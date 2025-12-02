@@ -1,7 +1,6 @@
 import scipy
 import operator
 import warnings
-import functools
 import numpy as np
 import numpy.typing as npt
 from sklearn import cluster
@@ -42,7 +41,7 @@ def rotmat_from_axangle(ax, angle):
     author: weiwei
     date: 20161220
     """
-    length, unit_ax = normalize(np.asarray(ax), return_length=True)
+    length, unit_ax = normalize(ax)
     if length == 0:
         return np.eye(3)
     a = np.cos(angle / 2.0)
@@ -127,7 +126,7 @@ def rotmat_from_normal(surface_normal):
     '''
     rotmat = np.eye(3, 3)
     rotmat[:, 2] = normalize(surface_normal)
-    rotmat[:, 0] = orthogonal_vector(rotmat[:, 2], toggle_unit=True)
+    rotmat[:, 0] = orth_vec(rotmat[:, 2], toggle_unit=True)
     rotmat[:, 1] = np.cross(rotmat[:, 2], rotmat[:, 0])
     return rotmat
 
@@ -149,7 +148,7 @@ def rotmat_from_normalandpoints(facet_normal, facet_first_pnt, facet_second_pnt)
     rotmat[:, 0] = normalize(facet_second_pnt - facet_first_pnt)
     if np.allclose(rotmat[:, 0], 0):
         warnings.warn("The provided facetpoints are the same! An autocomputed vector is used instead...")
-        rotmat[:, 0] = orthogonal_vector(rotmat[:, 2], toggle_unit=True)
+        rotmat[:, 0] = orth_vec(rotmat[:, 2], toggle_unit=True)
     rotmat[:, 1] = np.cross(rotmat[:, 2], rotmat[:, 0])
     return rotmat
 
@@ -247,7 +246,7 @@ def rotmat_to_euler(rotmat, order='sxyz'):
     return np.array([ax, ay, az])
 
 
-def rotmat_between_vectors(v1, v2):
+def rotmat_between_vecs(v1, v2):
     """
     from v1 to v2?
     :param v1: 1-by-3 nparray
@@ -256,12 +255,12 @@ def rotmat_between_vectors(v1, v2):
     author: weiwei
     date: 20191228
     """
-    theta = angle_between_vectors(v1, v2)
+    theta = angle_between_vecs(v1, v2)
     if np.allclose(theta, 0):
         return np.eye(3)
     if np.allclose(theta, np.pi):  # in this case, the rotation axis is arbitrary; I am using v1 for reference
-        return rotmat_from_axangle(orthogonal_vector(v1, toggle_unit=True), theta)
-    axis = normalize(np.cross(v1, v2))
+        return rotmat_from_axangle(orth_vec(v1, toggle_unit=True), theta)
+    _, axis = normalize(np.cross(v1, v2))
     return rotmat_from_axangle(axis, theta)
 
 
@@ -335,14 +334,14 @@ def tfmat_inverse(tfmat):
     :param tfmat: (4,4)
     :return:
     author: weiwei
-    date :20161213
+    date :20161213, 20251201
     """
-    rotmat = tfmat[:3, :3]
-    pos = tfmat[:3, 3]
-    inv_tfmat = np.eye(4)
-    inv_tfmat[:3, :3] = np.transpose(rotmat)
-    inv_tfmat[:3, 3] = -np.dot(np.transpose(rotmat), pos)
-    return inv_tfmat
+    R = tfmat[:3, :3]
+    t = tfmat[:3, 3]
+    inv = np.eye(4, dtype=np.float32)
+    inv[:3, :3] = R.T
+    inv[:3, 3] = -R.T @ t
+    return inv
 
 
 def tfmat_average(tfmat_list, bandwidth=10):
@@ -435,7 +434,7 @@ def interplate_pos_rotmat_around_circle(circle_center_pos,
     :param granularity: meter between two key points in the workspace
     :return:
     """
-    vec = orthogonal_vector(circle_normal_ax)
+    vec = orth_vec(circle_normal_ax)
     angular_step_length = granularity / radius
     n_angular_steps = np.ceil(np.pi * 2 / angular_step_length)
     if n_angular_steps < 2:
@@ -721,19 +720,19 @@ def skew_symmetric(pos_vec):
                      [-pos_vec[1], pos_vec[0], 0]])
 
 
-def orthogonal_vector(npvec3, toggle_unit=True):
+def orth_vec(vec, toggle_unit=True):
     """
     given a vector np.array([a,b,c]),
     this function computes an orthogonal wrs using np.array([b-c, -a+c, a-c])
     and then make it unit
-    :param npvec3: 1x3 nparray
-    :return: a 1x3 unit nparray
+    :param vec: (1,3)
+    :return: (1,3)
     author: weiwei
     date: 20200528
     """
-    a = npvec3[0]
-    b = npvec3[1]
-    c = npvec3[2]
+    a = vec[0]
+    b = vec[1]
+    c = vec[2]
     if toggle_unit:
         return normalize(np.array([b - c, -a + c, a - b]))
     else:
@@ -782,7 +781,7 @@ def regulate_angle(lowerbound, upperbound, jntangles):
         return jntangles
 
 
-def normalize(vec, return_length=False):
+def normalize(vec, return_length=True):
     """
     :param vec: (1,n)
     :param return_length: bool
@@ -790,6 +789,7 @@ def normalize(vec, return_length=False):
     author: weiwei
     date: 20200701osaka, 20251128
     """
+    vec = np.asarray(vec, dtype=np.float32)
     length = np.linalg.norm(vec)
     unit = np.divide(vec, length, out=np.zeros_like(vec, dtype=np.float32), where=length > 0)
     return (length, unit) if return_length else unit
@@ -959,6 +959,7 @@ def intersect_planes(p1, n1, p2, n2, tol=1e-6):
     b = np.array([np.dot(n1, p1), np.dot(n2, p2), 0.0])
     x0 = np.linalg.solve(A, b)
     return x0, d  # x0 is a point on the line of intersection, d is the direction vector
+
 
 def gen_2d_spiral_points(max_radius: float = .002,
                          radial_granularity: float = .0001,
@@ -1383,7 +1384,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True):
         q = V[:, np.argmax(w)]
         q /= np.linalg.norm(q)  # unit quaternion
         # homogeneous transformation matrix
-        M = homomat_from_quaternion(q)
+        M = tfmat_from_quat(q)
 
     if scale and not shear:
         # Affine transformation; scale is ratio of RMS deviations from centroid
@@ -1396,34 +1397,18 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True):
     M /= M[n_dims, n_dims]
     return M
 
-def look_at(eye, target, up):
+
+def rotmat_from_look_at(pos, look_at, up):
     """
-    Create a look-at view matrix.
-    :param eye:
-    :param target:
-    :param up:
-    :return:
-    author: weiwei
-    date: 20251129
+    Constructs a camera rotation matrix from pos to look_at
+    Rotmat columns: right, up, -forward.
     """
-    eye = np.asarray(eye, dtype=np.float32)
-    target = np.asarray(target, dtype=np.float32)
+    pos = np.asarray(pos, dtype=np.float32)
+    look_at = np.asarray(look_at, dtype=np.float32)
     up = np.asarray(up, dtype=np.float32)
-    # Forward vector
-    f = target - eye
-    f = f / np.linalg.norm(f)
-    # Right vector
-    s = np.cross(f, up)
-    s = s / np.linalg.norm(s)
-    # True up vector
-    u = np.cross(s, f)
-    # Build matrix
-    M = np.eye(4, dtype=np.float32)
-    M[0, :3] = s
-    M[1, :3] = u
-    M[2, :3] = -f
-    # Translation
-    M[0, 3] = -np.dot(s, eye)
-    M[1, 3] = -np.dot(u, eye)
-    M[2, 3] =  np.dot(f, eye)
-    return M
+    forward = look_at - pos
+    forward /= np.linalg.norm(forward)
+    right = np.cross(forward, up)
+    right /= np.linalg.norm(right)
+    up2 = np.cross(right, forward)
+    return np.column_stack((right, up2, -forward)).astype(np.float32)

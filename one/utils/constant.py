@@ -119,7 +119,16 @@ class StandardAxis:
     X = np.array([1, 0, 0], dtype=np.float32)
     Y = np.array([0, 1, 0], dtype=np.float32)
     Z = np.array([0, 0, 1], dtype=np.float32)
+    ARROW_SHAFT_RADIUS = 0.005
+    ARROW_HEAD_RADIUS = 0.01
+    ARROW_HEAD_LENGTH = 0.04
+    ARROW_LENGTH = 0.2
 
 
 class StandardCoord:
     XYZ = np.column_stack((StandardAxis.X, StandardAxis.Y, StandardAxis.Z))
+
+class ArrowSize:
+    HEAD_LENGTH = 0.04
+    HEAD_RADIUS = 0.01
+    SHAFT_RADIUS = 0.005

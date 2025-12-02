@@ -1,31 +1,60 @@
 import numpy as np
-import wrs.utils.constant as const
+import one.utils.constant as const
 
-class Geometry:
+
+class GeometryBase:
+
+    def __init__(self, verts, faces=None):
+        self.verts = np.asarray(verts, dtype=np.float32)
+        self.faces = None if faces is None else np.asarray(faces, dtype=np.uint32)
+        self.device_buffer = None
+
+
+class Mesh(GeometryBase):
     def __init__(self,
-                 verts=None,
-                 faces=None,
+                 verts,
+                 faces,
+                 rgb=None,
                  face_normals=None,
-                 rgbs=None,
+                 vert_normals=None,
                  alpha=1.0):
-        self.verts = verts
-        self.faces = faces
+        super().__init__(verts=verts, faces=faces)
         self.face_normals = face_normals
-        if faces is not None and face_normals is None:
+        self.vert_normals = vert_normals
+        if self.faces is not None and self.face_normals is None:
             self.compute_face_normals()
-        self.rgbs = self._ensure_rgbs(rgbs, len(self.verts))
+        self.rgbs = self._ensure_rgbs(rgb, len(self.verts))
         self.alpha = alpha
 
     def compute_face_normals(self):
         if self.faces is None:
+            print("Warning: Cannot compute face normals without faces.")
             return None
         f = self.faces
         v1 = self.verts[f[:, 1]] - self.verts[f[:, 0]]
         v2 = self.verts[f[:, 2]] - self.verts[f[:, 0]]
-        normals = np.cross(v1, v2)
-        normals /= np.linalg.norm(normals, axis=1, keepdims=True)
-        self.face_normals = normals.astype(np.float32)
+        fnormals = np.cross(v1, v2)
+        fnormals /= np.linalg.norm(fnormals, axis=1, keepdims=True)
+        self.face_normals = fnormals.astype(np.float32)
         return self.face_normals
+
+    def compute_vert_normals(self):
+        if self.faces is None:
+            print("Warning: Cannot compute vertex normals without faces.")
+            return None
+        if self.face_normals is None:
+            self.compute_face_normals()
+        vnormals = np.zeros_like(self.verts, dtype=np.float32)
+        np.add.at(vnormals, self.faces[:, 0], self.face_normals)
+        np.add.at(vnormals, self.faces[:, 1], self.face_normals)
+        np.add.at(vnormals, self.faces[:, 2], self.face_normals)
+        vnormals /= np.linalg.norm(vnormals, axis=1, keepdims=True)
+        self.vert_normals = vnormals.astype(np.float32)
+        return self.vert_normals
+
+    def set_rgba(self, rgb, alpha=1.0):
+        self.rgb = self._ensure_rgbs(rgb, len(self.verts))
+        self.alpha = alpha
 
     def _ensure_rgbs(self, c, n_verts):
         if c is None:
@@ -39,16 +68,18 @@ class Geometry:
             return c
         raise ValueError("Invalid color format. Expected (3,) or (N,3)")
 
-    @property
-    def is_point_cloud(self):
-        return self.faces is None
+
+class PointCloud(GeometryBase):
+    def __init__(self, verts, colors=None):
+        super().__init__(verts, faces=None)
+        self.colors = colors
 
 
 if __name__ == '__main__':
-    from wrs import loader
+    import one.scene.loader as loader
 
     verts, faces = loader.load_stl("bunnysim.stl")
-    geom = Geometry(verts=verts, faces=faces)
+    geom = GeometryBase(verts=verts, faces=faces)
     print("Face normals:", geom.compute_face_normals())
     print("Is point cloud:", geom.is_point_cloud)
     print("RGBs:", geom.rgbs)

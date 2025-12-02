@@ -18,8 +18,8 @@ class Camera(nd.Node):
                  parent=None):
         self._pos = np.asarray(pos, dtype=np.float32)
         self._look_at = np.asarray(look_at, dtype=np.float32)
-        self._up = np.asarray(up, dtype=np.float32)
-        self._rotmat = rm.rotmat_from_look_at(pos=self._pos, target=self._look_at, up=self._up)
+        self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up), dtype=np.float32)
+        self._rotmat = rm.rotmat_from_look_at(pos=self._pos, look_at=self._look_at, up=self._up)
         super().__init__(rotmat=self._rotmat, pos=self._pos, parent=parent)
         self._fov = fov
         self._aspect = aspect  # default 16:9
@@ -29,29 +29,44 @@ class Camera(nd.Node):
         self._proj_mat = None
         self._proj_dirty = True
 
-    def set_to(self, pos=None, look_at=None, up=None):
-        if pos is not None:
-            self._pos = np.asarray(pos, dtype=np.float32)
-        if look_at is not None:
-            self._look_at = np.asarray(look_at, dtype=np.float32)
+    def set_to(self, pos, look_at, up=None):
+        self.pos = np.asarray(pos, dtype=np.float32)
+        self.look_at = np.asarray(look_at, dtype=np.float32)
         if up is not None:
-            self._up = np.asarray(up, dtype=np.float32)
-        if pos is not None or look_at is not None or up is not None:
-            self.set_pose(rotmat=self._rotmat, pos=self._pos)
+            self.up = np.asarray(up, dtype=np.float32)
 
-    def orbit(self, dt=None, axis=(0, 0, 1), angle_rad=rm.np.pi / 360):
+    def orbit(self, axis=(0, 0, 1), angle_rad=rm.np.pi / 360):
         direction = self._pos - self._look_at
-        rotate_around_rotmat = rm.rotmat_from_axangle(axis, angle_rad)
-        direction_rotated = rotate_around_rotmat @ direction
+        R = rm.rotmat_from_axangle(axis, angle_rad)
+        direction_rotated = R @ direction
         self._pos = self._look_at + direction_rotated
-        rotmat = rm.rotmat_from_look_at(pos=self._pos, target=self._look_at, up=self._up)
-        self.set_pose(rotmat=rotmat, pos=self._pos)
+        self._up = (R @ self._up)
+        self._up /= np.linalg.norm(self._up)
+        self._up = self._fix_up_vector(self._pos, self._look_at, self._up)
+        self._dirty = True
+
+    def mouse_orbit(self, dx, dy, sensitivity=0.002):
+        right_axis = self.wd_rotmat[:, 0]
+        up_axis = self.wd_rotmat[:, 1]
+        self.orbit(axis=up_axis, angle_rad=-dx * sensitivity)
+        self.orbit(axis=right_axis, angle_rad=dy * sensitivity)
+
+    def mouse_pan(self, dx, dy, sensitivity=0.0002):
+        right_axis = self.wd_rotmat[:, 0]
+        up_axis = self.wd_rotmat[:, 1]
+        self.pos += -right_axis * dx * sensitivity - up_axis * dy * sensitivity
+        self.look_at += -right_axis * dx * sensitivity - up_axis * dy * sensitivity
+
+    def mouse_zoom(self, delta, sensitivity=0.05):
+        direction = self.pos - self.look_at
+        zoom_amount = delta * sensitivity
+        self.pos += direction * zoom_amount
 
     def update(self):
         """Overwrite Node.update to compute world transforms considering the look_at functionality."""
         if not self._dirty:
             return
-        self._rotmat = rm.rotmat_from_look_at(pos=self._pos, target=self._look_at, up=self._up)
+        self._rotmat = rm.rotmat_from_look_at(pos=self._pos, look_at=self._look_at, up=self._up)
         if self.parent is None:
             self._wd_rotmat = self._rotmat.copy()
             self._wd_pos = self._pos.copy()
@@ -74,6 +89,23 @@ class Camera(nd.Node):
 
     def _mark_proj_dirty(self):
         self._proj_dirty = True
+
+    def _fix_up_vector(self, pos, look_at, up):
+        fwd_length, fwd = rm.normalize(look_at - pos)
+        up_length, up = rm.normalize(up)
+        dot_val = np.dot(fwd, up)
+        limit = 0.99 * (fwd_length * up_length)
+        if dot_val > limit:
+            if np.allclose(up, (0, 0, 1)):
+                up = (1, 0, 0)
+            else:
+                up = (0, 0, 1)
+        return up
+
+    @nd.Node.rotmat.setter
+    def rotmat(self, rotmat):
+        """Disable direct setting of rotmat on Camera."""
+        raise AttributeError("Cannot set rotmat directly on Camera. Use set_to() method instead.")
 
     @property
     def look_at(self):
@@ -122,9 +154,9 @@ class Camera(nd.Node):
 
     # getters for matrices, setting matrices should be done via other methods
     @property
-    @decorators.lazy_update('_dirty', 'update_view')
+    @decorators.lazy_update('_dirty', 'update')
     def view_mat(self):
-        return self._rotmat.inverse()
+        return rm.tfmat_inverse(self._wd_tfmat)
 
     @property
     @decorators.lazy_update('_proj_dirty', 'update_proj')
