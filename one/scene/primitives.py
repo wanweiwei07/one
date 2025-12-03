@@ -1,7 +1,7 @@
 import numpy as np
 from torch.nn.init import dirac_
 
-import one.scene.geometry as geom
+import one.scene.geom as geom
 import one.scene.geomops as geomops
 import one.utils.constant as const
 import one.utils.math as rm
