@@ -1,9 +1,14 @@
 import numpy as np
 import struct
 import os
+import xml
 import one.scene.model as mdl
 import one.scene.scene_object as sob
 
+
+# ==============================
+# STL Loader
+# ==============================
 def load_stl(path):
     with open(path, "rb") as f:
         f.read(80)  # ignore header
@@ -14,12 +19,10 @@ def load_stl(path):
         # Expected binary size = 84 + M * 50
         file_size = os.path.getsize(path)
         expected = 84 + tri_count * 50
-        return_obj = sob.SceneObject()
         if file_size == expected:
-            return_obj.add_visual(_load_stl_binary(path, tri_count))
+            return _load_stl_binary(path, tri_count)
         else:
-            return_obj.add_visual(_load_stl_ascii(path))
-        return return_obj
+            return _load_stl_ascii(path)
 
 
 def _load_stl_binary(path, tri_count):
@@ -40,7 +43,7 @@ def _load_stl_binary(path, tri_count):
             verts[base + 2] = v2
             faces[i] = (base + 0, base + 1, base + 2)
             f.read(2)  # skip attribute bytes
-    return mdl.Model((verts, faces), None)
+    return (verts, faces)
 
 
 def _load_stl_ascii(path):
@@ -60,4 +63,49 @@ def _load_stl_ascii(path):
                 verts.extend(current_face)
                 faces.append([i0, i1, i2])
                 current_face = []
-    return np.array(verts, dtype=np.float32), np.array(faces, dtype=np.int32)
+    return (np.array(verts, dtype=np.float32), np.array(faces, dtype=np.int32))
+
+# ==============================
+# DAE Loader
+# ==============================
+def load_dae(filename):
+    tree = xml.etree.ElementTree.parse(filename)
+    root = tree.getroot()
+    # 1) auto extract namespace from root tag
+    # example tag: "{http://www.collada.org/2005/11/COLLADASchema}COLLADA"
+    tag = root.tag
+    namespace = tag[tag.find("{") + 1: tag.find("}")]
+    ns = {"ns": namespace}
+
+    # 2) find float array containing vertex positions
+    def find_positions():
+        # search all <source> elements
+        for src in root.findall(".//ns:source", ns):
+            sid = src.attrib.get("id", "")
+            # only take positions
+            if "positions" in sid.lower():
+                # float_array inside
+                fa = src.find(".//ns:float_array", ns)
+                if fa is None:
+                    raise ValueError("positions source has no float_array")
+                return np.fromstring(fa.text, sep=" ")
+        raise ValueError("positions array not found")
+
+    # 3) find face indices: triangles or polylist
+    def find_indices():
+        # triangles first
+        p = root.find(".//ns:mesh//ns:triangles//ns:p", ns)
+        if p is not None:
+            return np.fromstring(p.text, sep=" ", dtype=np.int32)
+        # fallback: polylist (common in COLLADA)
+        p = root.find(".//ns:mesh//ns:polylist//ns:p", ns)
+        if p is not None:
+            return np.fromstring(p.text, sep=" ", dtype=np.int32)
+        raise ValueError("no triangle/polylist indices found")
+
+    floats = find_positions()
+    # reshape to Nx3 vertices
+    verts = floats.reshape((-1, 3)).astype(np.float32)
+    idx = find_indices()
+    faces = idx.reshape((-1, 3))
+    return (verts, faces)

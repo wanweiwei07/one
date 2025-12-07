@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class ChainState:
+class RobotState:
 
     def __init__(self, jlc):
         self.jlc = jlc

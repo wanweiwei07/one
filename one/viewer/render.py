@@ -1,37 +1,24 @@
 import pyglet.gl as gl
-import one.viewer.device_buffer as db
 import one.viewer.shader as sd
-import one.scene.geometry as geom
-import one.scene.model as mdl
-import one.utils.math as rm
 
 
 class Render:
     def __init__(self, camera):
         self.camera = camera
-        self.shader = sd.Shader(sd.x_vert, sd.x_frag)
-        self.shader.use()
+        self.mesh_shader = sd.Shader(sd.mesh_vert, sd.mesh_frag)
+        self.pcd_shader = sd.Shader(sd.pcd_vert, sd.pcd_frag)
         self._gl_setup()
 
-    def set_shader(self, shader):
-        self.shader = shader
-        self.shader.use()
-
-    def draw_model(self, model):
-        if isinstance(model, mdl.Model):
-            self._set_uniforms(model, None)
-            if model.geometry.device_buffer is None:
-                model.geometry.device_buffer = db.DeviceBuffer(model.geometry)
-            model.geometry.device_buffer.draw()
-        elif isinstance(model, geom.GeometryBase):
-            self._set_uniforms(model, rm.np.eye(4))
-            if model.device_buffer is None:
-                model.device_buffer = db.DeviceBuffer(model)
-            model.device_buffer.draw()
+    def draw_model(self, model, final_tfmat):
+        device_buffer = model.get_device_buffer()
+        self._set_uniforms(model, final_tfmat)
+        device_buffer.draw()
 
     def show(self, scene):
-        for model in scene:
-            self.draw_model(model)
+        for entity in scene:
+            for model in entity.visuals:
+                final_tfmat = entity.node.wd_tfmat @ model.local_tfmat
+                self.draw_model(model, final_tfmat)
 
     def _gl_setup(self):
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -44,12 +31,29 @@ class Render:
         gl.glEnable(gl.GL_PROGRAM_POINT_SIZE)
         gl.glEnable(gl.GL_MULTISAMPLE)
 
-    def _set_uniforms(self, model, model_tfmat=None):
-        if model_tfmat is None:
-            model_tfmat = model.wd_tfmat
-        mvp_mat = self.camera.vp_mat @ model_tfmat
-        self.shader.program['u_mvp'] = mvp_mat.T.flatten()
-        self.shader.program['u_model'] = model_tfmat.T.flatten()
-        self.shader.program['u_point_size'] = 1.0
-        self.shader.program['u_view_pos'] = self.camera.pos
-        self.shader.program['u_alpha'] = 1.0
+    def _set_uniforms(self, model, model_final_tfmat):
+        shader = self._pick_shader(model)
+        shader.use()
+        mvp_mat = self.camera.vp_mat @ model_final_tfmat
+        if shader is self.mesh_shader:
+            self.mesh_shader.use()
+            self.mesh_shader.program['u_mvp'] = mvp_mat.T.flatten()
+            self.mesh_shader.program['u_model'] = model_final_tfmat.T.flatten()
+            self.mesh_shader.program['u_view_pos'] = self.camera.pos
+            self.mesh_shader.program['u_rgb'] = model.rgb
+            self.mesh_shader.program['u_alpha'] = 1.0
+        elif shader is self.pcd_shader:
+            self.pcd_shader.use()
+            self.pcd_shader.program['u_mvp'] = mvp_mat.T.flatten()
+            self.pcd_shader.program['u_alpha'] = 1.0
+        else:
+            raise ValueError("Unknown shader type!")
+
+    def _pick_shader(self, model):
+        if model.shader is not None:
+            return model.shader
+        geom = model.geometry
+        if geom.faces is not None:
+            return self.mesh_shader
+        else:
+            return self.pcd_shader

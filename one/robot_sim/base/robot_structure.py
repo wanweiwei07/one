@@ -4,17 +4,19 @@ import one.scene.scene_object as sob
 
 class Link(sob.SceneObject):
 
-    def __init__(self, parent_node=None):
-        super().__init__(parent_node)
+    def __init__(self, name=None,
+                 parent_node=None):
+        super().__init__(name=name, parent_node=parent_node)
         self.parent_joint = None
 
 
 class Joint:
 
-    def __init__(self, joint_type,
+    def __init__(self, name, joint_type,
                  parent_link, child_link,
                  axis, origin_tfmat,
                  limit_lower=None, limit_upper=None):
+        self.name = name
         self.joint_type = joint_type
         self.axis = rm.normalize(axis)
         self.origin_tfmat = origin_tfmat
@@ -31,9 +33,10 @@ class Joint:
 class RobotStructure:
 
     def __init__(self):
-        self.links=[]
-        self.joints=[]
+        self.links = []
+        self.joints = []
         self.children_map = {}
+        self.root_link = None
 
     def add_link(self, link):
         self.links.append(link)

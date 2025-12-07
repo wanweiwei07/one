@@ -1,10 +1,13 @@
-import one.scene.node as nd
+import one.scene.scene_node as snd
 
 
-class Entity:
+class SceneObject:
 
-    def __init__(self, rotmat=None, pos=None, parent_node=None):
-        self.node = nd.Node(rotmat=rotmat, pos=pos, parent=parent_node)
+    def __init__(self, name=None,
+                 rotmat=None, pos=None,
+                 parent_node=None):
+        self.name = name
+        self.node = snd.SceneNode(rotmat=rotmat, pos=pos, parent=parent_node)
         self.visuals = []
         self.collisions = []
 

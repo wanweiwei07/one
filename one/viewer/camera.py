@@ -1,11 +1,11 @@
 import numpy as np
 import pyglet.math as pm
-import one.utils.decorators as decorators
+import one.utils.decorator as decorators
 import one.utils.math as rm
-import one.scene.node as nd
+import one.scene.scene_node as nd
 
 
-class Camera(nd.Node):
+class Camera(nd.SceneNode):
 
     def __init__(self,
                  pos=(2, 2, 2),
@@ -51,16 +51,16 @@ class Camera(nd.Node):
         self.orbit(axis=up_axis, angle_rad=-dx * sensitivity)
         self.orbit(axis=right_axis, angle_rad=dy * sensitivity)
 
-    def mouse_pan(self, dx, dy, sensitivity=0.0002):
+    def mouse_pan(self, dx, dy, sensitivity=0.0003):
         right_axis = self.wd_rotmat[:, 0]
         up_axis = self.wd_rotmat[:, 1]
-        self.pos += -right_axis * dx * sensitivity - up_axis * dy * sensitivity
-        self.look_at += -right_axis * dx * sensitivity - up_axis * dy * sensitivity
+        self.pos = self.pos - right_axis * dx * sensitivity - up_axis * dy * sensitivity
+        self.look_at = self.look_at - right_axis * dx * sensitivity - up_axis * dy * sensitivity
 
     def mouse_zoom(self, delta, sensitivity=0.05):
         direction = self.pos - self.look_at
         zoom_amount = delta * sensitivity
-        self.pos += direction * zoom_amount
+        self.pos = self.pos + direction * zoom_amount
 
     def update(self):
         """Overwrite Node.update to compute world transforms considering the look_at functionality."""
@@ -102,7 +102,7 @@ class Camera(nd.Node):
                 up = (0, 0, 1)
         return up
 
-    @nd.Node.rotmat.setter
+    @nd.SceneNode.rotmat.setter
     def rotmat(self, rotmat):
         """Disable direct setting of rotmat on Camera."""
         raise AttributeError("Cannot set rotmat directly on Camera. Use set_to() method instead.")

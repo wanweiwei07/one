@@ -1,6 +1,6 @@
 import pyglet.window.mouse as mouse
 import pyglet.window.key as key
-import one.viewer.camera as cam
+
 
 class InputManager:
     def __init__(self, window):

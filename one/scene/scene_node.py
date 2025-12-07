@@ -2,7 +2,7 @@ import one.utils.math as rm
 import one.utils.decorator as deco
 
 
-class Node:
+class SceneNode:
 
     def __init__(self, rotmat=None, pos=None, parent=None):
         # local transform

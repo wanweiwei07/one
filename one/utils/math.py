@@ -3,14 +3,13 @@ import operator
 import warnings
 import numpy as np
 import numpy.typing as npt
+import one.utils.constant as const
 from sklearn import cluster
 from scipy.spatial.transform import Slerp
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Rotation
 
 np.set_printoptions(suppress=True)  # avoid scientific notation
-# epsilon for testing whether a number is close to zero
-_EPS = np.finfo(np.float32).eps
 # axis sequences for Euler angles
 _NEXT_AXIS = [1, 2, 0, 1]
 # map axes strings to/from tuples of inner axis, parity, repetition, frame
@@ -221,7 +220,7 @@ def rotmat_to_euler(rotmat, order='sxyz'):
     k = _NEXT_AXIS[i - parity + 1]
     if repetition:
         sy = np.sqrt(rotmat[i, j] * rotmat[i, j] + rotmat[i, k] * rotmat[i, k])
-        if sy > _EPS:
+        if sy > const.MathConst.EPS:
             ax = np.atan2(rotmat[i, j], rotmat[i, k])
             ay = np.atan2(sy, rotmat[i, i])
             az = np.atan2(rotmat[j, i], -rotmat[k, i])
@@ -231,7 +230,7 @@ def rotmat_to_euler(rotmat, order='sxyz'):
             az = 0.0
     else:
         cy = np.sqrt(rotmat[i, i] * rotmat[i, i] + rotmat[j, i] * rotmat[j, i])
-        if cy > _EPS:
+        if cy > const.MathConst.EPS:
             ax = np.atan2(rotmat[k, j], rotmat[k, k])
             ay = np.atan2(-rotmat[k, i], cy)
             az = np.atan2(rotmat[j, i], rotmat[i, i])
@@ -365,7 +364,7 @@ def tfmat_from_quat(quat):
     """
     q = np.array(quat, dtype=np.float32, copy=True)
     n = np.dot(q, q)
-    if n < _EPS:
+    if n < const.MathConst.EPS:
         return np.identity(4)
     q *= np.sqrt(2.0 / n)
     q = np.outer(q, q)
@@ -472,7 +471,7 @@ def quaternion_from_axangle(angle, axis):
     """
     quaternion = np.array([0.0, axis[0], axis[1], axis[2]])
     qlen, _ = normalize(quaternion, return_length=True)
-    if qlen > _EPS:
+    if qlen > const.MathConst.EPS:
         quaternion *= np.sin(angle / 2.0) / qlen
     quaternion[0] = np.cos(angle / 2.0)
     return quaternion
@@ -576,7 +575,7 @@ def quaternion_about_axis(angle, axis):
     """
     q = np.array([0.0, axis[0], axis[1], axis[2]])
     qlen, _ = normalize(q, return_length=True)
-    if qlen > _EPS:
+    if qlen > const.MathConst.EPS:
         q *= np.sin(angle / 2.0) / qlen
     q[0] = np.cos(angle / 2.0)
     return q
@@ -587,7 +586,7 @@ def quaternion_to_rotmat(quaternion):
     Previous implementation is as below, abandoned on 20241108
     # q = np.array(quaternion, dtype=np.float64, copy=True)
     # n = np.dot(q, q)
-    # if n < _EPS:
+    # if n < const.MathConst.EPS:
     #     return np.identity(4)
     # q *= np.sqrt(2.0 / n)
     # q = np.outer(q, q)
@@ -670,14 +669,14 @@ def quaternion_slerp(quat0, quat1, fraction, spin=0, shortestpath=True):
     elif fraction == 1.0:
         return q1
     d = np.dot(q0, q1)
-    if abs(abs(d) - 1.0) < _EPS:
+    if abs(abs(d) - 1.0) < const.MathConst.EPS:
         return q0
     if shortestpath and d < 0.0:
         # invert rotation
         d = -d
         np.negative(q1, q1)
     angle = np.acos(d) + spin * np.pi
-    if abs(angle) < _EPS:
+    if abs(angle) < const.MathConst.EPS:
         return q0
     isin = 1.0 / np.sin(angle)
     q0 *= np.sin((1.0 - fraction) * angle) * isin
@@ -791,7 +790,10 @@ def normalize(vec, return_length=True):
     """
     vec = np.asarray(vec, dtype=np.float32)
     length = np.linalg.norm(vec)
-    unit = np.divide(vec, length, out=np.zeros_like(vec, dtype=np.float32), where=length > 0)
+    if length < const.MathConst.EPS:
+        unit = vec
+    else:
+        unit = np.divide(vec, length, out=np.zeros_like(vec, dtype=np.float32), where=length > 0)
     return (length, unit) if return_length else unit
 
 

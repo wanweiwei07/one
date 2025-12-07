@@ -1,9 +1,10 @@
 import os
-import one.robot_sim.robot_loader as rld
+import one.robot_sim.base.robot_loader as rld
 
 base_dir = os.path.dirname(__file__)
-mappings = {"model": "cobotta"}
-robot = rld.load_robot_from_xacro("./denso_robot_descriptions/urdf/denso_robot.urdf.xacro",
+mappings = {}
+robot = rld.load_robot_from_xacro("./g1_29dof_with_hand.urdf",
+                                  base_dir=base_dir,
                                   mappings=mappings)
 print("\n=== LINKS ===")
 for link in robot.links:

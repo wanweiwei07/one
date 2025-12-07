@@ -33,7 +33,7 @@ def load_robot_from_xacro(main_file, base_dir=None, mappings=None):
     # absolute path
     main_file = os.path.abspath(main_file)
     if base_dir is None:
-        base_dir = os.path.dirname(__file__)
+        raise RuntimeError("Package base_dir must be specified for loading xacro files.")
     known_packages = auto_scan_packages(main_file, base_dir)
     # local resolver for $(find ...)
     def eval_find(pkg_name):
