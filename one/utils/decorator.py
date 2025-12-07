@@ -1,3 +1,4 @@
+import numpy as np
 import functools
 
 
@@ -25,4 +26,14 @@ def check_positive(func):
         if value <= 1e-8:
             raise ValueError(f"{func.__name__}: value must be > 0.")
         return func(value, *args, **kwargs)
+    return wrapper
+
+def readonly_view(func):
+    def wrapper(self, *args, **kwargs):
+        arr = func(self, *args, **kwargs)
+        if isinstance(arr, np.ndarray):
+            v = arr.view()
+            v.flags.writeable = False
+            return v
+        return arr
     return wrapper

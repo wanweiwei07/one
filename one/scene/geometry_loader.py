@@ -1,7 +1,8 @@
 import numpy as np
 import struct
 import os
-
+import one.scene.model as mdl
+import one.scene.scene_object as sob
 
 def load_stl(path):
     with open(path, "rb") as f:
@@ -13,13 +14,15 @@ def load_stl(path):
         # Expected binary size = 84 + M * 50
         file_size = os.path.getsize(path)
         expected = 84 + tri_count * 50
+        return_obj = sob.SceneObject()
         if file_size == expected:
-            return load_stl_binary(path, tri_count)
+            return_obj.add_visual(_load_stl_binary(path, tri_count))
         else:
-            return load_stl_ascii(path)
+            return_obj.add_visual(_load_stl_ascii(path))
+        return return_obj
 
 
-def load_stl_binary(path, tri_count):
+def _load_stl_binary(path, tri_count):
     verts = np.zeros((tri_count * 3, 3), dtype=np.float32)
     faces = np.zeros((tri_count, 3), dtype=np.int32)
     with open(path, "rb") as f:
@@ -37,10 +40,10 @@ def load_stl_binary(path, tri_count):
             verts[base + 2] = v2
             faces[i] = (base + 0, base + 1, base + 2)
             f.read(2)  # skip attribute bytes
-    return verts, faces
+    return mdl.Model((verts, faces), None)
 
 
-def load_stl_ascii(path):
+def _load_stl_ascii(path):
     verts = []
     faces = []
     current_face = []
