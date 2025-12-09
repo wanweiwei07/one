@@ -11,6 +11,8 @@ config = pyglet.gl.Config(
     depth_size=24,
     sample_buffers=1,  # multisample
     samples=4,  # MSAA 4X
+    vsync=False,
+    debug=False
 )
 
 
@@ -45,10 +47,10 @@ class World(pyglet.window.Window):
     def set_scene(self, scene):
         self.scene = scene
 
-    def auto_cam_orbit(self, dt, interval=1 / 30.0):
-        self.camera.orbit(angle_rad=interval)
+    def auto_cam_orbit(self, dt, angle_rad=3.14 / 360.0):
+        self.camera.orbit(angle_rad=angle_rad)
 
-    def schedule_interval(self, function, interval=1 / 30.0):
+    def schedule_interval(self, function, interval=1 / 10.0):
         pyglet.clock.schedule_interval(function, interval=interval)
 
     def run(self):

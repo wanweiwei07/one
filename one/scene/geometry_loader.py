@@ -2,9 +2,23 @@ import numpy as np
 import struct
 import os
 import xml
-import one.scene.model as mdl
-import one.scene.scene_object as sob
+import one.scene.geometry as geom
 
+_geometry_cache = {}
+
+
+def load_geometry(path):
+    if path in _geometry_cache:
+        return _geometry_cache[path]
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".stl":
+        geometry = load_stl(path)
+    elif ext == ".dae":
+        geometry = load_dae(path)
+    else:
+        raise ValueError(f"Unsupported geometry format: {ext}")
+    _geometry_cache[path] = geometry
+    return geometry
 
 # ==============================
 # STL Loader
@@ -43,7 +57,7 @@ def _load_stl_binary(path, tri_count):
             verts[base + 2] = v2
             faces[i] = (base + 0, base + 1, base + 2)
             f.read(2)  # skip attribute bytes
-    return (verts, faces)
+    return geom.Geometry(verts, faces)
 
 
 def _load_stl_ascii(path):
@@ -63,7 +77,8 @@ def _load_stl_ascii(path):
                 verts.extend(current_face)
                 faces.append([i0, i1, i2])
                 current_face = []
-    return (np.array(verts, dtype=np.float32), np.array(faces, dtype=np.int32))
+    return geom.Geometry(np.array(verts, dtype=np.float32), np.array(faces, dtype=np.int32))
+
 
 # ==============================
 # DAE Loader
@@ -108,4 +123,4 @@ def load_dae(filename):
     verts = floats.reshape((-1, 3)).astype(np.float32)
     idx = find_indices()
     faces = idx.reshape((-1, 3))
-    return (verts, faces)
+    return geom.Geometry(verts, faces)

@@ -132,3 +132,8 @@ class ArrowSize:
     HEAD_LENGTH = 0.04
     HEAD_RADIUS = 0.01
     SHAFT_RADIUS = 0.005
+
+class JointType:
+    REVOLUTE = 'revolute'
+    PRISMATIC = 'prismatic'
+    FIXED = 'fixed'

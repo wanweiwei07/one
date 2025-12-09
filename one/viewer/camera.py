@@ -91,8 +91,8 @@ class Camera(nd.SceneNode):
         self._proj_dirty = True
 
     def _fix_up_vector(self, pos, look_at, up):
-        fwd_length, fwd = rm.normalize(look_at - pos)
-        up_length, up = rm.normalize(up)
+        fwd_length, fwd = rm.unit_vec(look_at - pos)
+        up_length, up = rm.unit_vec(up)
         dot_val = np.dot(fwd, up)
         limit = 0.99 * (fwd_length * up_length)
         if dot_val > limit:
@@ -162,7 +162,3 @@ class Camera(nd.SceneNode):
     @decorators.lazy_update('_proj_dirty', 'update_proj')
     def proj_mat(self):
         return self._proj_mat
-
-    @property
-    def vp_mat(self):
-        return self.proj_mat @ self.view_mat

@@ -1,9 +1,8 @@
 if __name__ == '__main__':
-    from one import rm, wd, mdl, scn, geom, const, prims, geometry_loader
-    import open3d as o3d
+    from one import rm, wd, mdl, scn, geom, const, prims, sob
 
     oframe = prims.gen_frame()
-    bunny = loader.load_stl("bunny.stl")
+    bunny = sob.SceneObject.from_file("bunny.stl")
     scene = scn.Scene()
     scene.add(bunny)
     scene.add(oframe)

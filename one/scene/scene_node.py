@@ -46,9 +46,15 @@ class SceneNode:
         self._wd_tfmat = rm.tfmat_from_rotmat_pos(self._wd_rotmat, self._wd_pos)
         self._dirty = False
 
-    def set_pose(self, rotmat, pos):
+    def set_rotmat_pos(self, rotmat, pos):
         self._rotmat = rotmat.astype(rm.np.float32)
         self._pos = pos.astype(rm.np.float32)
+        self._mark_dirty()
+
+    def set_tfmat(self, tfmat):
+        tfmat = tfmat.astype(rm.np.float32)
+        self._rotmat = tfmat[:3, :3]
+        self._pos = tfmat[:3, 3]
         self._mark_dirty()
 
     @property

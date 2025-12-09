@@ -40,16 +40,16 @@ def rotmat_from_axangle(ax, angle):
     author: weiwei
     date: 20161220
     """
-    length, unit_ax = normalize(ax)
+    length, unit_ax = unit_vec(ax)
     if length == 0:
-        return np.eye(3)
+        return np.eye(3, dtype=np.float32)
     a = np.cos(angle / 2.0)
     b, c, d = -unit_ax * np.sin(angle / 2.0)
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
     return np.array([[aa + bb - cc - dd, 2.0 * (bc + ad), 2.0 * (bd - ac)],
                      [2.0 * (bc - ad), aa + cc - bb - dd, 2.0 * (cd + ab)],
-                     [2.0 * (bd + ac), 2.0 * (cd - ab), aa + dd - bb - cc]])
+                     [2.0 * (bd + ac), 2.0 * (cd - ab), aa + dd - bb - cc]], dtype=np.float32)
 
 
 def rotmat_from_quat(quat):
@@ -123,8 +123,8 @@ def rotmat_from_normal(surface_normal):
     date: 20160624
     author: weiwei
     '''
-    rotmat = np.eye(3, 3)
-    rotmat[:, 2] = normalize(surface_normal)
+    rotmat = np.eye(3, dtype=np.float32)
+    rotmat[:, 2] = unit_vec(surface_normal)
     rotmat[:, 0] = orth_vec(rotmat[:, 2], toggle_unit=True)
     rotmat[:, 1] = np.cross(rotmat[:, 2], rotmat[:, 0])
     return rotmat
@@ -143,8 +143,8 @@ def rotmat_from_normalandpoints(facet_normal, facet_first_pnt, facet_second_pnt)
     author: weiwei
     '''
     rotmat = np.eye(3, 3)
-    rotmat[:, 2] = normalize(facet_normal)
-    rotmat[:, 0] = normalize(facet_second_pnt - facet_first_pnt)
+    rotmat[:, 2] = unit_vec(facet_normal)
+    rotmat[:, 0] = unit_vec(facet_second_pnt - facet_first_pnt)
     if np.allclose(rotmat[:, 0], 0):
         warnings.warn("The provided facetpoints are the same! An autocomputed vector is used instead...")
         rotmat[:, 0] = orth_vec(rotmat[:, 2], toggle_unit=True)
@@ -178,7 +178,7 @@ def rotmat_from_euler(ai, aj, ak, order='sxyz'):
     ci, cj, ck = np.cos(ai), np.cos(aj), np.cos(ak)
     cc, cs = ci * ck, ci * sk
     sc, ss = si * ck, si * sk
-    rotmat = np.eye(3)
+    rotmat = np.eye(3, dtype=np.float32)
     if repetition:
         rotmat[i, i] = cj
         rotmat[i, j] = sj * si
@@ -259,7 +259,7 @@ def rotmat_between_vecs(v1, v2):
         return np.eye(3)
     if np.allclose(theta, np.pi):  # in this case, the rotation axis is arbitrary; I am using v1 for reference
         return rotmat_from_axangle(orth_vec(v1, toggle_unit=True), theta)
-    _, axis = normalize(np.cross(v1, v2))
+    _, axis = unit_vec(np.cross(v1, v2))
     return rotmat_from_axangle(axis, theta)
 
 
@@ -297,17 +297,18 @@ def rotmat_slerp(rotmat0, rotmat1, nval):
     return interp_rots.as_matrix()
 
 
-## homogeneous matrix
-def tfmat_from_rotmat_pos(rotmat=np.eye(3), pos=np.zeros(3)):
+## (4,4) transformation matrix
+def tfmat_from_rotmat_pos(rotmat=np.eye(3, dtype=np.float32),
+                          pos=np.zeros(3, dtype=np.float32)):
     """
-    build a 4x4 nparray homogeneous matrix
+    build a (4,4) homogeneous transformation matrix from rotation matrix and position
     :param rotmat: (1,3)
     :param pos: (3,3)
     :return:
     author: weiwei
     date: 20190313, 20251128
     """
-    tfmat = np.eye(4)
+    tfmat = np.eye(4, dtype=np.float32)
     tfmat[:3, :3] = rotmat
     tfmat[:3, 3] = pos
     return tfmat
@@ -322,7 +323,7 @@ def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     author: weiwei
     date: 20200408, 20251128
     """
-    angle, axis = normalize(rotvec, return_length=True)
+    angle, axis = unit_vec(rotvec, return_length=True)
     rotmat = rotmat_from_axangle(axis, angle)
     return tfmat_from_rotmat_pos(rotmat, pos)
 
@@ -344,7 +345,7 @@ def tfmat_inverse(tfmat):
 
 
 def tfmat_average(tfmat_list, bandwidth=10):
-    """
+    """TODO: tfmat list or (n,4,4) array
     average a list of tfmat (4,4)
     :param tfmat_list:
     :param bandwidth:
@@ -375,7 +376,7 @@ def tfmat_from_quat(quat):
         [0.0, 0.0, 0.0, 1.0]])
 
 
-def transform_points_by_homomat(tfmat, pnts):
+def transform_points_by_tfmat(tfmat, pnts):
     """
     do homotransform on a point or an array of points using pos
     :param tfmat: (4,4)
@@ -385,7 +386,7 @@ def transform_points_by_homomat(tfmat, pnts):
     date: 20161213
     """
     if tfmat.shape != (4, 4):
-        raise ValueError(f"tfmat must be (4,4), got {tfmat.shape}")
+        raise ValueError(f"Homomat must be (4,4), got {tfmat.shape}")
     if pnts.ndim == 1:
         if pnts.shape[0] != 3:
             raise ValueError("Single point must have shape (3,).")
@@ -411,7 +412,7 @@ def interplate_pos_rotmat(start_pos,
     :param granularity
     :return: a list of 1xn nparray
     """
-    len, vec = normalize(start_pos - goal_pos, return_length=True)
+    len, vec = unit_vec(start_pos - goal_pos, return_length=True)
     n_steps = np.ceil(len / granularity)
     if n_steps < 2:
         n_steps = 2
@@ -470,7 +471,7 @@ def quaternion_from_axangle(angle, axis):
     date: 20201113
     """
     quaternion = np.array([0.0, axis[0], axis[1], axis[2]])
-    qlen, _ = normalize(quaternion, return_length=True)
+    qlen, _ = unit_vec(quaternion, return_length=True)
     if qlen > const.MathConst.EPS:
         quaternion *= np.sin(angle / 2.0) / qlen
     quaternion[0] = np.cos(angle / 2.0)
@@ -574,7 +575,7 @@ def quaternion_about_axis(angle, axis):
     Return quaternion for rotation about axis.
     """
     q = np.array([0.0, axis[0], axis[1], axis[2]])
-    qlen, _ = normalize(q, return_length=True)
+    qlen, _ = unit_vec(q, return_length=True)
     if qlen > const.MathConst.EPS:
         q *= np.sin(angle / 2.0) / qlen
     q[0] = np.cos(angle / 2.0)
@@ -662,8 +663,8 @@ def quaternion_slerp(quat0, quat1, fraction, spin=0, shortestpath=True):
     """
     Return spherical linear interpolation between two quaternions.
     """
-    q0 = normalize(quat0[:4])
-    q1 = normalize(quat1[:4])
+    q0 = unit_vec(quat0[:4])
+    q1 = unit_vec(quat1[:4])
     if fraction == 0.0:
         return q0
     elif fraction == 1.0:
@@ -733,7 +734,7 @@ def orth_vec(vec, toggle_unit=True):
     b = vec[1]
     c = vec[2]
     if toggle_unit:
-        return normalize(np.array([b - c, -a + c, a - b]))
+        return unit_vec(np.array([b - c, -a + c, a - b]))
     else:
         return np.array([b - c, -a + c, a - b])
 
@@ -780,7 +781,7 @@ def regulate_angle(lowerbound, upperbound, jntangles):
         return jntangles
 
 
-def normalize(vec, return_length=True):
+def unit_vec(vec, return_length=True):
     """
     :param vec: (1,n)
     :param return_length: bool
@@ -805,8 +806,8 @@ def angle_between_vecs(vec1, vec2):
     author: weiwei
     date: 20190504
     """
-    l1, v1_u = normalize(vec1, return_length=True)
-    l2, v2_u = normalize(vec2, return_length=True)
+    l1, v1_u = unit_vec(vec1, return_length=True)
+    l2, v2_u = unit_vec(vec2, return_length=True)
     if l1 == 0 or l2 == 0:
         raise ValueError("Zero length vector!")
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
@@ -897,8 +898,8 @@ def diff_between_poses(src_pos,
 
 
 def cosine_between_vecs(v1, v2):
-    l1, v1_u = normalize(v1, return_length=True)
-    l2, v2_u = normalize(v2, return_length=True)
+    l1, v1_u = unit_vec(v1, return_length=True)
+    l2, v2_u = unit_vec(v2, return_length=True)
     if l1 == 0 or l2 == 0:
         raise Exception("One of the given vector is [0,0,0].")
     return np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)
@@ -1103,7 +1104,7 @@ def fit_plane(points):
     """
     plane_center = points.mean(axis=0)
     result = np.linalg.svd(points - plane_center)
-    plane_normal = normalize(np.cross(result[2][0], result[2][1]))
+    plane_normal = unit_vec(np.cross(result[2][0], result[2][1]))
     return plane_center, plane_normal
 
 
@@ -1248,20 +1249,19 @@ def null_space(npmat):
     return scipy.linalg.null_space(npmat)
 
 
-def homopos(pos: np.ndarray):
+def to_homogeneous(pos):
     """
     append 1 to pos
     :param pos:
     :return:
     """
-    return np.array([pos[0], pos[1], pos[2], 1])
-
+    return np.r_[pos, 1.0]
 
 def reflection_homomat(point, normal):
     """
     Return matrix to mirror at plane defined by point and normal vector.
     """
-    normal = normalize(normal[:3])
+    normal = unit_vec(normal[:3])
     homomat = np.identity(4)
     homomat[:3, :3] -= 2.0 * np.outer(normal, normal)
     homomat[:3, 3] = (2.0 * np.dot(point[:3], normal)) * normal
@@ -1297,7 +1297,7 @@ def projection_homomat(point, normal, perspective=None, pseudo=False):
     """
     homomat = np.identity(4)
     point = np.array(point[:3], dtype=np.float64, copy=False)
-    normal = normalize(normal[:3])
+    normal = unit_vec(normal[:3])
     if perspective is not None:
         # perspective projection
         perspective = np.array(perspective[:3], dtype=np.float64,
