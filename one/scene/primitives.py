@@ -136,25 +136,3 @@ def gen_frame(pos=np.zeros(3), rotmat=np.eye(3),
     return_obj.add_visual(mdl.Model(geometry=geometry, rotmat=rotmat_y, rgb=color_mat[:, 1], alpha=alpha))
     return_obj.add_visual(mdl.Model(geometry=geometry, rotmat=rotmat_z, rgb=color_mat[:, 2], alpha=alpha))
     return return_obj
-
-
-if __name__ == '__main__':
-    import cProfile
-    from one import wd, scn, mdl
-
-    profiler = cProfile.Profile()
-    profiler.enable()
-
-    scene = scn.Scene()
-    for i in range(2000):
-        pos = np.random.rand(3)
-        print(pos)
-        cyl = gen_frame(pos=pos)
-        scene.add(cyl)
-    base = wd.World(cam_pos=np.array([.5, 0, 1]), toggle_auto_cam_orbit=True)
-    base.set_scene(scene)
-    base.run()
-
-    profiler.disable()
-    profiler.dump_stats("result.prof")
-    print("Profile saved to result.prof")

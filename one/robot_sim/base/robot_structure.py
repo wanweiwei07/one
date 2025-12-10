@@ -11,9 +11,6 @@ class Link(sob.SceneObject):
         self.parent_joint = None
         self.children_joints = []
 
-    def set_tfmat(self, tfmat):
-        self.set_tfmat(tfmat)
-
 
 class Joint:
 
@@ -24,7 +21,7 @@ class Joint:
                  limit_lower=None, limit_upper=None):
         self.name = name
         self.joint_type = joint_type
-        self.axis = rm.unit_vec(axis)
+        self.axis = rm.unit_vec(axis, return_length=False)
         self.origin_rotmat = origin_rotmat
         self.origin_pos = origin_pos
         # link and joints

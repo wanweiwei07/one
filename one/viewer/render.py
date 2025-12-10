@@ -30,7 +30,7 @@ class Render:
                 tf_mat_array = np.empty((len(instance_list), 4, 4), np.float32)
                 rgba_array = np.empty((len(instance_list), 4), np.float32)
                 for i, (model, node) in enumerate(instance_list):
-                    tf_mat_array[i] = (node.wd_tfmat @ model.local_tfmat).T
+                    tf_mat_array[i] = (node.wd_tfmat @ model.tfmat).T
                     rgba_array[i] = np.array(
                         [*model.rgb, model.alpha], dtype=np.float32
                     )

@@ -7,14 +7,13 @@ import one.scene.scene_node as snd
 class SceneObject:
 
     @classmethod
-    def from_file(cls, path, rgb=None, alpha=1.0):
+    def from_file(cls, path, name=None, rgb=None, alpha=1.0):
         instance = cls(name=os.path.basename(path))
         instance.add_visual(mdl.Model(geometry=gldr.load_geometry(path), rgb=rgb, alpha=alpha))
+        instance.name = name
         return instance
 
-    def __init__(self, name=None,
-                 rotmat=None, pos=None,
-                 parent_node=None):
+    def __init__(self, name=None, rotmat=None, pos=None, parent_node=None):
         self.name = name
         self.node = snd.SceneNode(rotmat=rotmat, pos=pos, parent=parent_node)
         self.visuals = []

@@ -8,7 +8,7 @@ import one.viewer.device_buffer as dvb
 class Model:
 
     def __init__(
-        self, geometry=None, rotmat=None, pos=None, rgb=None, alpha=1.0, shader=None
+            self, geometry=None, rotmat=None, pos=None, rgb=None, alpha=1.0, shader=None
     ):
         if isinstance(geometry, tuple):
             verts = geometry[0]
@@ -24,10 +24,14 @@ class Model:
         self.shader = shader
         self._rotmat = np.eye(3) if rotmat is None else rotmat
         self._pos = np.zeros(3) if pos is None else pos
-        self._local_tfmat = np.eye(4, dtype=np.float32)
-        self._local_tfmat[:3, :3] = self._rotmat
-        self._local_tfmat[:3, 3] = self._pos
-        self._local_tfmat.flags.writeable = False
+        self._tfmat = np.eye(4, dtype=np.float32)
+        self._dirty = True
+
+    @deco.mark_dirty('_mark_dirty')
+    def set_rotmat_pos(self, rotmat, pos):
+        self._rotmat[:] = rotmat
+        self._pos[:] = pos
+        self._dirty = True
 
     def get_device_buffer(self):
         if self.geometry.device_buffer is None:
@@ -55,6 +59,37 @@ class Model:
         return new
 
     @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    @deco.mark_dirty('_mark_dirty')
+    def pos(self, pos):
+        self._pos = pos
+
+    @property
+    def rotmat(self):
+        return self._rotmat
+
+    @rotmat.setter
+    @deco.mark_dirty('_mark_dirty')
+    def rotmat(self, rotmat):
+        self._rotmat = rotmat
+
+    @property
     @deco.readonly_view
-    def local_tfmat(self):
-        return self._local_tfmat
+    @deco.lazy_update('_dirty', '_rebuild_tfmat')
+    def tfmat(self):
+        return self._tfmat
+
+    def _rebuild_tfmat(self):
+        if not self._dirty:
+            return
+        self._tfmat[:] = np.eye(4, dtype=np.float32)
+        self._tfmat[:3, :3] = self._rotmat
+        self._tfmat[:3, 3] = self._pos
+        self._dirty = False
+
+    def _mark_dirty(self):
+        if not self._dirty:
+            self._dirty = True

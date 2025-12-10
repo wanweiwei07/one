@@ -1,6 +1,6 @@
 import numpy as np
 import pyglet.math as pm
-import one.utils.decorator as decorators
+import one.utils.decorator as deco
 import one.utils.math as rm
 import one.scene.scene_node as nd
 
@@ -112,7 +112,7 @@ class Camera(nd.SceneNode):
         return self._look_at
 
     @look_at.setter
-    @decorators.mark_dirty('_mark_dirty')
+    @deco.mark_dirty('_mark_dirty')
     def look_at(self, look_at):
         self._look_at = np.asarray(look_at, dtype=np.float32)
 
@@ -121,7 +121,7 @@ class Camera(nd.SceneNode):
         return self._up
 
     @up.setter
-    @decorators.mark_dirty('_mark_dirty')
+    @deco.mark_dirty('_mark_dirty')
     def up(self, up):
         self._up = np.asarray(up, dtype=np.float32)
 
@@ -130,7 +130,7 @@ class Camera(nd.SceneNode):
         return self._fov
 
     @fov.setter
-    @decorators.mark_dirty('_proj_dirty')
+    @deco.mark_dirty('_proj_dirty')
     def fov(self, fov):
         self._fov = fov
 
@@ -139,7 +139,7 @@ class Camera(nd.SceneNode):
         return self._near
 
     @near.setter
-    @decorators.mark_dirty('_proj_dirty')
+    @deco.mark_dirty('_proj_dirty')
     def near(self, near):
         self._near = near
 
@@ -148,17 +148,17 @@ class Camera(nd.SceneNode):
         return self._far
 
     @far.setter
-    @decorators.mark_dirty('_proj_dirty')
+    @deco.mark_dirty('_proj_dirty')
     def far(self, far):
         self._far = far
 
     # getters for matrices, setting matrices should be done via other methods
     @property
-    @decorators.lazy_update('_dirty', 'update')
+    @deco.lazy_update('_dirty', 'update')
     def view_mat(self):
         return rm.tfmat_inverse(self._wd_tfmat)
 
     @property
-    @decorators.lazy_update('_proj_dirty', 'update_proj')
+    @deco.lazy_update('_proj_dirty', 'update_proj')
     def proj_mat(self):
         return self._proj_mat

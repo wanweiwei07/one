@@ -10,4 +10,6 @@ from one.scene import geometry_loader as gldr
 from one.utils import constant as const
 from one.utils import math as rm
 
-__all__ = ['wd', 'scn', 'sob', 'gldr', 'mdl', 'const', 'rm']
+from one.robot_sim.manipulators.kawasaki.rs007l import rs007l as khi_rs007l
+
+__all__ = ['wd', 'scn', 'sob', 'gldr', 'mdl', 'const', 'rm', 'khi_rs007l']

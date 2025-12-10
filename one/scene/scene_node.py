@@ -96,7 +96,6 @@ class SceneNode:
         return self._wd_tfmat
 
     def _mark_dirty(self):
-        """Override the base class method to propagate to children."""
         if not self._dirty:
             self._dirty = True
             for c in self.children:
