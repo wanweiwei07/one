@@ -18,7 +18,7 @@ class MeshBuffer(DeviceBufferBase):
         self.instance_tfmat_vbo = 0
         self.instance_rgba_vbo = 0
         self.instance_count = 0
-        self._build_mesh(verts, faces, normals)
+        self._build(verts, faces, normals)
 
     def update_instances(self, tf_mat_array, rgba_array):
         self.instance_count = len(tf_mat_array)
@@ -69,7 +69,7 @@ class MeshBuffer(DeviceBufferBase):
         gl.glDrawArraysInstanced(gl.GL_TRIANGLES, 0, self.count, self.instance_count)
         gl.glBindVertexArray(0)
 
-    def _build_mesh(self, verts, faces, normals):
+    def _build(self, verts, faces, normals):
         buf_verts = verts[faces].reshape(-1, 3)
         self.count = len(buf_verts)
         buf_normals = np.repeat(normals, 3, axis=0)
@@ -102,14 +102,14 @@ class MeshBuffer(DeviceBufferBase):
 class PointCloudBuffer(DeviceBufferBase):
     def __init__(self, verts, per_vert_rgbs):
         super().__init__()
-        self._build_pcd(verts, per_vert_rgbs)
+        self._build(verts, per_vert_rgbs)
 
     def draw(self):
         gl.glBindVertexArray(self.vao)
         gl.glDrawArrays(gl.GL_POINTS, 0, self.count)
         gl.glBindVertexArray(0)
 
-    def _build_pcd(self, verts, per_vert_rgbs):
+    def _build(self, verts, per_vert_rgbs):
         self.count = len(verts)
         # color
         array = np.hstack([verts, per_vert_rgbs]).astype(np.float32)

@@ -6,6 +6,6 @@ if __name__ == '__main__':
     scene = scn.Scene()
     scene.add(bunny)
     scene.add(oframe)
-    base = wd.World(cam_pos=(.3,.3,.3), toggle_auto_cam_orbit=True)
+    base = wd.World(cam_pos=(.3,.3,.3), toggle_auto_cam_orbit=False)
     base.set_scene(scene)
     base.run()

@@ -1,6 +1,7 @@
 import numpy as np
 import pyglet.gl as gl
 import one.viewer.shader as sd
+import one.viewer.screen_quad as sq
 
 
 class Render:
@@ -9,11 +10,13 @@ class Render:
         self.camera = camera
         self.mesh_shader = sd.Shader(sd.mesh_vert, sd.mesh_frag)
         self.pcd_shader = sd.Shader(sd.pcd_vert, sd.pcd_frag)
+        self.tex_shader = sd.Shader(sd.tex_vert, sd.tex_frag)
+        self.screen_quad = sq.ScreenQuad()
         self._groups_cache = None
         self._gl_setup()
         self._tmp = np.zeros(16, dtype=np.float32)  # for flattening matrices
 
-    def show(self, scene):
+    def draw(self, scene):
         cam_view_flatten = self.camera.view_mat.T.flatten()
         cam_proj_flatten = self.camera.proj_mat.T.flatten()
         if scene._dirty or self._groups_cache is None:
@@ -22,6 +25,7 @@ class Render:
         # mesh groups
         mesh_groups = self._groups_cache[self.mesh_shader]
         if mesh_groups:
+            # mesh
             self.mesh_shader.use()
             self.mesh_shader.program["u_view"] = cam_view_flatten
             self.mesh_shader.program["u_proj"] = cam_proj_flatten
@@ -46,9 +50,21 @@ class Render:
             for instance_list in pcd_groups.values():
                 for model, node in instance_list:
                     self.pcd_shader.program["u_model"] = (
-                        node.wd_tfmat @ model.local_tfmat
+                            node.wd_tfmat @ model.local_tfmat
                     ).T.ravel()
                     model.get_device_buffer().draw()
+
+    def draw_screen_quad(self, color_tex, width, height):
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+        gl.glViewport(0, 0, width, height)
+        gl.glDisable(gl.GL_DEPTH_TEST)
+        self.tex_shader.use()
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+        gl.glBindTexture(gl.GL_TEXTURE_2D, color_tex)
+        self.tex_shader.program["u_color"] = 0
+        self.tex_shader.program["u_texel"] = (1.0/width, 1.0/height)
+        self.screen_quad.draw()
+        gl.glEnable(gl.GL_DEPTH_TEST)
 
     def _build_shader_groups(self, scene):
         groups = {self.mesh_shader: {}, self.pcd_shader: {}}
@@ -79,3 +95,4 @@ class Render:
             return self.mesh_shader
         else:
             return self.pcd_shader
+

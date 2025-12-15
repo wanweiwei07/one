@@ -58,6 +58,8 @@ class ExtendedColor:
     GOLD = np.array([1.0, 0.843, 0.0], dtype=np.float32)
     GOLD2 = np.array([0.9, 0.77, 0.52], dtype=np.float32)
     ANTIQUE_GOLD = np.array([0.757, 0.671, 0.020], dtype=np.float32)
+    ALUMINUM = np.array([0.80, 0.80, 0.82], dtype=np.float32)
+    ALUMINUM_ANODIZED = np.array([0.65, 0.68, 0.72], dtype=np.float32)
     # Greens
     LAWN_GREEN = np.array([0.486, 0.988, 0.0], dtype=np.float32)
     SPRING_GREEN = np.array([0.0, 1.0, 0.498], dtype=np.float32)

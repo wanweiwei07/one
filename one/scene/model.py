@@ -48,9 +48,7 @@ class Model:
     def clone(self, keep_transform=True):
         new = Model(
             geometry=self.geometry,
-            rotmat=(
-                self._rotmat.copy() if keep_transform else np.eye(3, dtype=np.float32)
-            ),
+            rotmat=self._rotmat.copy() if keep_transform else np.eye(3, dtype=np.float32),
             pos=self._pos.copy() if keep_transform else np.zeros(3, dtype=np.float32),
             rgb=self.rgb,
             alpha=self.alpha,

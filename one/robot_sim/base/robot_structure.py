@@ -18,7 +18,19 @@ class Joint:
                  parent_link, child_link, axis,
                  origin_rotmat=np.eye(3, dtype=np.float32),
                  origin_pos=np.zeros(3, dtype=np.float32),
-                 limit_lower=None, limit_upper=None):
+                 mimic=None, limit_lower=None, limit_upper=None):
+        """
+        :param name:
+        :param joint_type: const.JointType
+        :param parent_link:
+        :param child_link:
+        :param axis:
+        :param origin_rotmat:
+        :param origin_pos:
+        :param mimic: None or (other_joint, multiplier, offset)
+        :param limit_lower:
+        :param limit_upper:
+        """
         self.name = name
         self.joint_type = joint_type
         self.axis = rm.unit_vec(axis, return_length=False)
@@ -29,6 +41,8 @@ class Joint:
         self.parent_link.children_joints.append(self)
         self.child_link = child_link
         self.child_link.parent_joint = self
+        # mimic
+        self.mimic = mimic
         # angles and limits
         self.limit_lower = limit_lower
         self.limit_upper = limit_upper

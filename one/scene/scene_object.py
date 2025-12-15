@@ -18,6 +18,13 @@ class SceneObject:
         self.node = snd.SceneNode(rotmat=rotmat, pos=pos, parent=parent_node)
         self.visuals = []
         self.collisions = []
+        self.scene = None
+
+    def attach_to(self, scene):
+        scene.add(self)
+
+    def remove_from(self, scene):
+        scene.remove(self)
 
     def add_visual(self, model):
         self.visuals.append(model)
@@ -45,7 +52,14 @@ class SceneObject:
         return self
 
     def clone(self, new_name=None):
-        name = new_name if new_name is not None else self.name + "_clone"
+        """
+        Clone the scene object. DOES NOT clone the affiliated scene.
+        :param new_name:
+        :return:
+        author: weiwei
+        date: 20251215
+        """
+        name = new_name if new_name is not None else self.name
         new = self.__class__(name=name)
         # clone all visuals
         for model in self.visuals:

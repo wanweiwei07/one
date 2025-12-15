@@ -11,6 +11,7 @@ class Scene:
         return self._scn_objs[key]
 
     def add(self, scn_obj):
+        scn_obj.scene = self
         self._scn_objs.append(scn_obj)
         self._dirty = True
 
