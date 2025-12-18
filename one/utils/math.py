@@ -1443,6 +1443,7 @@ np.set_printoptions(suppress=True)  # avoid scientific notation
 pi = np.pi
 dtype = np.dtype
 void = np.void
+int32 = np.int32
 uint32 = np.uint32
 float32 = np.float32
 int64 = np.int64
