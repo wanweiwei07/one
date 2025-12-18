@@ -2,21 +2,18 @@ import pyglet.graphics as pg
 
 mesh_vert = """
 #version 330 core
-// vertex shader for mesh rendering
-// author: weiwei
-// date: 20251127
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec3 a_normal;
 layout(location = 2) in vec4 i_model0;
 layout(location = 3) in vec4 i_model1;
 layout(location = 4) in vec4 i_model2;
 layout(location = 5) in vec4 i_model3;
-layout(location = 6) in vec3 a_inst_rgba;
+layout(location = 6) in vec4 a_inst_rgba;
 uniform mat4 u_view; //camera view matrix
 uniform mat4 u_proj; //camera projection matrix
 out vec3 v_normal;
 out vec3 v_pos;
-out vec3 v_rgba;
+out vec4 v_rgba;
 void main() {
     mat4 model = mat4(i_model0, i_model1, i_model2, i_model3);
     v_normal = mat3(model) * a_normal;
@@ -26,36 +23,105 @@ void main() {
 }
 """
 
-mesh_frag = """
+mesh_phong_frag = """
 #version 330 core
-// ambient and point light only,
-// author: weiwei
-// date: 20251127
 in vec3 v_normal;
 in vec3 v_pos;
 in vec4 v_rgba;
 out vec4 out_color;
 uniform vec3 u_view_pos; //camera position in world space
 void main() {
-    vec3 N = normalize(v_normal);
-    // key / fill / rim light
+    // facet normal
+    vec3 dX = dFdx(v_pos);
+    vec3 dY = dFdy(v_pos);
+    vec3 N = normalize(cross(dX, dY));
+    // lighting
+    vec3 V = normalize(u_view_pos - v_pos);
     float dist = length(u_view_pos);
-    vec3 L_key = normalize(u_view_pos + vec3(dist, 0.0, dist)-v_pos);
-    vec3 L_fill = normalize(u_view_pos + vec3(-dist, 0.0, dist)-v_pos);
-    vec3 L_rim = normalize(u_view_pos + vec3(0.0, 0.0, -dist)-v_pos);
-    float diff = max(dot(N, L_key), 0.0) +
-                 max(dot(N, L_fill), 0.0) * 0.5 +
-                 max(dot(N, L_rim), 0.0) * 0.3;
-    vec3 rgb = clamp(v_rgba.rgb * (0.2 * vec3(1.0, 1.0, 1.0) + 0.8 * diff), 0.0, 1.0);
-    out_color = vec4(rgb, v_rgba.a);
+    // key / fill
+    vec3 L_key = normalize(u_view_pos + vec3(0.0, dist * 0.5, 0.0)-v_pos);
+    vec3 L_fill = normalize(u_view_pos + vec3(-dist * 0.5, 0.0, 0.0)-v_pos);
+    float ambientStrength = 0.2;
+    vec3 ambient = ambientStrength * v_rgba.rgb;
+    float diffKey = max(dot(N, L_key), 0.0);
+    float diffFill = max(dot(N, L_fill), 0.0);
+    vec3 diffuse = (diffKey * 0.8 + diffFill * 0.3) * v_rgba.rgb;
+    float specularStrength = 0.5;
+    float shininess = 32.0;
+    vec3 R = reflect(-L_key, N);
+    float specRaw = pow(max(dot(V, R), 0.0), shininess);
+    vec3 specular = specularStrength * specRaw * vec3(1.0);
+    vec3 finalColor = ambient + diffuse + specular;
+    out_color = vec4(clamp(finalColor, 0.0, 1.0), v_rgba.a);
+}
+"""
+
+mesh_matte_frag = """
+#version 330 core
+in vec3 v_normal;
+in vec3 v_pos;
+in vec4 v_rgba;
+out vec4 out_color;
+uniform vec3 u_view_pos;
+void main() {
+    // facet normal
+    vec3 dX = dFdx(v_pos);
+    vec3 dY = dFdy(v_pos);
+    vec3 N = normalize(cross(dX, dY));
+    // lighting
+    vec3 V = normalize(u_view_pos - v_pos);
+    float dist = length(u_view_pos);
+    vec3 L_key = normalize(u_view_pos + vec3(0.0, dist * 0.5, 0.0) - v_pos);
+    vec3 L_fill = normalize(u_view_pos + vec3(-dist * 0.5, 0.0, 0.0) - v_pos);
+    float NdotL_key = dot(N, L_key);
+    float halfLambert = NdotL_key * 0.5 + 0.5;
+    float diffKey = pow(halfLambert, 2.0); 
+    float diffFill = max(dot(N, L_fill), 0.0) * 0.5 + 0.5;
+    float keyStrength = 0.8;
+    float fillStrength = 0.3;
+    float ambientStrength = 0.1;
+    vec3 lighting = (diffKey * keyStrength + 
+                     diffFill * fillStrength + 
+                     ambientStrength) * vec3(1.0, 1.0, 0.95);
+    out_color = vec4(v_rgba.rgb * lighting, v_rgba.a);
+}
+"""
+
+mesh_cartoon_frag = """
+#version 330 core
+in vec3 v_normal;
+in vec3 v_pos;
+in vec4 v_rgba;
+out vec4 out_color;
+uniform vec3 u_view_pos;
+void main() {
+    // facet normal
+    vec3 dX = dFdx(v_pos);
+    vec3 dY = dFdy(v_pos);
+    vec3 N = normalize(cross(dX, dY));
+    // lighting
+    vec3 V = normalize(u_view_pos - v_pos);
+    float dist = length(u_view_pos);
+    vec3 L_key = normalize(u_view_pos + vec3(0.0, dist * 0.5, 0.0) - v_pos);
+    vec3 L_fill = normalize(u_view_pos + vec3(-dist * 0.5, 0.0, 0.0) - v_pos);
+    float NdotKey = dot(N, L_key);
+    float NdotFill = dot(N, L_fill);
+    float lightLevel = 0.2; 
+    if (NdotFill > 0.0) {
+        lightLevel += smoothstep(0.3, 0.31, NdotFill) * 0.3; 
+    }
+    if (NdotKey > 0.0) {
+        lightLevel += smoothstep(0.3, 0.31, NdotKey) * 0.5;
+    }
+    float rimRaw = 1.0 - max(dot(N, V), 0.0);
+    float rimIntensity = smoothstep(0.9, 0.92, rimRaw) * 0.5;
+    vec3 finalColor = v_rgba.rgb * lightLevel + vec3(1.0) * rimIntensity;
+    out_color = vec4(finalColor, v_rgba.a);
 }
 """
 
 pcd_vert = """
 #version 330 core
-// vertex shader for point cloud rendering
-// author: weiwei
-// date: 20251203
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec3 a_rgb;
 uniform mat4 u_view; //camera view matrix
@@ -71,13 +137,39 @@ void main() {
 
 pcd_frag = """
 #version 330 core
-// point cloud shader for point cloud rendering
-// author: weiwei
-// date: 20251203
 in vec3 v_rgb;
 out vec4 out_color;
 void main() {
     out_color = vec4(v_rgb, 1.0);
+}
+"""
+
+outline_vert = """
+#version 330 core
+layout (location = 0) in vec3 a_pos;
+layout (location = 1) in vec3 a_normal;
+layout(location = 2) in vec4 i_model0;
+layout(location = 3) in vec4 i_model1;
+layout(location = 4) in vec4 i_model2;
+layout(location = 5) in vec4 i_model3;
+uniform mat4 u_view;
+uniform mat4 u_proj;
+void main() {
+    mat4 model = mat4(i_model0, i_model1, i_model2, i_model3);
+    vec4 pos = u_proj * u_view * model * vec4(a_pos, 1.0);
+    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    vec3 norm = normalize(normalMatrix * a_normal);
+    vec4 offset = u_proj * vec4(norm, 0.0);
+    float factor = 0.00127 * pos.w;
+    gl_Position = u_proj * u_view * model * vec4(a_pos + factor * a_normal, 1.0);
+}
+"""
+
+outline_frag = """
+#version 330 core
+out vec4 out_color;
+void main() {
+    out_color = vec4(0.0, 0.0, 0.0, 1.0);
 }
 """
 

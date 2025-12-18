@@ -2,11 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class MathConst:
-    EPS = 1e-6
-    PI = 3.141592653589793
-
-
 class BasicColor:
     RED = np.array([1.0, 0.0, 0.0], dtype=np.float32)
     GREEN = np.array([0.0, 0.5, 0.0], dtype=np.float32)

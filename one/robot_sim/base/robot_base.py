@@ -12,7 +12,17 @@ class Mounting:
 
 
 class RobotBase:
-    structure: rstruct.RobotStructure = None
+    _structure: rstruct.RobotStructure = None
+
+    @classmethod
+    def _build_structure(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def get_structure(cls):
+        if cls._structure is None:
+            cls._structure =cls._build_structure()
+        return cls._structure
 
     def __init__(self):
         self.kin_state = rstate.KinematicState(self.structure)
@@ -75,3 +85,7 @@ class RobotBase:
     @deco.readonly_view
     def qs(self):
         return self.kin_state.qs
+
+    @property
+    def structure(self):
+        return self.get_structure()

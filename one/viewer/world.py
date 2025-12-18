@@ -30,12 +30,12 @@ class World(pyglet.window.Window):
         self.set_location(100, 100)
         self.camera = cam.Camera(pos=cam_pos, look_at=cam_lookat_pos, aspect=width / height)
         self.render = rd.Render(camera=self.camera)
-        self.render_target = rt.RenderTarget(width=width, height=height)
-        self.fps_display = pyglet.window.FPSDisplay(self)
+        # self.render_target = rt.RenderTarget(width=width, height=height)
         self.scene = scn.Scene()
         if toggle_auto_cam_orbit:
             self.schedule_interval(self.auto_cam_orbit, interval=1 / 30.0)
         self.input_manager = input_mgr.InputManager(self)
+        self.fps_display = pyglet.window.FPSDisplay(self)
 
     def on_resize(self, width, height):
         gl.glViewport(0, 0, *self.get_framebuffer_size())
@@ -45,13 +45,13 @@ class World(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         if self.scene is not None:
-            self.render_target.bind()
+            # self.render_target.bind()
             self.render.draw(self.scene)
-            self.render_target.unbind()
-            self.render.draw_screen_quad(color_tex=self.render_target.color_tex,
-                                         width=self.width,
-                                         height=self.height)
-        self.fps_display.draw()
+            # self.render_target.unbind()
+            # self.render.draw_screen_quad(color_tex=self.render_target.color_tex,
+            #                              width=self.width,
+            #                              height=self.height)
+        # self.fps_display.draw()
 
     def set_scene(self, scene):
         self.scene = scene

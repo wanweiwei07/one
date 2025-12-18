@@ -2,7 +2,6 @@ import numpy as np
 import one.utils.decorator as deco
 import one.utils.constant as const
 import one.scene.geometry as geom
-import one.viewer.device_buffer as dvb
 
 
 class Model:
@@ -32,18 +31,6 @@ class Model:
         self._rotmat[:] = rotmat
         self._pos[:] = pos
         self._dirty = True
-
-    def get_device_buffer(self):
-        if self.geometry.device_buffer is None:
-            if self.geometry.faces is None:
-                self.geometry.device_buffer = dvb.PointCloudBuffer(
-                    self.geometry.verts, self.geometry.per_vert_rgbs
-                )
-            else:
-                self.geometry.device_buffer = dvb.MeshBuffer(
-                    self.geometry.verts, self.geometry.faces, self.geometry.face_normals
-                )
-        return self.geometry.device_buffer
 
     def clone(self, keep_transform=True):
         new = Model(

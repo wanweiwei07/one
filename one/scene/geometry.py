@@ -1,4 +1,5 @@
-import numpy as np
+import one.utils.math as rm
+import one.viewer.device_buffer as dvb
 
 
 class Geometry:
@@ -6,40 +7,44 @@ class Geometry:
     def __init__(self,
                  verts,
                  faces,
-                 face_normals=None,
-                 vert_normals=None,
                  per_vert_rgbs=None):
-        self.verts = np.asarray(verts, dtype=np.float32)
-        self.faces = None if faces is None else np.asarray(faces, dtype=np.uint32)
-        self.face_normals = face_normals
-        self.vert_normals = vert_normals
-        self.per_vert_rgbs = per_vert_rgbs
-        if self.faces is not None and self.face_normals is None:
-            self.compute_face_normals()
-        self.device_buffer = None
+        if faces is not None:
+            self.verts, self.faces = self._merge_vertices_and_faces(verts, faces)
+            self.vert_normals = self._compute_vert_normals()
+        else:
+            self.verts = rm.asarray(verts, dtype=rm.float32)
+            self.faces = None
+            self.vert_normals = None
+            self.per_vert_rgbs = per_vert_rgbs
+        self._device_buffer = None
 
-    def compute_face_normals(self):
-        if self.faces is None:
-            print("Warning: Cannot compute face normals without faces.")
-            return None
-        f = self.faces
-        v1 = self.verts[f[:, 1]] - self.verts[f[:, 0]]
-        v2 = self.verts[f[:, 2]] - self.verts[f[:, 0]]
-        fns = np.cross(v1, v2)
-        fns /= np.linalg.norm(fns, axis=1, keepdims=True)
-        self.face_normals = fns.astype(np.float32)
-        return self.face_normals
+    def get_device_buffer(self):
+        if self._device_buffer is None:
+            if self.faces is None:
+                self._device_buffer = dvb.PointCloudBuffer(self.verts, self.per_vert_rgbs)
+            else:
+                self._device_buffer = dvb.MeshBuffer(self.verts, self.faces,
+                                                     self.vert_normals)
+        return self._device_buffer
 
-    def compute_vert_normals(self):
-        if self.faces is None:
-            print("Warning: Cannot compute vertex normals without faces.")
-            return None
-        if self.face_normals is None:
-            self.compute_face_normals()
-        vns = np.zeros_like(self.verts, dtype=np.float32)
-        np.add.at(vns, self.faces[:, 0], self.face_normals)
-        np.add.at(vns, self.faces[:, 1], self.face_normals)
-        np.add.at(vns, self.faces[:, 2], self.face_normals)
-        vns /= np.linalg.norm(vns, axis=1, keepdims=True)
-        self.vert_normals = vns.astype(np.float32)
-        return self.vert_normals
+    def _compute_vert_normals(self):
+        v1 = self.verts[self.faces[:, 1]] - self.verts[self.faces[:, 0]]
+        v2 = self.verts[self.faces[:, 2]] - self.verts[self.faces[:, 0]]
+        raw_fns = rm.cross(v1, v2).astype(rm.float32)
+        # vert normals
+        vns = rm.zeros_like(self.verts)
+        rm.add.at(vns, self.faces[:, 0], raw_fns)
+        rm.add.at(vns, self.faces[:, 1], raw_fns)
+        rm.add.at(vns, self.faces[:, 2], raw_fns)
+        _, vns = rm.unit_vec(vns)
+        return vns
+
+    def _merge_vertices_and_faces(self, verts, faces, tol=1e-6):
+        q = rm.round(verts / tol).astype(rm.int64)
+        unique_q, inv = rm.unique(q, axis=0, return_inverse=True)
+        verts_new = rm.zeros((len(unique_q), 3), dtype=verts.dtype)
+        rm.add.at(verts_new, inv, verts)
+        counts = rm.bincount(inv)
+        verts_new /= counts[:, None]
+        faces_new = inv[faces].astype(rm.uint32).copy() # ensure contiguous
+        return verts_new, faces_new

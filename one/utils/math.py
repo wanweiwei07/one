@@ -9,7 +9,8 @@ from scipy.spatial.transform import Slerp
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Rotation
 
-np.set_printoptions(suppress=True)  # avoid scientific notation
+eps = np.finfo(np.float32).eps
+
 # axis sequences for Euler angles
 _NEXT_AXIS = [1, 2, 0, 1]
 # map axes strings to/from tuples of inner axis, parity, repetition, frame
@@ -220,7 +221,7 @@ def rotmat_to_euler(rotmat, order='sxyz'):
     k = _NEXT_AXIS[i - parity + 1]
     if repetition:
         sy = np.sqrt(rotmat[i, j] * rotmat[i, j] + rotmat[i, k] * rotmat[i, k])
-        if sy > const.MathConst.EPS:
+        if sy > EPS:
             ax = np.atan2(rotmat[i, j], rotmat[i, k])
             ay = np.atan2(sy, rotmat[i, i])
             az = np.atan2(rotmat[j, i], -rotmat[k, i])
@@ -230,7 +231,7 @@ def rotmat_to_euler(rotmat, order='sxyz'):
             az = 0.0
     else:
         cy = np.sqrt(rotmat[i, i] * rotmat[i, i] + rotmat[j, i] * rotmat[j, i])
-        if cy > const.MathConst.EPS:
+        if cy > EPS:
             ax = np.atan2(rotmat[k, j], rotmat[k, k])
             ay = np.atan2(-rotmat[k, i], cy)
             az = np.atan2(rotmat[j, i], rotmat[i, i])
@@ -319,6 +320,7 @@ def tfmat_from_axangle(ax, angle):
                      [2.0 * (bd + ac), 2.0 * (cd - ab), aa + dd - bb - cc, 0],
                      [0, 0, 0, 1]], dtype=np.float32)
 
+
 def tfmat_from_rotmat_pos(rotmat=np.eye(3, dtype=np.float32),
                           pos=np.zeros(3, dtype=np.float32)):
     """
@@ -334,6 +336,7 @@ def tfmat_from_rotmat_pos(rotmat=np.eye(3, dtype=np.float32),
     tfmat[:3, 3] = pos
     return tfmat
 
+
 def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     """
     build a (4,4) transformation matrix from position and rotation vector
@@ -346,6 +349,7 @@ def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     angle, axis = unit_vec(rotvec, return_length=True)
     rotmat = rotmat_from_axangle(axis, angle)
     return tfmat_from_rotmat_pos(rotmat, pos)
+
 
 def tfmat_inverse(tfmat):
     """
@@ -362,6 +366,7 @@ def tfmat_inverse(tfmat):
     inv[:3, 3] = -R.T @ t
     return inv
 
+
 def tfmat_average(tfmat_list, bandwidth=10):
     """TODO: tfmat list or (n,4,4) array
     average a list of tfmat (4,4)
@@ -376,13 +381,14 @@ def tfmat_average(tfmat_list, bandwidth=10):
     rotmat_avg = rotmat_average(tfmat_array[:, :3, :3], bandwidth)
     return tfmat_from_rotmat_pos(rotmat_avg, pos_avg)
 
+
 def tfmat_from_quat(quat):
     """
     convert a quaterion to homomat
     """
     q = np.array(quat, dtype=np.float32, copy=True)
     n = np.dot(q, q)
-    if n < const.MathConst.EPS:
+    if n < eps:
         return np.identity(4)
     q *= np.sqrt(2.0 / n)
     q = np.outer(q, q)
@@ -391,6 +397,7 @@ def tfmat_from_quat(quat):
         [q[1, 2] + q[3, 0], 1.0 - q[1, 1] - q[3, 3], q[2, 3] - q[1, 0], 0.0],
         [q[1, 3] - q[2, 0], q[2, 3] + q[1, 0], 1.0 - q[1, 1] - q[2, 2], 0.0],
         [0.0, 0.0, 0.0, 1.0]])
+
 
 def transform_points_by_tfmat(tfmat, pnts):
     """
@@ -416,6 +423,7 @@ def transform_points_by_tfmat(tfmat, pnts):
     t = tfmat[:3, 3]  # (3,)
     return pnts @ R.T + t
 
+
 def interplate_pos_rotmat(start_pos,
                           start_rotmat,
                           goal_pos,
@@ -434,6 +442,7 @@ def interplate_pos_rotmat(start_pos,
     pos_list = np.linspace(start_pos, goal_pos, n_steps)
     rotmat_list = rotmat_slerp(start_rotmat, goal_rotmat, n_steps)
     return zip(pos_list, rotmat_list)
+
 
 def interplate_pos_rotmat_around_circle(circle_center_pos,
                                         circle_normal_ax,
@@ -459,6 +468,7 @@ def interplate_pos_rotmat_around_circle(circle_center_pos,
         pos_list.append(np.dot(rotmat_from_axangle(circle_normal_ax, angle), vec * radius) + circle_center_pos)
     return zip(pos_list, rotmat_list)
 
+
 def interpolate_vectors(start_vector, end_vector, granularity):
     """
     :param start_vector:
@@ -474,6 +484,7 @@ def interpolate_vectors(start_vector, end_vector, granularity):
     interpolated_vectors = np.linspace(start_vector, end_vector, num_intervals)
     return interpolated_vectors
 
+
 # quaternion
 def quaternion_from_axangle(angle, axis):
     """
@@ -484,10 +495,11 @@ def quaternion_from_axangle(angle, axis):
     """
     quaternion = np.array([0.0, axis[0], axis[1], axis[2]])
     qlen, _ = unit_vec(quaternion, return_length=True)
-    if qlen > const.MathConst.EPS:
+    if qlen > EPS:
         quaternion *= np.sin(angle / 2.0) / qlen
     quaternion[0] = np.cos(angle / 2.0)
     return quaternion
+
 
 def quaternion_average(quaternion_list, bandwidth=10):
     """
@@ -524,6 +536,7 @@ def quaternion_average(quaternion_list, bandwidth=10):
     quatavg = np.linalg.eigh(accummat)[1][:, -1]
     return quatavg
 
+
 def quaternion_to_euler(quaternion, order='sxyz'):
     """
     :param rotmat: 3x3 nparray
@@ -533,6 +546,7 @@ def quaternion_to_euler(quaternion, order='sxyz'):
     date: 20190504
     """
     return rotmat_to_euler(rotmat_from_quaternion(quaternion), order)
+
 
 def quaternion_from_euler(ai, aj, ak, order='sxyz'):
     """
@@ -578,23 +592,25 @@ def quaternion_from_euler(ai, aj, ak, order='sxyz'):
         q[j] *= -1.0
     return q
 
+
 def quaternion_about_axis(angle, axis):
     """
     Return quaternion for rotation about axis.
     """
     q = np.array([0.0, axis[0], axis[1], axis[2]])
     qlen, _ = unit_vec(q, return_length=True)
-    if qlen > const.MathConst.EPS:
+    if qlen > EPS:
         q *= np.sin(angle / 2.0) / qlen
     q[0] = np.cos(angle / 2.0)
     return q
+
 
 def quaternion_to_rotmat(quaternion):
     """
     Previous implementation is as below, abandoned on 20241108
     # q = np.array(quaternion, dtype=np.float64, copy=True)
     # n = np.dot(q, q)
-    # if n < const.MathConst.EPS:
+    # if n < eps:
     #     return np.identity(4)
     # q *= np.sqrt(2.0 / n)
     # q = np.outer(q, q)
@@ -604,6 +620,7 @@ def quaternion_to_rotmat(quaternion):
     #     [q[1, 3] - q[2, 0], q[2, 3] + q[1, 0], 1.0 - q[1, 1] - q[2, 2]]])
     """
     return Rotation.from_quat(quaternion).as_matrix()
+
 
 def quaternion_from_rotmat(rotmat):
     """
@@ -620,6 +637,7 @@ def quaternion_from_rotmat(rotmat):
     """
     return Rotation.from_matrix(rotmat).as_quat()
 
+
 def quaternion_multiply(quaternion1, quaternion0):
     """
     Return multiplication of two quaternions.
@@ -631,6 +649,7 @@ def quaternion_multiply(quaternion1, quaternion0):
                      -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
                      x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
+
 def quaternion_conjugate(quaternion):
     """
     Return conjugate of quaternion.
@@ -638,6 +657,7 @@ def quaternion_conjugate(quaternion):
     q = np.array(quaternion, dtype=np.float64, copy=True)
     np.negative(q[1:], q[1:])
     return q
+
 
 def quaternion_inverse(quaternion):
     """
@@ -647,17 +667,20 @@ def quaternion_inverse(quaternion):
     np.negative(q[1:], q[1:])
     return q / np.dot(q, q)
 
+
 def quaternion_real(quaternion):
     """
     Return real part of quaternion.
     """
     return float(quaternion[0])
 
+
 def quaternion_imag(quaternion):
     """
     Return imaginary part of quaternion.
     """
     return np.array(quaternion[1:4], dtype=np.float64, copy=True)
+
 
 def quaternion_slerp(quat0, quat1, fraction, spin=0, shortestpath=True):
     """
@@ -670,20 +693,21 @@ def quaternion_slerp(quat0, quat1, fraction, spin=0, shortestpath=True):
     elif fraction == 1.0:
         return q1
     d = np.dot(q0, q1)
-    if abs(abs(d) - 1.0) < const.MathConst.EPS:
+    if abs(abs(d) - 1.0) < eps:
         return q0
     if shortestpath and d < 0.0:
         # invert rotation
         d = -d
         np.negative(q1, q1)
     angle = np.acos(d) + spin * np.pi
-    if abs(angle) < const.MathConst.EPS:
+    if abs(angle) < eps:
         return q0
     isin = 1.0 / np.sin(angle)
     q0 *= np.sin((1.0 - fraction) * angle) * isin
     q1 *= np.sin(fraction * angle) * isin
     q0 += q1
     return q0
+
 
 def rand_quaternion():
     """
@@ -698,11 +722,13 @@ def rand_quaternion():
     t2 = pi2 * rand[2]
     return np.array([np.cos(t2) * r2, np.sin(t1) * r1, np.cos(t1) * r1, np.sin(t2) * r2])
 
+
 def rand_rotmat():
     """
     Return uniform random rotation matrix.
     """
     return quaternion_to_rotmat(rand_quaternion())
+
 
 def skew_symmetric(pos_vec):
     """
@@ -715,6 +741,7 @@ def skew_symmetric(pos_vec):
     return np.array([[0, -pos_vec[2], pos_vec[1]],
                      [pos_vec[2], 0, -pos_vec[0]],
                      [-pos_vec[1], pos_vec[0], 0]])
+
 
 def orth_vec(vec, toggle_unit=True):
     """
@@ -730,9 +757,10 @@ def orth_vec(vec, toggle_unit=True):
     b = vec[1]
     c = vec[2]
     if toggle_unit:
-        return unit_vec(np.array([b - c, -a + c, a - b]))
+        return unit_vec(np.array([b - c, -a + c, a - b]), return_length=False)
     else:
         return np.array([b - c, -a + c, a - b])
+
 
 def rel_pose(pos0, rotmat0, pos1, rotmat1):
     """
@@ -748,6 +776,7 @@ def rel_pose(pos0, rotmat0, pos1, rotmat1):
     rel_pos = rotmat0.T @ (pos1 - pos0)
     rel_rotmat = rotmat0.T @ rotmat1
     return (rel_pos, rel_rotmat)
+
 
 def regulate_angle(lowerbound, upperbound, jntangles):
     """
@@ -774,21 +803,21 @@ def regulate_angle(lowerbound, upperbound, jntangles):
             raise ValueError("upperbound-lowerbound must be multiplies of 2*np.pi or 360")
         return jntangles
 
-def unit_vec(vec, return_length=True):
+
+def unit_vec(vec, axis=-1, return_length=True):
     """
     :param vec: (1,n)
     :param return_length: bool
     :return: (length, unit) or unit
     author: weiwei
-    date: 20200701osaka, 20251128
+    date: 20251128
     """
     vec = np.asarray(vec, dtype=np.float32)
-    length = np.linalg.norm(vec)
-    if length < const.MathConst.EPS:
-        unit = vec
-    else:
-        unit = np.divide(vec, length, out=np.zeros_like(vec, dtype=np.float32), where=length > 0)
+    length = np.linalg.norm(vec, axis=axis, keepdims=True)
+    unit = np.divide(vec, length, out=np.zeros_like(vec, dtype=np.float32), where=length > eps)
+    length = length[0] if length.size == 1 else length
     return (length, unit) if return_length else unit
+
 
 def angle_between_vecs(vec1, vec2):
     """
@@ -804,6 +833,7 @@ def angle_between_vecs(vec1, vec2):
         raise ValueError("Zero length vector!")
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
+
 def angle_between_2d_vecs(vec1, vec2):
     """
     return the angle from ved1 to vec2, with signs
@@ -814,6 +844,7 @@ def angle_between_2d_vecs(vec1, vec2):
     date: 20210530
     """
     return np.atan2(vec2[1] * vec1[0] - vec2[0] * vec1[1], vec2[0] * vec1[0] + vec2[1] * vec1[1])
+
 
 def delta_rotvec_between_rotmats(src_rotmat, tgt_rotmat):
     """
@@ -839,6 +870,7 @@ def delta_rotvec_between_rotmats(src_rotmat, tgt_rotmat):
     #     return np.pi / 2.0 * np.diag(delta_rotmat)
     # else:
     #     return np.arctan2(tmp_vec_norm, tmp_trace_minus_one) / tmp_vec_norm * tmp_vec
+
 
 # def delta_w_between_rotmat(src_rotmat, tgt_rotmat):
 #     """
@@ -884,6 +916,7 @@ def diff_between_poses(src_pos,
     rot_err = np.linalg.norm(delta[3:6])
     return pos_err, rot_err, delta
 
+
 def cosine_between_vecs(v1, v2):
     l1, v1_u = unit_vec(v1, return_length=True)
     l2, v2_u = unit_vec(v2, return_length=True)
@@ -891,11 +924,13 @@ def cosine_between_vecs(v1, v2):
         raise Exception("One of the given vector is [0,0,0].")
     return np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)
 
+
 def axangle_between_rotmat(rotmati, rotmatj):
     deltaw = delta_w_between_rotmat(rotmati, rotmatj)
     angle = np.linalg.norm(deltaw)
     ax = deltaw / angle if isinstance(deltaw, np.ndarray) else None
     return ax, angle
+
 
 def quaternion_to_axangle(quaternion):
     """
@@ -916,6 +951,7 @@ def quaternion_to_axangle(quaternion):
         axis = vec / normvec
     return angle, axis
 
+
 def pos_average(pos_list, bandwidth=10):
     """
     average a list of pos_vec (1x3)
@@ -934,6 +970,7 @@ def pos_average(pos_list, bandwidth=10):
     else:
         return np.array(pos_list).mean(axis=0)
 
+
 def intersect_planes(p1, n1, p2, n2, tol=1e-6):
     # normalize normals
     n1 = n1 / np.linalg.norm(n1)
@@ -945,6 +982,7 @@ def intersect_planes(p1, n1, p2, n2, tol=1e-6):
     b = np.array([np.dot(n1, p1), np.dot(n2, p2), 0.0])
     x0 = np.linalg.solve(A, b)
     return x0, d  # x0 is a point on the line of intersection, d is the direction vector
+
 
 def gen_2d_spiral_points(max_radius: float = .002,
                          radial_granularity: float = .0001,
@@ -970,6 +1008,7 @@ def gen_2d_spiral_points(max_radius: float = .002,
         y.insert(0, 0)
     return np.column_stack((x, y))
 
+
 def gen_3d_spiral_points(pos: npt.NDArray = np.zeros(3),
                          rotmat: npt.NDArray = np.eye(3),
                          max_radius: float = .002,
@@ -992,11 +1031,13 @@ def gen_3d_spiral_points(pos: npt.NDArray = np.zeros(3),
     xyz_spiral_points = np.column_stack((xy_spiral_points, np.zeros(len(xy_spiral_points))))
     return rotmat.dot(xyz_spiral_points.T).T + pos
 
+
 def gen_regpoly(radius, nedges=12):
     angle_list = np.linspace(0, np.pi * 2, nedges + 1, endpoint=True)
     x_vertex = np.sin(angle_list) * radius
     y_vertex = np.cos(angle_list) * radius
     return np.column_stack((x_vertex, y_vertex))
+
 
 def gen_2d_isosceles_verts(nlevel, edge_length, nedges=12):
     xy_array = np.asarray([[0, 0]])
@@ -1008,16 +1049,20 @@ def gen_2d_isosceles_verts(nlevel, edge_length, nedges=12):
                                  axis=0)
     return xy_array
 
+
 def gen_2d_equilateral_verts(nlevel, edge_length):
     return gen_2d_isosceles_verts(nlevel=nlevel, edge_length=edge_length, nedges=6)
+
 
 def gen_3d_isosceles_verts(pos, rotmat, nlevel=5, edge_length=0.001, nedges=12):
     xy_array = gen_2d_isosceles_verts(nlevel=nlevel, edge_length=edge_length, nedges=nedges)
     xyz_array = np.pad(xy_array, ((0, 0), (0, 1)), mode='constant', constant_values=0)
     return rotmat.dot((xyz_array).T).T + pos
 
+
 def gen_3d_equilateral_verts(pos, rotmat, nlevel=5, edge_length=0.001):
     return gen_3d_isosceles_verts(pos=pos, rotmat=rotmat, nlevel=nlevel, edge_length=edge_length, nedges=6)
+
 
 def get_aabb(pointsarray):
     """
@@ -1037,6 +1082,7 @@ def get_aabb(pointsarray):
     # volume = (xmax-xmin)*(ymax-ymin)*(zmax-zmin)
     return [center, np.array([[xmin, xmax], [ymin, ymax], [zmin, zmax]])]
 
+
 def compute_pca(nparray):
     """
     :param nparray: nxd array, d is the dimension
@@ -1047,6 +1093,7 @@ def compute_pca(nparray):
     ca = np.cov(nparray, y=None, rowvar=False, bias=True)  # rowvar row=point, bias biased covariance
     pcv, pcaxmat = np.linalg.eig(ca)
     return pcv, pcaxmat
+
 
 def transform_data_pcv(data, random_rot=True):
     """
@@ -1069,6 +1116,7 @@ def transform_data_pcv(data, random_rot=True):
     transformed_data = np.dot(pcaxmat.T, data.T).T
     return transformed_data, pcaxmat
 
+
 def fit_plane(points):
     """
     :param points: nx3 nparray
@@ -1079,6 +1127,7 @@ def fit_plane(points):
     plane_normal = unit_vec(np.cross(result[2][0], result[2][1]))
     return plane_center, plane_normal
 
+
 def project_point_to_plane(point, plane_center, plane_normal):
     dist = abs((point - plane_center).dot(plane_normal))
     # print((point - plane_center).dot(plane_normal))
@@ -1087,8 +1136,10 @@ def project_point_to_plane(point, plane_center, plane_normal):
     projected_point = point - dist * plane_normal
     return projected_point
 
+
 def project_vector_to_vector(vector1, vector2):
     return (vector1 @ vector2) * vector2 / (vector2 @ vector2)
+
 
 def distance_point_to_edge(point, edge_start, edge_end):
     """
@@ -1107,6 +1158,7 @@ def distance_point_to_edge(point, edge_start, edge_end):
     projection = edge_start + t * edge_vector
     return np.linalg.norm(point - projection), projection
 
+
 def min_distance_point_edge_list(contact_point, edge_list):
     """
     compute the minimum distance between a point and a list of nested edge lists.
@@ -1123,6 +1175,7 @@ def min_distance_point_edge_list(contact_point, edge_list):
             min_distance = distance
             min_projetion = projection
     return min_distance, min_projetion
+
 
 def points_obb(pointsarray, toggledebug=False):
     """
@@ -1167,6 +1220,7 @@ def points_obb(pointsarray, toggledebug=False):
         plt.show()
     return [center, corners, pcaxmat]
 
+
 def gaussian_ellipsoid(pointsarray):
     """
     compute a 95% percent ellipsoid axes_mat for the given points array
@@ -1184,6 +1238,7 @@ def gaussian_ellipsoid(pointsarray):
     axmat[:, 2] = 2 * np.sqrt(5.991 * pcv[2]) * pcaxmat[:, 2]
     return center, axmat
 
+
 def random_rgba(toggle_alpha_random=False):
     """
     randomize a 1x4 list in range 0-1
@@ -1194,6 +1249,7 @@ def random_rgba(toggle_alpha_random=False):
         return np.random.random_sample(3).tolist() + [1]
     else:
         return np.random.random_sample(4).tolist()
+
 
 def consecutive(nparray1d, stepsize=1):
     """
@@ -1208,8 +1264,10 @@ def consecutive(nparray1d, stepsize=1):
     """
     return np.split(nparray1d, np.where(np.diff(nparray1d) != stepsize)[0] + 1)
 
+
 def null_space(npmat):
     return scipy.linalg.null_space(npmat)
+
 
 def to_homogeneous(pos):
     """
@@ -1218,6 +1276,7 @@ def to_homogeneous(pos):
     :return:
     """
     return np.r_[pos, 1.0]
+
 
 def reflection_homomat(point, normal):
     """
@@ -1228,6 +1287,7 @@ def reflection_homomat(point, normal):
     homomat[:3, :3] -= 2.0 * np.outer(normal, normal)
     homomat[:3, 3] = (2.0 * np.dot(point[:3], normal)) * normal
     return homomat
+
 
 def reflection_from_homomat(homomat):
     """
@@ -1248,6 +1308,7 @@ def reflection_from_homomat(homomat):
     point = np.real(v[:, i[-1]]).squeeze()
     point /= point[3]
     return point, normal
+
 
 def projection_homomat(point, normal, perspective=None, pseudo=False):
     """
@@ -1277,6 +1338,7 @@ def projection_homomat(point, normal, perspective=None, pseudo=False):
         homomat[:3, :3] -= np.outer(normal, normal)
         homomat[:3, 3] = np.dot(point, normal) * normal
     return homomat
+
 
 def affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True):
     """
@@ -1358,6 +1420,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True):
     M /= M[n_dims, n_dims]
     return M
 
+
 def rotmat_from_look_at(pos, look_at, up):
     """
     Constructs a camera rotation matrix from pos to look_at
@@ -1372,3 +1435,52 @@ def rotmat_from_look_at(pos, look_at, up):
     right /= np.linalg.norm(right)
     up2 = np.cross(right, forward)
     return np.column_stack((right, up2, -forward)).astype(np.float32)
+
+
+# numpy settings
+np.set_printoptions(suppress=True)  # avoid scientific notation
+# numpy proxy
+pi = np.pi
+dtype = np.dtype
+void = np.void
+uint32 = np.uint32
+float32 = np.float32
+int64 = np.int64
+asarray = np.asarray
+stack = np.stack
+hstack = np.hstack
+vstack = np.vstack
+column_stack = np.column_stack
+concatenate = np.concatenate
+repeat = np.repeat
+sort = np.sort
+full = np.full
+tile = np.tile
+roll = np.roll
+unique = np.unique
+zeros = np.zeros
+zeros_like = np.zeros_like
+ones = np.ones
+eye = np.eye
+all = np.all
+any = np.any
+array = np.array
+empty = np.empty
+isfinite = np.isfinite
+arange = np.arange
+ascontiguousarray = np.ascontiguousarray
+linspace = np.linspace
+abs = np.abs
+sin = np.sin
+cos = np.cos
+tan = np.tan
+add = np.add
+sqrt = np.sqrt
+divide = np.divide
+cross = np.cross
+clip = np.clip
+linalg = np.linalg
+savetxt = np.savetxt
+round = np.round
+bincount = np.bincount
+where = np.where

@@ -82,7 +82,10 @@ def get_robot_structure():
 
 
 class RS007L(rbase.RobotBase):
-    structure = get_robot_structure()
+
+    @classmethod
+    def _build_structure(cls):
+        return get_robot_structure()
 
     def __init__(self, base_pos=None, base_rotmat=None):
         super().__init__()
