@@ -44,13 +44,6 @@ class SceneObject:
     def set_tfmat(self, tfmat):
         self.node.set_tfmat(tfmat)
 
-    def set_rgba(self, rgb, alpha=None):
-        for model in self.visuals:
-            model.rgb = rgb
-            if alpha is not None:
-                model.alpha = alpha
-        return self
-
     def clone(self, new_name=None):
         """
         Clone the scene object. DOES NOT clone the affiliated scene.
@@ -68,3 +61,39 @@ class SceneObject:
         for col in self.collisions:
             new.add_collision(col.clone())
         return new
+
+    @property
+    def rgb(self):
+        if not self.visuals:
+            return None
+        return self.visuals[0].rgb
+
+    @rgb.setter
+    def rgb(self, value):
+        for model in self.visuals:
+            model.rgb = value
+
+    @property
+    def alpha(self):
+        if not self.visuals:
+            return None
+        return self.visuals[0].alpha
+
+    @alpha.setter
+    def alpha(self, value):
+        for model in self.visuals:
+            model.alpha = value
+
+    @property
+    def rgba(self):
+        if not self.visuals:
+            return None
+        m = self.visuals[0]
+        return (*m.rgb, m.alpha)
+
+    @rgba.setter
+    def rgba(self, value):
+        r, g, b, a = value
+        for model in self.visuals:
+            model.rgb = (r, g, b)
+            model.alpha = a

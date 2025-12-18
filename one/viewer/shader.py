@@ -77,8 +77,8 @@ void main() {
     float halfLambert = NdotL_key * 0.5 + 0.5;
     float diffKey = pow(halfLambert, 2.0); 
     float diffFill = max(dot(N, L_fill), 0.0) * 0.5 + 0.5;
-    float keyStrength = 0.8;
-    float fillStrength = 0.3;
+    float keyStrength = 0.75;
+    float fillStrength = 0.25;
     float ambientStrength = 0.1;
     vec3 lighting = (diffKey * keyStrength + 
                      diffFill * fillStrength + 

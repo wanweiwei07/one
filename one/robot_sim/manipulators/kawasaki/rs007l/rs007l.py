@@ -89,3 +89,6 @@ class RS007L(rbase.RobotBase):
 
     def __init__(self, base_pos=None, base_rotmat=None):
         super().__init__()
+
+    def mount(self, child, engage_tfmat):
+        super().mount(child=child, parent_link=self.structure.links[-1], engage_tfmat=engage_tfmat)
