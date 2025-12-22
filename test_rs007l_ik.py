@@ -1,19 +1,22 @@
 import time
+import builtins
 import numpy as np
 from one import rm, wd, prims, khi_rs007l
 
 base = wd.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
-                toggle_auto_cam_orbit=False)
+                toggle_auto_cam_orbit=True)
 robot = khi_rs007l.RS007L()
 print((robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
-robot.fk(qs = (robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
+robot.fk(qs=(robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
 robot.attach_to(base.scene)
+builtins.robot = robot  # for debug access
+builtins.base = base
 
 tgt_rotmat = rm.rotmat_from_euler(rm.pi, 0, 0)
 results = []
-xs = np.linspace(0.4, 0.6, 5)
-ys = np.linspace(0.0, 0.3, 5)
-zs = np.linspace(0.4, 0.6, 5)
+xs = np.linspace(-1, 1, 15)
+ys = np.linspace(-1, 1, 15)
+zs = np.linspace(-1, 1, 15)
 for x in xs:
     for y in ys:
         for z in zs:
@@ -30,7 +33,7 @@ for x in xs:
                 "qs": qs
             })
             if success:
-                tmp_robot=robot.clone()
+                tmp_robot = robot.clone()
                 tmp_robot.fk(qs=qs)
                 tmp_robot.attach_to(base.scene)
 

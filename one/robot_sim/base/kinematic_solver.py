@@ -33,8 +33,21 @@ class KinematicSolver:
            max_iter=50,
            tol_pos=1e-4,
            tol_rot=1e-3,
-           damping=1e-2,
-           step_scale=0.3):
+           step_scale=1.0,
+           pos_step_max=0.1,
+           rot_step_max=0.3):
+        """
+        :param tgt_romat:
+        :param tgt_pos:
+        :param qs_active_init:
+        :param max_iter:
+        :param tol_pos:
+        :param tol_rot:
+        :param step_scale:
+        :param pos_step_max: parameter for trust region
+        :param rot_step_max: parameter for trust region
+        :return:
+        """
         tgt_tfmat = rm.tfmat_from_rotmat_pos(tgt_romat, tgt_pos)
         if qs_active_init is None:
             qs = (self.limit_lower + self.limit_upper) * 0.5
@@ -43,20 +56,27 @@ class KinematicSolver:
             assert qs.shape[0] == self.n_active_jnts
         for it in range(int(max_iter)):
             _, J, cur_tfmat = self._forward_to_lnk(qs)
-            # pose error in se(3): [p_err, dω]
             delta_p = tgt_tfmat[:3, 3] - cur_tfmat[:3, 3]
             delta_theta = rm.delta_rotvec_between_rotmats(cur_tfmat[:3, :3],
                                                           tgt_tfmat[:3, :3])
-            pos_ok = np.linalg.norm(delta_p) <= tol_pos
-            rot_ok = np.linalg.norm(delta_theta) <= tol_rot
             delta_x = np.concatenate([delta_p, delta_theta]).astype(np.float32)
-            if pos_ok and rot_ok:
+            pos_err = np.linalg.norm(delta_p)
+            rot_err = np.linalg.norm(delta_theta)
+            if pos_err <= tol_pos and rot_err <= tol_rot:
                 return qs, {"converged": True, "iters": it, "err": delta_x}
-            delta_x = np.concatenate([delta_p, delta_theta])
-            A = J @ J.T + (damping ** 2) * np.eye(6, dtype=np.float32)
-            delta_q = J.T @ np.linalg.solve(A, delta_x)
-            qs = np.clip(qs + step_scale * delta_q,
-                         self.limit_lower, self.limit_upper)
+            # trust region scaling
+            if pos_err > pos_step_max:
+                delta_p = delta_p / pos_err * pos_step_max
+            if rot_err > rot_step_max:
+                delta_theta = delta_theta / rot_err * rot_step_max
+            delta_x = np.concatenate([delta_p, delta_theta]).astype(np.float32)
+            delta_q = np.linalg.lstsq(J, delta_x, rcond=1e-4)[0]
+            qs = qs + step_scale * delta_q
+            # # debug purposes
+            # new_robot=robot.clone()
+            # new_robot.fk(qs)
+            # new_robot.attach_to(base.scene)
+            # print(delta_x)
         return qs, {"converged": False, "iters": max_iter, "err": delta_x}
 
     def _forward_to_lnk(self, qs_active, up_to_link=None, local_point=None):
