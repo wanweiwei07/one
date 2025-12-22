@@ -1,3 +1,4 @@
+import numpy as np
 import one.utils.math as rm
 import one.viewer.device_buffer as dvb
 
@@ -12,7 +13,7 @@ class Geometry:
             self.verts, self.faces = self._merge_vertices_and_faces(verts, faces)
             self.vert_normals = self._compute_vert_normals()
         else:
-            self.verts = rm.asarray(verts, dtype=rm.float32)
+            self.verts = np.asarray(verts, dtype=np.float32)
             self.faces = None
             self.vert_normals = None
             self.per_vert_rgbs = per_vert_rgbs
@@ -30,21 +31,21 @@ class Geometry:
     def _compute_vert_normals(self):
         v1 = self.verts[self.faces[:, 1]] - self.verts[self.faces[:, 0]]
         v2 = self.verts[self.faces[:, 2]] - self.verts[self.faces[:, 0]]
-        raw_fns = rm.cross(v1, v2).astype(rm.float32)
+        raw_fns = np.cross(v1, v2).astype(np.float32)
         # vert normals
-        vns = rm.zeros_like(self.verts)
-        rm.add.at(vns, self.faces[:, 0], raw_fns)
-        rm.add.at(vns, self.faces[:, 1], raw_fns)
-        rm.add.at(vns, self.faces[:, 2], raw_fns)
+        vns = np.zeros_like(self.verts)
+        np.add.at(vns, self.faces[:, 0], raw_fns)
+        np.add.at(vns, self.faces[:, 1], raw_fns)
+        np.add.at(vns, self.faces[:, 2], raw_fns)
         _, vns = rm.unit_vec(vns)
         return vns
 
     def _merge_vertices_and_faces(self, verts, faces, tol=1e-6):
-        q = rm.round(verts / tol).astype(rm.int64)
-        unique_q, inv = rm.unique(q, axis=0, return_inverse=True)
-        verts_new = rm.zeros((len(unique_q), 3), dtype=verts.dtype)
-        rm.add.at(verts_new, inv, verts)
-        counts = rm.bincount(inv)
+        q = np.round(verts / tol).astype(np.int64)
+        unique_q, inv = np.unique(q, axis=0, return_inverse=True)
+        verts_new = np.zeros((len(unique_q), 3), dtype=verts.dtype)
+        np.add.at(verts_new, inv, verts)
+        counts = np.bincount(inv)
         verts_new /= counts[:, None]
-        faces_new = inv[faces].astype(rm.uint32).copy() # ensure contiguous
+        faces_new = inv[faces].astype(np.uint32).copy() # ensure contiguous
         return verts_new, faces_new

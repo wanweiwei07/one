@@ -1,3 +1,4 @@
+import numpy as np
 import one.utils.math as rm
 import one.utils.decorator as deco
 
@@ -6,12 +7,18 @@ class SceneNode:
 
     def __init__(self, rotmat=None, pos=None, parent=None):
         # local transform
-        self._rotmat = rm.eye(3, dtype=rm.float32) if rotmat is None else rotmat.astype(rm.float32)
-        self._pos = rm.zeros(3, dtype=rm.float32) if pos is None else pos.astype(rm.float32)
+        if rotmat is None:
+            self._rotmat = np.eye(3, dtype=np.float32)
+        else:
+            self._rotmat = np.asarray(rotmat, dtype=np.float32)
+        if pos is None:
+            self._pos = np.zeros(3, dtype=np.float32)
+        else:
+            self._pos = np.asarray(pos, dtype=np.float32)
         # world transform cache
-        self._wd_rotmat = rm.eye(3, dtype=rm.float32)
-        self._wd_pos = rm.zeros(3, dtype=rm.float32)
-        self._wd_tfmat = rm.eye(4, dtype=rm.float32)
+        self._wd_rotmat = np.eye(3, dtype=np.float32)
+        self._wd_pos = np.zeros(3, dtype=np.float32)
+        self._wd_tfmat = np.eye(4, dtype=np.float32)
         # dirty flag
         self._dirty = True
         # tree structure
@@ -47,12 +54,12 @@ class SceneNode:
         self._dirty = False
 
     def set_rotmat_pos(self, rotmat, pos):
-        self._rotmat = rotmat.astype(rm.float32)
-        self._pos = pos.astype(rm.float32)
+        self._rotmat = rotmat.astype(np.float32)
+        self._pos = pos.astype(np.float32)
         self._mark_dirty()
 
     def set_tfmat(self, tfmat):
-        tfmat = tfmat.astype(rm.float32)
+        tfmat = tfmat.astype(np.float32)
         self._rotmat = tfmat[:3, :3]
         self._pos = tfmat[:3, 3]
         self._mark_dirty()
@@ -65,7 +72,7 @@ class SceneNode:
     @pos.setter
     @deco.mark_dirty('_mark_dirty')
     def pos(self, value):
-        self._pos = rm.asarray(value, dtype=rm.float32)
+        self._pos = np.asarray(value, dtype=np.float32)
 
     @property
     @deco.readonly_view
@@ -75,7 +82,7 @@ class SceneNode:
     @rotmat.setter
     @deco.mark_dirty('_mark_dirty')
     def rotmat(self, value):
-        self._rotmat = rm.asarray(value, dtype=rm.float32)
+        self._rotmat = np.asarray(value, dtype=np.float32)
 
     @property
     @deco.lazy_update('_dirty', 'update')

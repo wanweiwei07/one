@@ -52,7 +52,7 @@ def gen_cone(spos=np.zeros(3), epos=np.ones(3) * 0.01,
 
 def gen_sphere(pos=np.zeros(3), radius=0.05, segments=8,
                rgb=const.BasicColor.DEFAULT, alpha=1.0):
-    key=("sphere", radius, segments)
+    key = ("sphere", radius, segments)
     if key in _primitive_cache:
         geometry = _primitive_cache[key]
     else:
@@ -71,7 +71,7 @@ def gen_sphere(pos=np.zeros(3), radius=0.05, segments=8,
 
 def gen_icosphere(pos=np.zeros(3), radius=0.05, subdivisions=2,
                   rgb=const.BasicColor.DEFAULT, alpha=1.0):
-    key=("icosphere", radius, subdivisions)
+    key = ("icosphere", radius, subdivisions)
     if key in _primitive_cache:
         geometry = _primitive_cache[key]
     else:
@@ -95,7 +95,7 @@ def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
     length, dir_vec = rm.unit_vec(epos - spos, return_length=True)
-    key=("arrow", shaft_radius, length, head_radius, head_length, segments)
+    key = ("arrow", shaft_radius, length, head_radius, head_length, segments)
     if key in _primitive_cache:
         geometry = _primitive_cache[key]
     else:
@@ -113,12 +113,13 @@ def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
 
 
 def gen_frame(pos=np.zeros(3), rotmat=np.eye(3),
-              arrow_length=const.StandardAxis.ARROW_LENGTH,
-              arrow_shaft_radius=const.StandardAxis.ARROW_SHAFT_RADIUS,
-              arrow_head_length=const.StandardAxis.ARROW_HEAD_LENGTH,
-              arrow_head_radius=const.StandardAxis.ARROW_HEAD_RADIUS,
+              length_scale=1.0, radius_scale=1.0,
               segments=8, color_mat=const.CoordColor.RGB, alpha=1.0):
-    key=("arrow", arrow_shaft_radius, arrow_length, arrow_head_radius, arrow_head_length, segments)
+    arrow_length = const.StandardAxis.ARROW_LENGTH * length_scale
+    arrow_shaft_radius = const.StandardAxis.ARROW_SHAFT_RADIUS * radius_scale
+    arrow_head_length = const.StandardAxis.ARROW_HEAD_LENGTH * radius_scale
+    arrow_head_radius = const.StandardAxis.ARROW_HEAD_RADIUS * radius_scale
+    key = ("arrow", arrow_shaft_radius, arrow_length, arrow_head_radius, arrow_head_length, segments)
     if key in _primitive_cache:
         geometry = _primitive_cache[key]
     else:

@@ -1,6 +1,6 @@
 import ctypes
+import numpy as np
 import pyglet.gl as gl
-import one.utils.math as rm
 
 
 class DeviceBufferBase:
@@ -72,7 +72,7 @@ class MeshBuffer(DeviceBufferBase):
         gl.glBindVertexArray(0)
 
     def _build(self, verts, faces, vert_normals):
-        array = rm.hstack([verts, vert_normals]).astype(rm.float32)
+        array = np.hstack([verts, vert_normals]).astype(np.float32)
         # create VAO (vertex array object), VBO and EBO will be bound to it
         vao = (gl.GLuint * 1)()
         gl.glGenVertexArrays(1, vao)
@@ -97,7 +97,7 @@ class MeshBuffer(DeviceBufferBase):
         gl.glGenBuffers(1, ebo)
         self.ebo = ebo[0]
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ebo)
-        # indices = faces.astype(rm.uint32).copy(order='C')
+        # indices = faces.astype(np.uint32).copy(order='C')
         gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, faces.nbytes,
                         faces.ctypes.data, gl.GL_STATIC_DRAW)
         self.count = faces.size
@@ -117,7 +117,7 @@ class PointCloudBuffer(DeviceBufferBase):
     def _build(self, verts, per_vert_rgbs):
         self.count = len(verts)
         # color
-        array = rm.hstack([verts, per_vert_rgbs]).astype(rm.float32)
+        array = np.hstack([verts, per_vert_rgbs]).astype(np.float32)
         # create VAO (vertex array object), VBO and EBO will be bound to it
         vao = (gl.GLuint * 1)()
         gl.glGenVertexArrays(1, vao)

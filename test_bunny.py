@@ -3,9 +3,7 @@ if __name__ == '__main__':
 
     oframe = prims.gen_frame()
     bunny = sob.SceneObject.from_file("bunny.stl")
-    scene = scn.Scene()
-    scene.add(bunny)
-    scene.add(oframe)
-    base = wd.World(cam_pos=(.3,.3,.3), toggle_auto_cam_orbit=False)
-    base.set_scene(scene)
+    base = wd.World(cam_pos=(.3,.3,.3), toggle_auto_cam_orbit=True)
+    oframe.attach_to(base.scene)
+    bunny.attach_to(base.scene)
     base.run()

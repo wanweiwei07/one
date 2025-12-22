@@ -18,24 +18,28 @@ class RobotBase:
     def _build_structure(cls):
         raise NotImplementedError
 
-    @classmethod
-    def get_structure(cls):
-        if cls._structure is None:
-            cls._structure =cls._build_structure()
-        return cls._structure
-
     def __init__(self):
         self.kin_state = rstate.KinematicState(self.structure)
-        self.home_qs = np.zeros(len(self.structure.joint_order), dtype=np.float32)
-        self.kin_state.fk(qs=self.home_qs)
-        self.kin_state.update()
+        self.home_qs = np.zeros(self.structure.flat.n_joints, dtype=np.float32)
         self._mountings: dict[object, Mounting] = {}
+        self.fk(qs=self.home_qs, update=True)
 
-    def fk(self, qs=None, root_tfmat=np.eye(4, dtype=np.float32)):
-        return self.kin_state.fk(qs, root_tfmat)
+    def fk(self, qs=None, root_tfmat=None, update=True):
+        """
+        forward kinematics, update cannot be true when root_tfmat is given
+        :param qs:
+        :param root_tfmat: Allow specifying root (4,4). base_tfmat will be ignored if given.
+        :param update: whether to update the mountings after fk
+        :return:
+        """
+        wd_lnk_tfmat_arr = self.kin_state.fk(qs, root_tfmat)
+        if update:
+            if root_tfmat is not None:
+                raise ValueError("Cannot update mountings when root_tfmat is given")
+            self.update()
+        return wd_lnk_tfmat_arr
 
     def update(self):
-        self.kin_state.fk()
         self.kin_state.update()
         for m in self._mountings.values():
             self._update_mounting(m)
@@ -77,7 +81,7 @@ class RobotBase:
         child_tfmat = parent_tfmat @ mounting.engage_tfmat
         if isinstance(mounting.child, RobotBase):
             mounting.child.kin_state.base_tfmat = child_tfmat
-            mounting.child.update()
+            mounting.child.fk(update=True)
         else:
             mounting.child.set_tfmat(child_tfmat)
 
@@ -88,4 +92,7 @@ class RobotBase:
 
     @property
     def structure(self):
-        return self.get_structure()
+        cls = type(self)
+        if cls._structure is None:
+            cls._structure = cls._build_structure()
+        return cls._structure

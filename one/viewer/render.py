@@ -1,5 +1,5 @@
+import numpy as np
 import pyglet.gl as gl
-import one.utils.math as rm
 import one.viewer.shader as sd
 import one.viewer.screen_quad as sq
 
@@ -15,7 +15,7 @@ class Render:
         self.screen_quad = sq.ScreenQuad()
         self._groups_cache = None
         self._gl_setup()
-        self._tmp = rm.zeros(16, dtype=rm.float32)  # for flattening matrices
+        self._tmp = np.zeros(16, dtype=np.float32)  # for flattening matrices
 
     def draw(self, scene):
         cam_view_flatten = self.camera.view_mat.T.flatten()
@@ -32,7 +32,7 @@ class Render:
             self.outline_shader.program["u_view"] = cam_view_flatten
             self.outline_shader.program["u_proj"] = cam_proj_flatten
             for instance_list in mesh_groups.values():
-                tf_mat_array = rm.empty((len(instance_list), 4, 4), rm.float32)
+                tf_mat_array = np.empty((len(instance_list), 4, 4), np.float32)
                 for i, (model, node) in enumerate(instance_list):
                     tf_mat_array[i] = (node.wd_tfmat @ model.tfmat).T
                 # TODO: separate device buffer for outline shader?
@@ -46,12 +46,12 @@ class Render:
             self.mesh_shader.program["u_proj"] = cam_proj_flatten
             self.mesh_shader.program["u_view_pos"] = self.camera.pos
             for instance_list in mesh_groups.values():
-                tf_mat_array = rm.empty((len(instance_list), 4, 4), rm.float32)
-                rgba_array = rm.empty((len(instance_list), 4), rm.float32)
+                tf_mat_array = np.empty((len(instance_list), 4, 4), np.float32)
+                rgba_array = np.empty((len(instance_list), 4), np.float32)
                 for i, (model, node) in enumerate(instance_list):
                     tf_mat_array[i] = (node.wd_tfmat @ model.tfmat).T
-                    rgba_array[i] = rm.array(
-                        [*model.rgb, model.alpha], dtype=rm.float32
+                    rgba_array[i] = np.array(
+                        [*model.rgb, model.alpha], dtype=np.float32
                     )
                 device_buffer = instance_list[0][0].geometry.get_device_buffer()
                 device_buffer.update_instances(tf_mat_array, rgba_array)
@@ -77,7 +77,7 @@ class Render:
         gl.glActiveTexture(gl.GL_TEXTURE0)
         gl.glBindTexture(gl.GL_TEXTURE_2D, color_tex)
         self.tex_shader.program["u_color"] = 0
-        self.tex_shader.program["u_texel"] = (1.0/width, 1.0/height)
+        self.tex_shader.program["u_texel"] = (1.0 / width, 1.0 / height)
         self.screen_quad.draw()
         gl.glEnable(gl.GL_DEPTH_TEST)
 
@@ -110,4 +110,3 @@ class Render:
             return self.mesh_shader
         else:
             return self.pcd_shader
-

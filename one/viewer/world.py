@@ -22,13 +22,16 @@ class World(pyglet.window.Window):
     def __init__(self,
                  cam_pos=(.1, .1, .1),
                  cam_lookat_pos=(0, 0, 0),
-                 width=1920,
-                 height=1080,
+                 win_size=None,
                  toggle_auto_cam_orbit=False):
-        super().__init__(width, height, config=config, resizable=True)
+        display = pyglet.display.get_display()
+        screen = display.get_default_screen()
+        screen_w, screen_h = screen.width, screen.height
+        win_w, win_h = (screen_w * 8 // 10, screen_h * 8 // 10) if win_size is None else win_size
+        super().__init__(win_w, win_h, config=config, resizable=True)
+        self.set_location((screen_w - win_w) // 2, (screen_h - win_h) // 2)
         self.set_caption("WRS World")
-        self.set_location(100, 100)
-        self.camera = cam.Camera(pos=cam_pos, look_at=cam_lookat_pos, aspect=width / height)
+        self.camera = cam.Camera(pos=cam_pos, look_at=cam_lookat_pos, aspect=win_w / win_h)
         self.render = rd.Render(camera=self.camera)
         # self.render_target = rt.RenderTarget(width=width, height=height)
         self.scene = scn.Scene()
@@ -64,18 +67,3 @@ class World(pyglet.window.Window):
 
     def run(self):
         pyglet.app.run()
-
-
-if __name__ == '__main__':
-    import trimesh as trm
-    from one import mdl, geom, scn, const
-
-    mesh = trm.load_mesh("bunnysim.stl")
-    model = mdl.Model(geom.GeometryBase(verts=mesh.vertices,
-                                        faces=mesh.faces,
-                                        rgbs=const.BasicColor.GREEN))
-    scene = scn.Scene()
-    scene.add(model)
-    base = World()
-    base.set_scene(scene)
-    base.run()

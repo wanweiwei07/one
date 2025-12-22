@@ -131,6 +131,6 @@ class ArrowSize:
     SHAFT_RADIUS = 0.005
 
 class JointType:
-    REVOLUTE = 'revolute'
-    PRISMATIC = 'prismatic'
-    FIXED = 'fixed'
+    FIXED = 0
+    REVOLUTE = 1
+    PRISMATIC = 2

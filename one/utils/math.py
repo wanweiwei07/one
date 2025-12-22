@@ -1,15 +1,22 @@
-import scipy
 import operator
 import warnings
 import numpy as np
 import numpy.typing as npt
 import one.utils.constant as const
 from sklearn import cluster
+from scipy.linalg import null_space
 from scipy.spatial.transform import Slerp
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Rotation
 
+# numpy settings
+np.set_printoptions(suppress=True)  # avoid scientific notation
+# numpy proxy
+pi = np.pi
 eps = np.finfo(np.float32).eps
+sin = np.sin
+cos = np.cos
+tan = np.tan
 
 # axis sequences for Euler angles
 _NEXT_AXIS = [1, 2, 0, 1]
@@ -321,8 +328,8 @@ def tfmat_from_axangle(ax, angle):
                      [0, 0, 0, 1]], dtype=np.float32)
 
 
-def tfmat_from_rotmat_pos(rotmat=np.eye(3, dtype=np.float32),
-                          pos=np.zeros(3, dtype=np.float32)):
+def tfmat_from_rotmat_pos(rotmat=np.eye(3),
+                          pos=np.zeros(3)):
     """
     build a (4,4) homogeneous transformation matrix from rotation matrix and position
     :param rotmat: (1,3)
@@ -331,10 +338,10 @@ def tfmat_from_rotmat_pos(rotmat=np.eye(3, dtype=np.float32),
     author: weiwei
     date: 20190313, 20251128
     """
-    tfmat = np.eye(4, dtype=np.float32)
+    tfmat = np.eye(4)
     tfmat[:3, :3] = rotmat
     tfmat[:3, 3] = pos
-    return tfmat
+    return tfmat.astype(np.float32)
 
 
 def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
@@ -1266,7 +1273,7 @@ def consecutive(nparray1d, stepsize=1):
 
 
 def null_space(npmat):
-    return scipy.linalg.null_space(npmat)
+    return null_space(npmat)
 
 
 def to_homogeneous(pos):
@@ -1435,53 +1442,3 @@ def rotmat_from_look_at(pos, look_at, up):
     right /= np.linalg.norm(right)
     up2 = np.cross(right, forward)
     return np.column_stack((right, up2, -forward)).astype(np.float32)
-
-
-# numpy settings
-np.set_printoptions(suppress=True)  # avoid scientific notation
-# numpy proxy
-pi = np.pi
-dtype = np.dtype
-void = np.void
-int32 = np.int32
-uint32 = np.uint32
-float32 = np.float32
-int64 = np.int64
-asarray = np.asarray
-stack = np.stack
-hstack = np.hstack
-vstack = np.vstack
-column_stack = np.column_stack
-concatenate = np.concatenate
-repeat = np.repeat
-sort = np.sort
-full = np.full
-tile = np.tile
-roll = np.roll
-unique = np.unique
-zeros = np.zeros
-zeros_like = np.zeros_like
-ones = np.ones
-eye = np.eye
-all = np.all
-any = np.any
-array = np.array
-empty = np.empty
-isfinite = np.isfinite
-arange = np.arange
-ascontiguousarray = np.ascontiguousarray
-linspace = np.linspace
-abs = np.abs
-sin = np.sin
-cos = np.cos
-tan = np.tan
-add = np.add
-sqrt = np.sqrt
-divide = np.divide
-cross = np.cross
-clip = np.clip
-linalg = np.linalg
-savetxt = np.savetxt
-round = np.round
-bincount = np.bincount
-where = np.where

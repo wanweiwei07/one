@@ -18,8 +18,11 @@ class Camera(nd.SceneNode):
                  parent=None):
         self._pos = np.asarray(pos, dtype=np.float32)
         self._look_at = np.asarray(look_at, dtype=np.float32)
-        self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up), dtype=np.float32)
-        self._rotmat = rm.rotmat_from_look_at(pos=self._pos, look_at=self._look_at, up=self._up)
+        self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up),
+                              dtype=np.float32)
+        self._rotmat = rm.rotmat_from_look_at(pos=self._pos,
+                                              look_at=self._look_at,
+                                              up=self._up)
         super().__init__(rotmat=self._rotmat, pos=self._pos, parent=parent)
         self._fov = fov
         self._aspect = aspect  # default 16:9
@@ -35,7 +38,7 @@ class Camera(nd.SceneNode):
         if up is not None:
             self.up = np.asarray(up, dtype=np.float32)
 
-    def orbit(self, axis=(0, 0, 1), angle_rad=rm.np.pi / 360):
+    def orbit(self, axis=(0, 0, 1), angle_rad=np.pi / 360):
         direction = self._pos - self._look_at
         R = rm.rotmat_from_axangle(axis, angle_rad)
         direction_rotated = R @ direction
