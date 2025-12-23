@@ -5,17 +5,25 @@ import one.scene.geometry as geom
 
 
 class Model:
+    """
+    rotmat and pos of model is for transforming local geometries
+    scene rotmat and pos should be handled by scene.SceneObject
+    """
 
-    def __init__(
-            self, geometry=None, rotmat=None, pos=None, rgb=None, alpha=1.0, shader=None
-    ):
+    def __init__(self,
+                 geometry=None,
+                 rotmat=None,
+                 pos=None,
+                 rgb=None,
+                 alpha=1.0,
+                 shader=None):
         if isinstance(geometry, tuple):
             verts = geometry[0]
             faces = geometry[1] if len(geometry) > 1 else None
             per_vert_rgbs = geometry[2] if len(geometry) > 2 else None
-            self.geometry = geom.Geometry(
-                verts=verts, faces=faces, per_vert_rgbs=per_vert_rgbs
-            )
+            self.geometry = geom.Geometry(verts=verts,
+                                          faces=faces,
+                                          per_vert_rgbs=per_vert_rgbs)
         else:
             self.geometry = geometry
         self.rgb = const.BasicColor.DEFAULT if rgb is None else rgb

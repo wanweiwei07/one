@@ -61,6 +61,10 @@ class RobotBase:
             who = child.kin_state.runtime_links[0]
         if who.scene is not self.kin_state.runtime_links[0].scene:
             raise ValueError("Child object not in the same scene")
+        if engage_tfmat is None:
+            engage_tfmat = np.eye(4, dtype=np.float32)
+        else:
+            engage_tfmat = np.asarray(engage_tfmat, dtype=np.float32)
         self._mountings[child] = Mounting(child, parent_link, engage_tfmat)
 
     def unmount(self, child):
@@ -83,7 +87,7 @@ class RobotBase:
             mounting.child.kin_state.base_tfmat = child_tfmat
             mounting.child.fk(update=True)
         else:
-            mounting.child.set_tfmat(child_tfmat)
+            mounting.child.tfmat = child_tfmat
 
     @property
     @deco.readonly_view

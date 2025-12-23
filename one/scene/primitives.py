@@ -65,7 +65,7 @@ def gen_sphere(pos=np.zeros(3), radius=0.05, segments=8,
         _primitive_cache[key] = geometry
     return_obj = sob.SceneObject()
     return_obj.add_visual(mdl.Model(geometry=geometry, rgb=rgb, alpha=alpha))
-    return_obj.set_pos(pos=pos)
+    return_obj.pos = pos
     return return_obj
 
 
@@ -83,7 +83,7 @@ def gen_icosphere(pos=np.zeros(3), radius=0.05, subdivisions=2,
         _primitive_cache[key] = geometry
     return_obj = sob.SceneObject()
     return_obj.add_visual(mdl.Model(geometry=geometry, rgb=rgb, alpha=alpha))
-    return_obj.set_pos(pos=pos)
+    return_obj.pos = pos
     return return_obj
 
 

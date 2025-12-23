@@ -2,6 +2,8 @@ import numpy as np
 import one.utils.math as rm
 import one.utils.decorator as deco
 
+# TODO SceneNode for Scene Graph
+# To be deleted since the system does not rely on a scene graph
 
 class SceneNode:
 
@@ -58,12 +60,6 @@ class SceneNode:
         self._pos = pos.astype(np.float32)
         self._mark_dirty()
 
-    def set_tfmat(self, tfmat):
-        tfmat = tfmat.astype(np.float32)
-        self._rotmat = tfmat[:3, :3]
-        self._pos = tfmat[:3, 3]
-        self._mark_dirty()
-
     @property
     @deco.readonly_view
     def pos(self):
@@ -83,6 +79,19 @@ class SceneNode:
     @deco.mark_dirty('_mark_dirty')
     def rotmat(self, value):
         self._rotmat = np.asarray(value, dtype=np.float32)
+
+    @property
+    @deco.readonly_view
+    def tfmat(self):
+        tfmat = rm.tfmat_from_rotmat_pos(self._rotmat, self._pos)
+        return tfmat
+
+    @tfmat.setter
+    @deco.mark_dirty('_mark_dirty')
+    def tfmat(self, value):
+        value = value.astype(np.float32)
+        self._rotmat = value[:3, :3]
+        self._pos = value[:3, 3]
 
     @property
     @deco.lazy_update('_dirty', 'update')

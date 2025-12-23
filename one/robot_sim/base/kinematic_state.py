@@ -48,7 +48,7 @@ class KinematicState:
 
     def update(self):
         for i, link in enumerate(self.runtime_links):
-            link.set_tfmat(self.wd_link_tfmat_arr[i])
+            link.tfmat = self.wd_link_tfmat_arr[i]
 
     def attach_to(self, scene):
         for link in self.runtime_links:

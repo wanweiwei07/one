@@ -91,7 +91,16 @@ class RS007L(mbase.ManipulatorBase):
     def __init__(self, base_pos=None, base_rotmat=None):
         super().__init__()
 
-    def mount(self, child, engage_tfmat, update=True):
-        super().mount(child=child, parent_link=self.structure.links[-1], engage_tfmat=engage_tfmat)
+    def engage(self, child, engage_tfmat=None, update=True):
+        super().mount(child=child,
+                      parent_link=self.structure.links[-1],
+                      engage_tfmat=engage_tfmat)
         if update:
             self._update_mounting(self._mountings[child])
+
+    def mount(self, *args, **kwargs):
+        """turn off mount() to avoid confusion"""
+        raise RuntimeError(
+            "RS007L.mount() is disabled. "
+            "Use engage(child, engage_tfmat) instead."
+        )

@@ -2,8 +2,8 @@ import os
 import numpy as np
 import one.utils.math as rm
 import one.utils.constant as const
-import one.robot_sim.base.robot_base as rbase
 import one.robot_sim.base.robot_structure as rstruct
+import one.robot_sim.end_effectors.ee_base as eebase
 
 
 def get_robot_structure():
@@ -26,7 +26,7 @@ def get_robot_structure():
                                 parent_link=base_link, child_link=right_finger_link,
                                 axis=-const.StandardAxis.Y,
                                 pos=np.array([0, 0.019, 0], dtype=np.float32),
-                                mimic = (joint_bl_lf, -1.0, 0.0),
+                                mimic=(joint_bl_lf, -1.0, 0.0),
                                 limit_lower=0.0, limit_upper=0.019)
     # add links
     base_link.visuals[0].rotmat = rm.rotmat_from_euler(0, 0, np.pi / 2)
@@ -43,7 +43,7 @@ def get_robot_structure():
     return structure
 
 
-class OR2FG7(rbase.RobotBase):
+class OR2FG7(eebase.EndEffectorBase, eebase.GripperMixin):
 
     @classmethod
     def _build_structure(cls):
@@ -51,3 +51,9 @@ class OR2FG7(rbase.RobotBase):
 
     def __init__(self, base_pos=None, base_rotmat=None):
         super().__init__()
+        self.jaw_range = np.array([0.0, 0.038], dtype=np.float32)  # min, max
+
+    def set_jaw_width(self, jaw_width):
+        if jaw_width < self.jaw_range[0] or jaw_width > self.jaw_range[1]:
+            raise ValueError(f"jaw_width {jaw_width} out of range {self.jaw_range}")
+        self.fk(qs=[jaw_width * 0.5, jaw_width * 0.5])

@@ -1,7 +1,8 @@
 import os
-import one.scene.geometry_loader as gldr
 import one.scene.model as mdl
 import one.scene.scene_node as snd
+import one.utils.decorator as deco
+import one.scene.geometry_loader as gldr
 
 
 class SceneObject:
@@ -32,17 +33,8 @@ class SceneObject:
     def add_collision(self, model):
         self.collisions.append(model)
 
-    def set_pos(self, pos):
-        self.node.pos = pos
-
-    def set_rotmat(self, rotmat):
-        self.node.rotmat = rotmat
-
     def set_rotmat_pos(self, rotmat, pos):
         self.node.set_rotmat_pos(rotmat, pos)
-
-    def set_tfmat(self, tfmat):
-        self.node.set_tfmat(tfmat)
 
     def clone(self, new_name=None):
         """
@@ -61,6 +53,33 @@ class SceneObject:
         for col in self.collisions:
             new.add_collision(col.clone())
         return new
+
+    @property
+    @deco.readonly_view
+    def pos(self):
+        return self.node.pos
+
+    @pos.setter
+    def pos(self, value):
+        self.node.pos = value
+
+    @property
+    @deco.readonly_view
+    def rotmat(self):
+        return self.node.rotmat
+
+    @rotmat.setter
+    def rotmat(self, value):
+        self.node.rotmat = value
+
+    @property
+    @deco.readonly_view
+    def tfmat(self):
+        return self.node.tfmat
+
+    @tfmat.setter
+    def tfmat(self, value):
+        self.node.tfmat = value
 
     @property
     def rgb(self):
