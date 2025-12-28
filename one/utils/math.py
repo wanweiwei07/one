@@ -1,12 +1,9 @@
-import operator
 import warnings
 import numpy as np
 import numpy.typing as npt
-import one.utils.constant as const
 from sklearn import cluster
 from scipy.linalg import null_space
 from scipy.spatial.transform import Slerp
-from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Rotation
 
 # numpy settings
@@ -40,102 +37,31 @@ def vec(*args):
 
 ## rotmat
 def rotmat_from_axangle(ax, angle):
-    """
-    Compute the rodrigues matrix using the given axis and angle
-    :param ax: (1, 3)
-    :param angle: radian
-    :return: (3,3)
-    author: weiwei
-    date: 20161220
-    """
-    length, unit_ax = unit_vec(ax)
-    if length == 0:
+    ax = np.asarray(ax, dtype=np.float32)
+    if np.linalg.norm(ax) == 0:
         return np.eye(3, dtype=np.float32)
-    a = np.cos(angle / 2.0)
-    b, c, d = -unit_ax * np.sin(angle / 2.0)
-    aa, bb, cc, dd = a * a, b * b, c * c, d * d
-    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2.0 * (bc + ad), 2.0 * (bd - ac)],
-                     [2.0 * (bc - ad), aa + cc - bb - dd, 2.0 * (cd + ab)],
-                     [2.0 * (bd + ac), 2.0 * (cd - ab), aa + dd - bb - cc]], dtype=np.float32)
+    return rotmat_from_rotvec(ax / np.linalg.norm(ax) * angle)
 
 
 def rotmat_from_quat(quat):
-    quat_length = np.linalg.norm(quat)
-    if quat_length == 0:
-        raise ValueError("Degenerate rotation matrix produced zero quaternion.")
-    unit_quat = quat / quat_length
-    x, y, z, w = unit_quat
-    xx = x * x
-    yy = y * y
-    zz = z * z
-    xy = x * y
-    xz = x * z
-    yz = y * z
-    wx = w * x
-    wy = w * y
-    wz = w * z
-    return np.array([[1 - 2 * (yy + zz), 2 * (xy - wz), 2 * (xz + wy)],
-                     [2 * (xy + wz), 1 - 2 * (xx + zz), 2 * (yz - wx)],
-                     [2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy)]], dtype=np.float32)
+    return Rotation.from_quat(quat).as_matrix().astype(np.float32)
 
 
-def rotmat_to_quat(rotmat):
-    tr = rotmat[0, 0] + rotmat[1, 1] + rotmat[2, 2]
-    quat = np.empty(4, dtype=np.float32)
-    if tr > 0:
-        s = np.sqrt(tr + 1.0) * 2.0  # 4w
-        quat[3] = 0.25 * s
-        quat[0] = (rotmat[2, 1] - rotmat[1, 2]) / s
-        quat[1] = (rotmat[0, 2] - rotmat[2, 0]) / s
-        quat[2] = (rotmat[1, 0] - rotmat[0, 1]) / s
-    elif (rotmat[0, 0] > rotmat[1, 1]) and (rotmat[0, 0] > rotmat[2, 2]):
-        s = np.sqrt(1.0 + rotmat[0, 0] - rotmat[1, 1] - rotmat[2, 2]) * 2.0  # 4x
-        quat[3] = (rotmat[2, 1] - rotmat[1, 2]) / s
-        quat[0] = 0.25 * s
-        quat[1] = (rotmat[0, 1] + rotmat[1, 0]) / s
-        quat[2] = (rotmat[0, 2] + rotmat[2, 0]) / s
-    elif rotmat[1, 1] > rotmat[2, 2]:
-        s = np.sqrt(1.0 + rotmat[1, 1] - rotmat[0, 0] - rotmat[2, 2]) * 2.0  # 4y
-        quat[3] = (rotmat[0, 2] - rotmat[2, 0]) / s
-        quat[0] = (rotmat[0, 1] + rotmat[1, 0]) / s
-        quat[1] = 0.25 * s
-        quat[2] = (rotmat[1, 2] + rotmat[2, 1]) / s
-    else:
-        s = np.sqrt(1.0 + rotmat[2, 2] - rotmat[0, 0] - rotmat[1, 1]) * 2.0  # 4z
-        quat[3] = (rotmat[1, 0] - rotmat[0, 1]) / s
-        quat[0] = (rotmat[0, 2] + rotmat[2, 0]) / s
-        quat[1] = (rotmat[1, 2] + rotmat[2, 1]) / s
-        quat[2] = 0.25 * s
-        # --- Normalize quaternion (safety) ---
-    quat_length = np.linalg.norm(quat)
-    if quat_length == 0:
-        raise ValueError("Degenerate rotation matrix produced zero quaternion.")
-    return quat / quat_length
-
-
-def rotmat_to_wvec(rotmat):
-    """
-    convert a rotmat to angle*ax form
-    :param rotmat:
-    :return:
-    """
-    return Rotation.from_matrix(rotmat).as_rotvec()
-
-
-def rotmat_from_normal(surface_normal):
-    '''
-    Compute the rotation matrix of a 3D mesh using a surface normal
-    :param surface_normal: 1x3 nparray
-    :return: 3x3 rotmat
-    date: 20160624
-    author: weiwei
-    '''
-    rotmat = np.eye(3, dtype=np.float32)
-    rotmat[:, 2] = unit_vec(surface_normal)
-    rotmat[:, 0] = orth_vec(rotmat[:, 2], toggle_unit=True)
-    rotmat[:, 1] = np.cross(rotmat[:, 2], rotmat[:, 0])
-    return rotmat
+def rotmat_from_normal(normal, up=(0, 0, 1)):
+    """rotation matrix from normal vector,  normal is the z axis"""
+    normal = np.asarray(normal, dtype=float)
+    up = np.asarray(up, dtype=float)
+    n = np.linalg.norm(normal)
+    if n == 0:
+        return np.eye(3)
+    z = normal / n
+    # remove z-component from up
+    up_proj = up - np.dot(up, z) * z
+    if np.linalg.norm(up_proj) < 1e-8:
+        up_proj = np.array([1, 0, 0])
+    y = up_proj / np.linalg.norm(up_proj)
+    x = np.cross(y, z)
+    return np.column_stack((x, y, z)).astype(np.float32)
 
 
 def rotmat_from_normalandpoints(facet_normal, facet_first_pnt, facet_second_pnt):
@@ -210,47 +136,8 @@ def rotmat_from_euler(ai, aj, ak, order='sxyz'):
     return rotmat
 
 
-def rotmat_to_euler(rotmat, order='sxyz'):
-    """
-    :param rotmat: 3x3 nparray
-    :param order: order
-    :return: radian
-    author: weiwei
-    date: 20190504
-    """
-    try:
-        firstaxis, parity, repetition, frame = _AXES2TUPLE[order.lower()]
-    except (AttributeError, KeyError):
-        _TUPLE2AXES[order]  # validation
-        firstaxis, parity, repetition, frame = order
-    i = firstaxis
-    j = _NEXT_AXIS[i + parity]
-    k = _NEXT_AXIS[i - parity + 1]
-    if repetition:
-        sy = np.sqrt(rotmat[i, j] * rotmat[i, j] + rotmat[i, k] * rotmat[i, k])
-        if sy > EPS:
-            ax = np.atan2(rotmat[i, j], rotmat[i, k])
-            ay = np.atan2(sy, rotmat[i, i])
-            az = np.atan2(rotmat[j, i], -rotmat[k, i])
-        else:
-            ax = np.atan2(-rotmat[j, k], rotmat[j, j])
-            ay = np.atan2(sy, rotmat[i, i])
-            az = 0.0
-    else:
-        cy = np.sqrt(rotmat[i, i] * rotmat[i, i] + rotmat[j, i] * rotmat[j, i])
-        if cy > EPS:
-            ax = np.atan2(rotmat[k, j], rotmat[k, k])
-            ay = np.atan2(-rotmat[k, i], cy)
-            az = np.atan2(rotmat[j, i], rotmat[i, i])
-        else:
-            ax = np.atan2(-rotmat[j, k], rotmat[j, j])
-            ay = np.atan2(-rotmat[k, i], cy)
-            az = 0.0
-    if parity:
-        ax, ay, az = -ax, -ay, -az
-    if frame:
-        ax, az = az, ax
-    return np.array([ax, ay, az])
+def rotmat_from_rotvec(v):
+    return Rotation.from_rotvec(v).as_matrix().astype(np.float32)
 
 
 def rotmat_between_vecs(v1, v2):
@@ -284,25 +171,18 @@ def rotmat_average(rotmat_list, bandwidth=10):
         return False
     quaternion_list = []
     for rotmat in rotmat_list:
-        quaternion_list.append(quaternion_from_rotmat(rotmat))
-    quat_avg = quaternion_average(quaternion_list, bandwidth=bandwidth)
+        quaternion_list.append(quat_from_rotmat(rotmat))
+    quat_avg = quat_average(quaternion_list, bandwidth=bandwidth)
     rotmat_avg = rotmat_from_quat(quat_avg)
     return rotmat_avg
 
 
-def rotmat_slerp(rotmat0, rotmat1, nval):
-    """
-    :param rotmat0:
-    :param rotmat1:
-    :param nval:
-    :return: 1xnval list of slerped rotmat including rotmat0 and rotmat1
-    """
-    key_rots = R.from_matrix((rotmat0, rotmat1))
+def slerp_rotmat(rotmat0, rotmat1, n):
+    key_rots = Rotation.from_matrix((rotmat0, rotmat1))
     key_times = [0, 1]
     slerp = Slerp(key_times, key_rots)
-    slerp_times = np.linspace(key_times[0], key_times[1], nval)
-    interp_rots = slerp(slerp_times)
-    return interp_rots.as_matrix()
+    slerp_times = np.linspace(key_times[0], key_times[1], n)
+    return slerp(slerp_times).as_matrix().astype(np.float32)
 
 
 ## (4,4) transformation matrix
@@ -447,7 +327,7 @@ def interplate_pos_rotmat(start_pos,
     if n_steps < 2:
         n_steps = 2
     pos_list = np.linspace(start_pos, goal_pos, n_steps)
-    rotmat_list = rotmat_slerp(start_rotmat, goal_rotmat, n_steps)
+    rotmat_list = slerp_rotmat(start_rotmat, goal_rotmat, n_steps)
     return zip(pos_list, rotmat_list)
 
 
@@ -469,7 +349,7 @@ def interplate_pos_rotmat_around_circle(circle_center_pos,
     n_angular_steps = np.ceil(np.pi * 2 / angular_step_length)
     if n_angular_steps < 2:
         n_angular_steps = 2
-    rotmat_list = rotmat_slerp(start_rotmat, end_rotmat, n_angular_steps)
+    rotmat_list = slerp_rotmat(start_rotmat, end_rotmat, n_angular_steps)
     pos_list = []
     for angle in np.linspace(0, np.pi * 2, n_angular_steps).tolist():
         pos_list.append(np.dot(rotmat_from_axangle(circle_normal_ax, angle), vec * radius) + circle_center_pos)
@@ -493,22 +373,17 @@ def interpolate_vectors(start_vector, end_vector, granularity):
 
 
 # quaternion
-def quaternion_from_axangle(angle, axis):
-    """
-    :param angle: radian
-    :param axis: 1x3 nparray
-    author: weiwei
-    date: 20201113
-    """
-    quaternion = np.array([0.0, axis[0], axis[1], axis[2]])
-    qlen, _ = unit_vec(quaternion, return_length=True)
-    if qlen > EPS:
-        quaternion *= np.sin(angle / 2.0) / qlen
-    quaternion[0] = np.cos(angle / 2.0)
-    return quaternion
+def quat_from_rotmat(rotmat):
+    return Rotation.from_matrix(rotmat).as_quat().astype(np.float32)
 
 
-def quaternion_average(quaternion_list, bandwidth=10):
+def quat_from_axangle(ax, angle):
+    ax = np.asarray(ax, dtype=np.float32)
+    rotvec = ax / np.linalg.norm(ax) * angle
+    return Rotation.from_rotvec(rotvec).as_quat().astype(np.float32)
+
+
+def quat_average(quat_list, bandwidth=10):
     """
     average a list of quaternion (nx4)
     this is the full version
@@ -518,12 +393,12 @@ def quaternion_average(quaternion_list, bandwidth=10):
     author: weiwei
     date: 20190422
     """
-    if len(quaternion_list) == 0:
+    if len(quat_list) == 0:
         return False
-    quaternionarray = np.array(quaternion_list)
+    quaternionarray = np.array(quat_list)
     if bandwidth is not None:
         anglelist = []
-        for quaternion in quaternion_list:
+        for quaternion in quat_list:
             anglelist.append([quaternion_to_axangle(quaternion)[0]])
         mt = cluster.MeanShift(bandwidth=bandwidth)
         quaternionarray = quaternionarray[np.where(mt.fit(anglelist).labels_ == 0)]
@@ -544,18 +419,7 @@ def quaternion_average(quaternion_list, bandwidth=10):
     return quatavg
 
 
-def quaternion_to_euler(quaternion, order='sxyz'):
-    """
-    :param rotmat: 3x3 nparray
-    :param order: order
-    :return: radian
-    author: weiwei
-    date: 20190504
-    """
-    return rotmat_to_euler(rotmat_from_quaternion(quaternion), order)
-
-
-def quaternion_from_euler(ai, aj, ak, order='sxyz'):
+def quat_from_euler(ai, aj, ak, order='sxyz'):
     """
     Return quaternion from Euler angles and axis sequence.
     """
@@ -600,50 +464,48 @@ def quaternion_from_euler(ai, aj, ak, order='sxyz'):
     return q
 
 
-def quaternion_about_axis(angle, axis):
-    """
-    Return quaternion for rotation about axis.
-    """
-    q = np.array([0.0, axis[0], axis[1], axis[2]])
-    qlen, _ = unit_vec(q, return_length=True)
-    if qlen > EPS:
-        q *= np.sin(angle / 2.0) / qlen
-    q[0] = np.cos(angle / 2.0)
-    return q
+def rotvec_from_rotmat(rotmat):
+    return Rotation.from_matrix(rotmat).as_rotvec()
 
 
-def quaternion_to_rotmat(quaternion):
-    """
-    Previous implementation is as below, abandoned on 20241108
-    # q = np.array(quaternion, dtype=np.float64, copy=True)
-    # n = np.dot(q, q)
-    # if n < eps:
-    #     return np.identity(4)
-    # q *= np.sqrt(2.0 / n)
-    # q = np.outer(q, q)
-    # return np.array([
-    #     [1.0 - q[2, 2] - q[3, 3], q[1, 2] - q[3, 0], q[1, 3] + q[2, 0]],
-    #     [q[1, 2] + q[3, 0], 1.0 - q[1, 1] - q[3, 3], q[2, 3] - q[1, 0]],
-    #     [q[1, 3] - q[2, 0], q[2, 3] + q[1, 0], 1.0 - q[1, 1] - q[2, 2]]])
-    """
-    return Rotation.from_quat(quaternion).as_matrix()
+def euler_from_quat(quat, order='sxyz'):
+    return euler_from_rotmat(rotmat_from_quat(quat), order)
 
 
-def quaternion_from_rotmat(rotmat):
-    """
-    Previous implementation is as below, abandoned on 20241108
-    # q = np.empty((4,))
-    # t = np.trace(rotmat)
-    # q[0] = t
-    # q[3] = rotmat[1, 0] - rotmat[0, 1]
-    # q[2] = rotmat[0, 2] - rotmat[2, 0]
-    # q[1] = rotmat[2, 1] - rotmat[1, 2]
-    # if q[0] < 0.0:
-    #     np.negative(q, q)
-    # return q
-    """
-    return Rotation.from_matrix(rotmat).as_quat()
-
+def euler_from_rotmat(rotmat, order='sxyz'):
+    try:
+        firstaxis, parity, repetition, frame = _AXES2TUPLE[order.lower()]
+    except (AttributeError, KeyError):
+        _TUPLE2AXES[order]  # validation
+        firstaxis, parity, repetition, frame = order
+    i = firstaxis
+    j = _NEXT_AXIS[i + parity]
+    k = _NEXT_AXIS[i - parity + 1]
+    if repetition:
+        sy = np.sqrt(rotmat[i, j] * rotmat[i, j] + rotmat[i, k] * rotmat[i, k])
+        if sy > eps:
+            ax = np.atan2(rotmat[i, j], rotmat[i, k])
+            ay = np.atan2(sy, rotmat[i, i])
+            az = np.atan2(rotmat[j, i], -rotmat[k, i])
+        else:
+            ax = np.atan2(-rotmat[j, k], rotmat[j, j])
+            ay = np.atan2(sy, rotmat[i, i])
+            az = 0.0
+    else:
+        cy = np.sqrt(rotmat[i, i] * rotmat[i, i] + rotmat[j, i] * rotmat[j, i])
+        if cy > eps:
+            ax = np.atan2(rotmat[k, j], rotmat[k, k])
+            ay = np.atan2(-rotmat[k, i], cy)
+            az = np.atan2(rotmat[j, i], rotmat[i, i])
+        else:
+            ax = np.atan2(-rotmat[j, k], rotmat[j, j])
+            ay = np.atan2(-rotmat[k, i], cy)
+            az = 0.0
+    if parity:
+        ax, ay, az = -ax, -ay, -az
+    if frame:
+        ax, az = az, ax
+    return np.array([ax, ay, az])
 
 def quaternion_multiply(quaternion1, quaternion0):
     """
@@ -689,7 +551,7 @@ def quaternion_imag(quaternion):
     return np.array(quaternion[1:4], dtype=np.float64, copy=True)
 
 
-def quaternion_slerp(quat0, quat1, fraction, spin=0, shortestpath=True):
+def slerp_quat(quat0, quat1, fraction, spin=0, shortestpath=True):
     """
     Return spherical linear interpolation between two quaternions.
     """
@@ -734,7 +596,7 @@ def rand_rotmat():
     """
     Return uniform random rotation matrix.
     """
-    return quaternion_to_rotmat(rand_quaternion())
+    return rotmat_from_quat(rand_quaternion())
 
 
 def skew_symmetric(pos_vec):
@@ -1442,3 +1304,27 @@ def rotmat_from_look_at(pos, look_at, up):
     right /= np.linalg.norm(right)
     up2 = np.cross(right, forward)
     return np.column_stack((right, up2, -forward)).astype(np.float32)
+
+def area_weighted_pca(verts, faces, eps=eps):
+    """area weighted pca for a mesh defined by verts and faces"""
+    v0 = verts[faces[:, 0]]
+    v1 = verts[faces[:, 1]]
+    v2 = verts[faces[:, 2]]
+    centroids = (v0 + v1 + v2) / 3.0      # (M,3)
+    cross = np.cross(v1 - v0, v2 - v0)    # (M,3)
+    areas = np.linalg.norm(cross, axis=1) * 0.5   # (M,)
+    total_area = areas.sum()
+    if total_area < eps:
+        return verts.mean(axis=0), np.array([0., 0., 1.])
+    mean = (centroids * areas[:, None]).sum(axis=0) / total_area
+    diff = centroids - mean        # (M,3)
+    cov = (areas[:, None, None] * (diff[:, :, None] * diff[:, None, :])).sum(axis=0)
+    cov = cov / total_area
+    eig_vals, eig_vecs = np.linalg.eigh(cov)
+    return mean, eig_vecs.astype(np.float32)
+
+def ensure_right_handed(rotmat):
+    """ensure the given rotmat is right-handed"""
+    if np.linalg.det(rotmat) < 0:
+        rotmat[:, 2] *= -1
+    return rotmat.astype(np.float32)

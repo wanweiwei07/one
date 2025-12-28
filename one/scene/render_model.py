@@ -1,13 +1,15 @@
 import numpy as np
+import one.utils.math as rm
 import one.utils.decorator as deco
 import one.utils.constant as const
 import one.scene.geometry as geom
 
 
-class Model:
+class RenderModel:
     """
     rotmat and pos of model is for transforming local geometries
-    scene rotmat and pos should be handled by scene.SceneObject
+    it is intended to be immutable after creation.
+    runtime pose updates must go through SceneObject.node.
     """
 
     def __init__(self,
@@ -31,20 +33,13 @@ class Model:
         self.shader = shader
         self._rotmat = np.eye(3) if rotmat is None else rotmat
         self._pos = np.zeros(3) if pos is None else pos
-        self._tfmat = np.eye(4, dtype=np.float32)
-        self._dirty = True
+        self._tfmat = rm.tfmat_from_rotmat_pos(self._rotmat, self._pos)
 
-    @deco.mark_dirty('_mark_dirty')
-    def set_rotmat_pos(self, rotmat, pos):
-        self._rotmat[:] = rotmat
-        self._pos[:] = pos
-        self._dirty = True
-
-    def clone(self, keep_transform=True):
-        new = Model(
+    def clone(self):
+        new = RenderModel(
             geometry=self.geometry,
-            rotmat=self._rotmat.copy() if keep_transform else np.eye(3, dtype=np.float32),
-            pos=self._pos.copy() if keep_transform else np.zeros(3, dtype=np.float32),
+            rotmat=self._rotmat.copy(),
+            pos=self._pos.copy(),
             rgb=self.rgb,
             alpha=self.alpha,
             shader=self.shader,
@@ -52,37 +47,49 @@ class Model:
         return new
 
     @property
-    def pos(self):
-        return self._pos
-
-    @pos.setter
-    @deco.mark_dirty('_mark_dirty')
-    def pos(self, pos):
-        self._pos = pos
-
-    @property
-    def rotmat(self):
-        return self._rotmat
-
-    @rotmat.setter
-    @deco.mark_dirty('_mark_dirty')
-    def rotmat(self, rotmat):
-        self._rotmat = rotmat
+    @deco.readonly_view
+    def quat(self):
+        return rm.quat_from_rotmat(self._rotmat)
 
     @property
     @deco.readonly_view
-    @deco.lazy_update('_dirty', '_rebuild_tfmat')
+    def pos(self):
+        return self._pos
+
+    @property
+    @deco.readonly_view
+    def rotmat(self):
+        return self._rotmat
+
+    @property
+    @deco.readonly_view
     def tfmat(self):
         return self._tfmat
 
-    def _rebuild_tfmat(self):
-        if not self._dirty:
-            return
-        self._tfmat[:] = np.eye(4, dtype=np.float32)
-        self._tfmat[:3, :3] = self._rotmat
-        self._tfmat[:3, 3] = self._pos
-        self._dirty = False
+    # @deco.mark_dirty('_mark_dirty')
+    # def set_rotmat_pos(self, rotmat, pos):
+    #     self._rotmat[:] = rotmat
+    #     self._pos[:] = pos
+    #     self._dirty = True
 
-    def _mark_dirty(self):
-        if not self._dirty:
-            self._dirty = True
+    # @pos.setter
+    # @deco.mark_dirty('_mark_dirty')
+    # def pos(self, pos):
+    #     self._pos = pos
+
+    # @rotmat.setter
+    # @deco.mark_dirty('_mark_dirty')
+    # def rotmat(self, rotmat):
+    #     self._rotmat = rotmat
+
+    # def _rebuild_tfmat(self):
+    #     if not self._dirty:
+    #         return
+    #     self._tfmat[:] = np.eye(4, dtype=np.float32)
+    #     self._tfmat[:3, :3] = self._rotmat
+    #     self._tfmat[:3, 3] = self._pos
+    #     self._dirty = False
+    #
+    # def _mark_dirty(self):
+    #     if not self._dirty:
+    #         self._dirty = True

@@ -4,11 +4,24 @@ import one.robot_sim.base.kinematic_state as rstate
 import one.robot_sim.base.robot_structure as rstruct
 
 
+# TODO: dataclass, frozen, slots
 class Mounting:
     def __init__(self, child, parent_link, engage_tfmat):
         self.child = child
         self.parent_link = parent_link
         self.engage_tfmat = engage_tfmat
+
+
+# TODO : implement Anchor if needed
+# class Anchor:
+#     def __init__(self, parent_link, local_tfmat=np.eye(4, dtype=np.float32)):
+#         self.parent_link = parent_link
+#         self.local_tfmat = local_tfmat
+#
+#     @property
+#     @deco.readonly_view
+#     def tfmat(self):
+#         return self.parent_link.get_reference_wd_tfmat() @ self.local_tfmat
 
 
 class RobotBase:
@@ -26,6 +39,7 @@ class RobotBase:
 
     def fk(self, qs=None, root_tfmat=None, update=True):
         """
+        TODO: update visual and update collision
         forward kinematics, update cannot be true when root_tfmat is given
         :param qs:
         :param root_tfmat: Allow specifying root (4,4). base_tfmat will be ignored if given.

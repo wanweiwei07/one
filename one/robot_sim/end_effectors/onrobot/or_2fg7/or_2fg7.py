@@ -11,11 +11,17 @@ def get_robot_structure():
     mesh_dir = os.path.join(os.path.dirname(__file__), "meshes")
     # 3 links
     base_link = rstruct.Link.from_file(os.path.join(mesh_dir, "base_link.stl"),
-                                       rgb=const.ExtendedColor.ALUMINUM_ANODIZED)
+                                       local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
+                                       rgb=const.ExtendedColor.ALUMINUM_ANODIZED,
+                                       collision_type=const.CollisionType.AABB)
     left_finger_link = rstruct.Link.from_file(os.path.join(mesh_dir, "inward_left_finger_link.stl"),
-                                              rgb=const.ExtendedColor.DIM_GRAY)
+                                              local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
+                                              rgb=const.ExtendedColor.DIM_GRAY,
+                                              collision_type=const.CollisionType.AABB)
     right_finger_link = rstruct.Link.from_file(os.path.join(mesh_dir, "inward_right_finger_link.stl"),
-                                               rgb=const.ExtendedColor.DIM_GRAY)
+                                              local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
+                                               rgb=const.ExtendedColor.DIM_GRAY,
+                                               collision_type=const.CollisionType.AABB)
     # 1 joint
     joint_bl_lf = rstruct.Joint("joint_bl_lf", joint_type=const.JointType.PRISMATIC,
                                 parent_link=base_link, child_link=left_finger_link,
@@ -29,9 +35,6 @@ def get_robot_structure():
                                 mimic=(joint_bl_lf, -1.0, 0.0),
                                 limit_lower=0.0, limit_upper=0.019)
     # add links
-    base_link.visuals[0].rotmat = rm.rotmat_from_euler(0, 0, np.pi / 2)
-    left_finger_link.visuals[0].rotmat = rm.rotmat_from_euler(0, 0, np.pi / 2)
-    right_finger_link.visuals[0].rotmat = rm.rotmat_from_euler(0, 0, np.pi / 2)
     structure.add_link(base_link)
     structure.add_link(left_finger_link)
     structure.add_link(right_finger_link)

@@ -5,8 +5,8 @@ from one.viewer import world as wd
 from one.scene import scene as scn
 from one.scene import scene_object as sob
 from one.scene import geometry as geom
-from one.scene import primitives as prims
-from one.scene import model as mdl
+from one.scene import scene_object_primitive as prims
+from one.scene import render_model as mdl
 from one.scene import geometry_loader as gldr
 
 from one.utils import constant as const

@@ -157,9 +157,6 @@ uniform mat4 u_proj;
 void main() {
     mat4 model = mat4(i_model0, i_model1, i_model2, i_model3);
     vec4 pos = u_proj * u_view * model * vec4(a_pos, 1.0);
-    mat3 normalMatrix = transpose(inverse(mat3(model)));
-    vec3 norm = normalize(normalMatrix * a_normal);
-    vec4 offset = u_proj * vec4(norm, 0.0);
     float factor = 0.0015 * pos.w;
     gl_Position = u_proj * u_view * model * vec4(a_pos + factor * a_normal, 1.0);
 }

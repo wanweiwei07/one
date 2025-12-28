@@ -9,8 +9,11 @@ import one.robot_sim.base.kinematic_solver as rsolver
 
 class Link(sob.SceneObject):
 
-    def __init__(self, name=None):
-        super().__init__(name=name)
+    def __init__(self, name=None, rotmat=None, pos=None,
+                 collision_type=None, parent_node=None):
+        super().__init__(name=name, rotmat=rotmat, pos=pos,
+                         parent_node=parent_node,
+                         collision_type=collision_type)
         self.parent_joint = None
         self.children_joints = []
 
@@ -30,7 +33,7 @@ class Joint:
                  limit_upper=None):
         """
         :param name:
-        :param joint_type: const.JointType
+        :param joint_type: JointType
         :param parent_link:
         :param child_link:
         :param axis:

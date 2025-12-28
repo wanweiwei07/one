@@ -2,6 +2,7 @@ import numpy as np
 import one.utils.math as rm
 import one.utils.decorator as deco
 
+
 # TODO SceneNode for Scene Graph
 # To be deleted since the system does not rely on a scene graph
 
@@ -59,6 +60,11 @@ class SceneNode:
         self._rotmat = rotmat.astype(np.float32)
         self._pos = pos.astype(np.float32)
         self._mark_dirty()
+
+    @property
+    @deco.readonly_view
+    def quat(self):
+        return rm.quat_from_rotmat(self._rotmat)
 
     @property
     @deco.readonly_view

@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from enum import Enum
+
+
+# color constants
 
 class BasicColor:
     RED = np.array([1.0, 0.0, 0.0], dtype=np.float32)
@@ -95,6 +99,8 @@ class Tab20:
     CYAN_LIGHT = np.array(_C[19], dtype=np.float32)
 
 
+# axes
+
 class AxisColor:
     X = BasicColor.RED
     Y = BasicColor.GREEN
@@ -125,12 +131,23 @@ class StandardAxis:
 class StandardCoord:
     XYZ = np.column_stack((StandardAxis.X, StandardAxis.Y, StandardAxis.Z))
 
+
+# graphics
+
 class ArrowSize:
     HEAD_LENGTH = 0.04
     HEAD_RADIUS = 0.01
     SHAFT_RADIUS = 0.005
 
+# robotics
 class JointType:
     FIXED = 0
     REVOLUTE = 1
     PRISMATIC = 2
+
+class CollisionType:
+    SPHERE = 0
+    CAPSULE = 1
+    AABB = 2
+    OBB = 3
+    MESH = 4

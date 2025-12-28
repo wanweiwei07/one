@@ -9,6 +9,11 @@ class ScreenQuad:
         self.vbo = 0
         self._build()
 
+    def draw(self):
+        gl.glBindVertexArray(self.vao)
+        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
+        gl.glBindVertexArray(0)
+
     def _build(self):
         verts = np.array([
             -1, -1,
@@ -36,9 +41,4 @@ class ScreenQuad:
         gl.glVertexAttribPointer(
             0, 2, gl.GL_FLOAT, False, 2 * 4, ctypes.c_void_p(0)
         )
-        gl.glBindVertexArray(0)
-
-    def draw(self):
-        gl.glBindVertexArray(self.vao)
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6)
         gl.glBindVertexArray(0)

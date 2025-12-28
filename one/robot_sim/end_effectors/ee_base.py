@@ -12,6 +12,15 @@ class EndEffectorBase(rbase.RobotBase):
     def is_engaged(self):
         return self._is_engaged
 
+    @property
+    def toggle_render_collision(self):
+        return self.kin_state.runtime_links[0].toggle_render_collision
+
+    @toggle_render_collision.setter
+    def toggle_render_collision(self, flag=True):
+        for link in self.kin_state.runtime_links:
+            link.toggle_render_collision = flag
+
 
 class GripperMixin:
 
@@ -35,7 +44,7 @@ class GripperMixin:
 
     def release(self, child, jaw_width=None):
         jaw_width = self.jaw_range[1] if jaw_width is None else jaw_width
-        self.set_jaw_width(jaw_width) # TODO jaw_width should increase
+        self.set_jaw_width(jaw_width)  # TODO jaw_width should increase
         self.unmount(child)
 
     def set_jaw_width(self, width):

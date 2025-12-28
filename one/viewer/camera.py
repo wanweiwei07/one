@@ -90,21 +90,6 @@ class Camera(nd.SceneNode):
                                                                  fov=self._fov)).reshape(4, 4).T
         self._proj_dirty = False
 
-    def _mark_proj_dirty(self):
-        self._proj_dirty = True
-
-    def _fix_up_vector(self, pos, look_at, up):
-        fwd_length, fwd = rm.unit_vec(look_at - pos)
-        up_length, up = rm.unit_vec(up)
-        dot_val = np.dot(fwd, up)
-        limit = 0.99 * (fwd_length * up_length)
-        if dot_val > limit:
-            if np.allclose(up, (0, 0, 1)):
-                up = (1, 0, 0)
-            else:
-                up = (0, 0, 1)
-        return up
-
     @nd.SceneNode.rotmat.setter
     def rotmat(self, rotmat):
         """Disable direct setting of rotmat on Camera."""
@@ -165,3 +150,18 @@ class Camera(nd.SceneNode):
     @deco.lazy_update('_proj_dirty', 'update_proj')
     def proj_mat(self):
         return self._proj_mat
+
+    def _mark_proj_dirty(self):
+        self._proj_dirty = True
+
+    def _fix_up_vector(self, pos, look_at, up):
+        fwd_length, fwd = rm.unit_vec(look_at - pos)
+        up_length, up = rm.unit_vec(up)
+        dot_val = np.dot(fwd, up)
+        limit = 0.99 * (fwd_length * up_length)
+        if dot_val > limit:
+            if np.allclose(up, (0, 0, 1)):
+                up = (1, 0, 0)
+            else:
+                up = (0, 0, 1)
+        return up
