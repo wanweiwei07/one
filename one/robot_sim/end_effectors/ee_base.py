@@ -8,6 +8,11 @@ class EndEffectorBase(rbase.RobotBase):
         super().__init__()
         self._is_engaged = False
 
+    def clone(self):
+        new = super().clone()
+        new._is_engaged = self._is_engaged
+        return new
+
     @property
     def is_engaged(self):
         return self._is_engaged

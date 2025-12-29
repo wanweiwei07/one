@@ -1,60 +1,37 @@
-import time
-import builtins
 import numpy as np
 from one import rm, wd, prims, khi_rs007l
 
-base = wd.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
-                toggle_auto_cam_orbit=True)
+base = wd.World(cam_pos=(1.6, .3, .7), cam_lookat_pos=(0, 0, .45),
+                toggle_auto_cam_orbit=False)
+# world origin
 oframe = prims.gen_frame().attach_to(base.scene)
-robot = khi_rs007l.RS007L()
-# robot.attach_to(base.scene)
-# base.run()
-
-robot1 = robot.clone()
-robot1.fk(update=True) # TODO no update
-robot1.base_pos = np.array([0.5, 0, 0])
-robot2 = robot.clone()
-robot2.base_pos = np.array([-0.5, 0, 0])
+base_pos1 = np.array([0, 0.5, 0])
+base_rotmat = rm.rotmat_from_euler(0, 0, -np.pi / 2)
+# robot 1 (left robot)
+robot1 = khi_rs007l.RS007L()
 robot1.attach_to(base.scene)
+robot1.set_base_tfmat_from_rotmat_pos(rotmat=base_rotmat, pos=base_pos1)
+# robot1.toggle_render_collision = True
+# robot 2 (right robot)
+robot2 = robot1.clone()
+base_pos2 = np.array([0, -0.5, 0])
 robot2.attach_to(base.scene)
-base.run()
-
-print((robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
-robot.fk(qs=(robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
-robot.attach_to(base.scene)
-builtins.robot = robot  # for debug access
-builtins.base = base
-
-tgt_rotmat = rm.rotmat_from_euler(rm.pi, 0, 0)
-results = []
-xs = np.linspace(-1, 1, 15)
-ys = np.linspace(-1, 1, 15)
-zs = np.linspace(-1, 1, 15)
-for x in xs:
-    for y in ys:
-        for z in zs:
-            tgt_pos = (x, y, z)
-            prims.gen_frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
-            tic = time.perf_counter_ns()
-            qs, _ = robot.ik_tcp(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat)
-            toc = time.perf_counter_ns()
-            success = qs is not None
-            results.append({
-                "pos": tgt_pos,
-                "success": success,
-                "time_ns": toc - tic,
-                "qs": qs
-            })
-            if success:
-                tmp_robot = robot.clone()
-                tmp_robot.fk(qs=qs)
-                tmp_robot.attach_to(base.scene)
-
-succ = [r for r in results if r["success"]]
-fail = [r for r in results if not r["success"]]
-print("success:", len(succ))
-print("fail:", len(fail))
-print("avg time (ms):",
-      np.mean([r["time_ns"] for r in succ]) / 1e6)
-
+robot2.set_base_tfmat_from_rotmat_pos(rotmat=base_rotmat, pos=base_pos2)
+# robot2.toggle_render_collision = True
+# goal1
+tgt1_rotmat = rm.rotmat_from_euler(-rm.pi / 2, 0, 0)
+tgt1_pos = np.array([0.3, 0, 0.5])
+g1frame = prims.gen_frame(rotmat=tgt1_rotmat, pos=tgt1_pos)
+g1frame.attach_to(base.scene)
+qs1, _ = robot1.ik_tcp(tgt_rotmat=tgt1_rotmat, tgt_pos=tgt1_pos)
+if qs1 is not None:
+    robot1.fk(qs=qs1)
+# goal2
+tgt2_rotmat = rm.rotmat_from_euler(rm.pi / 2, 0, 0)
+tgt2_pos = np.array([0.3, 0, 0.5])
+g2frame = prims.gen_frame(rotmat=tgt2_rotmat, pos=tgt2_pos)
+g2frame.attach_to(base.scene)
+qs2, _ = robot2.ik_tcp(tgt_rotmat=tgt2_rotmat, tgt_pos=tgt2_pos)
+if qs2 is not None:
+    robot2.fk(qs=qs2)
 base.run()

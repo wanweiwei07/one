@@ -208,16 +208,9 @@ def tfmat_from_axangle(ax, angle):
                      [0, 0, 0, 1]], dtype=np.float32)
 
 
-def tfmat_from_rotmat_pos(rotmat=np.eye(3),
-                          pos=np.zeros(3)):
-    """
-    build a (4,4) homogeneous transformation matrix from rotation matrix and position
-    :param rotmat: (1,3)
-    :param pos: (3,3)
-    :return:
-    author: weiwei
-    date: 20190313, 20251128
-    """
+def tfmat_from_rotmat_pos(rotmat=None, pos=None):
+    rotmat = ensure_rotmat(rotmat)
+    pos = ensure_pos(pos)
     tfmat = np.eye(4)
     tfmat[:3, :3] = rotmat
     tfmat[:3, 3] = pos
@@ -1354,13 +1347,4 @@ def ensure_tfmat(tfmat=None):
         return np.eye(4, dtype=np.float32)
     tfmat = np.asarray(tfmat, dtype=np.float32)
     assert tfmat.shape == (4, 4)
-    return tfmat
-
-
-def ensure_tfmat_from_rotmat_pos(rotmat=None, pos=None):
-    rotmat = ensure_rotmat(rotmat)
-    pos = ensure_pos(pos)
-    tfmat = np.eye(4, dtype=np.float32)
-    tfmat[:3, :3] = rotmat
-    tfmat[:3, 3] = pos
     return tfmat

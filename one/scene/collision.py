@@ -7,14 +7,21 @@ import one.scene.render_model as mdl
 
 class CollisionShape:
     def __init__(self, rotmat=None, pos=None):
-        self._rotmat = np.eye(3, dtype=np.float32) if rotmat is None else rotmat
-        self._pos = np.zeros(3, dtype=np.float32) if pos is None else pos
+        self._tfmat = rm.tfmat_from_rotmat_pos(rotmat, pos)
 
     def to_render_model(self):
         raise NotImplementedError
 
     def clone(self):
         raise NotImplementedError
+
+    @property
+    def rotmat(self):
+        return self._tfmat[:3, :3].copy()
+
+    @property
+    def pos(self):
+        return self._tfmat[:3, 3].copy()
 
 
 class SphereCollisionShape(CollisionShape):
@@ -30,17 +37,18 @@ class SphereCollisionShape(CollisionShape):
         return shape
 
     def __init__(self, radius, pos=None):
-        super().__init__(rotmat=np.eye(3, dtype=np.float32), pos=pos)
+        super().__init__(pos=pos)
         self._radius = radius
 
     def clone(self):
         return self.__class__(radius=self._radius,
-                              pos=self._pos.copy())
+                              pos=self.pos)
 
     def to_render_model(self):
         g = gprim.gen_icosphere_geom(radius=self._radius)
-        return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
-                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
+        return mdl.RenderModel(geometry=g, pos=self.pos,
+                               rgb=const.BasicColor.GRAY,
+                               alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
     def radius(self):
@@ -80,12 +88,12 @@ class CapsuleCollisionShape(CollisionShape):
     def clone(self):
         return self.__class__(radius=self._radius,
                               half_length=self._half_length,
-                              rotmat=self._rotmat.copy(),
-                              pos=self._pos.copy())
+                              rotmat=self.rotmat,
+                              pos=self.pos)
 
     def to_render_model(self):
         g = gprim.gen_capsule_geom(radius=self._radius, half_length=self._half_length)
-        return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
+        return mdl.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
                                rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
@@ -110,17 +118,17 @@ class AABBCollisionShape(CollisionShape):
         return shape
 
     def __init__(self, half_extents, pos=None):
-        super().__init__(rotmat=np.eye(3, dtype=np.float32), pos=pos)
+        super().__init__(pos=pos)
         # half_extents: [length/2, width/2, height/2]
         self._half_extents = half_extents
 
     def clone(self):
         return self.__class__(half_extents=self._half_extents,
-                              pos=self._pos.copy())
+                              pos=self.pos)
 
     def to_render_model(self):
         g = gprim.gen_box_geom(half_extents=self._half_extents)
-        return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
+        return mdl.RenderModel(geometry=g, pos=self.pos,
                                rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
@@ -153,12 +161,11 @@ class OBBCollisionShape(CollisionShape):
 
     def clone(self):
         return self.__class__(half_extents=self._half_extents,
-                              rotmat=self._rotmat.copy(),
-                              pos=self._pos.copy())
+                              rotmat=self.rotmat, pos=self.pos)
 
     def to_render_model(self):
         g = gprim.gen_box_geom(half_extents=self._half_extents)
-        return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
+        return mdl.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
                                rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
@@ -176,11 +183,11 @@ class MeshCollisionShape(CollisionShape):
     def clone(self):
         return self.__class__(file_path=self._file_path,
                               geometry=self._geometry,
-                              rotmat=self._rotmat.copy(),
-                              pos=self._pos.copy())
+                              rotmat=self.rotmat,
+                              pos=self.pos)
 
     def to_render_model(self):
-        return mdl.RenderModel(geometry=self._geometry, rotmat=self._rotmat, pos=self._pos,
+        return mdl.RenderModel(geometry=self._geometry, rotmat=self.rotmat, pos=self.pos,
                                rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property

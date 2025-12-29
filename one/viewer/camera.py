@@ -11,11 +11,14 @@ class Camera(nd.SceneNode):
                  pos=(2, 2, 2),
                  look_at=(0, 0, 0),
                  up=(0, 0, 1),
-                 fov=60,
+                 fov=45,
                  aspect=1.7778,
                  near=0.01,
                  far=1000.0,
                  parent=None):
+        pos = rm.ensure_pos(pos)
+        look_at = rm.ensure_pos(look_at)
+
         self._pos = np.asarray(pos, dtype=np.float32)
         self._look_at = np.asarray(look_at, dtype=np.float32)
         self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up),

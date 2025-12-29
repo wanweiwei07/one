@@ -32,10 +32,17 @@ class RobotBase:
         raise NotImplementedError
 
     def __init__(self, base_tfmat=None):
-        self.kin_state = rstate.KinematicState(self.structure, root_tfmat=base_tfmat)
+        self.kin_state = rstate.KinematicState(self.structure, base_tfmat=base_tfmat)
         self.home_qs = np.zeros(self.structure.flat.n_joints, dtype=np.float32)
         self._mountings: dict[object, Mounting] = {}
         self.fk(qs=self.home_qs, update=True)
+
+    def set_base_tfmat_from_rotmat_pos(self, rotmat, pos):
+        tfmat = np.eye(4, dtype=np.float32)
+        tfmat[:3, :3] = rotmat
+        tfmat[:3, 3] = pos
+        self.kin_state.base_tfmat = tfmat
+        self.fk(update=True)
 
     def fk(self, qs=None, update=True):
         """
@@ -95,7 +102,7 @@ class RobotBase:
         parent_tfmat = self.get_link_wd_tfmat(mounting.parent_link)
         child_tfmat = parent_tfmat @ mounting.engage_tfmat
         if isinstance(mounting.child, RobotBase):
-            mounting.child.kin_state.root_tfmat = child_tfmat
+            mounting.child.kin_state.base_tfmat = child_tfmat
             mounting.child.fk(update=True)
         else:
             mounting.child.tfmat = child_tfmat
@@ -123,29 +130,29 @@ class RobotBase:
     @property
     @deco.readonly_view
     def base_tfmat(self):
-        return self.kin_state.root_tfmat
+        return self.kin_state.base_tfmat
 
     @base_tfmat.setter
     def base_tfmat(self, tfmat):
-        self.kin_state.root_tfmat = tfmat
+        self.kin_state.base_tfmat = tfmat
         self.kin_state.fk()
 
     @property
     @deco.readonly_view
     def base_pos(self):
-        return self.kin_state.root_tfmat[:3, 3]
+        return self.kin_state.base_tfmat[:3, 3]
 
     @base_pos.setter
     def base_pos(self, pos):
-        self.kin_state.root_tfmat[:3, 3] = pos
-        self.kin_state.fk()
+        self.kin_state.base_tfmat[:3, 3] = pos
+        self.fk(update=True)
 
     @property
     @deco.readonly_view
     def base_rotmat(self):
-        return self.kin_state.root_tfmat[:3, :3]
+        return self.kin_state.base_tfmat[:3, :3]
 
     @base_rotmat.setter
     def base_rotmat(self, rotmat):
-        self.kin_state.root_tfmat[:3, :3] = rotmat
+        self.kin_state.base_tfmat[:3, :3] = rotmat
         self.kin_state.fk()

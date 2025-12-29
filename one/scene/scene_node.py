@@ -10,18 +10,9 @@ class SceneNode:
 
     def __init__(self, rotmat=None, pos=None, parent=None):
         # local transform
-        if rotmat is None:
-            self._rotmat = np.eye(3, dtype=np.float32)
-        else:
-            self._rotmat = np.asarray(rotmat, dtype=np.float32)
-        if pos is None:
-            self._pos = np.zeros(3, dtype=np.float32)
-        else:
-            self._pos = np.asarray(pos, dtype=np.float32)
+        self._tfmat = rm.tfmat_from_rotmat_pos(rotmat, pos)
         # world transform cache
-        self._wd_rotmat = np.eye(3, dtype=np.float32)
-        self._wd_pos = np.zeros(3, dtype=np.float32)
-        self._wd_tfmat = np.eye(4, dtype=np.float32)
+        self._wd_tfmat = self._tfmat.copy()
         # dirty flag
         self._dirty = True
         # tree structure
@@ -46,70 +37,62 @@ class SceneNode:
         if not self._dirty:
             return
         if self.parent is None:
-            self._wd_rotmat = self._rotmat.copy()
-            self._wd_pos = self._pos.copy()
+            self._wd_tfmat = self._tfmat.copy()
         else:
             self.parent.update()
-            self._wd_rotmat = self.parent._wd_rotmat @ self._rotmat
-            self._wd_pos = self.parent._wd_rotmat @ self._pos + self.parent._wd_pos
-        # update world mat4
-        self._wd_tfmat = rm.tfmat_from_rotmat_pos(self._wd_rotmat, self._wd_pos)
+            self._wd_tfmat = self.parent._wd_tfmat @ self._tfmat
         self._dirty = False
 
     def set_rotmat_pos(self, rotmat, pos):
-        self._rotmat = rotmat.astype(np.float32)
-        self._pos = pos.astype(np.float32)
+        self._tfmat = rm.tfmat_from_rotmat_pos(rotmat, pos)
         self._mark_dirty()
 
     @property
     @deco.readonly_view
     def quat(self):
-        return rm.quat_from_rotmat(self._rotmat)
+        return rm.quat_from_rotmat(self._tfmat[:3, :3])
 
     @property
     @deco.readonly_view
     def pos(self):
-        return self._pos
+        return self._tfmat[:3, 3]
 
     @pos.setter
     @deco.mark_dirty('_mark_dirty')
     def pos(self, value):
-        self._pos = np.asarray(value, dtype=np.float32)
+        self._tfmat[:3, 3] = rm.ensure_pos(value)
 
     @property
     @deco.readonly_view
     def rotmat(self):
-        return self._rotmat
+        return self._tfmat[:3, :3]
 
     @rotmat.setter
     @deco.mark_dirty('_mark_dirty')
     def rotmat(self, value):
-        self._rotmat = np.asarray(value, dtype=np.float32)
+        self._tfmat[:3, :3] = rm.ensure_rotmat(value)
 
     @property
     @deco.readonly_view
     def tfmat(self):
-        tfmat = rm.tfmat_from_rotmat_pos(self._rotmat, self._pos)
-        return tfmat
+        return self._tfmat
 
     @tfmat.setter
     @deco.mark_dirty('_mark_dirty')
     def tfmat(self, value):
-        value = value.astype(np.float32)
-        self._rotmat = value[:3, :3]
-        self._pos = value[:3, 3]
+        self._tfmat = rm.ensure_tfmat(value)
 
     @property
     @deco.lazy_update('_dirty', 'update')
     @deco.readonly_view
     def wd_pos(self):
-        return self._wd_pos
+        return self._wd_tfmat[:3, 3]
 
     @property
     @deco.lazy_update('_dirty', 'update')
     @deco.readonly_view
     def wd_rotmat(self):
-        return self._wd_rotmat
+        return self._wd_tfmat[:3, :3]
 
     @property
     @deco.lazy_update('_dirty', 'update')

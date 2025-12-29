@@ -96,7 +96,7 @@ class RS007L(mbase.ManipulatorBase):
         return get_robot_structure()
 
     def __init__(self, base_rotmat=None, base_pos=None):
-        base_tfmat = rm.ensure_tfmat_from_rotmat_pos(base_rotmat, base_pos)
+        base_tfmat = rm.tfmat_from_rotmat_pos(base_rotmat, base_pos)
         super().__init__(base_tfmat=base_tfmat)
 
     def engage(self, child, engage_tfmat=None, update=True):

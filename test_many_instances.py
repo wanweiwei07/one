@@ -5,7 +5,7 @@ from one import wd, scn, prims
 profiler = cProfile.Profile()
 profiler.enable()
 
-base = wd.World(cam_pos=np.array([.5, 0, 1]),
+base = wd.World(cam_pos=np.array([1.5, 0, 1]),
                 toggle_auto_cam_orbit=True)
 for i in range(2000):
     pos = np.random.rand(3)

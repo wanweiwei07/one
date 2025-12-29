@@ -6,7 +6,6 @@ prims.gen_frame().attach_to(base.scene)
 robot = khi_rs007l.RS007L()
 robot.toggle_render_collision = True
 robot.attach_to(base.scene)
-base.run()
 
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)

@@ -34,7 +34,7 @@ class ManipulatorBase(rbase.RobotBase):
         tgt_tcp_tfmat = rm.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
         qs_active, info = self._solver.ik(
-            root_tfmat=self.kin_state.root_tfmat,
+            root_tfmat=self.kin_state.base_tfmat,
             tgt_romat=tgt_flange_tfmat[:3, :3],
             tgt_pos=tgt_flange_tfmat[:3, 3],
             qs_active_init=qs_active_init)
@@ -42,3 +42,14 @@ class ManipulatorBase(rbase.RobotBase):
             return None, info
         qs_full = self._chain.embed_active_qs(qs_active, self.kin_state.qs)
         return qs_full, info
+
+    def clone(self):
+        new = super().clone()
+        # rebuild manipulator-specific stuff
+        new._tcp_tfmat = self._tcp_tfmat.copy()
+        # structure is the same self.structure also ok
+        new._base_link = new.structure.root_link
+        new._tip_link = new.structure.link_dfs_order[-1]
+        new._chain = new.structure.get_chain(new._base_link, new._tip_link)
+        new._solver = new.structure.get_solver(new._base_link, new._tip_link)
+        return new
