@@ -31,25 +31,22 @@ class RobotBase:
     def _build_structure(cls):
         raise NotImplementedError
 
-    def __init__(self):
-        self.kin_state = rstate.KinematicState(self.structure)
+    def __init__(self, base_tfmat=None):
+        self.kin_state = rstate.KinematicState(self.structure, root_tfmat=base_tfmat)
         self.home_qs = np.zeros(self.structure.flat.n_joints, dtype=np.float32)
         self._mountings: dict[object, Mounting] = {}
         self.fk(qs=self.home_qs, update=True)
 
-    def fk(self, qs=None, root_tfmat=None, update=True):
+    def fk(self, qs=None, update=True):
         """
         TODO: update visual and update collision
         forward kinematics, update cannot be true when root_tfmat is given
         :param qs:
-        :param root_tfmat: Allow specifying root (4,4). base_tfmat will be ignored if given.
         :param update: whether to update the mountings after fk
         :return:
         """
-        wd_lnk_tfmat_arr = self.kin_state.fk(qs, root_tfmat)
+        wd_lnk_tfmat_arr = self.kin_state.fk(qs)
         if update:
-            if root_tfmat is not None:
-                raise ValueError("Cannot update mountings when root_tfmat is given")
             self.update()
         return wd_lnk_tfmat_arr
 
@@ -98,7 +95,7 @@ class RobotBase:
         parent_tfmat = self.get_link_wd_tfmat(mounting.parent_link)
         child_tfmat = parent_tfmat @ mounting.engage_tfmat
         if isinstance(mounting.child, RobotBase):
-            mounting.child.kin_state.base_tfmat = child_tfmat
+            mounting.child.kin_state.root_tfmat = child_tfmat
             mounting.child.fk(update=True)
         else:
             mounting.child.tfmat = child_tfmat
@@ -114,3 +111,41 @@ class RobotBase:
         if cls._structure is None:
             cls._structure = cls._build_structure()
         return cls._structure
+
+    @property
+    def toggle_render_collision(self):
+        return self.kin_state.toggle_render_collision
+
+    @toggle_render_collision.setter
+    def toggle_render_collision(self, flag=True):
+        self.kin_state.toggle_render_collision = flag
+
+    @property
+    @deco.readonly_view
+    def base_tfmat(self):
+        return self.kin_state.root_tfmat
+
+    @base_tfmat.setter
+    def base_tfmat(self, tfmat):
+        self.kin_state.root_tfmat = tfmat
+        self.kin_state.fk()
+
+    @property
+    @deco.readonly_view
+    def base_pos(self):
+        return self.kin_state.root_tfmat[:3, 3]
+
+    @base_pos.setter
+    def base_pos(self, pos):
+        self.kin_state.root_tfmat[:3, 3] = pos
+        self.kin_state.fk()
+
+    @property
+    @deco.readonly_view
+    def base_rotmat(self):
+        return self.kin_state.root_tfmat[:3, :3]
+
+    @base_rotmat.setter
+    def base_rotmat(self, rotmat):
+        self.kin_state.root_tfmat[:3, :3] = rotmat
+        self.kin_state.fk()

@@ -12,16 +12,19 @@ def get_robot_structure():
     # 3 links
     base_link = rstruct.Link.from_file(os.path.join(mesh_dir, "base_link.stl"),
                                        local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
-                                       rgb=const.ExtendedColor.ALUMINUM_ANODIZED,
-                                       collision_type=const.CollisionType.AABB)
+                                       collision_type=const.CollisionType.AABB,
+                                       name="base",
+                                       rgb=const.ExtendedColor.ALUMINUM_ANODIZED)
     left_finger_link = rstruct.Link.from_file(os.path.join(mesh_dir, "inward_left_finger_link.stl"),
                                               local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
-                                              rgb=const.ExtendedColor.DIM_GRAY,
-                                              collision_type=const.CollisionType.AABB)
+                                              collision_type=const.CollisionType.AABB,
+                                              name="inward_left_finger",
+                                              rgb=const.ExtendedColor.DIM_GRAY)
     right_finger_link = rstruct.Link.from_file(os.path.join(mesh_dir, "inward_right_finger_link.stl"),
-                                              local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
-                                               rgb=const.ExtendedColor.DIM_GRAY,
-                                               collision_type=const.CollisionType.AABB)
+                                               local_rotmat=rm.rotmat_from_euler(0, 0, np.pi / 2),
+                                               collision_type=const.CollisionType.AABB,
+                                               name="inward_right_finger",
+                                               rgb=const.ExtendedColor.DIM_GRAY)
     # 1 joint
     joint_bl_lf = rstruct.Joint("joint_bl_lf", joint_type=const.JointType.PRISMATIC,
                                 parent_link=base_link, child_link=left_finger_link,

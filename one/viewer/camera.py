@@ -40,10 +40,10 @@ class Camera(nd.SceneNode):
 
     def orbit(self, axis=(0, 0, 1), angle_rad=np.pi / 360):
         direction = self._pos - self._look_at
-        R = rm.rotmat_from_axangle(axis, angle_rad)
-        direction_rotated = R @ direction
+        rotmat = rm.rotmat_from_axangle(axis, angle_rad)
+        direction_rotated = rotmat @ direction
         self._pos = self._look_at + direction_rotated
-        self._up = (R @ self._up)
+        self._up = (rotmat @ self._up)
         self._up /= np.linalg.norm(self._up)
         self._up = self._fix_up_vector(self._pos, self._look_at, self._up)
         self._dirty = True
@@ -155,6 +155,7 @@ class Camera(nd.SceneNode):
         self._proj_dirty = True
 
     def _fix_up_vector(self, pos, look_at, up):
+        # TODO: elevate to utils.math
         fwd_length, fwd = rm.unit_vec(look_at - pos)
         up_length, up = rm.unit_vec(up)
         dot_val = np.dot(fwd, up)

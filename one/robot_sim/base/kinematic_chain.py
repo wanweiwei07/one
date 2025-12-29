@@ -59,7 +59,5 @@ class KinematicChain:
         if np.any(mimic_flags):
             bad = self.joint_indices[mimic_flags]
             names = [self.structure.joint_reg_order[j].name for j in bad]
-            raise ValueError(
-                "KinematicChain does not support mimic joints. "
-                f"Mimic joints in chain: {names}"
-            )
+            raise ValueError("KinematicChain does not support mimic joints. "
+                             f"Mimic joints in chain: {names}")

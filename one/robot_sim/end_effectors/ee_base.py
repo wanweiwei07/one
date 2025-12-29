@@ -12,15 +12,6 @@ class EndEffectorBase(rbase.RobotBase):
     def is_engaged(self):
         return self._is_engaged
 
-    @property
-    def toggle_render_collision(self):
-        return self.kin_state.runtime_links[0].toggle_render_collision
-
-    @toggle_render_collision.setter
-    def toggle_render_collision(self, flag=True):
-        for link in self.kin_state.runtime_links:
-            link.toggle_render_collision = flag
-
 
 class GripperMixin:
 

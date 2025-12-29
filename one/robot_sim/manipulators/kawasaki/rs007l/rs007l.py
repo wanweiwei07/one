@@ -11,18 +11,29 @@ def get_robot_structure():
     mesh_dir = os.path.join(os.path.dirname(__file__), "meshes")
     # 7 links
     base_link = rstruct.Link.from_file(os.path.join(mesh_dir, "base_link.stl"),
+                                       collision_type=const.CollisionType.AABB,
                                        name="base_link", rgb=const.ExtendedColor.BEIGE)
     link1 = rstruct.Link.from_file(os.path.join(mesh_dir, "link1.stl"),
+                                   collision_type=const.CollisionType.AABB,
                                    name="link1", rgb=const.ExtendedColor.BEIGE)
     link2 = rstruct.Link.from_file(os.path.join(mesh_dir, "link2.stl"),
+                                   collision_type=const.CollisionType.AABB,
+                                   local_rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                    name="link2", rgb=const.ExtendedColor.BEIGE)
     link3 = rstruct.Link.from_file(os.path.join(mesh_dir, "link3.stl"),
+                                   collision_type=const.CollisionType.AABB,
+                                   local_rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                    name="link3", rgb=const.ExtendedColor.BEIGE)
     link4 = rstruct.Link.from_file(os.path.join(mesh_dir, "link4.stl"),
+                                   collision_type=const.CollisionType.AABB,
+                                   local_pos=np.array([0.0, 0.0, 0.3852], dtype=np.float32),
                                    name="link4", rgb=const.ExtendedColor.BEIGE)
     link5 = rstruct.Link.from_file(os.path.join(mesh_dir, "link5.stl"),
+                                   collision_type=const.CollisionType.AABB,
+                                   local_rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                    name="link5", rgb=const.ExtendedColor.BEIGE)
     link6 = rstruct.Link.from_file(os.path.join(mesh_dir, "link6.stl"),
+                                   collision_type=const.CollisionType.AABB,
                                    name="link6", rgb=const.ExtendedColor.BEIGE)
     # 6 joints
     joint_bl_l1 = rstruct.Joint("joint_bl_l1", joint_type=const.JointType.REVOLUTE,
@@ -59,10 +70,6 @@ def get_robot_structure():
                                 rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                 limit_lower=-2 * np.pi, limit_upper=2 * np.pi)
     # add links
-    link2.visuals[0].rotmat = rm.rotmat_from_euler(0, np.pi / 2, 0)
-    link3.visuals[0].rotmat = rm.rotmat_from_euler(0, np.pi / 2, 0)
-    link4.visuals[0].pos = np.array([0.0, 0.0, 0.3852], dtype=np.float32)
-    link5.visuals[0].rotmat = rm.rotmat_from_euler(0, np.pi / 2, 0)
     structure.add_link(base_link)
     structure.add_link(link1)
     structure.add_link(link2)
@@ -88,8 +95,9 @@ class RS007L(mbase.ManipulatorBase):
     def _build_structure(cls):
         return get_robot_structure()
 
-    def __init__(self, base_pos=None, base_rotmat=None):
-        super().__init__()
+    def __init__(self, base_rotmat=None, base_pos=None):
+        base_tfmat = rm.ensure_tfmat_from_rotmat_pos(base_rotmat, base_pos)
+        super().__init__(base_tfmat=base_tfmat)
 
     def engage(self, child, engage_tfmat=None, update=True):
         super().mount(child=child,

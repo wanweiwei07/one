@@ -5,8 +5,8 @@ import one.robot_sim.base.robot_base as rbase
 
 class ManipulatorBase(rbase.RobotBase):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, base_tfmat=None):
+        super().__init__(base_tfmat=base_tfmat)
         self._tcp_tfmat = np.eye(4, dtype=np.float32)
         self._base_link = self.structure.root_link
         self._tip_link = self.structure.link_dfs_order[-1]
@@ -34,6 +34,7 @@ class ManipulatorBase(rbase.RobotBase):
         tgt_tcp_tfmat = rm.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
         qs_active, info = self._solver.ik(
+            root_tfmat=self.kin_state.root_tfmat,
             tgt_romat=tgt_flange_tfmat[:3, :3],
             tgt_pos=tgt_flange_tfmat[:3, 3],
             qs_active_init=qs_active_init)

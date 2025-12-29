@@ -67,7 +67,6 @@ class SceneObject:
                              parent_node=None)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
-
         # inertia / mass / com
         new.mass = self.mass
         new.inertia = None if self.inertia is None else self.inertia.copy()

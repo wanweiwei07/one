@@ -5,10 +5,10 @@ import one.utils.math as rm
 
 class KinematicState:
 
-    def __init__(self, structure, qs=None):
+    def __init__(self, structure, root_tfmat=None, qs=None):
         self.structure = structure
         self.flat = self.structure.flat
-        self.base_tfmat = np.eye(4, dtype=np.float32)
+        self.root_tfmat = rm.ensure_tfmat(root_tfmat)
         if qs is None:
             self.qs = np.zeros(self.flat.n_joints, dtype=np.float32)
         else:
@@ -19,21 +19,17 @@ class KinematicState:
         self.wd_link_tfmat_arr = np.zeros((self.flat.n_links, 4, 4), dtype=np.float32)
         self.runtime_links = []
         for link in structure.link_dfs_order:
-            clone = link.clone()  # clone visual/collision node
-            self.runtime_links.append(clone)
+            self.runtime_links.append(link.clone())
 
     def get_link_reference_wd_tfmat(self, link):
         idx = self.structure.link_dfs_index(link)
         return self.wd_link_tfmat_arr[idx]
 
-    def fk(self, qs=None, root_tfmat=None):
+    def fk(self, qs=None):
         if qs is not None:
             self._set_qs(qs)
         q_resolved = self.flat.resolve_all_qs(self.qs)
-        if root_tfmat is None:
-            self.wd_link_tfmat_arr[self.flat.root_link_idx] = self.base_tfmat
-        else:
-            self.wd_link_tfmat_arr[self.flat.root_link_idx] = root_tfmat
+        self.wd_link_tfmat_arr[self.flat.root_link_idx] = self.root_tfmat
         for lnk in self.structure.link_dfs_order:
             lnk_idx = self.structure.link_dfs_index_map[lnk]
             if lnk_idx == self.flat.root_link_idx:
@@ -59,11 +55,21 @@ class KinematicState:
             scene.remove(link)
 
     def clone(self):
-        new = KinematicState(self.structure)
-        new.qs = self.qs.copy() # TODO base_tfmat
-        new.base_tfmat = self.base_tfmat.copy()
+        # TODO create new kinstate ignores runtime links
+        new = KinematicState(structure=self.structure,
+                             root_tfmat=self.root_tfmat,
+                             qs = self.qs.copy())
         new.wd_link_tfmat_arr = self.wd_link_tfmat_arr.copy()
         return new
+
+    @property
+    def toggle_render_collision(self):
+        return self.runtime_links[0].toggle_render_collision
+
+    @toggle_render_collision.setter
+    def toggle_render_collision(self, flag=True):
+        for link in self.runtime_links:
+            link.toggle_render_collision = flag
 
     def _set_qs(self, values):
         # TODO active qs only (joints with no mimic)

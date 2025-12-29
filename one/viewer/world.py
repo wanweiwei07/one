@@ -59,7 +59,8 @@ class World(pyglet.window.Window):
     def set_scene(self, scene):
         self.scene = scene
 
-    def auto_cam_orbit(self, dt, angle_rad=3.14 / 360.0):
+    def auto_cam_orbit(self, dt, deg_per_sec=5):
+        angle_rad = deg_per_sec * dt * (3.14159265 / 180.0)
         self.camera.orbit(angle_rad=angle_rad)
 
     def schedule_interval(self, function, interval=.01):

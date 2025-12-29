@@ -99,6 +99,15 @@ class Tab20:
     CYAN_LIGHT = np.array(_C[19], dtype=np.float32)
 
 
+class ALPHA:
+    SOLID = 1.0
+    NEAR_SOLID = 0.8
+    SEMI = 0.6
+    LIGHT_SEMI = 0.4
+    TRANSPARENT = 0.3
+    INVISIBLE = 0.0
+
+
 # axes
 
 class AxisColor:
@@ -139,11 +148,13 @@ class ArrowSize:
     HEAD_RADIUS = 0.01
     SHAFT_RADIUS = 0.005
 
+
 # robotics
 class JointType:
     FIXED = 0
     REVOLUTE = 1
     PRISMATIC = 2
+
 
 class CollisionType:
     SPHERE = 0

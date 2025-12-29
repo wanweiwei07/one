@@ -6,7 +6,19 @@ from one import rm, wd, prims, khi_rs007l
 base = wd.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
                 toggle_auto_cam_orbit=True)
 oframe = prims.gen_frame().attach_to(base.scene)
-robot = khi_rs007l.RS007L(base_rotmat=rm.rotmat_from_euler(0,0,-rm.pi/2))
+robot = khi_rs007l.RS007L()
+# robot.attach_to(base.scene)
+# base.run()
+
+robot1 = robot.clone()
+robot1.fk(update=True) # TODO no update
+robot1.base_pos = np.array([0.5, 0, 0])
+robot2 = robot.clone()
+robot2.base_pos = np.array([-0.5, 0, 0])
+robot1.attach_to(base.scene)
+robot2.attach_to(base.scene)
+base.run()
+
 print((robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
 robot.fk(qs=(robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
 robot.attach_to(base.scene)

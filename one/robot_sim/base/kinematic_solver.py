@@ -22,11 +22,12 @@ class KinematicSolver:
         self.limit_lower = chain.limit_lower
         self.limit_upper = chain.limit_upper
 
-    def fk(self, qs_active):
-        _, _, tip_tfmat = self._forward_to_lnk(qs_active)
+    def fk(self, qs_active, root_tfmat):
+        _, _, tip_tfmat = self._forward_to_lnk(qs_active, root_tfmat)
         return tip_tfmat
 
     def ik(self,
+           root_tfmat,
            tgt_romat,
            tgt_pos,
            qs_active_init=None,
@@ -55,7 +56,7 @@ class KinematicSolver:
             qs = np.array(qs_active_init, dtype=np.float32)
             assert qs.shape[0] == self.n_active_jnts
         for it in range(int(max_iter)):
-            _, J, cur_tfmat = self._forward_to_lnk(qs)
+            _, J, cur_tfmat = self._forward_to_lnk(qs, root_tfmat)
             delta_p = tgt_tfmat[:3, 3] - cur_tfmat[:3, 3]
             delta_theta = rm.delta_rotvec_between_rotmats(cur_tfmat[:3, :3],
                                                           tgt_tfmat[:3, :3])
@@ -79,7 +80,7 @@ class KinematicSolver:
             # print(delta_x)
         return qs, {"converged": False, "iters": max_iter, "err": delta_x}
 
-    def _forward_to_lnk(self, qs_active, up_to_link=None, local_point=None):
+    def _forward_to_lnk(self, qs_active, root_tfmat, up_to_link=None, local_point=None):
         assert qs_active.shape[0] == self.n_active_jnts, \
             f"Expected {self.n_active_jnts} active joints, got {len(qs_active)}"
         if up_to_link is None:
@@ -93,12 +94,14 @@ class KinematicSolver:
         q_chain = np.zeros(self.n_jnts)
         q_chain[self._active_pos_in_chain] = qs_active
         wd_lnk_tfmat_arr = np.empty((up_to_pos + 1, 4, 4))
-        wd_lnk_tfmat_arr[0] = np.eye(4)
+        wd_lnk_tfmat_arr[0] = root_tfmat
         wd_jnt_tfmat_arr = np.empty((up_to_pos, 4, 4))
         for k in range(up_to_pos):
             wd_jnt_tfmat_arr[k] = wd_lnk_tfmat_arr[k] @ self._loc_jorig_tfmat[k]
             wd_lnk_tfmat_arr[k + 1] = (wd_jnt_tfmat_arr[k] @
-                                       self._joint_motion_tfmat(self._jtype[k], self._loc_jax[k], q_chain[k]))
+                                       self._joint_motion_tfmat(self._jtype[k],
+                                                                self._loc_jax[k],
+                                                                q_chain[k]))
         if local_point is None:
             wd_p_tgt = wd_lnk_tfmat_arr[-1, :3, 3]
         else:

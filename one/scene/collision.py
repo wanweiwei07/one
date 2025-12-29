@@ -3,7 +3,6 @@ import one.utils.math as rm
 import one.utils.constant as const
 import one.scene.geometry_primitive as gprim
 import one.scene.render_model as mdl
-from enum import Enum
 
 
 class CollisionShape:
@@ -41,7 +40,7 @@ class SphereCollisionShape(CollisionShape):
     def to_render_model(self):
         g = gprim.gen_icosphere_geom(radius=self._radius)
         return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
-                               rgb=const.BasicColor.GRAY, alpha=0.3)
+                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
     def radius(self):
@@ -87,7 +86,7 @@ class CapsuleCollisionShape(CollisionShape):
     def to_render_model(self):
         g = gprim.gen_capsule_geom(radius=self._radius, half_length=self._half_length)
         return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
-                               rgb=const.BasicColor.GRAY, alpha=0.3)
+                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
     def radius(self):
@@ -122,7 +121,7 @@ class AABBCollisionShape(CollisionShape):
     def to_render_model(self):
         g = gprim.gen_box_geom(half_extents=self._half_extents)
         return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
-                               rgb=const.BasicColor.GRAY, alpha=0.3)
+                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
     def half_extents(self):
@@ -160,7 +159,7 @@ class OBBCollisionShape(CollisionShape):
     def to_render_model(self):
         g = gprim.gen_box_geom(half_extents=self._half_extents)
         return mdl.RenderModel(geometry=g, rotmat=self._rotmat, pos=self._pos,
-                               rgb=const.BasicColor.GRAY, alpha=0.3)
+                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
     def half_extents(self):
@@ -182,7 +181,7 @@ class MeshCollisionShape(CollisionShape):
 
     def to_render_model(self):
         return mdl.RenderModel(geometry=self._geometry, rotmat=self._rotmat, pos=self._pos,
-                               rgb=const.BasicColor.GRAY, alpha=0.3)
+                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
 
     @property
     def file_path(self):

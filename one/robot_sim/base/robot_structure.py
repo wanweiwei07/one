@@ -99,9 +99,7 @@ class RobotStructure:
     def get_chain(self, base_link, tip_link):
         key = (base_link, tip_link)
         if key not in self._chains:
-            self._chains[key] = rchain.KinematicChain(
-                self, base_link, tip_link
-            )
+            self._chains[key] = rchain.KinematicChain(self, base_link, tip_link)
         return self._chains[key]
 
     def get_solver(self, base_link, tip_link):

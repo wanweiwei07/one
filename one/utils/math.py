@@ -507,6 +507,7 @@ def euler_from_rotmat(rotmat, order='sxyz'):
         ax, az = az, ax
     return np.array([ax, ay, az])
 
+
 def quaternion_multiply(quaternion1, quaternion0):
     """
     Return multiplication of two quaternions.
@@ -1305,26 +1306,61 @@ def rotmat_from_look_at(pos, look_at, up):
     up2 = np.cross(right, forward)
     return np.column_stack((right, up2, -forward)).astype(np.float32)
 
+
 def area_weighted_pca(verts, faces, eps=eps):
     """area weighted pca for a mesh defined by verts and faces"""
     v0 = verts[faces[:, 0]]
     v1 = verts[faces[:, 1]]
     v2 = verts[faces[:, 2]]
-    centroids = (v0 + v1 + v2) / 3.0      # (M,3)
-    cross = np.cross(v1 - v0, v2 - v0)    # (M,3)
-    areas = np.linalg.norm(cross, axis=1) * 0.5   # (M,)
+    centroids = (v0 + v1 + v2) / 3.0  # (M,3)
+    cross = np.cross(v1 - v0, v2 - v0)  # (M,3)
+    areas = np.linalg.norm(cross, axis=1) * 0.5  # (M,)
     total_area = areas.sum()
     if total_area < eps:
         return verts.mean(axis=0), np.array([0., 0., 1.])
     mean = (centroids * areas[:, None]).sum(axis=0) / total_area
-    diff = centroids - mean        # (M,3)
+    diff = centroids - mean  # (M,3)
     cov = (areas[:, None, None] * (diff[:, :, None] * diff[:, None, :])).sum(axis=0)
     cov = cov / total_area
     eig_vals, eig_vecs = np.linalg.eigh(cov)
     return mean, eig_vecs.astype(np.float32)
+
 
 def ensure_right_handed(rotmat):
     """ensure the given rotmat is right-handed"""
     if np.linalg.det(rotmat) < 0:
         rotmat[:, 2] *= -1
     return rotmat.astype(np.float32)
+
+
+def ensure_rotmat(rotmat=None):
+    if rotmat is None:
+        return np.eye(3, dtype=np.float32)
+    rotmat = np.asarray(rotmat, dtype=np.float32)
+    assert rotmat.shape == (3, 3)
+    return rotmat
+
+
+def ensure_pos(pos=None):
+    if pos is None:
+        return np.zeros(3, dtype=np.float32)
+    pos = np.asarray(pos, dtype=np.float32)
+    assert pos.shape == (3,)
+    return pos
+
+
+def ensure_tfmat(tfmat=None):
+    if tfmat is None:
+        return np.eye(4, dtype=np.float32)
+    tfmat = np.asarray(tfmat, dtype=np.float32)
+    assert tfmat.shape == (4, 4)
+    return tfmat
+
+
+def ensure_tfmat_from_rotmat_pos(rotmat=None, pos=None):
+    rotmat = ensure_rotmat(rotmat)
+    pos = ensure_pos(pos)
+    tfmat = np.eye(4, dtype=np.float32)
+    tfmat[:3, :3] = rotmat
+    tfmat[:3, 3] = pos
+    return tfmat
