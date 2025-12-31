@@ -157,7 +157,7 @@ uniform mat4 u_proj;
 void main() {
     mat4 model = mat4(i_model0, i_model1, i_model2, i_model3);
     vec4 pos = u_proj * u_view * model * vec4(a_pos, 1.0);
-    float factor = 0.0015 * pos.w;
+    float factor = 0.001 * pos.w;
     gl_Position = u_proj * u_view * model * vec4(a_pos + factor * a_normal, 1.0);
 }
 """

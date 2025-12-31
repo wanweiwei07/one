@@ -25,22 +25,16 @@ class MuJoCoEnv:
         substeps = int(round(dt / h))
         for _ in range(substeps):
             mujoco.mj_step(self.model, self.data)
-        # import numpy as np
-        # Rfix = np.array([
-        #     [0, -1, 0],
-        #     [1, 0, 0],
-        #     [0, 0, 1]], dtype=np.float32)
         for obj, bid in self._body_map.items():
-            print(obj.name, "pos:", self.data.xpos[bid], "rotmat:", self.data.xmat[bid].reshape(3, 3))
-            rotmat = self.data.xmat[bid].reshape(3, 3)
-            pos = self.data.xpos[bid]
-            obj.set_rotmat_pos(rotmat, pos)
+            mj_rotmat = self.data.xmat[bid].reshape(3, 3)
+            mj_pos = self.data.xpos[bid]
+            obj.set_rotmat_pos(mj_rotmat, mj_pos)
 
     def _build_from_scene(self):
         self._assets_xml.clear()
         self._bodies_xml.clear()
         self._body_map.clear()
-        for scn_obj in self.scene._scn_objs:
+        for scn_obj in self.scene:
             if not scn_obj.collisions:
                 continue
             assets, body = self._sceneobj_to_mjcf(scn_obj)
@@ -49,7 +43,7 @@ class MuJoCoEnv:
             self._bodies_xml.append(body)
         xml = f"""
                 <mujoco>
-                  <option gravity="0 0 0"/>
+                  <option gravity="0 0 -9.81"/>
                   <option timestep="0.002"/>
                   <asset>
                     {' '.join(self._assets_xml)}
@@ -63,15 +57,20 @@ class MuJoCoEnv:
         self.model = mujoco.MjModel.from_xml_string(xml)
         self.data = mujoco.MjData(self.model)
         for sobj in self.scene:
+            if not sobj.collisions: # TODO: use mass to check
+                continue
             bid = mujoco.mj_name2id(self.model,
                                     mujoco.mjtObj.mjOBJ_BODY,
                                     sobj.name)
+            if bid < 0:
+                raise ValueError(f"Body not found in MuJoCo model: {sobj.name}. "
+                                 f"Did you skip it because collisions is empty?")
             self._body_map[sobj] = bid
 
     def _sceneobj_to_mjcf(self, scn_obj):
         name = scn_obj.name
         pos = scn_obj.pos
-        qw, qx, qy, qz = scn_obj.quat
+        qx, qy, qz, qw = scn_obj.quat
         body_attr = (f'pos="{pos[0]} {pos[1]} {pos[2]}" '
                      f'quat="{qw} {qx} {qy} {qz}"')
         # inertial
@@ -98,7 +97,8 @@ class MuJoCoEnv:
         geoms_str = "\n".join(geoms_xml)
         assets_str = "\n".join(assets_xml)
         joint_xml = ""
-        if self.freejoint_default and not isinstance(c, sco.PlaneCollisionShape):
+        has_plane = any(isinstance(c, sco.PlaneCollisionShape) for c in scn_obj.collisions)
+        if self.freejoint_default and not has_plane:
             joint_xml = "<freejoint/>"
         body_xml = f"""
                     <body name="{name}" {body_attr}>

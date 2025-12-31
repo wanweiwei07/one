@@ -190,7 +190,6 @@ class PlaneCollisionShape(CollisionShape):
 
     def __init__(self, normal=const.StandardAxis.Z, pos=None):
         rotmat = rm.rotmat_between_vecs(const.StandardAxis.Z, normal)
-        print(rotmat)
         super().__init__(rotmat=rotmat, pos=pos)
 
     def clone(self):

@@ -86,17 +86,13 @@ def gen_plane(pos=(0, 0, 0),
               rgb=const.BasicColor.GRAY, alpha=1.0):
     pos = np.asarray(pos, np.float32)
     size = np.asarray(size, np.float32)
-    # visual geometry = thin box in local frame (Z is normal)
-    half_extents = np.array([size[0], size[1], thickness], np.float32)
+    half_extents = np.array([size[0]/2, size[1]/2, thickness], np.float32)
     geometry = gprim.gen_box_geom(half_extents)
-    # scene object
     o = sob.SceneObject(inertia=inertia, com=com, mass=mass,
                         collision_type=collision_type)
-    # visual model
     o.add_visual(mdl.RenderModel(geometry=geometry,
                                  rgb=rgb, alpha=alpha))
     rotmat = rm.rotmat_between_vecs(const.StandardAxis.Z, normal)
-    # set world pose
     o.set_rotmat_pos(rotmat, pos)
     return o
 
