@@ -8,10 +8,15 @@ import one.robot_sim.base.kinematic_solver as rsolver
 
 
 class Link(sob.SceneObject):
+    # TODO: separate link and joints, use external data structure to manage the topology
+    _auto_counter = 0 # maintain new counter for Link class
 
-    def __init__(self, name=None, rotmat=None, pos=None,
+    def __init__(self, rotmat=None, pos=None,
+                 inertia=None, com=None, mass=None,
                  collision_type=None, parent_node=None):
-        super().__init__(name=name, rotmat=rotmat, pos=pos,
+        super().__init__(name=self.auto_name(),
+                         rotmat=rotmat, pos=pos,
+                         inertia=inertia, com=com, mass=mass,
                          parent_node=parent_node,
                          collision_type=collision_type)
         self.parent_joint = None
@@ -75,6 +80,7 @@ class Joint:
 
 
 class RobotStructure:
+    # TODO unify with flat representation
 
     def __init__(self):
         self.links = []
@@ -109,9 +115,17 @@ class RobotStructure:
         return self._solvers[chain]
 
     def add_link(self, link):
+        if link in self.links:
+            return
         self.links.append(link)
 
-    def add_joint(self, joint):
+    def add_joint(self, joint, auto_add_links=True):
+        for link in (joint.parent_link, joint.child_link):
+            if link not in self.links:
+                if auto_add_links:
+                    self.add_link(link)
+                else:
+                    raise RuntimeError("Link not in RobotStructure")
         self.joints.append(joint)
 
     def finalize(self):

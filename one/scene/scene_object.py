@@ -1,5 +1,3 @@
-import os
-import one.utils.math as rm
 import one.utils.constant as const
 import one.scene.render_model as mdl
 import one.scene.scene_node as snd
@@ -8,23 +6,33 @@ import one.scene.collision as sco
 
 
 class SceneObject:
+    _auto_counter = 0 #TODO thread safety
 
     @classmethod
-    def from_file(cls, path,
-                  local_rotmat=None, local_pos=None,
-                  collision_type=None, name=None,
-                  rgb=None, alpha=1.0):
-        instance = cls(name=os.path.basename(path) if name is None else name,
-                       collision_type=collision_type)
+    def auto_name(cls):
+        name = f"{cls.__name__}_{cls._auto_counter}"
+        cls._auto_counter += 1
+        return name
+
+    @classmethod
+    def from_file(cls, path, local_rotmat=None, local_pos=None,  # render model offset
+                  rotmat=None, pos=None,  # scene object pose
+                  inertia=None, com=None, mass=None,
+                  collision_type=None, parent_node=None,
+                  rgb=None, alpha=1.0): #TODO do we expose rotmat/pos of render model here?
+        instance = cls(rotmat=rotmat, pos=pos,
+                       inertia=inertia, com=com, mass=mass,
+                       collision_type=collision_type, parent_node=parent_node)
         instance.file_path = path
         instance.add_visual(mdl.RenderModel(geometry=gldr.load_geometry(path),
                                             rotmat=local_rotmat, pos=local_pos,
                                             rgb=rgb, alpha=alpha))
         return instance
 
-    def __init__(self, name=None, rotmat=None, pos=None,
+    def __init__(self, rotmat=None, pos=None,
+                 inertia=None, com=None, mass=None,
                  collision_type=None, parent_node=None):
-        self.name = name
+        self.name = self.auto_name()
         self.file_path = None
         self.node = snd.SceneNode(rotmat=rotmat, pos=pos, parent=parent_node)
         self.visuals = []
@@ -32,9 +40,9 @@ class SceneObject:
         self.collision_type = collision_type  # None means no auto collision generation
         self.toggle_render_collision = False
         self.scene = None
-        self.inertia = None
-        self.com = None
-        self.mass = None
+        self.inertia = inertia
+        self.com = com
+        self.mass = mass
 
     def attach_to(self, scene):
         scene.add(self)
@@ -52,26 +60,16 @@ class SceneObject:
     def set_rotmat_pos(self, rotmat, pos):
         self.node.set_rotmat_pos(rotmat, pos)
 
-    def clone(self, new_name=None):
-        """
-        Clone the scene object. DOES NOT clone the affiliated scene.
-        :param new_name:
-        :return:
-        author: weiwei
-        date: 20251215
-        """
-        name = new_name if new_name is not None else self.name
-        new = self.__class__(name=name,
-                             rotmat=self.rotmat.copy(),
-                             pos=self.pos.copy(),
+    def clone(self):
+        """DOES NOT clone the affiliated scene."""
+        inertia = self.inertia.copy() if self.inertia is not None else None
+        com = self.com.copy() if self.com is not None else None
+        new = self.__class__(rotmat=self.rotmat.copy(), pos=self.pos.copy(),
+                             inertia=inertia, com=com, mass=self.mass,
                              collision_type=self.collision_type,
                              parent_node=None)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
-        # inertia / mass / com
-        new.mass = self.mass
-        new.inertia = None if self.inertia is None else self.inertia.copy()
-        new.com = None if self.com is None else self.com.copy()
         # clone all visuals
         for m in self.visuals:
             new.add_visual(m.clone())
@@ -159,4 +157,6 @@ class SceneObject:
             shape = sco.AABBCollisionShape.fit_from_model(m)
         elif self.collision_type == const.CollisionType.OBB:
             shape = sco.OBBCollisionShape.fit_from_model(m)
+        elif self.collision_type == const.CollisionType.PLANE:
+            shape = sco.PlaneCollisionShape.fit_from_model(m)
         self.add_collision(shape)

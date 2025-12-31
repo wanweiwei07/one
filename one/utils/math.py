@@ -1348,3 +1348,12 @@ def ensure_tfmat(tfmat=None):
     tfmat = np.asarray(tfmat, dtype=np.float32)
     assert tfmat.shape == (4, 4)
     return tfmat
+
+
+def ensure_rgb(rgb=None):  # TODO make an independent util file
+    from one.utils.constant import BasicColor
+    if rgb is None:
+        return BasicColor.DEFAULT
+    rgb = np.asarray(rgb, dtype=np.float32)
+    assert rgb.shape == (3,)
+    return rgb

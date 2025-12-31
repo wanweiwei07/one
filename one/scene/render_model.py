@@ -7,9 +7,9 @@ import one.scene.geometry as geom
 
 class RenderModel:
     """
-    rotmat and pos of rendermodel is for transforming local geometries
+    rotmat and pos of model is for transforming local geometries
     it is intended to be immutable after creation.
-    runtime pose updates must go through SceneObject.
+    runtime pose updates must go through SceneObject.node.
     """
 
     def __init__(self,
@@ -28,36 +28,65 @@ class RenderModel:
                                           per_vert_rgbs=per_vert_rgbs)
         else:
             self.geometry = geometry
-        self.rgb = const.BasicColor.DEFAULT if rgb is None else rgb
+        self.rgb = rm.ensure_rgb(rgb)
         self.alpha = alpha
         self.shader = shader
-        self._tfmat = rm.tfmat_from_rotmat_pos(rotmat, pos)
+        self._rotmat = rm.ensure_rotmat(rotmat)
+        self._pos = rm.ensure_pos(pos)
+        # cached
+        self._tfmat = rm.tfmat_from_rotmat_pos(self._rotmat, self._pos)
+        self._dirty = True
 
     def clone(self):
-        new = RenderModel(geometry=self.geometry,
-                          rotmat=self.rotmat,
-                          pos=self.pos,
-                          rgb=self.rgb,
-                          alpha=self.alpha,
-                          shader=self.shader)
+        new = self.__class__(geometry=self.geometry,
+                             rotmat=self._rotmat.copy(),
+                             pos=self._pos.copy(),
+                             rgb=self.rgb.copy(),
+                             alpha=self.alpha,
+                             shader=self.shader)
         return new
 
     @property
-    @deco.readonly_view
     def quat(self):
-        return rm.quat_from_rotmat(self.rotmat)
+        # TODO cache?
+        return rm.quat_from_rotmat(self._rotmat)
 
     @property
-    @deco.readonly_view
     def pos(self):
-        return self._tfmat[:3, 3]
+        return self._pos.copy()
+
+    @pos.setter
+    @deco.mark_dirty('_mark_dirty')
+    def pos(self, pos):
+        self._pos[:] = rm.ensure_pos(pos)
 
     @property
-    @deco.readonly_view
     def rotmat(self):
-        return self._tfmat[:3, :3]
+        return self._rotmat.copy()
+
+    @rotmat.setter
+    @deco.mark_dirty('_mark_dirty')
+    def rotmat(self, rotmat):
+        self._rotmat[:] = rm.ensure_rotmat(rotmat)
 
     @property
-    @deco.readonly_view
+    @deco.lazy_update("_dirty", "_rebuild_tfmat")
     def tfmat(self):
-        return self._tfmat
+        return self._tfmat.copy()
+
+    @deco.mark_dirty('_mark_dirty')
+    def set_rotmat_pos(self, rotmat, pos):
+        self._rotmat[:] = rm.ensure_rotmat(rotmat)
+        self._pos[:] = rm.ensure_pos(pos)
+
+    def _rebuild_tfmat(self):
+        if not self._dirty:
+            return
+        self._tfmat[:] = np.eye(4, dtype=np.float32)
+        self._tfmat[:3, :3] = self._rotmat
+        self._tfmat[:3, 3] = self._pos
+        self._dirty = False
+
+    def _mark_dirty(self):
+        if not self._dirty:
+            self._dirty = True

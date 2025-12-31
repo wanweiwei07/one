@@ -16,9 +16,6 @@ class Camera(nd.SceneNode):
                  near=0.01,
                  far=1000.0,
                  parent=None):
-        pos = rm.ensure_pos(pos)
-        look_at = rm.ensure_pos(look_at)
-
         self._pos = np.asarray(pos, dtype=np.float32)
         self._look_at = np.asarray(look_at, dtype=np.float32)
         self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up),
@@ -31,8 +28,8 @@ class Camera(nd.SceneNode):
         self._aspect = aspect  # default 16:9
         self._near = near
         self._far = far
-        # cached matrices
-        self._proj_mat = None
+        # cached
+        self._projmat = None
         self._proj_dirty = True
 
     def set_to(self, pos, look_at, up=None):
@@ -52,14 +49,14 @@ class Camera(nd.SceneNode):
         self._dirty = True
 
     def mouse_orbit(self, dx, dy, sensitivity=0.002):
-        right_axis = self.wd_rotmat[:, 0]
-        up_axis = self.wd_rotmat[:, 1]
+        right_axis = self.wd_tfmat[:3, 0]
+        up_axis = self.wd_tfmat[:3, 1]
         self.orbit(axis=up_axis, angle_rad=-dx * sensitivity)
         self.orbit(axis=right_axis, angle_rad=dy * sensitivity)
 
     def mouse_pan(self, dx, dy, sensitivity=0.0003):
-        right_axis = self.wd_rotmat[:, 0]
-        up_axis = self.wd_rotmat[:, 1]
+        right_axis = self.wd_tfmat[:3, 0]
+        up_axis = self.wd_tfmat[:3, 1]
         self.pos = self.pos - right_axis * dx * sensitivity - up_axis * dy * sensitivity
         self.look_at = self.look_at - right_axis * dx * sensitivity - up_axis * dy * sensitivity
 
@@ -67,31 +64,6 @@ class Camera(nd.SceneNode):
         direction = self.pos - self.look_at
         zoom_amount = delta * sensitivity
         self.pos = self.pos + direction * zoom_amount
-
-    def update(self):
-        """Overwrite Node.update to compute world transforms considering the look_at functionality."""
-        if not self._dirty:
-            return
-        self._rotmat = rm.rotmat_from_look_at(pos=self._pos, look_at=self._look_at, up=self._up)
-        if self.parent is None:
-            self._wd_rotmat = self._rotmat.copy()
-            self._wd_pos = self._pos.copy()
-        else:
-            self.parent.update()
-            self._wd_rotmat = self.parent._wd_rotmat @ self._rotmat
-            self._wd_pos = self.parent._wd_rotmat @ self._pos + self.parent._wd_pos
-        # update world 4x4
-        self._wd_tfmat = rm.tfmat_from_rotmat_pos(self._wd_rotmat, self._wd_pos)
-        self._dirty = False
-
-    def update_proj(self, width=None, height=None):
-        if width is not None and height is not None:
-            self._aspect = width / height
-        self._proj_mat = np.array(pm.Mat4.perspective_projection(aspect=self._aspect,
-                                                                 z_near=self._near,
-                                                                 z_far=self._far,
-                                                                 fov=self._fov)).reshape(4, 4).T
-        self._proj_dirty = False
 
     @nd.SceneNode.rotmat.setter
     def rotmat(self, rotmat):
@@ -145,14 +117,14 @@ class Camera(nd.SceneNode):
 
     # getters for matrices, setting matrices should be done via other methods
     @property
-    @deco.lazy_update('_dirty', 'update')
+    @deco.lazy_update('_dirty', '_rebuild_tfmat')
     def view_mat(self):
         return rm.tfmat_inverse(self._wd_tfmat)
 
     @property
-    @deco.lazy_update('_proj_dirty', 'update_proj')
-    def proj_mat(self):
-        return self._proj_mat
+    @deco.lazy_update('_proj_dirty', '_rebuild_projmat')
+    def projmat(self):
+        return self._projmat
 
     def _mark_proj_dirty(self):
         self._proj_dirty = True
@@ -169,3 +141,22 @@ class Camera(nd.SceneNode):
             else:
                 up = (0, 0, 1)
         return up
+
+    def _rebuild_tfmat(self):
+        if not self._dirty:
+            return
+        self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, self._up),
+                              dtype=np.float32)
+        self._rotmat = rm.rotmat_from_look_at(pos=self._pos,
+                                              look_at=self._look_at,
+                                              up=self._up)
+        super()._rebuild_tfmat()
+
+    def _rebuild_projmat(self, width=None, height=None):
+        if width is not None and height is not None:
+            self._aspect = width / height
+        self._projmat = np.array(pm.Mat4.perspective_projection(aspect=self._aspect,
+                                                                z_near=self._near,
+                                                                z_far=self._far,
+                                                                fov=self._fov)).reshape(4, 4).T
+        self._proj_dirty = False

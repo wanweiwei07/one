@@ -162,3 +162,4 @@ class CollisionType:
     AABB = 2
     OBB = 3
     MESH = 4
+    PLANE = 5

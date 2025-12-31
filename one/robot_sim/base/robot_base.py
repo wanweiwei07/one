@@ -98,15 +98,6 @@ class RobotBase:
         new_obj._mountings = dict(self._mountings)
         return new_obj
 
-    def _update_mounting(self, mounting: Mounting):
-        parent_tfmat = self.get_link_wd_tfmat(mounting.parent_link)
-        child_tfmat = parent_tfmat @ mounting.engage_tfmat
-        if isinstance(mounting.child, RobotBase):
-            mounting.child.kin_state.base_tfmat = child_tfmat
-            mounting.child.fk(update=True)
-        else:
-            mounting.child.tfmat = child_tfmat
-
     @property
     @deco.readonly_view
     def qs(self):
@@ -156,3 +147,12 @@ class RobotBase:
     def base_rotmat(self, rotmat):
         self.kin_state.base_tfmat[:3, :3] = rotmat
         self.kin_state.fk()
+
+    def _update_mounting(self, mounting: Mounting):
+        parent_tfmat = self.get_link_wd_tfmat(mounting.parent_link)
+        child_tfmat = parent_tfmat @ mounting.engage_tfmat
+        if isinstance(mounting.child, RobotBase):
+            mounting.child.kin_state.base_tfmat = child_tfmat
+            mounting.child.fk(update=True)
+        else:
+            mounting.child.tfmat = child_tfmat

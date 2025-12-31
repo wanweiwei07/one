@@ -42,7 +42,7 @@ class World(pyglet.window.Window):
 
     def on_resize(self, width, height):
         gl.glViewport(0, 0, *self.get_framebuffer_size())
-        self.camera.update_proj(width, height)
+        self.camera._rebuild_projmat(width, height)
         self.render_target = rt.RenderTarget(width, height)
 
     def on_draw(self):

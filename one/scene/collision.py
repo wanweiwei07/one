@@ -16,6 +16,10 @@ class CollisionShape:
         raise NotImplementedError
 
     @property
+    def quat(self):
+        return rm.quat_from_rotmat(self._tfmat[:3, :3])
+
+    @property
     def rotmat(self):
         return self._tfmat[:3, :3].copy()
 
@@ -171,6 +175,39 @@ class OBBCollisionShape(CollisionShape):
     @property
     def half_extents(self):
         return self._half_extents
+
+
+class PlaneCollisionShape(CollisionShape):
+    @classmethod
+    def fit_from_model(cls, m):
+        verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
+        faces = m.geometry.faces
+        mean, pcmat = rm.area_weighted_pca(verts, faces)
+        center = mean
+        normal = pcmat[:, 0]
+        shape = cls(normal=normal, pos=center)
+        return shape
+
+    def __init__(self, normal=const.StandardAxis.Z, pos=None):
+        rotmat = rm.rotmat_between_vecs(const.StandardAxis.Z, normal)
+        print(rotmat)
+        super().__init__(rotmat=rotmat, pos=pos)
+
+    def clone(self):
+        return self.__class__(normal=self.rotmat[:, 2], pos=self.pos)
+
+    def to_render_model(self, size=100.0, thickness=1e-3):
+        half_extents = np.array([size, size, thickness], dtype=np.float32)
+        g = gprim.gen_box_geom(half_extents=half_extents)
+        return mdl.RenderModel(geometry=g,
+                               rotmat=self.rotmat,
+                               pos=self.pos,
+                               rgb=const.BasicColor.GRAY,
+                               alpha=const.ALPHA.LIGHT_SEMI)
+
+    @property
+    def normal(self):
+        return self.rotmat[:, 2].copy()
 
 
 class MeshCollisionShape(CollisionShape):

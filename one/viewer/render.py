@@ -19,7 +19,7 @@ class Render:
 
     def draw(self, scene):
         cam_view = self.camera.view_mat.T.flatten()
-        cam_proj = self.camera.proj_mat.T.flatten()
+        cam_proj = self.camera.projmat.T.flatten()
         # rebuild cache if needed
         if scene._dirty or self._groups_cache is None:
             self._groups_cache = self._build_shader_groups(scene)

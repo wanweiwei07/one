@@ -5,8 +5,8 @@ import functools
 def mark_dirty(dirty_method_name):
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(self, value):
-            func(self, value)
+        def wrapper(self, *args, **kwargs):
+            func(self, *args, **kwargs)
             getattr(self, dirty_method_name)()
         return wrapper
     return decorator
