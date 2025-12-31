@@ -6,7 +6,7 @@ import one.scene.collision as sco
 
 
 class SceneObject:
-    _auto_counter = 0 #TODO thread safety
+    _auto_counter = 0  # TODO thread safety
 
     @classmethod
     def auto_name(cls):
@@ -17,11 +17,9 @@ class SceneObject:
     @classmethod
     def from_file(cls, path, local_rotmat=None, local_pos=None,  # render model offset
                   rotmat=None, pos=None,  # scene object pose
-                  inertia=None, com=None, mass=None,
-                  collision_type=None, parent_node=None,
-                  rgb=None, alpha=1.0): #TODO do we expose rotmat/pos of render model here?
-        instance = cls(rotmat=rotmat, pos=pos,
-                       inertia=inertia, com=com, mass=mass,
+                  auto_inertia=False, collision_type=None, parent_node=None,
+                  rgb=None, alpha=1.0):  # TODO do we expose rotmat/pos of render model here?
+        instance = cls(rotmat=rotmat, pos=pos, auto_inertia=auto_inertia,
                        collision_type=collision_type, parent_node=parent_node)
         instance.file_path = path
         instance.add_visual(mdl.RenderModel(geometry=gldr.load_geometry(path),
@@ -29,8 +27,7 @@ class SceneObject:
                                             rgb=rgb, alpha=alpha))
         return instance
 
-    def __init__(self, rotmat=None, pos=None,
-                 inertia=None, com=None, mass=None,
+    def __init__(self, rotmat=None, pos=None, auto_inertia=False,
                  collision_type=None, parent_node=None):
         self.name = self.auto_name()
         self.file_path = None
@@ -40,9 +37,10 @@ class SceneObject:
         self.collision_type = collision_type  # None means no auto collision generation
         self.toggle_render_collision = False
         self.scene = None
-        self.inertia = inertia
-        self.com = com
-        self.mass = mass
+        self.auto_inertia = auto_inertia
+        self.inertia = None
+        self.com = None
+        self.mass = None
 
     def attach_to(self, scene):
         scene.add(self)
@@ -65,11 +63,14 @@ class SceneObject:
         inertia = self.inertia.copy() if self.inertia is not None else None
         com = self.com.copy() if self.com is not None else None
         new = self.__class__(rotmat=self.rotmat.copy(), pos=self.pos.copy(),
-                             inertia=inertia, com=com, mass=self.mass,
+                             auto_inertia=self.auto_inertia,
                              collision_type=self.collision_type,
                              parent_node=None)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
+        self.inertia = inertia
+        self.com = com
+        self.mass = self.mass
         # clone all visuals
         for m in self.visuals:
             new.add_visual(m.clone())

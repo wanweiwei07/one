@@ -11,12 +11,11 @@ class Link(sob.SceneObject):
     # TODO: separate link and joints, use external data structure to manage the topology
     _auto_counter = 0 # maintain new counter for Link class
 
-    def __init__(self, rotmat=None, pos=None,
-                 inertia=None, com=None, mass=None,
+    def __init__(self, rotmat=None, pos=None, auto_inertia=False,
                  collision_type=None, parent_node=None):
         super().__init__(name=self.auto_name(),
                          rotmat=rotmat, pos=pos,
-                         inertia=inertia, com=com, mass=mass,
+                         auto_inertia=auto_inertia,
                          parent_node=parent_node,
                          collision_type=collision_type)
         self.parent_joint = None
