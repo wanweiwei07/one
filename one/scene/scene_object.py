@@ -17,17 +17,18 @@ class SceneObject:
     @classmethod
     def from_file(cls, path, local_rotmat=None, local_pos=None,  # render model offset
                   rotmat=None, pos=None,  # scene object pose
-                  auto_inertia=False, collision_type=None, parent_node=None,
+                  collision_type=None, parent_node=None,
                   rgb=None, alpha=1.0):  # TODO do we expose rotmat/pos of render model here?
-        instance = cls(rotmat=rotmat, pos=pos, auto_inertia=auto_inertia,
+        instance = cls(rotmat=rotmat, pos=pos,
                        collision_type=collision_type, parent_node=parent_node)
         instance.file_path = path
         instance.add_visual(mdl.RenderModel(geometry=gldr.load_geometry(path),
                                             rotmat=local_rotmat, pos=local_pos,
-                                            rgb=rgb, alpha=alpha))
+                                            rgb=rgb, alpha=alpha),
+                            auto_make_collision=True)
         return instance
 
-    def __init__(self, rotmat=None, pos=None, auto_inertia=False,
+    def __init__(self, rotmat=None, pos=None,
                  collision_type=None, parent_node=None):
         self.name = self.auto_name()
         self.file_path = None
@@ -37,10 +38,9 @@ class SceneObject:
         self.collision_type = collision_type  # None means no auto collision generation
         self.toggle_render_collision = False
         self.scene = None
-        self.auto_inertia = auto_inertia
-        self.inertia = None
-        self.com = None
-        self.mass = None
+        self._inertia = None
+        self._com = None
+        self._mass = None
 
     def attach_to(self, scene):
         scene.add(self)
@@ -48,9 +48,10 @@ class SceneObject:
     def remove_from(self, scene):
         scene.remove(self)
 
-    def add_visual(self, model):
+    def add_visual(self, model, auto_make_collision=True):
         self.visuals.append(model)
-        self._auto_make_collision_from_model(model)
+        if auto_make_collision:
+            self._auto_make_collision_from_model(model)
 
     def add_collision(self, model):
         self.collisions.append(model)
@@ -60,24 +61,27 @@ class SceneObject:
 
     def clone(self):
         """DOES NOT clone the affiliated scene."""
-        inertia = self.inertia.copy() if self.inertia is not None else None
-        com = self.com.copy() if self.com is not None else None
         new = self.__class__(rotmat=self.rotmat.copy(), pos=self.pos.copy(),
-                             auto_inertia=self.auto_inertia,
                              collision_type=self.collision_type,
                              parent_node=None)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
-        self.inertia = inertia
-        self.com = com
-        self.mass = self.mass
+        new.set_inertia(self._inertia, self._com, self._mass)
         # clone all visuals
         for m in self.visuals:
-            new.add_visual(m.clone())
+            new.add_visual(m.clone(), auto_make_collision=False)
         # clone collisions if needed
         for c in self.collisions:
             new.add_collision(c.clone())
         return new
+
+    def set_inertia(self, inertia=None, com=None, mass=None):
+        if inertia is not None:
+            self._inertia = inertia.copy()
+        if com is not None:
+            self._com = com.copy()
+        if mass is not None:
+            self._mass = mass
 
     @property
     def quat(self):
@@ -142,6 +146,24 @@ class SceneObject:
         for model in self.visuals:
             model.rgb = (r, g, b)
             model.alpha = a
+
+    @property
+    def inertia(self):
+        if self._inertia is None:
+            return None
+        return self._inertia.copy()
+
+    @property
+    def com(self):
+        if self._com is None:
+            return None
+        return self._com.copy()
+
+    @property
+    def mass(self):
+        if self._mass is None:
+            return None
+        return self._mass
 
     def _auto_make_collision_from_model(self, m):
         if self.collision_type is None or self.collisions:

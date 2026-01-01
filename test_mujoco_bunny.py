@@ -13,7 +13,7 @@ builtins.base = base
 oframe.attach_to(base.scene)
 # bunny.attach_to(base.scene)
 # bunny.pos = (0, 0, 1)
-for i in np.linspace(.5, 10.5, 30):
+for i in np.linspace(.5, 10.5, 50):
     tmp_bunny = bunny.clone()
     tmp_bunny.pos = (0, 0, i)
     tmp_bunny.attach_to(base.scene)

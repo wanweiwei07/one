@@ -57,7 +57,7 @@ class MuJoCoEnv:
         self.model = mujoco.MjModel.from_xml_string(xml)
         self.data = mujoco.MjData(self.model)
         for sobj in self.scene:
-            if not sobj.collisions: # TODO: use mass to check
+            if not sobj.collisions:  # TODO: use mass to check
                 continue
             bid = mujoco.mj_name2id(self.model,
                                     mujoco.mjtObj.mjOBJ_BODY,
@@ -76,16 +76,16 @@ class MuJoCoEnv:
         # inertial
         inertial_xml = ""
         if scn_obj.mass is not None:
-            com = scn_obj.com if scn_obj.com is not None else (0, 0, 0)
+            inertial_xml = f'<inertial mass="{scn_obj.mass}"'
+            if scn_obj.com is not None:
+                com = scn_obj.com
+                inertial_xml = inertial_xml + f' pos="{com[0]} {com[1]} {com[2]}"'
             if scn_obj.inertia is not None:
                 I = scn_obj.inertia
-                inertial_xml = (f'<inertial mass="{scn_obj.mass}" '
-                                f'pos="{com[0]} {com[1]} {com[2]}" '
-                                f'fullinertia="{I[0][0]} {I[1][1]} {I[2][2]} '
-                                f'{I[0][1]} {I[0][2]} {I[1][2]}"/>')
-            else:
-                inertial_xml = (f'<inertial mass="{scn_obj.mass}" '
-                                f'pos="{com[0]} {com[1]} {com[2]}"/>')
+                inertial_xml = inertial_xml + (
+                    f' fullinertia="{I[0][0]} {I[1][1]} {I[2][2]} '
+                    f'{I[0][1]} {I[0][2]} {I[1][2]}"')
+            inertial_xml = inertial_xml + '/>'
         # geoms
         geoms_xml = []
         assets_xml = []
@@ -100,13 +100,11 @@ class MuJoCoEnv:
         has_plane = any(isinstance(c, sco.PlaneCollisionShape) for c in scn_obj.collisions)
         if self.freejoint_default and not has_plane:
             joint_xml = "<freejoint/>"
-        body_xml = f"""
-                    <body name="{name}" {body_attr}>
-                      {joint_xml}
-                      {inertial_xml}
-                      {geoms_str}
-                    </body>
-                    """
+        body_xml = f"""<body name="{name}" {body_attr}>
+                         {joint_xml}
+                         {inertial_xml}
+                         {geoms_str}
+                       </body>"""
         return assets_str, body_xml
 
     def _collision_to_mjcf(self, c):
