@@ -9,13 +9,11 @@ import one.robot_sim.base.kinematic_solver as rsolver
 
 class Link(sob.SceneObject):
     # TODO: separate link and joints, use external data structure to manage the topology
-    _auto_counter = 0 # maintain new counter for Link class
+    _auto_counter = 0  # maintain new counter for Link class
 
-    def __init__(self, rotmat=None, pos=None, auto_inertia=False,
+    def __init__(self, name=None, rotmat=None, pos=None,
                  collision_type=None, parent_node=None):
-        super().__init__(name=self.auto_name(),
-                         rotmat=rotmat, pos=pos,
-                         auto_inertia=auto_inertia,
+        super().__init__(name=name, rotmat=rotmat, pos=pos,
                          parent_node=parent_node,
                          collision_type=collision_type)
         self.parent_joint = None

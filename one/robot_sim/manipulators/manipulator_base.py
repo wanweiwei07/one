@@ -5,8 +5,8 @@ import one.robot_sim.base.robot_base as rbase
 
 class ManipulatorBase(rbase.RobotBase):
 
-    def __init__(self, base_tfmat=None):
-        super().__init__(base_tfmat=base_tfmat)
+    def __init__(self, base_rotmat=None, base_pos=None):
+        super().__init__(base_rotmat=base_rotmat, base_pos=base_pos)
         self._tcp_tfmat = np.eye(4, dtype=np.float32)
         self._base_link = self.structure.root_link
         self._tip_link = self.structure.link_dfs_order[-1]

@@ -21,9 +21,9 @@ class Render:
         cam_view = self.camera.view_mat.T.flatten()
         cam_proj = self.camera.projmat.T.flatten()
         # rebuild cache if needed
-        if scene._dirty or self._groups_cache is None:
+        if scene.dirty or self._groups_cache is None:
             self._groups_cache = self._build_shader_groups(scene)
-            scene._dirty = False
+            scene.dirty = False
         solid_group = self._groups_cache["mesh_solid"]
         transparent_group = self._groups_cache["mesh_transparent"]
         pcd_group = self._groups_cache["pcd"]

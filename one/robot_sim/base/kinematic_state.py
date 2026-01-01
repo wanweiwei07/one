@@ -8,7 +8,7 @@ class KinematicState:
     def __init__(self, structure, base_rotmat=None, base_pos=None, qs=None):
         self.structure = structure
         self.flat = self.structure.flat
-        self.base_rotmat = rm.ensure_tfmat(base_rotmat)
+        self.base_rotmat = rm.ensure_rotmat(base_rotmat)
         self.base_pos = rm.ensure_pos(base_pos)
         if qs is None:
             self.qs = np.zeros(self.flat.n_joints, dtype=np.float32)

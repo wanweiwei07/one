@@ -31,17 +31,15 @@ class RobotBase:
     def _build_structure(cls):
         raise NotImplementedError
 
-    def __init__(self, base_tfmat=None):
-        self.kin_state = rstate.KinematicState(self.structure, base_tfmat=base_tfmat)
+    def __init__(self, base_rotmat=None, base_pos=None):
+        self.kin_state = rstate.KinematicState(self.structure, base_rotmat=base_rotmat, base_pos=base_pos)
         self.home_qs = np.zeros(self.structure.flat.n_joints, dtype=np.float32)
         self._mountings: dict[object, Mounting] = {}
         self.fk(qs=self.home_qs, update=True)
 
-    def set_base_tfmat_from_rotmat_pos(self, rotmat, pos):
-        tfmat = np.eye(4, dtype=np.float32)
-        tfmat[:3, :3] = rotmat
-        tfmat[:3, 3] = pos
-        self.kin_state.base_tfmat = tfmat
+    def set_base_rotmat_pos(self, rotmat, pos):
+        self.kin_state.base_rotmat[:] = rotmat
+        self.kin_state.base_pos[:] = pos
         self.fk(update=True)
 
     def fk(self, qs=None, update=True):
@@ -63,7 +61,8 @@ class RobotBase:
             self._update_mounting(m)
 
     def attach_to(self, scene):
-        return self.kin_state.attach_to(scene)
+        scene.add(self.structure)
+        self.kin_state.attach_to(scene)
 
     def remove_from(self, scene):
         return self.kin_state.remove_from(scene)

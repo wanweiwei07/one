@@ -12,7 +12,6 @@ def update_pose(dt):
         qs = robot.qs + rm.pi / 180
         robot.fk(qs=qs)
 
-
 def spawn_robot(dt):
     new_robot = robot.clone()
     new_robot.attach_to(base.scene)

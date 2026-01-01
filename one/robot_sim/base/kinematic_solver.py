@@ -56,7 +56,7 @@ class KinematicSolver:
             qs = np.array(qs_active_init, dtype=np.float32)
             assert qs.shape[0] == self.n_active_jnts
         for it in range(int(max_iter)):
-            _, J, cur_tfmat = self._forward_to_lnk(qs, root_tfmat)
+            _, jacmat, cur_tfmat = self._forward_to_lnk(qs, root_tfmat)
             delta_p = tgt_tfmat[:3, 3] - cur_tfmat[:3, 3]
             delta_theta = rm.delta_rotvec_between_rotmats(cur_tfmat[:3, :3],
                                                           tgt_tfmat[:3, :3])
@@ -71,7 +71,7 @@ class KinematicSolver:
             if rot_err > rot_step_max:
                 delta_theta = delta_theta / rot_err * rot_step_max
             delta_x = np.concatenate([delta_p, delta_theta]).astype(np.float32)
-            delta_q = np.linalg.lstsq(J, delta_x, rcond=1e-4)[0]
+            delta_q = np.linalg.lstsq(jacmat, delta_x, rcond=1e-4)[0]
             qs = qs + step_scale * delta_q
             # # debug purposes
             # new_robot=robot.clone()
@@ -106,18 +106,18 @@ class KinematicSolver:
             wd_p_tgt = wd_lnk_tfmat_arr[-1, :3, 3]
         else:
             wd_p_tgt = wd_lnk_tfmat_arr[-1, :3, :3] @ local_point + wd_lnk_tfmat_arr[-1, :3, 3]
-        J = np.zeros((6, self.n_active_jnts))
+        jacmat = np.zeros((6, self.n_active_jnts))
         for col, k in enumerate(self._active_pos_in_chain):
             if k >= up_to_pos:
                 continue
             wd_ax_k = wd_jnt_tfmat_arr[k, :3, :3] @ self._loc_jax[k]
             wd_p_k = wd_jnt_tfmat_arr[k, :3, 3]
             if self._jtype[k] == 1:  # REVOLUTE
-                J[3:6, col] = wd_ax_k
-                J[0:3, col] = np.cross(wd_ax_k, wd_p_tgt - wd_p_k)
+                jacmat[3:6, col] = wd_ax_k
+                jacmat[0:3, col] = np.cross(wd_ax_k, wd_p_tgt - wd_p_k)
             elif self._jtype[k] == 2:  # PRISMATIC
-                J[0:3, col] = wd_ax_k
-        return wd_p_tgt.astype(np.float32), J.astype(np.float32), wd_lnk_tfmat_arr[-1].astype(np.float32)
+                jacmat[0:3, col] = wd_ax_k
+        return wd_p_tgt.astype(np.float32), jacmat.astype(np.float32), wd_lnk_tfmat_arr[-1].astype(np.float32)
 
     def _joint_motion_tfmat(self, jnt_type, loc_jnt_ax, q):
         if jnt_type == const.JointType.FIXED:

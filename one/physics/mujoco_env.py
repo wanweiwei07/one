@@ -34,7 +34,7 @@ class MuJoCoEnv:
         self._assets_xml.clear()
         self._bodies_xml.clear()
         self._body_map.clear()
-        for scn_obj in self.scene:
+        for scn_obj in self.scene.objects:
             if not scn_obj.collisions:
                 continue
             assets, body = self._sceneobj_to_mjcf(scn_obj)
@@ -56,7 +56,7 @@ class MuJoCoEnv:
         print(xml)
         self.model = mujoco.MjModel.from_xml_string(xml)
         self.data = mujoco.MjData(self.model)
-        for sobj in self.scene:
+        for sobj in self.scene.objects:
             if not sobj.collisions:  # TODO: use mass to check
                 continue
             bid = mujoco.mj_name2id(self.model,
@@ -67,21 +67,21 @@ class MuJoCoEnv:
                                  f"Did you skip it because collisions is empty?")
             self._body_map[sobj] = bid
 
-    def _sceneobj_to_mjcf(self, scn_obj):
-        name = scn_obj.name
-        pos = scn_obj.pos
-        qx, qy, qz, qw = scn_obj.quat
+    def _sceneobj_to_mjcf(self, sobj):
+        name = sobj.name
+        pos = sobj.pos
+        qx, qy, qz, qw = sobj.quat
         body_attr = (f'pos="{pos[0]} {pos[1]} {pos[2]}" '
                      f'quat="{qw} {qx} {qy} {qz}"')
         # inertial
         inertial_xml = ""
-        if scn_obj.mass is not None:
-            inertial_xml = f'<inertial mass="{scn_obj.mass}"'
-            if scn_obj.com is not None:
-                com = scn_obj.com
+        if sobj.mass is not None:
+            inertial_xml = f'<inertial mass="{sobj.mass}"'
+            if sobj.com is not None:
+                com = sobj.com
                 inertial_xml = inertial_xml + f' pos="{com[0]} {com[1]} {com[2]}"'
-            if scn_obj.inertia is not None:
-                I = scn_obj.inertia
+            if sobj.inertia is not None:
+                I = sobj.inertia
                 inertial_xml = inertial_xml + (
                     f' fullinertia="{I[0][0]} {I[1][1]} {I[2][2]} '
                     f'{I[0][1]} {I[0][2]} {I[1][2]}"')
@@ -89,7 +89,7 @@ class MuJoCoEnv:
         # geoms
         geoms_xml = []
         assets_xml = []
-        for c in scn_obj.collisions:
+        for c in sobj.collisions:
             geom_xml, asset_xml = self._collision_to_mjcf(c)
             geoms_xml.append(geom_xml)
             if asset_xml:
@@ -97,7 +97,7 @@ class MuJoCoEnv:
         geoms_str = "\n".join(geoms_xml)
         assets_str = "\n".join(assets_xml)
         joint_xml = ""
-        has_plane = any(isinstance(c, sco.PlaneCollisionShape) for c in scn_obj.collisions)
+        has_plane = any(isinstance(c, sco.PlaneCollisionShape) for c in sobj.collisions)
         if self.freejoint_default and not has_plane:
             joint_xml = "<freejoint/>"
         body_xml = f"""<body name="{name}" {body_attr}>

@@ -9,17 +9,20 @@ class SceneObject:
     _auto_counter = 0  # TODO thread safety
 
     @classmethod
-    def auto_name(cls):
-        name = f"{cls.__name__}_{cls._auto_counter}"
+    def auto_name(cls, flag_str=None):
+        if flag_str is not None:
+            name = f"{cls.__name__}_{flag_str}_{cls._auto_counter}"
+        else:
+            name = f"{cls.__name__}_{cls._auto_counter}"
         cls._auto_counter += 1
         return name
 
     @classmethod
-    def from_file(cls, path, local_rotmat=None, local_pos=None,  # render model offset
+    def from_file(cls, path, name=None, local_rotmat=None, local_pos=None,  # render model offset
                   rotmat=None, pos=None,  # scene object pose
                   collision_type=None, parent_node=None,
                   rgb=None, alpha=1.0):  # TODO do we expose rotmat/pos of render model here?
-        instance = cls(rotmat=rotmat, pos=pos,
+        instance = cls(name=name, rotmat=rotmat, pos=pos,
                        collision_type=collision_type, parent_node=parent_node)
         instance.file_path = path
         instance.add_visual(mdl.RenderModel(geometry=gldr.load_geometry(path),
@@ -28,9 +31,9 @@ class SceneObject:
                             auto_make_collision=True)
         return instance
 
-    def __init__(self, rotmat=None, pos=None,
+    def __init__(self, name=None, rotmat=None, pos=None,
                  collision_type=None, parent_node=None):
-        self.name = self.auto_name()
+        self.name = self.auto_name(flag_str=name)
         self.file_path = None
         self.node = snd.SceneNode(rotmat=rotmat, pos=pos, parent=parent_node)
         self.visuals = []
