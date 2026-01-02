@@ -10,8 +10,8 @@ bunny.rgb = const.ExtendedColor.PINK
 base = wd.World(cam_pos=(3.5, 1, 3.5), cam_lookat_pos=(0, 0, .5), toggle_auto_cam_orbit=False)
 builtins.base = base
 oframe.attach_to(base.scene)
-# bunny.attach_to(base.scene)
-for i in np.linspace(.5, 10.5, 50):
+bunny.attach_to(base.scene)
+for i in np.linspace(1.5, 15.5, 50):
     tmp_bunny = bunny.clone()
     tmp_bunny.pos = (.5, 0, i)
     tmp_bunny.attach_to(base.scene)
@@ -19,22 +19,26 @@ for i in np.linspace(.5, 10.5, 50):
 plane_bottom = prims.gen_plane()
 plane_bottom.toggle_render_collision = True
 plane_bottom.attach_to(base.scene)
-plane_left = prims.gen_plane(pos=(.5, .35, 0), size=(.7, .7),
-                             normal=-const.StandardAxis.Y,
-                             alpha=const.ALPHA.TRANSPARENT)
-plane_left.attach_to(base.scene)
-plane_right = prims.gen_plane(pos=(.5, -.35, 0), size=(.7, .7),
-                              normal=const.StandardAxis.Y,
-                              alpha=const.ALPHA.TRANSPARENT)
-plane_right.attach_to(base.scene)
-plane_front = prims.gen_plane(pos=(.85, 0, 0), size=(.7, .7),
-                              normal=-const.StandardAxis.X,
-                              alpha=const.ALPHA.TRANSPARENT)
-plane_front.attach_to(base.scene)
-plane_back = prims.gen_plane(pos=(.15, 0, 0), size=(.7, .7),
-                             normal=const.StandardAxis.X,
-                             alpha=const.ALPHA.TRANSPARENT)
-plane_back.attach_to(base.scene)
+wall_left = prims.gen_box(pos=(.5, .35, .2),
+                          half_extents=(.3, .005, .15),
+                          collision_type=const.CollisionType.AABB,
+                          alpha=const.ALPHA.SOLID)
+wall_left.attach_to(base.scene)
+wall_right = prims.gen_box(pos=(.5, -.35, .2),
+                           half_extents=(.3, .005, .15),
+                           collision_type=const.CollisionType.AABB,
+                           alpha=const.ALPHA.SOLID)
+wall_right.attach_to(base.scene)
+wall_front = prims.gen_box(pos=(.85, 0, .2),
+                           half_extents=(.005, .3, .15),
+                           collision_type=const.CollisionType.AABB,
+                           alpha=const.ALPHA.SOLID)
+wall_front.attach_to(base.scene)
+wall_back = prims.gen_box(pos=(.15, 0, .2),
+                          half_extents=(.005, .3, .15),
+                          collision_type=const.CollisionType.AABB,
+                          alpha=const.ALPHA.SOLID)
+wall_back.attach_to(base.scene)
 
 # robot
 base_rotmat = rm.rotmat_from_euler(0, 0, -np.pi / 2)
@@ -42,7 +46,11 @@ base_pos = np.array([0, 0.7, 0])
 robot1 = khi_rs007l.RS007L()
 robot1.attach_to(base.scene)
 robot1.set_base_rotmat_pos(rotmat=base_rotmat, pos=base_pos)
+robot1.toggle_render_collision = True
+robot1.fk(qs=[0, 0, -np.pi / 4, 0, 0, 0])
 
 mjenv = mj.MuJoCoEnv(scene=base.scene)
+mjenv.sync_mechstates_to_mujoco()
+mjenv.save_xml("scene.xml")
 base.schedule_interval(mjenv.step)
 base.run()

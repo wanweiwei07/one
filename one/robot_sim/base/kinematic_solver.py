@@ -7,27 +7,27 @@ class KinematicSolver:
     """Solver for one chain"""
 
     def __init__(self, structure, chain):
-        self.structure = structure
-        self.flat = structure.flat
+        self._compiled = structure._compiled
         self.chain = chain
         # cache per-joint constants for chain joints (ordered base->tip)
-        self._jids_in_robot = chain.joint_indices
-        self._loc_jorig_tfmat = self.flat.joint_origin_tfmat[self._jids_in_robot]  # (m,4,4)
-        self._loc_jax = self.flat.joint_axis[self._jids_in_robot]  # (m,3)
-        self._jtype = self.flat.joint_type[self._jids_in_robot]  # (m,)
+        self._jnt_ids = chain.jnt_ids
+        self._loc_jnt_origin_tfmats = self._compiled.jotfmat_by_idx[self._jnt_ids]  # (m,4,4)
+        self._loc_jnt_axes = self._compiled.jax_by_idx[self._jnt_ids]  # (m,3)
+        self._jnt_types = self._compiled.jtypes_by_idx[self._jnt_ids]  # (m,)
         # active subset mapping: chain-index -> active-index
         self._active_mask = chain.active_mask
         self._active_pos_in_chain = np.nonzero(self._active_mask)[0].astype(np.int32)
         # joint limits
-        self.limit_lower = chain.limit_lower
-        self.limit_upper = chain.limit_upper
+        self.lmt_low = chain.lmt_low
+        self.lmt_up = chain.lmt_up
 
     def fk(self, qs_active, root_tfmat):
         _, _, tip_tfmat = self._forward_to_lnk(qs_active, root_tfmat)
         return tip_tfmat
 
     def ik(self,
-           root_tfmat,
+           root_rotmat,
+           root_pos,
            tgt_romat,
            tgt_pos,
            qs_active_init=None,
@@ -49,9 +49,10 @@ class KinematicSolver:
         :param rot_step_max: parameter for trust region
         :return:
         """
+        root_tfmat = rm.tfmat_from_rotmat_pos(root_rotmat, root_pos)
         tgt_tfmat = rm.tfmat_from_rotmat_pos(tgt_romat, tgt_pos)
         if qs_active_init is None:
-            qs = (self.limit_lower + self.limit_upper) * 0.5
+            qs = (self.lmt_low + self.lmt_up) * 0.5
         else:
             qs = np.array(qs_active_init, dtype=np.float32)
             assert qs.shape[0] == self.n_active_jnts
@@ -84,7 +85,7 @@ class KinematicSolver:
         assert qs_active.shape[0] == self.n_active_jnts, \
             f"Expected {self.n_active_jnts} active joints, got {len(qs_active)}"
         if up_to_link is None:
-            tgt_lnk_idx = self.chain.tip_link_idx
+            tgt_lnk_idx = self.chain.tip_lnk_idx
         else:
             tgt_lnk_idx = self.structure.link_dfs_index(up_to_link)
         try:
@@ -97,11 +98,11 @@ class KinematicSolver:
         wd_lnk_tfmat_arr[0] = root_tfmat
         wd_jnt_tfmat_arr = np.empty((up_to_pos, 4, 4))
         for k in range(up_to_pos):
-            wd_jnt_tfmat_arr[k] = wd_lnk_tfmat_arr[k] @ self._loc_jorig_tfmat[k]
+            wd_jnt_tfmat_arr[k] = wd_lnk_tfmat_arr[k] @ self._loc_jnt_origin_tfmats[k]
             wd_lnk_tfmat_arr[k + 1] = (wd_jnt_tfmat_arr[k] @
-                                       self._joint_motion_tfmat(self._jtype[k],
-                                                                self._loc_jax[k],
-                                                                q_chain[k]))
+                                       self._jnt_motion_tfmat(self._jnt_types[k],
+                                                              self._loc_jnt_axes[k],
+                                                              q_chain[k]))
         if local_point is None:
             wd_p_tgt = wd_lnk_tfmat_arr[-1, :3, 3]
         else:
@@ -110,27 +111,27 @@ class KinematicSolver:
         for col, k in enumerate(self._active_pos_in_chain):
             if k >= up_to_pos:
                 continue
-            wd_ax_k = wd_jnt_tfmat_arr[k, :3, :3] @ self._loc_jax[k]
+            wd_ax_k = wd_jnt_tfmat_arr[k, :3, :3] @ self._loc_jnt_axes[k]
             wd_p_k = wd_jnt_tfmat_arr[k, :3, 3]
-            if self._jtype[k] == 1:  # REVOLUTE
+            if self._jnt_types[k] == 1:  # REVOLUTE
                 jacmat[3:6, col] = wd_ax_k
                 jacmat[0:3, col] = np.cross(wd_ax_k, wd_p_tgt - wd_p_k)
-            elif self._jtype[k] == 2:  # PRISMATIC
+            elif self._jnt_types[k] == 2:  # PRISMATIC
                 jacmat[0:3, col] = wd_ax_k
         return wd_p_tgt.astype(np.float32), jacmat.astype(np.float32), wd_lnk_tfmat_arr[-1].astype(np.float32)
 
-    def _joint_motion_tfmat(self, jnt_type, loc_jnt_ax, q):
-        if jnt_type == const.JointType.FIXED:
+    def _jnt_motion_tfmat(self, jnt_type, loc_jnt_ax, q):
+        if jnt_type == const.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
-        if jnt_type == const.JointType.REVOLUTE:
+        if jnt_type == const.JntType.REVOLUTE:
             return rm.tfmat_from_rotmat_pos(rotmat=rm.rotmat_from_axangle(loc_jnt_ax, q))
-        if jnt_type == const.JointType.PRISMATIC:
+        if jnt_type == const.JntType.PRISMATIC:
             return rm.tfmat_from_rotmat_pos(pos=loc_jnt_ax * q)
         raise TypeError(f"Unknown joint type: {jnt_type}")
 
     @property
     def n_jnts(self):
-        return len(self._jids_in_robot)
+        return len(self._jnt_ids)
 
     @property
     def n_active_jnts(self):

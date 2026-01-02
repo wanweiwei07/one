@@ -150,7 +150,7 @@ class ArrowSize:
 
 
 # robotics
-class JointType:
+class JntType:
     FIXED = 0
     REVOLUTE = 1
     PRISMATIC = 2
@@ -163,3 +163,16 @@ class CollisionType:
     OBB = 3
     MESH = 4
     PLANE = 5
+
+class DefaultPhy:
+    INERTIA = np.eye(3, dtype=np.float32)
+    COM = np.zeros(3, dtype=np.float32)
+    MASS = 1.0  # kg
+    DENSITY = 1000.0  # kg/m3
+    FRICTION = 0.5
+    RESTITUTION = 0.0
+    LINEAR_DAMPING = 0.01
+    ANGULAR_DAMPING = 0.01
+    SLEEP_VELOCITY = 0.01
+    SLEEP_ANGULAR_VELOCITY = 0.01
+    SLEEP_TIME = 0.5  # seconds

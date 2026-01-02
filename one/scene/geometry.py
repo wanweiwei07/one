@@ -32,11 +32,12 @@ class Geometry:
         v1 = self.verts[self.faces[:, 1]] - self.verts[self.faces[:, 0]]
         v2 = self.verts[self.faces[:, 2]] - self.verts[self.faces[:, 0]]
         raw_fns = np.cross(v1, v2).astype(np.float32)
+        _, unit_fns = rm.unit_vec(raw_fns)
         # vert normals
         vns = np.zeros_like(self.verts)
-        np.add.at(vns, self.faces[:, 0], raw_fns)
-        np.add.at(vns, self.faces[:, 1], raw_fns)
-        np.add.at(vns, self.faces[:, 2], raw_fns)
+        np.add.at(vns, self.faces[:, 0], unit_fns)
+        np.add.at(vns, self.faces[:, 1], unit_fns)
+        np.add.at(vns, self.faces[:, 2], unit_fns)
         _, vns = rm.unit_vec(vns)
         return vns
 

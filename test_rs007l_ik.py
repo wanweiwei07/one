@@ -7,8 +7,8 @@ base = wd.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
                 toggle_auto_cam_orbit=True)
 oframe = prims.gen_frame().attach_to(base.scene)
 robot = khi_rs007l.RS007L(base_rotmat=rm.rotmat_from_euler(0,0,-rm.pi/2))
-print((robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
-robot.fk(qs=(robot._solver.limit_lower + robot._solver.limit_upper) * 0.5)
+print((robot._solver.lmt_low + robot._solver.lmt_up) * 0.5)
+robot.fk(qs=(robot._solver.lmt_low + robot._solver.lmt_up) * 0.5)
 robot.attach_to(base.scene)
 builtins.robot = robot  # for debug access
 builtins.base = base

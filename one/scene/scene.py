@@ -1,58 +1,62 @@
 from one.scene.scene_object import SceneObject
-from one.robot_sim.base.robot_structure import Link
-from one.robot_sim.base.robot_structure import RobotStructure
+from one.robot_sim.base.mech_structure import Link
+from one.robot_sim.base.mech_state import MechState
 
 
 class Scene:
 
     def __init__(self):
         self.dirty = True  # shader group needs update
-        self._scene_objects = []
-        self._links = []
-        self._robot_structures = []
+        self._sobjs = []
+        self._lnks = []
+        self._states = []
 
-    def __iter__(self):
-        yield from self._scene_objects
-        yield from self._links
+    def __iter__(self): # for rendering order
+        yield from self._sobjs
+        yield from self._lnks
 
-    def __getitem__(self, key):
-        if key < len(self._scene_objects):
-            return self._scene_objects[key]
+    def __getitem__(self, key): # for rendering order
+        if key < len(self._sobjs):
+            return self._sobjs[key]
         else:
-            return self._links[key - len(self._scene_objects)]
+            return self._lnks[key - len(self._sobjs)]
 
     def add(self, entity):
-        if isinstance(entity, Link):
-            if entity not in self._links:
-                self._links.append(entity)
+        if isinstance(entity, SceneObject):
+            if entity not in self._sobjs:
+                self._sobjs.append(entity)
                 entity.scene = self
-        elif isinstance(entity, SceneObject):
-            if entity not in self._scene_objects:
-                self._scene_objects.append(entity)
-                entity.scene = self
-        elif isinstance(entity, RobotStructure):
-            self._robot_structures.append(entity)
+        elif isinstance(entity, MechState):
+            self._states.append(entity)
+            for lnk in entity.runtime_lnks:
+                if lnk not in self._lnks:
+                    self._lnks.append(lnk)
+                    lnk.scene = self
         else:
             raise TypeError(f"Unsupported type: {type(entity)}")
         self.dirty = True
 
     def remove(self, entity):
         if isinstance(entity, SceneObject):
-            if entity in self._scene_objects:
-                self._scene_objects.remove(entity)
+            if entity in self._sobjs:
+                self._sobjs.remove(entity)
                 entity.scene = None
-        elif isinstance(entity, Link):
-            if entity in self._links:
-                self._links.remove(entity)
-        elif isinstance(entity, RobotStructure):
-            if entity in self._robot_structures:
-                self._robot_structures.remove(entity)
+        elif isinstance(entity, MechState):
+            for lnk in entity.runtime_lnks:
+                if lnk in self._lnks:
+                    self._lnks.remove(lnk)
+            if entity in self._states:
+                self._states.remove(entity)
         self.dirty = True
 
     @property
-    def objects(self):
-        return tuple(self._scene_objects)
+    def sobjs(self):
+        return tuple(self._sobjs)
 
     @property
-    def links(self):
-        return tuple(self._links)
+    def lnks(self):
+        return tuple(self._lnks)
+
+    @property
+    def states(self):
+        return tuple(self._states)

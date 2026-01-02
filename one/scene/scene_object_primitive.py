@@ -68,12 +68,12 @@ def gen_box(pos=(0, 0, 0), half_extents=(0.05, 0.05, 0.05),
             collision_type=None, rgb=const.BasicColor.DEFAULT, alpha=1.0):
     half_extents = np.asarray(half_extents, np.float32)
     geometry = gprim.gen_box_geom(half_extents)
-    o = sob.SceneObject(inertia=inertia, com=com, mass=mass,
+    o = sob.SceneObject(rotmat=rm.ensure_rotmat(rotmat),
+                        pos=rm.ensure_pos(pos),
                         collision_type=collision_type)
     o.add_visual(mdl.RenderModel(geometry=geometry,
                                  rgb=rgb, alpha=alpha))
-    o.pos = pos
-    o.rotmat = rm.ensure_rotmat(rotmat)
+    o.set_inertia(inertia, com, mass)
     return o
 
 
@@ -85,7 +85,7 @@ def gen_plane(pos=(0, 0, 0),
               rgb=const.BasicColor.GRAY, alpha=1.0):
     pos = np.asarray(pos, np.float32)
     size = np.asarray(size, np.float32)
-    half_extents = np.array([size[0]/2, size[1]/2, thickness], np.float32)
+    half_extents = np.array([size[0] / 2, size[1] / 2, thickness], np.float32)
     geometry = gprim.gen_box_geom(half_extents)
     o = sob.SceneObject(collision_type=collision_type)
     o.add_visual(mdl.RenderModel(geometry=geometry,

@@ -1,19 +1,21 @@
 import numpy as np
 import one.utils.math as rm
-import one.robot_sim.base.robot_base as rbase
+import one.robot_sim.base.mech_base as rbase
 
 
-class ManipulatorBase(rbase.RobotBase):
+class ManipulatorBase(rbase.MechBase):
 
     def __init__(self, base_rotmat=None, base_pos=None):
         super().__init__(base_rotmat=base_rotmat, base_pos=base_pos)
         self._tcp_tfmat = np.eye(4, dtype=np.float32)
-        self._base_link = self.structure.root_link
-        self._tip_link = self.structure.link_dfs_order[-1]
-        self._chain = self.structure.get_chain(self._base_link,
-                                               self._tip_link)
-        self._solver = self.structure.get_solver(self._base_link,
-                                                 self._tip_link)
+        self._root_lnk = self.structure._compiled.root_lnk
+        if len(self.structure._compiled.tip_lnks) != 1:
+            raise ValueError("ManipulatorBase must have a single tip.")
+        self._tip_lnk = self.structure._compiled.tip_lnks[0]
+        self._chain = self.structure.get_chain(self._root_lnk,
+                                               self._tip_lnk)
+        self._solver = self.structure.get_solver(self._root_lnk,
+                                                 self._tip_lnk)
 
     def set_tcp(self, rotmat=None, pos=None, tfmat=None):
         if tfmat is not None:
@@ -34,13 +36,14 @@ class ManipulatorBase(rbase.RobotBase):
         tgt_tcp_tfmat = rm.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
         qs_active, info = self._solver.ik(
-            root_tfmat=self.kin_state.base_tfmat,
+            root_rotmat=self.state.base_rotmat,
+            root_pos=self.state.base_pos,
             tgt_romat=tgt_flange_tfmat[:3, :3],
             tgt_pos=tgt_flange_tfmat[:3, 3],
             qs_active_init=qs_active_init)
         if not info["converged"]:
             return None, info
-        qs_full = self._chain.embed_active_qs(qs_active, self.kin_state.qs)
+        qs_full = self._chain.embed_active_qs(qs_active, self.state.qs)
         return qs_full, info
 
     def clone(self):
@@ -48,8 +51,8 @@ class ManipulatorBase(rbase.RobotBase):
         # rebuild manipulator-specific stuff
         new._tcp_tfmat = self._tcp_tfmat.copy()
         # structure is the same self.structure also ok
-        new._base_link = new.structure.root_link
-        new._tip_link = new.structure.link_dfs_order[-1]
-        new._chain = new.structure.get_chain(new._base_link, new._tip_link)
-        new._solver = new.structure.get_solver(new._base_link, new._tip_link)
+        new._root_lnk = self._root_lnk
+        new._tip_lnk = self._tip_lnk
+        new._chain = new.structure.get_chain(new._root_lnk, new._tip_lnk)
+        new._solver = new.structure.get_solver(new._root_lnk, new._tip_lnk)
         return new
