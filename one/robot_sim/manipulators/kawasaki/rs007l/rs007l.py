@@ -12,50 +12,37 @@ def prepare_mechstruct():
     # 7 links
     base_link = rstruct.Link.from_file(os.path.join(mesh_dir, "base_link.stl"),
                                        collision_type=const.CollisionType.MESH,
-                                       name="base_link", rgb=const.ExtendedColor.BEIGE)
-    base_link.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                          com=const.DefaultPhy.COM,
-                          mass=11.0)
+                                       is_fixed=True, name="base_link",
+                                       rgb=const.ExtendedColor.BEIGE)
+    base_link.set_inertia(mass=11.0)
     link1 = rstruct.Link.from_file(os.path.join(mesh_dir, "link1.stl"),
                                    collision_type=const.CollisionType.MESH,
                                    name="link1", rgb=const.ExtendedColor.BEIGE)
-    link1.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                      com=const.DefaultPhy.COM,
-                      mass=8.118)
+    link1.set_inertia(mass=8.118)
     link2 = rstruct.Link.from_file(os.path.join(mesh_dir, "link2.stl"),
                                    collision_type=const.CollisionType.MESH,
                                    local_rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                    name="link2", rgb=const.ExtendedColor.BEIGE)
-    link2.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                      com=const.DefaultPhy.COM,
-                      mass=6.826)
+    link2.set_inertia(mass=6.826)
     link3 = rstruct.Link.from_file(os.path.join(mesh_dir, "link3.stl"),
                                    collision_type=const.CollisionType.MESH,
                                    local_rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                    name="link3", rgb=const.ExtendedColor.BEIGE)
-    link3.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                      com=const.DefaultPhy.COM,
-                      mass=5.236)
+    link3.set_inertia(mass=5.236)
     link4 = rstruct.Link.from_file(os.path.join(mesh_dir, "link4.stl"),
                                    collision_type=const.CollisionType.MESH,
                                    local_pos=np.array([0.0, 0.0, 0.3852], dtype=np.float32),
                                    name="link4", rgb=const.ExtendedColor.BEIGE)
-    link4.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                      com=const.DefaultPhy.COM,
-                      mass=5.066)
+    link4.set_inertia(mass=5.066)
     link5 = rstruct.Link.from_file(os.path.join(mesh_dir, "link5.stl"),
                                    collision_type=const.CollisionType.MESH,
                                    local_rotmat=rm.rotmat_from_euler(0, np.pi / 2, 0),
                                    name="link5", rgb=const.ExtendedColor.BEIGE)
-    link5.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                      com=const.DefaultPhy.COM,
-                      mass=1.625)
+    link5.set_inertia(mass=1.625)
     link6 = rstruct.Link.from_file(os.path.join(mesh_dir, "link6.stl"),
                                    collision_type=const.CollisionType.MESH,
                                    name="link6", rgb=const.ExtendedColor.BEIGE)
-    link6.set_inertia(inertia=const.DefaultPhy.INERTIA,
-                      com=const.DefaultPhy.COM,
-                      mass=0.625)
+    link6.set_inertia(mass=0.625)
     # 6 joints
     joint_bl_l1 = rstruct.Joint("joint_bl_l1", jnt_type=const.JntType.REVOLUTE,
                                 parent_lnk=base_link, child_lnk=link1,
@@ -128,7 +115,5 @@ class RS007L(mbase.ManipulatorBase):
 
     def mount(self, *args, **kwargs):
         """turn off mount() to avoid confusion"""
-        raise RuntimeError(
-            "RS007L.mount() is disabled. "
-            "Use engage(child, engage_tfmat) instead."
-        )
+        raise RuntimeError("RS007L.mount() is disabled. "
+                           "Use engage(child, engage_tfmat) instead.")

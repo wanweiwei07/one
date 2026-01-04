@@ -56,7 +56,7 @@ class MechState:
             scene.remove(lnk)
 
     def clone(self):
-        new = MechState.__new__(MechState) # bypass __init__
+        new = MechState.__new__(MechState)  # bypass __init__
         new._compiled = self._compiled
         new.base_rotmat = self.base_rotmat.copy()
         new.base_pos = self.base_pos.copy()
@@ -64,7 +64,6 @@ class MechState:
         new.wd_lnk_tfmat_arr = self.wd_lnk_tfmat_arr.copy()
         new.runtime_lnks = [lnk.clone() for lnk in self.runtime_lnks]
         return new
-
 
     @property
     def toggle_render_collision(self):
@@ -78,6 +77,33 @@ class MechState:
     @property
     def n_jnts(self):
         return self._compiled.n_jnts
+
+    @property
+    def rgba(self):
+        return [lnk.rgba for lnk in self.runtime_lnks]
+
+    @rgba.setter
+    def rgba(self, value):
+        for lnk in self.runtime_lnks:
+            lnk.rgba = value
+
+    @property
+    def rgb(self):
+        return [lnk.rgb for lnk in self.runtime_lnks]
+
+    @rgb.setter
+    def rgb(self, value):
+        for lnk in self.runtime_lnks:
+            lnk.rgb = value
+
+    @property
+    def alpha(self):
+        return [lnk.alpha for lnk in self.runtime_lnks]
+
+    @alpha.setter
+    def alpha(self, value):
+        for lnk in self.runtime_lnks:
+            lnk.alpha = value
 
     def _set_qs(self, values):
         # TODO active qs only (joints with no mimic)

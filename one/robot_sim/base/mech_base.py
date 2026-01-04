@@ -146,6 +146,30 @@ class MechBase:
         self.state.base_tfmat[:3, :3] = rotmat
         self.state.fk()
 
+    @property
+    def rgba(self):
+        return self.state.rgba
+
+    @rgba.setter
+    def rgba(self, value):
+        self.state.rgba = value
+
+    @property
+    def rgb(self):
+        return self.state.rgb
+
+    @rgb.setter
+    def rgb(self, value):
+        self.state.rgb = value
+
+    @property
+    def alpha(self):
+        return self.state.alpha
+
+    @alpha.setter
+    def alpha(self, value):
+        self.state.alpha = value
+
     def _update_mounting(self, mounting: Mounting):
         parent_tfmat = self.get_link_wd_tfmat(mounting.parent_link)
         child_tfmat = parent_tfmat @ mounting.engage_tfmat

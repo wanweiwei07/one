@@ -6,7 +6,8 @@ model_template = """<mujoco>
   <option gravity="{gx} {gy} {gz}"/>
   <option timestep="{timestep}"/>
   <default>
-    <joint damping="2.0" armature="0.1"/>
+    <joint damping="2.0" armature="0.05" frictionloss="0.1"/>
+    <geom friction="1 0.1 0.1"/>
   </default>
   <asset>
 {assets}
@@ -14,7 +15,7 @@ model_template = """<mujoco>
   <worldbody>
 {bodies}
   </worldbody>
-  <compiler angle="radian"/>
+  <compiler angle="radian" inertiafromgeom="true"/>
 </mujoco>
 """
 
@@ -34,25 +35,36 @@ def join_nonempty(lines, n_indent=0):
                      if line and line.strip())
 
 
-def inertial_to_xml(mass=None, com=None, inertia=None):
-    if mass is None:
+# def inertial_to_xml(mass=None, com=None, inertia=None):
+#     if mass is None:
+#         return ""
+#     inertial_xml = f'<inertial mass="{mass}"'
+#     if com is not None:
+#         inertial_xml += f' pos="{com[0]} {com[1]} {com[2]}"'
+#     if inertia is not None:
+#         I = inertia
+#         inertial_xml += (f' fullinertia="{I[0][0]} {I[1][1]} {I[2][2]} '
+#                          f'{I[0][1]} {I[0][2]} {I[1][2]}"')
+#     inertial_xml += '/>'
+#     return inertial_xml
+
+
+def inertial_to_xml(mass, com, inrtmat):
+    """all arguments required"""
+    if (mass is None) or (com is None) or (inrtmat is None):
         return ""
-    inertial_xml = f'<inertial mass="{mass}"'
-    if com is not None:
-        inertial_xml += f' pos="{com[0]} {com[1]} {com[2]}"'
-    if inertia is not None:
-        I = inertia
-        inertial_xml += (f' fullinertia="{I[0][0]} {I[1][1]} {I[2][2]} '
-                         f'{I[0][1]} {I[0][2]} {I[1][2]}"')
-    inertial_xml += '/>'
-    return inertial_xml
+    return (f'<inertial mass="{mass}" '
+            f'pos="{com[0]} {com[1]} {com[2]}" '
+            f'fullinertia="{inrtmat[0][0]} {inrtmat[1][1]} {inrtmat[2][2]} '
+            f'{inrtmat[0][1]} {inrtmat[0][2]} {inrtmat[1][2]}"/>')
 
 
-def collision_to_xml(c, mesh_assets, mesh_counter):
+def collision_to_xml(c, mesh_assets, mesh_counter, mass=None):
     """mesh_counter: list with one integer element to act as mutable counter"""
+    mass_attr = f'mass="{mass}" ' if mass is not None else ""
     pos = c.pos
     qx, qy, qz, qw = c.quat
-    common = f'pos="{pos[0]} {pos[1]} {pos[2]}" quat="{qw} {qx} {qy} {qz}"'
+    common = f'{mass_attr}pos="{pos[0]} {pos[1]} {pos[2]}" quat="{qw} {qx} {qy} {qz}"'
     asset_xml = None
     if isinstance(c, sco.SphereCollisionShape):
         return f'<geom type="sphere" size="{c.radius}" {common}/>', None
@@ -78,23 +90,25 @@ def collision_to_xml(c, mesh_assets, mesh_counter):
 
 
 def sceneobject_to_mjcf(sobj, mesh_assets, mesh_counter):
-    inertial_xml = inertial_to_xml(sobj.mass, sobj.com, sobj.inertia)
+    inertial_xml = inertial_to_xml(sobj.mass, sobj.com, sobj.inrtmat)
     geoms = []
     assets = []
-    for c in getattr(sobj, "collisions", []):
-        geom_xml, asset_xml = collision_to_xml(c, mesh_assets, mesh_counter)
+    first_geom_mass = None if inertial_xml else sobj.mass
+    for idx, c in enumerate(getattr(sobj, "collisions", [])):
+        mass = first_geom_mass if idx == 0 else None
+        geom_xml, asset_xml = collision_to_xml(c, mesh_assets,
+                                               mesh_counter, mass=mass)
         geoms.append(geom_xml)
         if asset_xml:
             assets.append(asset_xml)
     return inertial_xml, geoms, assets
 
 
-def sceneobject_to_mjcf_body(sobj, mesh_assets, mesh_counter, freejoint=True):
+def sceneobject_to_mjcf_body(sobj, mesh_assets, mesh_counter):
     px, py, pz = sobj.pos
     qx, qy, qz, qw = sobj.quat
     inertial_xml, geoms, assets = sceneobject_to_mjcf(sobj, mesh_assets, mesh_counter)
-    has_plane = any(isinstance(c, sco.PlaneCollisionShape) for c in sobj.collisions)
-    joint_xml = "<freejoint/>" if (freejoint and not has_plane) else ""
+    joint_xml = "" if sobj.is_fixed else "<freejoint/>"
     body_inner = join_nonempty([joint_xml, inertial_xml, "\n".join(geoms)])
     body_xml = body_template.format(name=sobj.name,
                                     px=px, py=py, pz=pz,
@@ -103,21 +117,21 @@ def sceneobject_to_mjcf_body(sobj, mesh_assets, mesh_counter, freejoint=True):
     return assets, body_xml
 
 
-def state_to_mjcf_body(state, mesh_assets, mesh_counter, root_freejoint=False):
+def state_to_mjcf_body(state, mesh_assets, mesh_counter):
     compiled = state._compiled
     if compiled is None:
         raise RuntimeError("structure must be compiled before exporting to MJCF")
     assets = []
 
     def _build_child_body_with_joint(jidx, lidx, level):
-        lnk = state._compiled._meta.lnks[lidx]
+        lnk = state.runtime_lnks[lidx]
         # joint origin in parent link frame
         tfmat = compiled.jotfmat_by_idx[jidx]
         rotmat = tfmat[:3, :3]
         px, py, pz = tfmat[:3, 3]
         qx, qy, qz, qw = rm.quat_from_rotmat(rotmat)
         # joint xml
-        jnt = state._compiled._meta.jnts[jidx]
+        jnt = compiled._meta.jnts[jidx]
         jnt_type = compiled.jtypes_by_idx[jidx]
         if jnt_type == const.JntType.REVOLUTE:
             jtype_str = "hinge"
@@ -155,7 +169,7 @@ def state_to_mjcf_body(state, mesh_assets, mesh_counter, root_freejoint=False):
 
     def _build_root_body():
         root_lnk_idx = compiled.root_lnk_idx
-        root_lnk = compiled.root_lnk
+        root_lnk = state.runtime_lnks[root_lnk_idx]
         base_pos = state.base_pos
         base_rotmat = state.base_rotmat
         root_loc_pos = root_lnk.pos
@@ -168,7 +182,7 @@ def state_to_mjcf_body(state, mesh_assets, mesh_counter, root_freejoint=False):
                                                                mesh_assets,
                                                                mesh_counter)
         assets.extend(root_assets)
-        root_joint_xml = "<freejoint/>" if root_freejoint else ""
+        root_joint_xml = "" if root_lnk.is_fixed else "<freejoint/>"
         child_bodies = []
         for clnk_idx in compiled.clnk_ids_of_lidx[root_lnk_idx]:
             pjidx_of_clidx = compiled.pjidx_of_lidx[clnk_idx]

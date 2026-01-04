@@ -11,11 +11,9 @@ class Link(sob.SceneObject):
     """Links is essentially a SceneObject"""
     _auto_counter = 0  # maintain new counter for Link class
 
-    def __init__(self, name=None, rotmat=None, pos=None,
-                 collision_type=None, parent_node=None):
+    def __init__(self, name=None, rotmat=None, pos=None, collision_type=None, is_fixed=False):
         super().__init__(name=name, rotmat=rotmat, pos=pos,
-                         parent_node=parent_node,
-                         collision_type=collision_type)
+                         collision_type=collision_type, is_fixed=is_fixed)
 
 
 class Joint:
@@ -101,10 +99,16 @@ class MechStruct:
         self.jnts.append(jnt)
 
     def compile(self):
-        self._compiled = MechStructHelper(self)
+        self._compiled = FlatMechStructure(self)
+
+    @property
+    def compiled(self):
+        if self._compiled is None:
+            raise RuntimeError("MechStruct not compiled yet. Call compile() first.")
+        return self._compiled
 
 
-class MechStructHelper:
+class FlatMechStructure:
     """flat representation of RobotStructure for efficient computation"""
 
     def __init__(self, structure):
@@ -129,7 +133,7 @@ class MechStructHelper:
         self.mmc_src_by_idx = np.full(self.n_jnts, -1, dtype=np.int32)
         self.mmc_mult_by_idx = np.ones(self.n_jnts, dtype=np.float32)
         self.mmc_offset_by_idx = np.zeros(self.n_jnts, dtype=np.float32)
-        # limits
+        # limits # TODO only active non-mimic joints?
         self.jlmt_low_by_idx = np.zeros(self.n_jnts, dtype=np.float32)
         self.jlmt_high_by_idx = np.zeros(self.n_jnts, dtype=np.float32)
         # build

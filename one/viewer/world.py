@@ -63,8 +63,8 @@ class World(pyglet.window.Window):
         angle_rad = deg_per_sec * dt * (3.14159265 / 180.0)
         self.camera.orbit(angle_rad=angle_rad)
 
-    def schedule_interval(self, function, interval=.01):
-        pyglet.clock.schedule_interval(function, interval=interval)
+    def schedule_interval(self, function, interval=.01, *args, **kwargs):
+        pyglet.clock.schedule_interval(function, interval=interval, *args, **kwargs)
 
     def run(self):
         pyglet.app.run()

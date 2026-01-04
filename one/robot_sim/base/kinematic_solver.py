@@ -35,8 +35,8 @@ class KinematicSolver:
            tol_pos=1e-4,
            tol_rot=1e-3,
            step_scale=1.0,
-           pos_step_max=0.1,
-           rot_step_max=0.3):
+           pos_err_max=0.1,
+           rot_err_max=0.3):
         """
         :param tgt_romat:
         :param tgt_pos:
@@ -45,8 +45,8 @@ class KinematicSolver:
         :param tol_pos:
         :param tol_rot:
         :param step_scale:
-        :param pos_step_max: parameter for trust region
-        :param rot_step_max: parameter for trust region
+        :param pos_err_max: parameter for trust region
+        :param rot_err_max: parameter for trust region
         :return:
         """
         root_tfmat = rm.tfmat_from_rotmat_pos(root_rotmat, root_pos)
@@ -67,10 +67,10 @@ class KinematicSolver:
             if pos_err <= tol_pos and rot_err <= tol_rot:
                 return qs, {"converged": True, "iters": it, "err": delta_x}
             # trust region scaling
-            if pos_err > pos_step_max:
-                delta_p = delta_p / pos_err * pos_step_max
-            if rot_err > rot_step_max:
-                delta_theta = delta_theta / rot_err * rot_step_max
+            if pos_err > pos_err_max:
+                delta_p = delta_p / pos_err * pos_err_max
+            if rot_err > rot_err_max:
+                delta_theta = delta_theta / rot_err * rot_err_max
             delta_x = np.concatenate([delta_p, delta_theta]).astype(np.float32)
             delta_q = np.linalg.lstsq(jacmat, delta_x, rcond=1e-4)[0]
             qs = qs + step_scale * delta_q
@@ -81,15 +81,15 @@ class KinematicSolver:
             # print(delta_x)
         return qs, {"converged": False, "iters": max_iter, "err": delta_x}
 
-    def _forward_to_lnk(self, qs_active, root_tfmat, up_to_link=None, local_point=None):
+    def _forward_to_lnk(self, qs_active, root_tfmat, tgt_lnk=None, local_point=None):
         assert qs_active.shape[0] == self.n_active_jnts, \
             f"Expected {self.n_active_jnts} active joints, got {len(qs_active)}"
-        if up_to_link is None:
-            tgt_lnk_idx = self.chain.tip_lnk_idx
+        if tgt_lnk is None:
+            tgt_lidx = self.chain.tip_lidx
         else:
-            tgt_lnk_idx = self.structure.link_dfs_index(up_to_link)
+            tgt_lidx = self._compiled.lidx_map[tgt_lnk]
         try:
-            up_to_pos = self.chain.link_pos_in_chain[tgt_lnk_idx]
+            up_to_pos = self.chain.lnk_pos_in_chain[tgt_lidx]
         except KeyError:
             raise ValueError("Specified link is not on this kinematic chain")
         q_chain = np.zeros(self.n_jnts)

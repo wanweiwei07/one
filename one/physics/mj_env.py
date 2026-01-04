@@ -1,11 +1,10 @@
 import mujoco
 import numpy as np
-import one.utils.math as rm
-import one.scene.collision as sco
 import one.physics.mjcf_utils as mju
+import one.physics.mj_contact as mjcv
 
 
-class MuJoCoEnv:
+class MjEnv:
     def __init__(self, scene, free_root=False):
         self.gravity = np.asarray([0, 0, -9.81], dtype=np.float32)
         self.timestep = 0.002
@@ -16,8 +15,8 @@ class MuJoCoEnv:
         self.data = None
         # SceneObject -> body_id
         self._body_idx_map = {}
-        # Compiled structure joint idx -> qpos adr
-        self._compiled_to_qpos = {}
+        # state, joint idx -> qpos adr
+        self._qpos_by_state_jidx = {}
         # mesh assets bookkeeping
         self._mesh_assets = {}
         self._mesh_count = 0
@@ -25,8 +24,14 @@ class MuJoCoEnv:
         self.xml_string = None
         # build from scene
         self._build_from_scene()
+        # collision mode
+        self._cd_mode = False  # False: Dynamic, True: Collision Detection
+        self._dyn_backup = None  # backup dynamics for cd mode
+        # # contact viz
+        # self.contact_viz = mjcv.MjContactForceViz(self.scene)
 
     def step(self, dt):
+        self._exit_cd_mode()
         h = self.model.opt.timestep
         substeps = int(round(dt / h))
         for _ in range(substeps):
@@ -36,14 +41,32 @@ class MuJoCoEnv:
             mj_rotmat = self.data.xmat[bid].reshape(3, 3)
             mj_pos = self.data.xpos[bid]
             obj.set_rotmat_pos(mj_rotmat, mj_pos)
+        # self.contact_viz.update_from_data(self.model, self.data)
 
-    def sync_mechstates_to_mujoco(self):
+    def is_collided(self):
+        mujoco.mj_kinematics(self.model, self.data)
+        mujoco.mj_collision(self.model, self.data)
+        return self.data.ncon > 0
+
+    def sync_mechstates_to_mujoco_collision(self):
+        # helper function
+        self.sync_mechstates_to_mujoco(cd_mode=True)
+
+    def sync_mechstates_to_mujoco_dynamics(self):
+        # helper function
+        self.sync_mechstates_to_mujoco(cd_mode=False)
+
+    def sync_mechstates_to_mujoco(self, cd_mode=True):
+        if cd_mode:
+            self._enter_cd_mode() # toggle once
+        else:
+            self._cd_mode = False # avoid exit and restore in step
         for state in self.scene.states:
             # print("state.qs =", state.qs)
             qs = state.qs
             qs_mj = []
             for jidx, q in enumerate(qs):
-                qadr = self._compiled_to_qpos[(state, jidx)]
+                qadr = self._qpos_by_state_jidx[(state, jidx)]
                 self.data.qpos[qadr] = q
                 qs_mj.append(self.data.qpos[qadr])
         #     print("after set qpos:", qs_mj)
@@ -51,15 +74,15 @@ class MuJoCoEnv:
         # self.data.qacc[:] = 0
         # if self.model.na:
         #     self.data.act[:] = 0
-        print("ncon(before step) =", self.data.ncon)
+        # print("ncon(before step) =", self.data.ncon)
         # mujoco.mj_forward(self.model, self.data)
-        print("ncon(after forward) =", self.data.ncon)
+        # print("ncon(after forward) =", self.data.ncon)
         # TODO use qpos 0-7 for root pose
-            # if self.free_root:
-            #     pos = state.base_pos
-            #     qx, qy, qz, qw = rm.quat_from_rotmat(state.base_rotmat)  # x,y,z,w?
-            #     self.data.qpos[0:3] = pos
-            #     self.data.qpos[3:7] = (qw, qx, qy, qz)
+        # if self.free_root:
+        #     pos = state.base_pos
+        #     qx, qy, qz, qw = rm.quat_from_rotmat(state.base_rotmat)  # x,y,z,w?
+        #     self.data.qpos[0:3] = pos
+        #     self.data.qpos[3:7] = (qw, qx, qy, qz)
 
     def sync_mujoco_to_mechstates(self):
         for state in self.scene.states:
@@ -70,9 +93,8 @@ class MuJoCoEnv:
             #     state.base_pos[:] = pos
             #     state.base_rotmat[:] = rotmat
             for jidx, _ in enumerate(state.qs):
-                qadr = self._compiled_to_qpos[(state, jidx)]
+                qadr = self._qpos_by_state_jidx[(state, jidx)]
                 state.qs[jidx] = self.data.qpos[qadr]
-            print(state.qs)
             state.fk()
             state.update()
 
@@ -90,8 +112,7 @@ class MuJoCoEnv:
         for state in self.scene.states:
             assets, root_body = mju.state_to_mjcf_body(state,
                                                        mesh_assets,
-                                                       mesh_counter,
-                                                       root_freejoint=self.free_root)
+                                                       mesh_counter)
             assets_xml.extend(assets)
             bodies_xml.append(root_body)
             self._mesh_count = mesh_counter[0]
@@ -100,8 +121,7 @@ class MuJoCoEnv:
                 continue
             assets, body = mju.sceneobject_to_mjcf_body(scn_obj,
                                                         mesh_assets,
-                                                        mesh_counter,
-                                                        freejoint=True)
+                                                        mesh_counter)
             assets_xml.extend(assets)
             bodies_xml.append(body)
         self.xml_string = mju.model_template.format(gx=self.gravity[0], gy=self.gravity[1], gz=self.gravity[2],
@@ -113,19 +133,6 @@ class MuJoCoEnv:
         self.data = mujoco.MjData(self.model)
         self._build_body_map()
 
-        print("nu(actuators) =", self.model.nu)
-        print("na(state)     =", self.model.na)
-        print("nv(dofs)      =", self.model.nv)
-
-        if self.model.nu:
-            for i in range(self.model.nu):
-                name = mujoco.mj_id2name(self.model, mujoco.mjtObj.mjOBJ_ACTUATOR, i)
-                print("act", i, name,
-                      "trntype", int(self.model.actuator_trntype[i]),
-                      "biastype", int(self.model.actuator_biastype[i]))
-        print("jnt_stiffness:", self.model.jnt_stiffness)  # 只要这里有非零，就会“回参考位”
-        print("dof_damping:", self.model.dof_damping)  # damping 不会在 qvel=0 时产生力
-
     def _build_body_map(self):
         self._body_idx_map.clear()
         # normal objects
@@ -133,12 +140,12 @@ class MuJoCoEnv:
             if not sobj.collisions:
                 continue
             mb_id = mujoco.mj_name2id(self.model,
-                                    mujoco.mjtObj.mjOBJ_BODY,
-                                    sobj.name)
+                                      mujoco.mjtObj.mjOBJ_BODY,
+                                      sobj.name)
             assert mb_id >= 0, f"Body name not found in MJCF: {sobj.name}"
             self._body_idx_map[sobj] = mb_id
         # structures
-        self._compiled_to_qpos.clear()
+        self._qpos_by_state_jidx.clear()
         for state in self.scene.states:
             for jidx, jnt in enumerate(state._compiled._meta.jnts):
                 mj_id = mujoco.mj_name2id(self.model,
@@ -146,4 +153,36 @@ class MuJoCoEnv:
                                           jnt.name)
                 assert mj_id >= 0, f"Joint name not found in MJCF: {jnt.name}"
                 qadr = self.model.jnt_qposadr[mj_id]
-                self._compiled_to_qpos[(state, jidx)] = qadr
+                self._qpos_by_state_jidx[(state, jidx)] = qadr
+
+    def _enter_cd_mode(self):
+        if self._cd_mode:
+            return
+        self._backup_dyn_state()
+        self._cd_mode = True
+
+    def _exit_cd_mode(self):
+        if not self._cd_mode:
+            return
+        self._restore_dyn_state()
+        self._cd_mode = False
+
+    def _backup_dyn_state(self):
+        assert self._dyn_backup is None
+        self._dyn_backup = {"qpos": self.data.qpos.copy(),
+                            "qvel": self.data.qvel.copy(),
+                            "act": self.data.act.copy(),
+                            "ctrl": self.data.ctrl.copy(),
+                            "time": self.data.time}
+
+    def _restore_dyn_state(self):
+        if self._dyn_backup is None:
+            return
+        b = self._dyn_backup
+        self.data.qpos[:] = b["qpos"]
+        self.data.qvel[:] = b["qvel"]
+        self.data.act[:] = b["act"]
+        self.data.ctrl[:] = b["ctrl"]
+        self.data.time = b["time"]
+        self._dyn_backup = None
+        mujoco.mj_forward(self.model, self.data)

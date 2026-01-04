@@ -1,7 +1,7 @@
 import cProfile
 import builtins
 import numpy as np
-import one.physics.mujoco_env as mj
+import one.physics.mj_env as mj
 from one import wd, prims, const, sob
 
 oframe = prims.gen_frame()
@@ -38,6 +38,6 @@ plane_back = prims.gen_plane(pos=(-.35, 0, 0), size=(.7, .7),
                              alpha=const.ALPHA.TRANSPARENT)
 plane_back.attach_to(base.scene)
 
-mjenv = mj.MuJoCoEnv(scene=base.scene)
+mjenv = mj.MjEnv(scene=base.scene)
 base.schedule_interval(mjenv.step)
 base.run()

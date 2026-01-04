@@ -19,11 +19,10 @@ class SceneObject:
 
     @classmethod
     def from_file(cls, path, name=None, local_rotmat=None, local_pos=None,  # render model offset
-                  rotmat=None, pos=None,  # scene object pose
-                  collision_type=None, parent_node=None,
+                  rotmat=None, pos=None, collision_type=None, is_fixed=False,
                   rgb=None, alpha=1.0):  # TODO do we expose rotmat/pos of render model here?
         instance = cls(name=name, rotmat=rotmat, pos=pos,
-                       collision_type=collision_type, parent_node=parent_node)
+                       collision_type=collision_type, is_fixed=is_fixed)
         instance.file_path = path
         instance.add_visual(mdl.RenderModel(geometry=gldr.load_geometry(path),
                                             rotmat=local_rotmat, pos=local_pos,
@@ -32,18 +31,19 @@ class SceneObject:
         return instance
 
     def __init__(self, name=None, rotmat=None, pos=None,
-                 collision_type=None, parent_node=None):
+                 collision_type=None, is_fixed=False):
         self.name = self.auto_name(flag_str=name)
         self.file_path = None
-        self.node = snd.SceneNode(rotmat=rotmat, pos=pos, parent=parent_node)
+        self.node = snd.SceneNode(rotmat=rotmat, pos=pos)
         self.visuals = []
         self.collisions = []
         self.collision_type = collision_type  # None means no auto collision generation
         self.toggle_render_collision = False
         self.scene = None
-        self._inertia = None
+        self._inrtmat = None
         self._com = None
         self._mass = None
+        self._is_fixed = is_fixed
 
     def attach_to(self, scene):
         scene.add(self)
@@ -65,11 +65,10 @@ class SceneObject:
     def clone(self):
         """DOES NOT clone the affiliated scene."""
         new = self.__class__(rotmat=self.rotmat.copy(), pos=self.pos.copy(),
-                             collision_type=self.collision_type,
-                             parent_node=None)
+                             collision_type=self.collision_type)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
-        new.set_inertia(self._inertia, self._com, self._mass)
+        new.set_inertia(self._inrtmat, self._com, self._mass)
         # clone all visuals
         for m in self.visuals:
             new.add_visual(m.clone(), auto_make_collision=False)
@@ -78,9 +77,9 @@ class SceneObject:
             new.add_collision(c.clone())
         return new
 
-    def set_inertia(self, inertia=None, com=None, mass=None):
-        if inertia is not None:
-            self._inertia = inertia.copy()
+    def set_inertia(self, inrtmat=None, com=None, mass=None):
+        if inrtmat is not None:
+            self._inrtmat = inrtmat.copy()
         if com is not None:
             self._com = com.copy()
         if mass is not None:
@@ -151,10 +150,10 @@ class SceneObject:
             model.alpha = a
 
     @property
-    def inertia(self):
-        if self._inertia is None:
+    def inrtmat(self):
+        if self._inrtmat is None:
             return None
-        return self._inertia.copy()
+        return self._inrtmat.copy()
 
     @property
     def com(self):
@@ -167,6 +166,10 @@ class SceneObject:
         if self._mass is None:
             return None
         return self._mass
+
+    @property
+    def is_fixed(self):
+        return self._is_fixed
 
     def _auto_make_collision_from_model(self, m):
         if self.collision_type is None or self.collisions:

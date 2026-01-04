@@ -16,4 +16,7 @@ from one.robot_sim.manipulators.kawasaki.rs007l import rs007l as khi_rs007l
 
 from one.robot_sim.end_effectors.onrobot.or_2fg7 import or_2fg7
 
-__all__ = ['np', 'wd', 'scn', 'sob', 'gldr', 'mdl', 'const', 'rm', 'khi_rs007l', 'or_2fg7',]
+from one.motion.probabilistic import space_provider as spdr
+from one.motion.probabilistic import rrt as rrt
+
+__all__ = ['np', 'wd', 'scn', 'sob', 'gldr', 'mdl', 'const', 'rm', 'khi_rs007l', 'or_2fg7', 'spdr', 'rrt']

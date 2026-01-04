@@ -149,6 +149,14 @@ class ArrowSize:
     SHAFT_RADIUS = 0.005
 
 
+class ForceArrowSize:
+    BASE_LENGTH = 0.05
+    GAIN = 3.0  # scale force (length or color)
+    SHAFT_RADIUS = 0.003
+    HEAD_RADIUS = 0.007
+    HEAD_LENGTH = 0.03
+
+
 # robotics
 class JntType:
     FIXED = 0
@@ -163,6 +171,7 @@ class CollisionType:
     OBB = 3
     MESH = 4
     PLANE = 5
+
 
 class DefaultPhy:
     INERTIA = np.eye(3, dtype=np.float32)

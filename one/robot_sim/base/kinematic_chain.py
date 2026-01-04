@@ -8,8 +8,8 @@ class KinematicChain:
         self._compiled = structure._compiled
         self.base_lnk = base_lnk
         self.tip_lnk = tip_lnk
-        self.base_lnk_idx = self._compiled.lidx_map[base_lnk]
-        self.tip_lnk_idx = self._compiled.lidx_map[tip_lnk]
+        self.base_lidx = self._compiled.lidx_map[base_lnk]
+        self.tip_lidx = self._compiled.lidx_map[tip_lnk]
         self.jnt_ids = self._build_chain_joints()
         # mimic joints are not supported
         self._check_mmc()
@@ -21,12 +21,11 @@ class KinematicChain:
         self.lmt_up = self._compiled.jlmt_high_by_idx[self.active_jnt_ids]
         # link idx cache
         pos = 0
-        lnk_idx = self.base_lnk_idx
-        self.link_pos_in_chain = {lnk_idx: pos}
+        self.lnk_pos_in_chain = {self.base_lidx: pos}
         for jnt_idx in self.jnt_ids:
             pos += 1
             lnk_idx = self._compiled.clidx_of_jidx[jnt_idx]
-            self.link_pos_in_chain[lnk_idx] = pos
+            self.lnk_pos_in_chain[lnk_idx] = pos
 
     def __len__(self):
         return int(self.jnt_ids.shape[0])
@@ -40,8 +39,8 @@ class KinematicChain:
         return qs_full[self.active_jnt_ids]
 
     def _build_chain_joints(self):
-        r2b_jids = self._compiled.ancestor_jnt_ids[self.base_lnk_idx]
-        r2t_jids = self._compiled.ancestor_jnt_ids[self.tip_lnk_idx]
+        r2b_jids = self._compiled.ancestor_jnt_ids[self.base_lidx]
+        r2t_jids = self._compiled.ancestor_jnt_ids[self.tip_lidx]
         n_common = min(r2b_jids.size, r2t_jids.size)
         if n_common == 0:
             return np.concatenate([r2b_jids[::-1], r2t_jids]).astype(np.int32)
