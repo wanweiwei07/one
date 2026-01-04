@@ -1,10 +1,10 @@
 import pyglet
 import pyglet.gl as gl
-import one.viewer.render as rd
-import one.viewer.render_target as rt
-import one.viewer.camera as cam
-import one.viewer.input_manager as input_mgr
-import one.scene.scene as scn
+import one.viewer.render as ovr
+import one.viewer.render_target as ovrt
+import one.viewer.camera as ovc
+import one.viewer.input_manager as ovim
+import one.scene.scene as osc
 
 config = pyglet.gl.Config(
     major_version=4,
@@ -31,19 +31,19 @@ class World(pyglet.window.Window):
         super().__init__(win_w, win_h, config=config, resizable=True)
         self.set_location((screen_w - win_w) // 2, (screen_h - win_h) // 2)
         self.set_caption("WRS World")
-        self.camera = cam.Camera(pos=cam_pos, look_at=cam_lookat_pos, aspect=win_w / win_h)
-        self.render = rd.Render(camera=self.camera)
+        self.camera = ovc.Camera(pos=cam_pos, look_at=cam_lookat_pos, aspect=win_w / win_h)
+        self.render = ovr.Render(camera=self.camera)
         # self.render_target = rt.RenderTarget(width=width, height=height)
-        self.scene = scn.Scene()
+        self.scene = osc.Scene()
         if toggle_auto_cam_orbit:
             self.schedule_interval(self.auto_cam_orbit, interval=1 / 30.0)
-        self.input_manager = input_mgr.InputManager(self)
+        self.input_manager = ovim.InputManager(self)
         self.fps_display = pyglet.window.FPSDisplay(self)
 
     def on_resize(self, width, height):
         gl.glViewport(0, 0, *self.get_framebuffer_size())
         self.camera._rebuild_projmat(width, height)
-        self.render_target = rt.RenderTarget(width, height)
+        self.render_target = ovrt.RenderTarget(width, height)
 
     def on_draw(self):
         self.clear()

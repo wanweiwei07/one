@@ -1,5 +1,5 @@
 import os
-import one.robot_sim.base.urdf_loader as rld
+import one.robots.base.urdf_loader as rld
 
 base_dir = os.path.dirname(__file__)
 mappings = {}

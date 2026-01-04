@@ -1,5 +1,5 @@
 import numpy as np
-import one.utils.math as rm
+import one.utils.math as oum
 
 def revolve(profile, segments=36):
     """
@@ -8,10 +8,10 @@ def revolve(profile, segments=36):
     date: 20251201
     """
     profile = np.asarray(profile, dtype=np.float32)
-    if np.any(profile[1:-1, 0] <= rm.eps):
+    if np.any(profile[1:-1, 0] <= oum.eps):
         raise ValueError("Only the first and last radius may be zero! Others must be positive.")
-    has_bottom = (profile[0, 0] <= rm.eps)
-    has_top = (profile[-1, 0] <= rm.eps)
+    has_bottom = (profile[0, 0] <= oum.eps)
+    has_top = (profile[-1, 0] <= oum.eps)
     profile_core = profile[1:] if has_bottom else profile
     profile_core = profile_core[:-1] if has_top else profile_core
     r_core = profile_core[:, 0]

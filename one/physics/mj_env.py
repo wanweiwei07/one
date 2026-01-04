@@ -4,6 +4,25 @@ import one.physics.mjcf_utils as mju
 import one.physics.mj_contact as mjcv
 
 
+class Namer:
+    def __init__(self):
+        self._counter = {}
+        self.bdy_names = {}
+        self.jnt_names = {}
+
+    def unique_name(self, kind, base):
+        key = (kind, base)
+        i = self._counter.get(key, 0)
+        self._counter[key] = i + 1
+        return f"{base}_{i}"
+
+    def reg_bdy(self, sobj, name):
+        self.bdy_names[sobj] = name
+
+    def reg_jnt(self, jnt, name):
+        self.jnt_names[jnt] = name
+
+
 class MjEnv:
     def __init__(self, scene, free_root=False):
         self.gravity = np.asarray([0, 0, -9.81], dtype=np.float32)
@@ -17,14 +36,15 @@ class MjEnv:
         self._body_idx_map = {}
         # state, joint idx -> qpos adr
         self._qpos_by_state_jidx = {}
-        # mesh assets bookkeeping
+        # mesh assets
         self._mesh_assets = {}
-        self._mesh_count = 0
+        # name manager
+        self.namer = Namer()
         # xml string cache
         self.xml_string = None
         # build from scene
         self._build_from_scene()
-        # collision mode
+        # collider mode
         self._cd_mode = False  # False: Dynamic, True: Collision Detection
         self._dyn_backup = None  # backup dynamics for cd mode
         # # contact viz
@@ -58,9 +78,9 @@ class MjEnv:
 
     def sync_mechstates_to_mujoco(self, cd_mode=True):
         if cd_mode:
-            self._enter_cd_mode() # toggle once
+            self._enter_cd_mode()  # toggle once
         else:
-            self._cd_mode = False # avoid exit and restore in step
+            self._cd_mode = False  # avoid exit and restore in step
         for state in self.scene.states:
             # print("state.qs =", state.qs)
             qs = state.qs
@@ -108,27 +128,29 @@ class MjEnv:
         assets_xml = []
         bodies_xml = []
         mesh_assets = self._mesh_assets
-        mesh_counter = [self._mesh_count]
         for state in self.scene.states:
             assets, root_body = mju.state_to_mjcf_body(state,
                                                        mesh_assets,
-                                                       mesh_counter)
+                                                       self.namer)
             assets_xml.extend(assets)
             bodies_xml.append(root_body)
-            self._mesh_count = mesh_counter[0]
         for scn_obj in self.scene.sobjs:
             if not scn_obj.collisions:
                 continue
-            assets, body = mju.sceneobject_to_mjcf_body(scn_obj,
-                                                        mesh_assets,
-                                                        mesh_counter)
+            assets, body = mju.sobj_to_mjcf_body(scn_obj,
+                                                 mesh_assets,
+                                                 self.namer)
             assets_xml.extend(assets)
             bodies_xml.append(body)
-        self.xml_string = mju.model_template.format(gx=self.gravity[0], gy=self.gravity[1], gz=self.gravity[2],
+        assets = "\n".join(mju.indent(x, 4) for x in assets_xml)
+        bodies = "\n".join(mju.indent(x, 4) for x in bodies_xml)
+        self.xml_string = mju.model_template.format(gx=self.gravity[0],
+                                                    gy=self.gravity[1],
+                                                    gz=self.gravity[2],
                                                     timestep=self.timestep,
-                                                    assets="\n".join(mju.indent(x, 4) for x in assets_xml),
-                                                    bodies="\n".join(mju.indent(x, 4) for x in bodies_xml))
-        print(self.xml_string)
+                                                    assets=assets,
+                                                    bodies=bodies)
+        # print(self.xml_string)
         self.model = mujoco.MjModel.from_xml_string(self.xml_string)
         self.data = mujoco.MjData(self.model)
         self._build_body_map()
@@ -139,19 +161,21 @@ class MjEnv:
         for sobj in self.scene.sobjs:
             if not sobj.collisions:
                 continue
+            mj_name = self.namer.bdy_names[sobj]
             mb_id = mujoco.mj_name2id(self.model,
                                       mujoco.mjtObj.mjOBJ_BODY,
-                                      sobj.name)
-            assert mb_id >= 0, f"Body name not found in MJCF: {sobj.name}"
+                                      mj_name)
+            assert mb_id >= 0, f"Body name not found in MJCF: {mj_name}"
             self._body_idx_map[sobj] = mb_id
         # structures
         self._qpos_by_state_jidx.clear()
         for state in self.scene.states:
             for jidx, jnt in enumerate(state._compiled._meta.jnts):
+                mj_name = self.namer.jnt_names[jnt]
                 mj_id = mujoco.mj_name2id(self.model,
                                           mujoco.mjtObj.mjOBJ_JOINT,
-                                          jnt.name)
-                assert mj_id >= 0, f"Joint name not found in MJCF: {jnt.name}"
+                                          mj_name)
+                assert mj_id >= 0, f"Joint name not found in MJCF: {mj_name}"
                 qadr = self.model.jnt_qposadr[mj_id]
                 self._qpos_by_state_jidx[(state, jidx)] = qadr
 

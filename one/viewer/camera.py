@@ -1,11 +1,11 @@
 import numpy as np
 import pyglet.math as pm
-import one.utils.decorator as deco
-import one.utils.math as rm
-import one.scene.scene_node as nd
+import one.utils.math as oum
+import one.utils.decorator as oud
+import one.scene.scene_node as ossn
 
 
-class Camera(nd.SceneNode):
+class Camera(ossn.SceneNode):
 
     def __init__(self,
                  pos=(2, 2, 2),
@@ -20,9 +20,9 @@ class Camera(nd.SceneNode):
         self._look_at = np.asarray(look_at, dtype=np.float32)
         self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up),
                               dtype=np.float32)
-        self._rotmat = rm.rotmat_from_look_at(pos=self._pos,
-                                              look_at=self._look_at,
-                                              up=self._up)
+        self._rotmat = oum.rotmat_from_look_at(pos=self._pos,
+                                               look_at=self._look_at,
+                                               up=self._up)
         super().__init__(rotmat=self._rotmat, pos=self._pos, parent=parent)
         self._fov = fov
         self._aspect = aspect  # default 16:9
@@ -40,7 +40,7 @@ class Camera(nd.SceneNode):
 
     def orbit(self, axis=(0, 0, 1), angle_rad=np.pi / 360):
         direction = self._pos - self._look_at
-        rotmat = rm.rotmat_from_axangle(axis, angle_rad)
+        rotmat = oum.rotmat_from_axangle(axis, angle_rad)
         direction_rotated = rotmat @ direction
         self._pos = self._look_at + direction_rotated
         self._up = (rotmat @ self._up)
@@ -65,7 +65,7 @@ class Camera(nd.SceneNode):
         zoom_amount = delta * sensitivity
         self.pos = self.pos + direction * zoom_amount
 
-    @nd.SceneNode.rotmat.setter
+    @ossn.SceneNode.rotmat.setter
     def rotmat(self, rotmat):
         """Disable direct setting of rotmat on Camera."""
         raise AttributeError("Cannot set rotmat directly on Camera. Use set_to() method instead.")
@@ -75,7 +75,7 @@ class Camera(nd.SceneNode):
         return self._look_at
 
     @look_at.setter
-    @deco.mark_dirty('_mark_dirty')
+    @oud.mark_dirty('_mark_dirty')
     def look_at(self, look_at):
         self._look_at = np.asarray(look_at, dtype=np.float32)
 
@@ -84,7 +84,7 @@ class Camera(nd.SceneNode):
         return self._up
 
     @up.setter
-    @deco.mark_dirty('_mark_dirty')
+    @oud.mark_dirty('_mark_dirty')
     def up(self, up):
         self._up = np.asarray(up, dtype=np.float32)
 
@@ -93,7 +93,7 @@ class Camera(nd.SceneNode):
         return self._fov
 
     @fov.setter
-    @deco.mark_dirty('_proj_dirty')
+    @oud.mark_dirty('_proj_dirty')
     def fov(self, fov):
         self._fov = fov
 
@@ -102,7 +102,7 @@ class Camera(nd.SceneNode):
         return self._near
 
     @near.setter
-    @deco.mark_dirty('_proj_dirty')
+    @oud.mark_dirty('_proj_dirty')
     def near(self, near):
         self._near = near
 
@@ -111,18 +111,18 @@ class Camera(nd.SceneNode):
         return self._far
 
     @far.setter
-    @deco.mark_dirty('_proj_dirty')
+    @oud.mark_dirty('_proj_dirty')
     def far(self, far):
         self._far = far
 
     # getters for matrices, setting matrices should be done via other methods
     @property
-    @deco.lazy_update('_dirty', '_rebuild_tfmat')
+    @oud.lazy_update('_dirty', '_rebuild_tfmat')
     def view_mat(self):
-        return rm.tfmat_inverse(self._wd_tfmat)
+        return oum.tfmat_inverse(self._wd_tfmat)
 
     @property
-    @deco.lazy_update('_proj_dirty', '_rebuild_projmat')
+    @oud.lazy_update('_proj_dirty', '_rebuild_projmat')
     def projmat(self):
         return self._projmat
 
@@ -131,8 +131,8 @@ class Camera(nd.SceneNode):
 
     def _fix_up_vector(self, pos, look_at, up):
         # TODO: elevate to utils.math
-        fwd_length, fwd = rm.unit_vec(look_at - pos)
-        up_length, up = rm.unit_vec(up)
+        fwd_length, fwd = oum.unit_vec(look_at - pos)
+        up_length, up = oum.unit_vec(up)
         dot_val = np.dot(fwd, up)
         limit = 0.99 * (fwd_length * up_length)
         if dot_val > limit:
@@ -147,9 +147,9 @@ class Camera(nd.SceneNode):
             return
         self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, self._up),
                               dtype=np.float32)
-        self._rotmat = rm.rotmat_from_look_at(pos=self._pos,
-                                              look_at=self._look_at,
-                                              up=self._up)
+        self._rotmat = oum.rotmat_from_look_at(pos=self._pos,
+                                               look_at=self._look_at,
+                                               up=self._up)
         super()._rebuild_tfmat()
 
     def _rebuild_projmat(self, width=None, height=None):

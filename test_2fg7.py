@@ -1,17 +1,17 @@
 import numpy as np
-from one import wd, const, prims, or_2fg7
+from one import ovw, ouc, ossop, or_2fg7
 
-base = wd.World(cam_pos=(.5, .5, .5), cam_lookat_pos=(0, 0, .2),
+base = ovw.World(cam_pos=(.5, .5, .5), cam_lookat_pos=(0, 0, .2),
                 toggle_auto_cam_orbit=True)
-oframe = prims.gen_frame().attach_to(base.scene)
+oframe = ossop.gen_frame().attach_to(base.scene)
 gripper = or_2fg7.OR2FG7()
 #
 # gripper.toggle_render_collision = True
 gripper.attach_to(base.scene)
 gripper.fk()
 
-box = prims.gen_cylinder(spos=(.3, 0, 0), epos=(.3, 0, .1), radius=.03,
-                         collision_type=const.CollisionType.AABB)
+box = ossop.gen_cylinder(spos=(.3, 0, 0), epos=(.3, 0, .1), radius=.03,
+                         collision_type=ouc.CollisionType.AABB)
 box.attach_to(base.scene)
 # box.toggle_render_collision = True
 

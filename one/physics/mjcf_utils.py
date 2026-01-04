@@ -59,8 +59,7 @@ def inertial_to_xml(mass, com, inrtmat):
             f'{inrtmat[0][1]} {inrtmat[0][2]} {inrtmat[1][2]}"/>')
 
 
-def collision_to_xml(c, mesh_assets, mesh_counter, mass=None):
-    """mesh_counter: list with one integer element to act as mutable counter"""
+def collision_to_xml(c, mesh_assets, namer, mass=None):
     mass_attr = f'mass="{mass}" ' if mass is not None else ""
     pos = c.pos
     qx, qy, qz, qw = c.quat
@@ -78,9 +77,8 @@ def collision_to_xml(c, mesh_assets, mesh_counter, mass=None):
         return f'<geom type="plane" size="1 1 0.1" {common}/>', None
     elif isinstance(c, sco.MeshCollisionShape):
         if c.file_path not in mesh_assets:
-            mesh_name = f"mesh_{mesh_counter[0]}"
+            mesh_name = namer.unique_name("mesh", "mesh")
             mesh_assets[c.file_path] = mesh_name
-            mesh_counter[0] += 1
             asset_xml = f'<mesh name="{mesh_name}" file="{c.file_path}"/>'
         else:
             mesh_name = mesh_assets[c.file_path]
@@ -89,7 +87,7 @@ def collision_to_xml(c, mesh_assets, mesh_counter, mass=None):
         raise NotImplementedError
 
 
-def sceneobject_to_mjcf(sobj, mesh_assets, mesh_counter):
+def sobj_to_mjcf(sobj, mesh_assets, namer):
     inertial_xml = inertial_to_xml(sobj.mass, sobj.com, sobj.inrtmat)
     geoms = []
     assets = []
@@ -97,27 +95,29 @@ def sceneobject_to_mjcf(sobj, mesh_assets, mesh_counter):
     for idx, c in enumerate(getattr(sobj, "collisions", [])):
         mass = first_geom_mass if idx == 0 else None
         geom_xml, asset_xml = collision_to_xml(c, mesh_assets,
-                                               mesh_counter, mass=mass)
+                                               namer, mass=mass)
         geoms.append(geom_xml)
         if asset_xml:
             assets.append(asset_xml)
     return inertial_xml, geoms, assets
 
 
-def sceneobject_to_mjcf_body(sobj, mesh_assets, mesh_counter):
+def sobj_to_mjcf_body(sobj, mesh_assets, namer):
     px, py, pz = sobj.pos
     qx, qy, qz, qw = sobj.quat
-    inertial_xml, geoms, assets = sceneobject_to_mjcf(sobj, mesh_assets, mesh_counter)
+    inertial_xml, geoms, assets = sobj_to_mjcf(sobj, mesh_assets, namer)
     joint_xml = "" if sobj.is_fixed else "<freejoint/>"
     body_inner = join_nonempty([joint_xml, inertial_xml, "\n".join(geoms)])
-    body_xml = body_template.format(name=sobj.name,
+    body_name = namer.unique_name("body", sobj.name)
+    namer.reg_bdy(sobj, body_name)
+    body_xml = body_template.format(name=body_name,
                                     px=px, py=py, pz=pz,
                                     qw=qw, qx=qx, qy=qy, qz=qz,
                                     body_inner=indent(body_inner, n=2))
     return assets, body_xml
 
 
-def state_to_mjcf_body(state, mesh_assets, mesh_counter):
+def state_to_mjcf_body(state, mesh_assets, namer):
     compiled = state._compiled
     if compiled is None:
         raise RuntimeError("structure must be compiled before exporting to MJCF")
@@ -142,12 +142,14 @@ def state_to_mjcf_body(state, mesh_assets, mesh_counter):
         axis = compiled.jax_by_idx[jidx]
         range_low = compiled.jlmt_low_by_idx[jidx]
         range_high = compiled.jlmt_high_by_idx[jidx]
-        joint_xml = (f'<joint name="{jnt.name}" type="{jtype_str}" '
+        jnt_name = namer.unique_name("joint", jnt.name)
+        namer.reg_jnt(jnt, jnt_name)
+        joint_xml = (f'<joint name="{jnt_name}" type="{jtype_str}" '
                      f'axis="{axis[0]} {axis[1]} {axis[2]}" '
                      f'range="{range_low} {range_high}"/>')
-        inertial_xml, geoms, new_assets = sceneobject_to_mjcf(lnk,
-                                                              mesh_assets,
-                                                              mesh_counter)
+        inertial_xml, geoms, new_assets = sobj_to_mjcf(lnk,
+                                                       mesh_assets,
+                                                       namer)
         assets.extend(new_assets)
         # build children (grand-children links)
         child_bodies = []
@@ -161,7 +163,9 @@ def state_to_mjcf_body(state, mesh_assets, mesh_counter):
         body_inner = join_nonempty([joint_xml, inertial_xml,
                                     "\n".join(geoms),
                                     "\n".join(child_bodies)])
-        body_xml = body_template.format(name=lnk.name,
+        body_name = namer.unique_name("body", lnk.name)
+        namer.reg_bdy(lnk, body_name)
+        body_xml = body_template.format(name=body_name,
                                         px=px, py=py, pz=pz,
                                         qw=qw, qx=qx, qy=qy, qz=qz,
                                         body_inner=indent(body_inner, n=2))
@@ -178,9 +182,9 @@ def state_to_mjcf_body(state, mesh_assets, mesh_counter):
         root_wd_rotmat = base_rotmat @ root_loc_rotmat
         px, py, pz = root_wd_pos
         qx, qy, qz, qw = rm.quat_from_rotmat(root_wd_rotmat)
-        inertial_xml, geoms, root_assets = sceneobject_to_mjcf(root_lnk,
-                                                               mesh_assets,
-                                                               mesh_counter)
+        inertial_xml, geoms, root_assets = sobj_to_mjcf(root_lnk,
+                                                        mesh_assets,
+                                                        namer)
         assets.extend(root_assets)
         root_joint_xml = "" if root_lnk.is_fixed else "<freejoint/>"
         child_bodies = []
@@ -190,7 +194,9 @@ def state_to_mjcf_body(state, mesh_assets, mesh_counter):
                 continue
             child_bodies.append(_build_child_body_with_joint(pjidx_of_clidx, clnk_idx, level=1))
         body_inner = join_nonempty([root_joint_xml, inertial_xml, "\n".join(geoms), "\n".join(child_bodies)])
-        body_xml = body_template.format(name=root_lnk.name,
+        body_name = namer.unique_name("body", root_lnk.name)
+        namer.reg_bdy(root_lnk, body_name)
+        body_xml = body_template.format(name=body_name,
                                         px=px, py=py, pz=pz,
                                         qw=qw, qx=qx, qy=qy, qz=qz,
                                         body_inner=indent(body_inner, n=2))

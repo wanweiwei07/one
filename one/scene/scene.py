@@ -1,6 +1,6 @@
 from one.scene.scene_object import SceneObject
-from one.robot_sim.base.mech_structure import Link
-from one.robot_sim.base.mech_state import MechState
+from one.robots.base.mech_structure import Link
+from one.robots.base.mech_state import MechState
 
 
 class Scene:

@@ -1,18 +1,18 @@
 import numpy as np
 import pyglet.gl as gl
-import one.viewer.shader as sd
-import one.viewer.screen_quad as sq
+import one.viewer.shader as ovs
+import one.viewer.screen_quad as ovsq
 
 
 class Render:
 
     def __init__(self, camera):
         self.camera = camera
-        self.mesh_shader = sd.Shader(sd.mesh_vert, sd.mesh_matte_frag)
-        self.pcd_shader = sd.Shader(sd.pcd_vert, sd.pcd_frag)
-        self.outline_shader = sd.Shader(sd.outline_vert, sd.outline_frag)
-        self.tex_shader = sd.Shader(sd.tex_vert, sd.tex_frag)
-        self.screen_quad = sq.ScreenQuad()
+        self.mesh_shader = ovs.Shader(ovs.mesh_vert, ovs.mesh_matte_frag)
+        self.pcd_shader = ovs.Shader(ovs.pcd_vert, ovs.pcd_frag)
+        self.outline_shader = ovs.Shader(ovs.outline_vert, ovs.outline_frag)
+        self.tex_shader = ovs.Shader(ovs.tex_vert, ovs.tex_frag)
+        self.screen_quad = ovsq.ScreenQuad()
         self._groups_cache = None
         self._gl_setup()
         self._tmp = np.zeros(16, dtype=np.float32)  # for flattening matrices

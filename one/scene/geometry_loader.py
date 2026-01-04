@@ -2,7 +2,7 @@ import os
 import xml
 import struct
 import numpy as np
-import one.scene.geometry as geom
+import one.scene.geometry as osg
 
 _geometry_cache = {}
 
@@ -86,7 +86,7 @@ def _load_stl_binary(path, tri_count):
             verts[base + 2] = v2
             faces[i] = (base + 0, base + 1, base + 2)
             f.read(2)  # skip attribute bytes
-    return geom.Geometry(verts, faces)
+    return osg.Geometry(verts, faces)
 
 
 def _load_stl_ascii(path):
@@ -106,7 +106,7 @@ def _load_stl_ascii(path):
                 verts.extend(current_face)
                 faces.append([i0, i1, i2])
                 current_face = []
-    return geom.Geometry(np.array(verts, dtype=np.float32), np.array(faces, dtype=np.int32))
+    return osg.Geometry(np.array(verts, dtype=np.float32), np.array(faces, dtype=np.int32))
 
 
 # ==============================
@@ -152,4 +152,4 @@ def load_dae(filename):
     verts = floats.reshape((-1, 3)).astype(np.float32)
     idx = find_indices()
     faces = idx.reshape((-1, 3))
-    return geom.Geometry(verts, faces)
+    return osg.Geometry(verts, faces)

@@ -1,8 +1,8 @@
-import one.utils.constant as const
-import one.scene.render_model as mdl
-import one.scene.scene_node as snd
-import one.scene.geometry_loader as gldr
-import one.scene.collision as sco
+import one.utils.constant as ouc
+import one.scene.render_model as osrm
+import one.scene.scene_node as ossn
+import one.scene.geometry_loader as osgl
+import one.scene.collision as osc
 
 
 class SceneObject:
@@ -11,7 +11,7 @@ class SceneObject:
     @classmethod
     def auto_name(cls, flag_str=None):
         if flag_str is not None:
-            name = f"{cls.__name__}_{flag_str}_{cls._auto_counter}"
+            name = f"{cls.__name__}_{flag_str}"
         else:
             name = f"{cls.__name__}_{cls._auto_counter}"
         cls._auto_counter += 1
@@ -24,9 +24,9 @@ class SceneObject:
         instance = cls(name=name, rotmat=rotmat, pos=pos,
                        collision_type=collision_type, is_fixed=is_fixed)
         instance.file_path = path
-        instance.add_visual(mdl.RenderModel(geometry=gldr.load_geometry(path),
-                                            rotmat=local_rotmat, pos=local_pos,
-                                            rgb=rgb, alpha=alpha),
+        instance.add_visual(osrm.RenderModel(geometry=osgl.load_geometry(path),
+                                             rotmat=local_rotmat, pos=local_pos,
+                                             rgb=rgb, alpha=alpha),
                             auto_make_collision=True)
         return instance
 
@@ -34,10 +34,10 @@ class SceneObject:
                  collision_type=None, is_fixed=False):
         self.name = self.auto_name(flag_str=name)
         self.file_path = None
-        self.node = snd.SceneNode(rotmat=rotmat, pos=pos)
+        self.node = ossn.SceneNode(rotmat=rotmat, pos=pos)
         self.visuals = []
         self.collisions = []
-        self.collision_type = collision_type  # None means no auto collision generation
+        self.collision_type = collision_type  # None means no auto collider generation
         self.toggle_render_collision = False
         self.scene = None
         self._inrtmat = None
@@ -174,18 +174,18 @@ class SceneObject:
     def _auto_make_collision_from_model(self, m):
         if self.collision_type is None or self.collisions:
             return
-        if self.collision_type == const.CollisionType.MESH:
-            shape = sco.MeshCollisionShape(file_path=self.file_path,
+        if self.collision_type == ouc.CollisionType.MESH:
+            shape = osc.MeshCollisionShape(file_path=self.file_path,
                                            geometry=m.geometry,
                                            rotmat=m.rotmat, pos=m.pos)
-        elif self.collision_type == const.CollisionType.SPHERE:
-            shape = sco.SphereCollisionShape.fit_from_model(m)
-        elif self.collision_type == const.CollisionType.CAPSULE:
-            shape = sco.CapsuleCollisionShape.fit_from_model(m)
-        elif self.collision_type == const.CollisionType.AABB:
-            shape = sco.AABBCollisionShape.fit_from_model(m)
-        elif self.collision_type == const.CollisionType.OBB:
-            shape = sco.OBBCollisionShape.fit_from_model(m)
-        elif self.collision_type == const.CollisionType.PLANE:
-            shape = sco.PlaneCollisionShape.fit_from_model(m)
+        elif self.collision_type == ouc.CollisionType.SPHERE:
+            shape = osc.SphereCollisionShape.fit_from_model(m)
+        elif self.collision_type == ouc.CollisionType.CAPSULE:
+            shape = osc.CapsuleCollisionShape.fit_from_model(m)
+        elif self.collision_type == ouc.CollisionType.AABB:
+            shape = osc.AABBCollisionShape.fit_from_model(m)
+        elif self.collision_type == ouc.CollisionType.OBB:
+            shape = osc.OBBCollisionShape.fit_from_model(m)
+        elif self.collision_type == ouc.CollisionType.PLANE:
+            shape = osc.PlaneCollisionShape.fit_from_model(m)
         self.add_collision(shape)

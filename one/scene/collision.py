@@ -1,13 +1,13 @@
 import numpy as np
-import one.utils.math as rm
-import one.utils.constant as const
-import one.scene.geometry_primitive as gprim
-import one.scene.render_model as mdl
+import one.utils.math as oum
+import one.utils.constant as ouc
+import one.scene.geometry_primitive as osgp
+import one.scene.render_model as osrm
 
 
 class CollisionShape:
     def __init__(self, rotmat=None, pos=None):
-        self._tfmat = rm.tfmat_from_rotmat_pos(rotmat, pos)
+        self._tfmat = oum.tfmat_from_rotmat_pos(rotmat, pos)
 
     def to_render_model(self):
         raise NotImplementedError
@@ -17,7 +17,7 @@ class CollisionShape:
 
     @property
     def quat(self):
-        return rm.quat_from_rotmat(self._tfmat[:3, :3])
+        return oum.quat_from_rotmat(self._tfmat[:3, :3])
 
     @property
     def rotmat(self):
@@ -49,10 +49,10 @@ class SphereCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
-        g = gprim.gen_icosphere_geom(radius=self._radius)
-        return mdl.RenderModel(geometry=g, pos=self.pos,
-                               rgb=const.BasicColor.GRAY,
-                               alpha=const.ALPHA.LIGHT_SEMI)
+        g = osgp.gen_icosphere_geom(radius=self._radius)
+        return osrm.RenderModel(geometry=g, pos=self.pos,
+                                rgb=ouc.BasicColor.GRAY,
+                                alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def radius(self):
@@ -65,7 +65,7 @@ class CapsuleCollisionShape(CollisionShape):
     def fit_from_model(cls, m):
         verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
         faces = m.geometry.faces
-        mean, pcmat = rm.area_weighted_pca(verts, faces)
+        mean, pcmat = oum.area_weighted_pca(verts, faces)
         pc_ax = pcmat[:, -1]
         proj = (verts - mean) @ pc_ax
         mn = proj.min()
@@ -96,9 +96,9 @@ class CapsuleCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
-        g = gprim.gen_capsule_geom(radius=self._radius, half_length=self._half_length)
-        return mdl.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
-                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
+        g = osgp.gen_capsule_geom(radius=self._radius, half_length=self._half_length)
+        return osrm.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
+                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def radius(self):
@@ -131,9 +131,9 @@ class AABBCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
-        g = gprim.gen_box_geom(half_extents=self._half_extents)
-        return mdl.RenderModel(geometry=g, pos=self.pos,
-                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
+        g = osgp.gen_box_geom(half_extents=self._half_extents)
+        return osrm.RenderModel(geometry=g, pos=self.pos,
+                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def half_extents(self):
@@ -146,7 +146,7 @@ class OBBCollisionShape(CollisionShape):
     def fit_from_model(cls, m):
         verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
         faces = m.geometry.faces
-        mean, pcmat = rm.area_weighted_pca(verts, faces)
+        mean, pcmat = oum.area_weighted_pca(verts, faces)
         local = (verts - mean) @ pcmat
         loc_vmin = local.min(axis=0)
         loc_vmax = local.max(axis=0)
@@ -168,9 +168,9 @@ class OBBCollisionShape(CollisionShape):
                               rotmat=self.rotmat, pos=self.pos)
 
     def to_render_model(self):
-        g = gprim.gen_box_geom(half_extents=self._half_extents)
-        return mdl.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
-                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
+        g = osgp.gen_box_geom(half_extents=self._half_extents)
+        return osrm.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
+                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def half_extents(self):
@@ -182,14 +182,14 @@ class PlaneCollisionShape(CollisionShape):
     def fit_from_model(cls, m):
         verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
         faces = m.geometry.faces
-        mean, pcmat = rm.area_weighted_pca(verts, faces)
+        mean, pcmat = oum.area_weighted_pca(verts, faces)
         center = mean
         normal = pcmat[:, 0]
         shape = cls(normal=normal, pos=center)
         return shape
 
-    def __init__(self, normal=const.StandardAxis.Z, pos=None):
-        rotmat = rm.rotmat_between_vecs(const.StandardAxis.Z, normal)
+    def __init__(self, normal=ouc.StandardAxis.Z, pos=None):
+        rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, normal)
         super().__init__(rotmat=rotmat, pos=pos)
 
     def clone(self):
@@ -197,12 +197,12 @@ class PlaneCollisionShape(CollisionShape):
 
     def to_render_model(self, size=100.0, thickness=1e-3):
         half_extents = np.array([size, size, thickness], dtype=np.float32)
-        g = gprim.gen_box_geom(half_extents=half_extents)
-        return mdl.RenderModel(geometry=g,
-                               rotmat=self.rotmat,
-                               pos=self.pos,
-                               rgb=const.BasicColor.GRAY,
-                               alpha=const.ALPHA.LIGHT_SEMI)
+        g = osgp.gen_box_geom(half_extents=half_extents)
+        return osrm.RenderModel(geometry=g,
+                                rotmat=self.rotmat,
+                                pos=self.pos,
+                                rgb=ouc.BasicColor.GRAY,
+                                alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def normal(self):
@@ -223,8 +223,8 @@ class MeshCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
-        return mdl.RenderModel(geometry=self._geometry, rotmat=self.rotmat, pos=self.pos,
-                               rgb=const.BasicColor.GRAY, alpha=const.ALPHA.LIGHT_SEMI)
+        return osrm.RenderModel(geometry=self._geometry, rotmat=self.rotmat, pos=self.pos,
+                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def file_path(self):

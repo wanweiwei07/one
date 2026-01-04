@@ -1,52 +1,53 @@
 import numpy as np
-import one.utils.constant as const
-import one.utils.math as rm
+import one.utils.math as oum
+import one.utils.constant as ouc
 
 
 class MechState:
 
     def __init__(self, structure, base_rotmat=None, base_pos=None, qs=None):
         self._compiled = structure._compiled
-        self.base_rotmat = rm.ensure_rotmat(base_rotmat)
-        self.base_pos = rm.ensure_pos(base_pos)
+        self.base_rotmat = oum.ensure_rotmat(base_rotmat)
+        self.base_pos = oum.ensure_pos(base_pos)
         if qs is None:
             self.qs = np.zeros(self._compiled.n_jnts, dtype=np.float32)
         else:
             self.qs = np.asarray(qs, dtype=np.float32)
         # TODO: dirty tfmats and auto fk after set qs
-        # reference_wd_frames: world transforms of kinematic reference frames after joint motion
+        # lnk_ref_tfmat: world transforms of kinematic reference frames after joint motion
         # (indexed by link; equivalent to joint after-motion frames)
-        self.wd_lnk_tfmat_arr = np.zeros((self._compiled.n_lnks, 4, 4), dtype=np.float32)
+        self.lnk_ref_tfmat_arr = np.tile(np.eye(4, dtype=np.float32),
+                                         (self._compiled.n_lnks, 1, 1))
         self.runtime_lnks = []
         for lnk in structure.lnks:
             self.runtime_lnks.append(lnk.clone())
 
     def get_lnk_ref_tfmat(self, lnk):
         idx = self._compiled.lidx_map[lnk]
-        return self.wd_lnk_tfmat_arr[idx]
+        return self.lnk_ref_tfmat_arr[idx]
 
     def fk(self, qs=None):
         if qs is not None:
             self._set_qs(qs)
         q_resolved = self._compiled.resolve_all_qs(self.qs)
         rlnk_idx = self._compiled.root_lnk_idx
-        self.wd_lnk_tfmat_arr[rlnk_idx][:3, :3] = self.base_rotmat
-        self.wd_lnk_tfmat_arr[rlnk_idx][:3, 3] = self.base_pos
+        self.lnk_ref_tfmat_arr[rlnk_idx][:3, :3] = self.base_rotmat
+        self.lnk_ref_tfmat_arr[rlnk_idx][:3, 3] = self.base_pos
         for lnk_idx in self._compiled.lnk_ids_traversal_order:
             # lnk_idx = self.structure.link_dfs_index_map[lidx]
             if lnk_idx == rlnk_idx:
                 continue
             plnk_idx = self._compiled.plidx_of_lidx[lnk_idx]
             pjnt_idx = self._compiled.pjidx_of_lidx[lnk_idx]
-            plnk_tfmat = self.wd_lnk_tfmat_arr[plnk_idx]
+            plnk_tfmat = self.lnk_ref_tfmat_arr[plnk_idx]
             loc_tfmat = (self._compiled.jotfmat_by_idx[pjnt_idx] @
                          self._jnt_motion_tfmat(pjnt_idx, q_resolved[pjnt_idx]))
-            self.wd_lnk_tfmat_arr[lnk_idx] = plnk_tfmat @ loc_tfmat
-        return self.wd_lnk_tfmat_arr
+            self.lnk_ref_tfmat_arr[lnk_idx] = plnk_tfmat @ loc_tfmat
+        return self.lnk_ref_tfmat_arr
 
     def update(self):
         for i, link in enumerate(self.runtime_lnks):
-            link.tfmat = self.wd_lnk_tfmat_arr[i]
+            link.tfmat = self.lnk_ref_tfmat_arr[i]
 
     def attach_to(self, scene):
         scene.add(self)
@@ -61,7 +62,7 @@ class MechState:
         new.base_rotmat = self.base_rotmat.copy()
         new.base_pos = self.base_pos.copy()
         new.qs = self.qs.copy()
-        new.wd_lnk_tfmat_arr = self.wd_lnk_tfmat_arr.copy()
+        new.lnk_ref_tfmat_arr = self.lnk_ref_tfmat_arr.copy()
         new.runtime_lnks = [lnk.clone() for lnk in self.runtime_lnks]
         return new
 
@@ -114,10 +115,10 @@ class MechState:
     def _jnt_motion_tfmat(self, jnt_idx, q):
         jnt_type = self._compiled.jtypes_by_idx[jnt_idx]
         jnt_ax = self._compiled.jax_by_idx[jnt_idx]
-        if jnt_type == const.JntType.FIXED:
+        if jnt_type == ouc.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
-        if jnt_type == const.JntType.REVOLUTE:
-            return rm.tfmat_from_rotmat_pos(rotmat=rm.rotmat_from_axangle(jnt_ax, q))
-        if jnt_type == const.JntType.PRISMATIC:
-            return rm.tfmat_from_rotmat_pos(pos=jnt_ax * q)
+        if jnt_type == ouc.JntType.REVOLUTE:
+            return oum.tfmat_from_rotmat_pos(rotmat=oum.rotmat_from_axangle(jnt_ax, q))
+        if jnt_type == ouc.JntType.PRISMATIC:
+            return oum.tfmat_from_rotmat_pos(pos=jnt_ax * q)
         raise TypeError(f"Unknown joint type: {jnt_type}")

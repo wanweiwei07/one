@@ -1,6 +1,6 @@
 import numpy as np
-import one.utils.math as rm
-import one.viewer.device_buffer as dvb
+import one.utils.math as oum
+import one.viewer.device_buffer as ovdb
 
 
 class Geometry:
@@ -22,23 +22,23 @@ class Geometry:
     def get_device_buffer(self):
         if self._device_buffer is None:
             if self.faces is None:
-                self._device_buffer = dvb.PointCloudBuffer(self.verts, self.per_vert_rgbs)
+                self._device_buffer = ovdb.PointCloudBuffer(self.verts, self.per_vert_rgbs)
             else:
-                self._device_buffer = dvb.MeshBuffer(self.verts, self.faces,
-                                                     self.vert_normals)
+                self._device_buffer = ovdb.MeshBuffer(self.verts, self.faces,
+                                                      self.vert_normals)
         return self._device_buffer
 
     def _compute_vert_normals(self):
         v1 = self.verts[self.faces[:, 1]] - self.verts[self.faces[:, 0]]
         v2 = self.verts[self.faces[:, 2]] - self.verts[self.faces[:, 0]]
         raw_fns = np.cross(v1, v2).astype(np.float32)
-        _, unit_fns = rm.unit_vec(raw_fns)
+        _, unit_fns = oum.unit_vec(raw_fns)
         # vert normals
         vns = np.zeros_like(self.verts)
         np.add.at(vns, self.faces[:, 0], unit_fns)
         np.add.at(vns, self.faces[:, 1], unit_fns)
         np.add.at(vns, self.faces[:, 2], unit_fns)
-        _, vns = rm.unit_vec(vns)
+        _, vns = oum.unit_vec(vns)
         return vns
 
     def _merge_vertices_and_faces(self, verts, faces, tol=1e-6):

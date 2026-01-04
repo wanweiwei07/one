@@ -1,9 +1,9 @@
 import numpy as np
-import one.utils.math as rm
-import one.robot_sim.base.mech_base as rbase
+import one.utils.math as oum
+import one.robots.base.mech_base as orb
 
 
-class ManipulatorBase(rbase.MechBase):
+class ManipulatorBase(orb.MechBase):
 
     def __init__(self, base_rotmat=None, base_pos=None):
         super().__init__(base_rotmat=base_rotmat, base_pos=base_pos)
@@ -33,7 +33,7 @@ class ManipulatorBase(rbase.MechBase):
                tgt_rotmat,
                tgt_pos,
                qs_active_init=None):
-        tgt_tcp_tfmat = rm.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_tcp_tfmat = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
         qs_active, info = self._solver.ik(
             root_rotmat=self.state.base_rotmat,

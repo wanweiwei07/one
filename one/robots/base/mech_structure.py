@@ -1,13 +1,13 @@
 import numpy as np
-import one.utils.math as rm
-import one.utils.constant as const
-import one.utils.decorator as deco
-import one.scene.scene_object as sob
-import one.robot_sim.base.kinematic_chain as rchain
-import one.robot_sim.base.kinematic_solver as rsolver
+import one.utils.math as oum
+import one.utils.constant as ouc
+import one.utils.decorator as oud
+import one.scene.scene_object as osob
+import one.robots.base.kinematic_chain as orc
+import one.robots.base.kinematic_solver as ors
 
 
-class Link(sob.SceneObject):
+class Link(osob.SceneObject):
     """Links is essentially a SceneObject"""
     _auto_counter = 0  # maintain new counter for Link class
 
@@ -31,7 +31,7 @@ class Joint:
                  lmt_up=None):
         self.name = name
         self.jnt_type = jnt_type
-        self.axis = rm.unit_vec(axis, return_length=False)
+        self.axis = oum.unit_vec(axis, return_length=False)
         self.rotmat = rotmat
         self.pos = pos
         self.parent_lnk = parent_lnk
@@ -39,22 +39,22 @@ class Joint:
         # mimic
         self.mmc = mmc
         # joint limits
-        if jnt_type == const.JntType.REVOLUTE:
-            self.lmt_low = -2.0 * rm.pi if lmt_low is None else lmt_low
-            self.lmt_up = 2.0 * rm.pi if lmt_up is None else lmt_up
-        elif jnt_type == const.JntType.PRISMATIC:
+        if jnt_type == ouc.JntType.REVOLUTE:
+            self.lmt_low = -2.0 * oum.pi if lmt_low is None else lmt_low
+            self.lmt_up = 2.0 * oum.pi if lmt_up is None else lmt_up
+        elif jnt_type == ouc.JntType.PRISMATIC:
             self.lmt_low = -1.0 if lmt_low is None else lmt_low
             self.lmt_up = 1.0 if lmt_up is None else lmt_up
-        elif jnt_type == const.JntType.FIXED:
+        elif jnt_type == ouc.JntType.FIXED:
             self.lmt_low = 0.0
             self.lmt_up = 0.0
         else:
             raise ValueError(f"Unknown joint type: {jnt_type}")
 
     @property
-    @deco.readonly_view
+    @oud.readonly_view
     def origin_tfmat(self):
-        return rm.tfmat_from_rotmat_pos(self.rotmat, self.pos)
+        return oum.tfmat_from_rotmat_pos(self.rotmat, self.pos)
 
 
 class MechStruct:
@@ -75,13 +75,13 @@ class MechStruct:
     def get_chain(self, root_lnk, tip_lnk):
         key = (root_lnk, tip_lnk)
         if key not in self._chains:
-            self._chains[key] = rchain.KinematicChain(self, root_lnk, tip_lnk)
+            self._chains[key] = orc.KinematicChain(self, root_lnk, tip_lnk)
         return self._chains[key]
 
     def get_solver(self, root_lnk, tip_lnk):
         chain = self.get_chain(root_lnk, tip_lnk)
         if chain not in self._solvers:
-            self._solvers[chain] = rsolver.KinematicSolver(self, chain)
+            self._solvers[chain] = ors.KinematicSolver(self, chain)
         return self._solvers[chain]
 
     def add_lnk(self, lnk):
@@ -147,7 +147,7 @@ class FlatMechStructure:
         self.ancestor_jnt_ids = self._build_ancestor_cache()
         # active joint mask
         self.active_jnt_ids_mask = np.ones(self.n_jnts, dtype=bool)
-        self.active_jnt_ids_mask[self.jtypes_by_idx == const.JntType.FIXED] = False
+        self.active_jnt_ids_mask[self.jtypes_by_idx == ouc.JntType.FIXED] = False
         self.active_jnt_ids_mask[self.mmc_src_by_idx >= 0] = False
         # traversal order (O(n) FK)
         self.lnk_ids_traversal_order = self._build_traversal_order()

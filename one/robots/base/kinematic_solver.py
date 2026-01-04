@@ -1,6 +1,6 @@
 import numpy as np
-import one.utils.math as rm
-import one.utils.constant as const
+import one.utils.math as oum
+import one.utils.constant as ouc
 
 
 class KinematicSolver:
@@ -49,8 +49,8 @@ class KinematicSolver:
         :param rot_err_max: parameter for trust region
         :return:
         """
-        root_tfmat = rm.tfmat_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tfmat = rm.tfmat_from_rotmat_pos(tgt_romat, tgt_pos)
+        root_tfmat = oum.tfmat_from_rotmat_pos(root_rotmat, root_pos)
+        tgt_tfmat = oum.tfmat_from_rotmat_pos(tgt_romat, tgt_pos)
         if qs_active_init is None:
             qs = (self.lmt_low + self.lmt_up) * 0.5
         else:
@@ -59,8 +59,8 @@ class KinematicSolver:
         for it in range(int(max_iter)):
             _, jacmat, cur_tfmat = self._forward_to_lnk(qs, root_tfmat)
             delta_p = tgt_tfmat[:3, 3] - cur_tfmat[:3, 3]
-            delta_theta = rm.delta_rotvec_between_rotmats(cur_tfmat[:3, :3],
-                                                          tgt_tfmat[:3, :3])
+            delta_theta = oum.delta_rotvec_between_rotmats(cur_tfmat[:3, :3],
+                                                           tgt_tfmat[:3, :3])
             delta_x = np.concatenate([delta_p, delta_theta]).astype(np.float32)
             pos_err = np.linalg.norm(delta_p)
             rot_err = np.linalg.norm(delta_theta)
@@ -121,12 +121,12 @@ class KinematicSolver:
         return wd_p_tgt.astype(np.float32), jacmat.astype(np.float32), wd_lnk_tfmat_arr[-1].astype(np.float32)
 
     def _jnt_motion_tfmat(self, jnt_type, loc_jnt_ax, q):
-        if jnt_type == const.JntType.FIXED:
+        if jnt_type == ouc.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
-        if jnt_type == const.JntType.REVOLUTE:
-            return rm.tfmat_from_rotmat_pos(rotmat=rm.rotmat_from_axangle(loc_jnt_ax, q))
-        if jnt_type == const.JntType.PRISMATIC:
-            return rm.tfmat_from_rotmat_pos(pos=loc_jnt_ax * q)
+        if jnt_type == ouc.JntType.REVOLUTE:
+            return oum.tfmat_from_rotmat_pos(rotmat=oum.rotmat_from_axangle(loc_jnt_ax, q))
+        if jnt_type == ouc.JntType.PRISMATIC:
+            return oum.tfmat_from_rotmat_pos(pos=loc_jnt_ax * q)
         raise TypeError(f"Unknown joint type: {jnt_type}")
 
     @property

@@ -1,7 +1,8 @@
 import numpy as np
-import one.utils.decorator as deco
-import one.robot_sim.base.mech_state as rstate
-import one.robot_sim.base.mech_structure as rstruct
+import one.utils.math as oum
+import one.utils.decorator as oud
+import one.robots.base.mech_state as orst
+import one.robots.base.mech_structure as orstr
 
 
 # TODO: dataclass, frozen, slots
@@ -25,14 +26,14 @@ class Mounting:
 
 
 class MechBase:
-    _structure: rstruct.MechStruct = None
+    _structure: orstr.MechStruct = None
 
     @classmethod
     def _build_structure(cls):
         raise NotImplementedError
 
     def __init__(self, base_rotmat=None, base_pos=None):
-        self.state = rstate.MechState(self.structure, base_rotmat=base_rotmat, base_pos=base_pos)
+        self.state = orst.MechState(self.structure, base_rotmat=base_rotmat, base_pos=base_pos)
         self.home_qs = np.zeros(self.state.n_jnts, dtype=np.float32)
         self._mountings: dict[object, Mounting] = {}
         self.fk(qs=self.home_qs, update=True)
@@ -44,7 +45,7 @@ class MechBase:
 
     def fk(self, qs=None, update=True):
         """
-        TODO: update visual and update collision
+        TODO: update visual and update collider
         forward kinematics, update cannot be true when root_tfmat is given
         :param qs:
         :param update: whether to update the mountings after fk
@@ -66,7 +67,7 @@ class MechBase:
     def remove_from(self, scene):
         return self.state.remove_from(scene)
 
-    def get_link_wd_tfmat(self, link):
+    def get_lnk_ref_tfmat(self, link):
         return self.state.get_lnk_ref_tfmat(link)
 
     def mount(self, child, parent_link, engage_tfmat):
@@ -97,7 +98,7 @@ class MechBase:
         return new_obj
 
     @property
-    @deco.readonly_view
+    @oud.readonly_view
     def qs(self):
         return self.state.qs
 
@@ -117,33 +118,26 @@ class MechBase:
         self.state.toggle_render_collision = flag
 
     @property
-    @deco.readonly_view
     def base_tfmat(self):
-        return self.state.base_tfmat
-
-    @base_tfmat.setter
-    def base_tfmat(self, tfmat):
-        self.state.base_tfmat = tfmat
-        self.state.fk()
+        return oum.tfmat_from_rotmat_pos(self.state.base_rotmat,
+                                         self.state.base_pos)
 
     @property
-    @deco.readonly_view
     def base_pos(self):
-        return self.state.base_tfmat[:3, 3]
+        return self.state.base_pos.copy()
 
     @base_pos.setter
     def base_pos(self, pos):
-        self.state.base_tfmat[:3, 3] = pos
+        self.state.base_pos[:] = pos
         self.fk(update=True)
 
     @property
-    @deco.readonly_view
     def base_rotmat(self):
-        return self.state.base_tfmat[:3, :3]
+        return self.state.base_rotmat.copy()
 
     @base_rotmat.setter
     def base_rotmat(self, rotmat):
-        self.state.base_tfmat[:3, :3] = rotmat
+        self.state.base_rotmat[:] = rotmat
         self.state.fk()
 
     @property
@@ -171,7 +165,7 @@ class MechBase:
         self.state.alpha = value
 
     def _update_mounting(self, mounting: Mounting):
-        parent_tfmat = self.get_link_wd_tfmat(mounting.parent_link)
+        parent_tfmat = self.get_lnk_ref_tfmat(mounting.parent_link)
         child_tfmat = parent_tfmat @ mounting.engage_tfmat
         if isinstance(mounting.child, MechBase):
             mounting.child.state.base_tfmat = child_tfmat

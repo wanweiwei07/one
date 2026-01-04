@@ -1,22 +1,23 @@
 import numpy as np
 
-from one.viewer import world as wd
+import one.utils.math as oum
+import one.utils.constant as ouc
 
-from one.scene import scene as scn
-from one.scene import scene_object as sob
-from one.scene import geometry as geom
-from one.scene import scene_object_primitive as prims
-from one.scene import render_model as mdl
-from one.scene import geometry_loader as gldr
+import one.scene.scene as oss
+import one.scene.scene_object as osso
+import one.scene.geometry as osg
+import one.scene.scene_object_primitive as ossop
+import one.scene.render_model as osrm
+import one.scene.geometry_loader as osgl
 
-from one.utils import constant as const
-from one.utils import math as rm
+import one.viewer.world as ovw
 
-from one.robot_sim.manipulators.kawasaki.rs007l import rs007l as khi_rs007l
+import one.motion.probabilistic.space_provider as ompsp
+import one.motion.probabilistic.rrt as ompr
 
-from one.robot_sim.end_effectors.onrobot.or_2fg7 import or_2fg7
+import one.robots.manipulators.kawasaki.rs007l.rs007l as khi_rs007l
+import one.robots.end_effectors.onrobot.or_2fg7.or_2fg7 as or_2fg7
 
-from one.motion.probabilistic import space_provider as spdr
-from one.motion.probabilistic import rrt as rrt
-
-__all__ = ['np', 'wd', 'scn', 'sob', 'gldr', 'mdl', 'const', 'rm', 'khi_rs007l', 'or_2fg7', 'spdr', 'rrt']
+__all__ = ['np', 'oum', 'oss', 'osso', 'osg', 'osrm', 'osgl', 'ovw',
+           'ompsp', 'ompr',
+           'khi_rs007l', 'or_2fg7']

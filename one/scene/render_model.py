@@ -1,8 +1,8 @@
 import numpy as np
-import one.utils.math as rm
-import one.utils.decorator as deco
-import one.utils.constant as const
-import one.scene.geometry as geom
+import one.utils.math as oum
+import one.utils.decorator as oud
+import one.utils.constant as ouc
+import one.scene.geometry as osg
 
 
 class RenderModel:
@@ -23,18 +23,18 @@ class RenderModel:
             verts = geometry[0]
             faces = geometry[1] if len(geometry) > 1 else None
             per_vert_rgbs = geometry[2] if len(geometry) > 2 else None
-            self.geometry = geom.Geometry(verts=verts,
-                                          faces=faces,
-                                          per_vert_rgbs=per_vert_rgbs)
+            self.geometry = osg.Geometry(verts=verts,
+                                         faces=faces,
+                                         per_vert_rgbs=per_vert_rgbs)
         else:
             self.geometry = geometry
-        self.rgb = rm.ensure_rgb(rgb)
+        self.rgb = oum.ensure_rgb(rgb)
         self.alpha = alpha
         self.shader = shader
-        self._rotmat = rm.ensure_rotmat(rotmat)
-        self._pos = rm.ensure_pos(pos)
+        self._rotmat = oum.ensure_rotmat(rotmat)
+        self._pos = oum.ensure_pos(pos)
         # cached
-        self._tfmat = rm.tfmat_from_rotmat_pos(self._rotmat, self._pos)
+        self._tfmat = oum.tfmat_from_rotmat_pos(self._rotmat, self._pos)
         self._dirty = True
 
     def clone(self):
@@ -49,35 +49,35 @@ class RenderModel:
     @property
     def quat(self):
         # TODO cache?
-        return rm.quat_from_rotmat(self._rotmat)
+        return oum.quat_from_rotmat(self._rotmat)
 
     @property
     def pos(self):
         return self._pos.copy()
 
     @pos.setter
-    @deco.mark_dirty('_mark_dirty')
+    @oud.mark_dirty('_mark_dirty')
     def pos(self, pos):
-        self._pos[:] = rm.ensure_pos(pos)
+        self._pos[:] = oum.ensure_pos(pos)
 
     @property
     def rotmat(self):
         return self._rotmat.copy()
 
     @rotmat.setter
-    @deco.mark_dirty('_mark_dirty')
+    @oud.mark_dirty('_mark_dirty')
     def rotmat(self, rotmat):
-        self._rotmat[:] = rm.ensure_rotmat(rotmat)
+        self._rotmat[:] = oum.ensure_rotmat(rotmat)
 
     @property
-    @deco.lazy_update("_dirty", "_rebuild_tfmat")
+    @oud.lazy_update("_dirty", "_rebuild_tfmat")
     def tfmat(self):
         return self._tfmat.copy()
 
-    @deco.mark_dirty('_mark_dirty')
+    @oud.mark_dirty('_mark_dirty')
     def set_rotmat_pos(self, rotmat, pos):
-        self._rotmat[:] = rm.ensure_rotmat(rotmat)
-        self._pos[:] = rm.ensure_pos(pos)
+        self._rotmat[:] = oum.ensure_rotmat(rotmat)
+        self._pos[:] = oum.ensure_pos(pos)
 
     def _rebuild_tfmat(self):
         if not self._dirty:
