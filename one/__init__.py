@@ -12,6 +12,8 @@ import one.scene.geometry_loader as osgl
 
 import one.viewer.world as ovw
 
+import one.collider.mj_collider as ocm
+
 import one.motion.probabilistic.space_provider as ompsp
 import one.motion.probabilistic.rrt as ompr
 
@@ -19,5 +21,5 @@ import one.robots.manipulators.kawasaki.rs007l.rs007l as khi_rs007l
 import one.robots.end_effectors.onrobot.or_2fg7.or_2fg7 as or_2fg7
 
 __all__ = ['np', 'oum', 'oss', 'osso', 'osg', 'osrm', 'osgl', 'ovw',
-           'ompsp', 'ompr',
+           'ocm', 'ompsp', 'ompr',
            'khi_rs007l', 'or_2fg7']

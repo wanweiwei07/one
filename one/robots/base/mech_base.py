@@ -73,11 +73,12 @@ class MechBase:
     def mount(self, child, parent_link, engage_tfmat):
         if child in self._mountings or child is self:
             raise ValueError("Child already mounted or self-mounting")
-        who = child
-        if isinstance(child, MechBase):
-            who = child.state.runtime_lnks[0]
-        if who.scene is not self.state.runtime_lnks[0].scene:
-            raise ValueError("Child object not in the same scene")
+        # TODO: the following code is deprecated due to collider scene
+        # who = child
+        # if isinstance(child, MechBase):
+        #     who = child.state.runtime_lnks[0]
+        # if who.scene is not self.state.runtime_lnks[0].scene:
+        #     raise ValueError("Child object not in the same scene")
         if engage_tfmat is None:
             engage_tfmat = np.eye(4, dtype=np.float32)
         else:

@@ -1,33 +1,44 @@
 import builtins
 import numpy as np
-from one import rm, const, sob, wd, khi_rs007l, prims, spdr, rrt
+from one import oum, ovw, ouc, ossop, ocm, ompsp, ompr, khi_rs007l
 
-base = wd.World(cam_pos=(2, -1, 2), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False)
+base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False)
 builtins.base = base
-oframe = prims.gen_frame()
+oframe = ossop.gen_frame()
 oframe.attach_to(base.scene)
 robot = khi_rs007l.RS007L()
-robot.base_rotmat = rm.rotmat_from_euler(0,0,-rm.pi/2)
+robot.base_rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
-box = prims.gen_box(half_extents=(1, .01, .15), pos=(.0, -0.3, 1))
+box = ossop.gen_box(half_extents=(1, .01, .15), pos=(.0, -0.3, 1),
+                    collision_type=ouc.CollisionType.AABB)
 box.attach_to(base.scene)
+box2 = ossop.gen_box(half_extents=(.15, .01, 1), pos=(-.5, -0.3, 0.5),
+                    collision_type=ouc.CollisionType.AABB)
+box2.attach_to(base.scene)
+box3 = ossop.gen_box(half_extents=(.01, 1, .15), pos=(.3, 0.0, 1),
+                    collision_type=ouc.CollisionType.AABB)
+box3.attach_to(base.scene)
 
 
-
-def is_state_valid(state):
-    return True
-
+collider = ocm.MjCollider()
+collider.append(robot.state)
+collider.append(box)
+collider.append(box2)
+collider.append(box3)
+collider.actor = robot
+collider.compile()
 
 jlmt_low = robot.structure.compiled.jlmt_low_by_idx
 jlmt_high = robot.structure.compiled.jlmt_high_by_idx
-sspp = spdr.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
-                                          lmt_high=jlmt_high,
-                                          is_state_valid=is_state_valid)
-planner = rrt.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
+sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
+                                           lmt_high=jlmt_high,
+                                           collider=collider,
+                                           max_edge_step=np.pi/180)
+planner = ompr.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
-goal = np.array([-rm.pi / 2, -rm.pi / 4, rm.pi / 2, -rm.pi / 2, rm.pi / 4, rm.pi / 3])
-state_list = planner.solve(start=start, goal=goal)
+goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, -oum.pi / 2, oum.pi / 4, oum.pi / 3])
+state_list = planner.solve(start=start, goal=goal, verbose=True)
 robot1 = robot.clone()
 robot1.fk(qs=start)
 robot1.rgba = (1, 0, 0, 0.5)

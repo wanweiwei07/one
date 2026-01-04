@@ -64,31 +64,23 @@ class MjEnv:
         # self.contact_viz.update_from_data(self.model, self.data)
 
     def is_collided(self):
+        self._enter_cd_mode()
         mujoco.mj_kinematics(self.model, self.data)
         mujoco.mj_collision(self.model, self.data)
         return self.data.ncon > 0
 
-    def sync_mechstates_to_mujoco_collision(self):
-        # helper function
-        self.sync_mechstates_to_mujoco(cd_mode=True)
+    def sync_to_mujoco(self, state, qs):
+        for jidx, q in enumerate(qs):
+            qadr = self._qpos_by_state_jidx[(state, jidx)]
+            self.data.qpos[qadr] = q
 
-    def sync_mechstates_to_mujoco_dynamics(self):
-        # helper function
-        self.sync_mechstates_to_mujoco(cd_mode=False)
-
-    def sync_mechstates_to_mujoco(self, cd_mode=True):
-        if cd_mode:
-            self._enter_cd_mode()  # toggle once
-        else:
-            self._cd_mode = False  # avoid exit and restore in step
+    def sync_mechstates_to_mujoco(self):
         for state in self.scene.states:
             # print("state.qs =", state.qs)
             qs = state.qs
-            qs_mj = []
             for jidx, q in enumerate(qs):
                 qadr = self._qpos_by_state_jidx[(state, jidx)]
                 self.data.qpos[qadr] = q
-                qs_mj.append(self.data.qpos[qadr])
         #     print("after set qpos:", qs_mj)
         # self.data.qvel[:] = 0
         # self.data.qacc[:] = 0

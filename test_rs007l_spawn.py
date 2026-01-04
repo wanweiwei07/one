@@ -1,4 +1,4 @@
-from one import oum, ovw, oss, khi_rs007l
+from one import oum, ovw, khi_rs007l
 
 base = ovw.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
                 toggle_auto_cam_orbit=True)

@@ -39,7 +39,7 @@ class SceneObject:
         self.collisions = []
         self.collision_type = collision_type  # None means no auto collider generation
         self.toggle_render_collision = False
-        self.scene = None
+        # self.scene = None # TODO: do we need to track the affiliated scene?
         self._inrtmat = None
         self._com = None
         self._mass = None

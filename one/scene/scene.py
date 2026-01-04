@@ -25,13 +25,13 @@ class Scene:
         if isinstance(entity, SceneObject):
             if entity not in self._sobjs:
                 self._sobjs.append(entity)
-                entity.scene = self
+                # entity.scene = self
         elif isinstance(entity, MechState):
             self._states.append(entity)
             for lnk in entity.runtime_lnks:
                 if lnk not in self._lnks:
                     self._lnks.append(lnk)
-                    lnk.scene = self
+                    # lnk.scene = self
         else:
             raise TypeError(f"Unsupported type: {type(entity)}")
         self.dirty = True
@@ -40,7 +40,7 @@ class Scene:
         if isinstance(entity, SceneObject):
             if entity in self._sobjs:
                 self._sobjs.remove(entity)
-                entity.scene = None
+                # entity.scene = None
         elif isinstance(entity, MechState):
             for lnk in entity.runtime_lnks:
                 if lnk in self._lnks:

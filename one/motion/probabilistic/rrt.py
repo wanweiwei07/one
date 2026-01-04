@@ -98,7 +98,7 @@ class RRTConnectPlanner:
         nearest_idx = tree.nearest(tgt_state, self._sspp.ssp)
         nearest_state = tree.states[nearest_idx]
         new_state = self._steer(nearest_state, tgt_state)
-        if not self._sspp.check_motion(nearest_state, new_state):
+        if not self._sspp.is_motion_valid(nearest_state, new_state):
             return "trapped", nearest_idx  # valid nodes in check motion wasted
         last_idx = tree.add_node(new_state, nearest_idx)
         while True:
@@ -112,7 +112,7 @@ class RRTConnectPlanner:
             else:
                 next_state = self._steer(cur_state, tgt_state)
                 pre_reached = False
-            if not self._sspp.check_motion(cur_state, next_state):
+            if not self._sspp.is_motion_valid(cur_state, next_state):
                 break
             last_idx = tree.add_node(next_state, last_idx)
             if pre_reached:
