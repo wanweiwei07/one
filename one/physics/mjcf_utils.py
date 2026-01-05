@@ -35,20 +35,6 @@ def join_nonempty(lines, n_indent=0):
                      if line and line.strip())
 
 
-# def inertial_to_xml(mass=None, com=None, inertia=None):
-#     if mass is None:
-#         return ""
-#     inertial_xml = f'<inertial mass="{mass}"'
-#     if com is not None:
-#         inertial_xml += f' pos="{com[0]} {com[1]} {com[2]}"'
-#     if inertia is not None:
-#         I = inertia
-#         inertial_xml += (f' fullinertia="{I[0][0]} {I[1][1]} {I[2][2]} '
-#                          f'{I[0][1]} {I[0][2]} {I[1][2]}"')
-#     inertial_xml += '/>'
-#     return inertial_xml
-
-
 def inertial_to_xml(mass, com, inrtmat):
     """all arguments required"""
     if (mass is None) or (com is None) or (inrtmat is None):
@@ -143,7 +129,7 @@ def state_to_mjcf_body(state, mesh_assets, namer):
         range_low = compiled.jlmt_low_by_idx[jidx]
         range_high = compiled.jlmt_high_by_idx[jidx]
         jnt_name = namer.unique_name("joint", jnt.name)
-        namer.reg_jnt(jnt, jnt_name)
+        namer.reg_jnt(jnt, jnt_name) # TODO: state, jidx instead of jnt
         joint_xml = (f'<joint name="{jnt_name}" type="{jtype_str}" '
                      f'axis="{axis[0]} {axis[1]} {axis[2]}" '
                      f'range="{range_low} {range_high}"/>')

@@ -12,7 +12,7 @@ base = ovw.World(cam_pos=(3.5, 1, 3.5), cam_lookat_pos=(0, 0, .5), toggle_auto_c
 builtins.base = base
 oframe.attach_to(base.scene)
 bunny.attach_to(base.scene)
-for i in np.linspace(1.5, 15.5, 50):
+for i in np.linspace(1.5, 15.5, 1):
     tmp_bunny = bunny.clone()
     tmp_bunny.pos = (.5, 0, i)
     tmp_bunny.attach_to(base.scene)
@@ -52,7 +52,7 @@ robot1.fk(qs=[0, 0, -np.pi / 4, 0, 0, 0])
 robot1.alpha=0.1
 
 mjenv = mj.MjEnv(scene=base.scene)
-mjenv.sync_mechstates_to_mujoco_dynamics()
+mjenv.sync_mechstates_to_mujoco()
 mjenv.save_xml("scene.xml")
 base.schedule_interval(mjenv.step)
 base.run()

@@ -1,9 +1,9 @@
 import numpy as np
+import one.utils.math as oum
+import one.utils.constant as ouc
 import one.scene.scene_object as osso
 import one.scene.render_model as osrm
 import one.scene.geometry_primitive as osgp
-import one.utils.constant as ouc
-import one.utils.math as oum
 
 # kwargs in the functions are defined as in _parse_phys
 def _parse_phys(kwargs):

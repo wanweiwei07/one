@@ -1316,6 +1316,7 @@ def area_weighted_pca(verts, faces, eps=eps):
     cov = (areas[:, None, None] * (diff[:, :, None] * diff[:, None, :])).sum(axis=0)
     cov = cov / total_area
     eig_vals, eig_vecs = np.linalg.eigh(cov)
+    eig_vecs = ensure_right_handed(eig_vecs)
     return mean, eig_vecs.astype(np.float32)
 
 

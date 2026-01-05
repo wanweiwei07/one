@@ -80,6 +80,7 @@ class MjEnv:
             qs = state.qs
             for jidx, q in enumerate(qs):
                 qadr = self._qpos_by_state_jidx[(state, jidx)]
+                print(qadr)
                 self.data.qpos[qadr] = q
         #     print("after set qpos:", qs_mj)
         # self.data.qvel[:] = 0
@@ -98,12 +99,13 @@ class MjEnv:
 
     def sync_mujoco_to_mechstates(self):
         for state in self.scene.states:
-            # if self.free_root:
-            #     pos = self.data.qpos[0:3]
-            #     w, x, y, z = self.data.qpos[3:7]
-            #     rotmat = rm.rotmat_from_quat([x, y, z, w])
-            #     state.base_pos[:] = pos
-            #     state.base_rotmat[:] = rotmat
+            # TODO only first lnk fixed for now
+            if not state.runtime_lnks[0].is_fixed:
+                bid = self._body_idx_map[state.runtime_lnks[0]]
+                mj_rotmat = self.data.xmat[bid].reshape(3, 3)
+                mj_pos = self.data.xpos[bid]
+                state.base_rotmat[:] = mj_rotmat
+                state.base_pos[:] = mj_pos
             for jidx, _ in enumerate(state.qs):
                 qadr = self._qpos_by_state_jidx[(state, jidx)]
                 state.qs[jidx] = self.data.qpos[qadr]
@@ -142,7 +144,7 @@ class MjEnv:
                                                     timestep=self.timestep,
                                                     assets=assets,
                                                     bodies=bodies)
-        # print(self.xml_string)
+        print(self.xml_string)
         self.model = mujoco.MjModel.from_xml_string(self.xml_string)
         self.data = mujoco.MjData(self.model)
         self._build_body_map()
@@ -162,8 +164,16 @@ class MjEnv:
         # structures
         self._qpos_by_state_jidx.clear()
         for state in self.scene.states:
+            for lnk in state.runtime_lnks:
+                mj_name = self.namer.bdy_names[lnk]
+                bid = mujoco.mj_name2id(self.model,
+                                        mujoco.mjtObj.mjOBJ_BODY,
+                                        mj_name)
+                assert bid >= 0
+                self._body_idx_map[lnk] = bid
             for jidx, jnt in enumerate(state._compiled._meta.jnts):
                 mj_name = self.namer.jnt_names[jnt]
+                print(mj_name)
                 mj_id = mujoco.mj_name2id(self.model,
                                           mujoco.mjtObj.mjOBJ_JOINT,
                                           mj_name)

@@ -11,15 +11,18 @@ class SceneObject:
     @classmethod
     def auto_name(cls, flag_str=None):
         if flag_str is not None:
-            name = f"{cls.__name__}_{flag_str}"
+            name = f"{cls.__name__}_{cls._auto_counter}_{flag_str}"
         else:
             name = f"{cls.__name__}_{cls._auto_counter}"
         cls._auto_counter += 1
         return name
 
     @classmethod
-    def from_file(cls, path, name=None, local_rotmat=None, local_pos=None,  # render model offset
-                  rotmat=None, pos=None, collision_type=None, is_fixed=False,
+    def from_file(cls, path, name=None,
+                  local_rotmat=None, local_pos=None,  # render model offset
+                  rotmat=None, pos=None,
+                  collision_type=None,
+                  is_fixed=False,
                   rgb=None, alpha=1.0):  # TODO do we expose rotmat/pos of render model here?
         instance = cls(name=name, rotmat=rotmat, pos=pos,
                        collision_type=collision_type, is_fixed=is_fixed)
@@ -64,8 +67,11 @@ class SceneObject:
 
     def clone(self):
         """DOES NOT clone the affiliated scene."""
-        new = self.__class__(rotmat=self.rotmat.copy(), pos=self.pos.copy(),
-                             collision_type=self.collision_type)
+        new = self.__class__(name='Clone',
+                             rotmat=self.rotmat.copy(),
+                             pos=self.pos.copy(),
+                             collision_type=self.collision_type,
+                             is_fixed=self.is_fixed)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
         new.set_inertia(self._inrtmat, self._com, self._mass)
