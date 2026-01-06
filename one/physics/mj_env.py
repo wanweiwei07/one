@@ -56,11 +56,8 @@ class MjEnv:
         substeps = int(round(dt / h))
         for _ in range(substeps):
             mujoco.mj_step(self.model, self.data)
-        self.sync_mujoco_to_mechstates()
-        for obj, bid in self._body_idx_map.items():
-            mj_rotmat = self.data.xmat[bid].reshape(3, 3)
-            mj_pos = self.data.xpos[bid]
-            obj.set_rotmat_pos(mj_rotmat, mj_pos)
+            # print(self.data.cfrc_ext[:])
+        self.sync_to_scene()
         # self.contact_viz.update_from_data(self.model, self.data)
 
     def is_collided(self):
@@ -80,7 +77,6 @@ class MjEnv:
             qs = state.qs
             for jidx, q in enumerate(qs):
                 qadr = self._qpos_by_state_jidx[(state, jidx)]
-                print(qadr)
                 self.data.qpos[qadr] = q
         #     print("after set qpos:", qs_mj)
         # self.data.qvel[:] = 0
@@ -112,6 +108,13 @@ class MjEnv:
             state.fk()
             state.update()
 
+    def sync_to_scene(self):
+        self.sync_mujoco_to_mechstates()
+        for obj, bid in self._body_idx_map.items():
+            mj_rotmat = self.data.xmat[bid].reshape(3, 3)
+            mj_pos = self.data.xpos[bid]
+            obj.set_rotmat_pos(mj_rotmat, mj_pos)
+
     def save_xml(self, filepath, encoding="utf-8"):
         if self.xml_string is None:
             raise RuntimeError("XML not built yet")
@@ -120,30 +123,36 @@ class MjEnv:
 
     def _build_from_scene(self):
         assets_xml = []
+        actuators_xml = []
         bodies_xml = []
         mesh_assets = self._mesh_assets
         for state in self.scene.states:
-            assets, root_body = mju.state_to_mjcf_body(state,
-                                                       mesh_assets,
-                                                       self.namer)
+            st_m = mju.state_to_mjcf_body(state,
+                                          mesh_assets,
+                                          self.namer)
+            assets, actuators, root_body = st_m
             assets_xml.extend(assets)
+            actuators_xml.extend(actuators)
             bodies_xml.append(root_body)
         for scn_obj in self.scene.sobjs:
             if not scn_obj.collisions:
                 continue
-            assets, body = mju.sobj_to_mjcf_body(scn_obj,
-                                                 mesh_assets,
-                                                 self.namer)
+            so_m = mju.sobj_to_mjcf_body(scn_obj,
+                                         mesh_assets,
+                                         self.namer)
+            assets, body = so_m
             assets_xml.extend(assets)
             bodies_xml.append(body)
         assets = "\n".join(mju.indent(x, 4) for x in assets_xml)
+        actuators = "\n".join(mju.indent(x, 4) for x in actuators_xml)
         bodies = "\n".join(mju.indent(x, 4) for x in bodies_xml)
         self.xml_string = mju.model_template.format(gx=self.gravity[0],
                                                     gy=self.gravity[1],
                                                     gz=self.gravity[2],
                                                     timestep=self.timestep,
                                                     assets=assets,
-                                                    bodies=bodies)
+                                                    bodies=bodies,
+                                                    actuators=actuators)
         print(self.xml_string)
         self.model = mujoco.MjModel.from_xml_string(self.xml_string)
         self.data = mujoco.MjData(self.model)
@@ -164,16 +173,16 @@ class MjEnv:
         # structures
         self._qpos_by_state_jidx.clear()
         for state in self.scene.states:
-            for lnk in state.runtime_lnks:
-                mj_name = self.namer.bdy_names[lnk]
+            lnk0 = state.runtime_lnks[0]
+            if not lnk0.is_fixed:
+                mj_name = self.namer.bdy_names[lnk0]
                 bid = mujoco.mj_name2id(self.model,
                                         mujoco.mjtObj.mjOBJ_BODY,
                                         mj_name)
                 assert bid >= 0
-                self._body_idx_map[lnk] = bid
-            for jidx, jnt in enumerate(state._compiled._meta.jnts):
-                mj_name = self.namer.jnt_names[jnt]
-                print(mj_name)
+                self._body_idx_map[lnk0] = bid
+            for jidx in range(state._compiled.n_jnts):
+                mj_name = self.namer.jnt_names[(state, jidx)]
                 mj_id = mujoco.mj_name2id(self.model,
                                           mujoco.mjtObj.mjOBJ_JOINT,
                                           mj_name)

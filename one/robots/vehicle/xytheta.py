@@ -11,31 +11,31 @@ def prepare_mechstruct():
     dummy_xlnk = osrbms.Link(name="xlink")
     dummy_ylnk = osrbms.Link(name="ylink")
     body_lnk = osrbms.Link(name="bodylink",
-                           collision_type=ouc.CollisionType.OBB)
-    body_lnk.add_visual(osrmp.gen_cylinder(0.3, 0.5))
+                           collision_type=ouc.CollisionType.AABB)
+    body_lnk.add_visual(osrmp.gen_cylinder(0.15, 0.1, 64))
     body_lnk.set_inertia(mass=3.0)
     joint_x = osrbms.Joint(name="joint_x",
                            jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=wd_lnk,
-                           child_lnk=body_lnk,
+                           child_lnk=dummy_xlnk,
                            axis=ouc.StandardAxis.X,
                            pos=(0,0,0.001), # avoid collision
                            lmt_low=-5.0, lmt_up=5.0)
     joint_y = osrbms.Joint(name="joint_y",
                            jnt_type=ouc.JntType.PRISMATIC,
-                           parent_lnk=wd_lnk,
-                           child_lnk=body_lnk,
+                           parent_lnk=dummy_xlnk,
+                           child_lnk=dummy_ylnk,
                            axis=ouc.StandardAxis.Y,
                            lmt_low=-5.0, lmt_up=5.0)
     joint_t = osrbms.Joint(name="joint_theta",
                            jnt_type=ouc.JntType.REVOLUTE,
-                           parent_lnk=wd_lnk,
+                           parent_lnk=dummy_ylnk,
                            child_lnk=body_lnk,
                            axis=ouc.StandardAxis.Z,
                            lmt_low=-np.pi, lmt_up=np.pi)
     structure.add_lnk(wd_lnk)
-    # structure.add_lnk(dummy_xlnk)
-    # structure.add_lnk(dummy_ylnk)
+    structure.add_lnk(dummy_xlnk)
+    structure.add_lnk(dummy_ylnk)
     structure.add_lnk(body_lnk)
     structure.add_jnt(joint_x)
     structure.add_jnt(joint_y)

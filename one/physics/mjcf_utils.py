@@ -6,7 +6,7 @@ model_template = """<mujoco>
   <option gravity="{gx} {gy} {gz}"/>
   <option timestep="{timestep}"/>
   <default>
-    <joint damping="2.0" armature="0.05" frictionloss="0.1"/>
+    <joint damping="5.0" armature="0.05" frictionloss="0.7"/>
     <geom friction="1 0.1 0.1"/>
   </default>
   <asset>
@@ -15,6 +15,9 @@ model_template = """<mujoco>
   <worldbody>
 {bodies}
   </worldbody>
+  <actuator>
+{actuators}
+  </actuator>
   <compiler angle="radian" inertiafromgeom="true"/>
 </mujoco>
 """
@@ -108,8 +111,9 @@ def state_to_mjcf_body(state, mesh_assets, namer):
     if compiled is None:
         raise RuntimeError("structure must be compiled before exporting to MJCF")
     assets = []
+    actuators = []
 
-    def _build_child_body_with_joint(jidx, lidx, level):
+    def _build_child_body_with_joint(jidx, lidx, level, attach_to_parent_body=False):
         lnk = state.runtime_lnks[lidx]
         # joint origin in parent link frame
         tfmat = compiled.jotfmat_by_idx[jidx]
@@ -117,7 +121,6 @@ def state_to_mjcf_body(state, mesh_assets, namer):
         px, py, pz = tfmat[:3, 3]
         qx, qy, qz, qw = rm.quat_from_rotmat(rotmat)
         # joint xml
-        jnt = compiled._meta.jnts[jidx]
         jnt_type = compiled.jtypes_by_idx[jidx]
         if jnt_type == const.JntType.REVOLUTE:
             jtype_str = "hinge"
@@ -128,34 +131,48 @@ def state_to_mjcf_body(state, mesh_assets, namer):
         axis = compiled.jax_by_idx[jidx]
         range_low = compiled.jlmt_low_by_idx[jidx]
         range_high = compiled.jlmt_high_by_idx[jidx]
-        jnt_name = namer.unique_name("joint", jnt.name)
-        namer.reg_jnt(jnt, jnt_name) # TODO: state, jidx instead of jnt
+        jnt_name = namer.unique_name("joint", f"jnt{jidx}_lnk{lidx}")
+        namer.reg_jnt((state, jidx), jnt_name)  # jnt shared, so (state, jidx) for key
         joint_xml = (f'<joint name="{jnt_name}" type="{jtype_str}" '
                      f'axis="{axis[0]} {axis[1]} {axis[2]}" '
                      f'range="{range_low} {range_high}"/>')
+        if jtype_str == "hinge" or jtype_str == "slide":
+            act_name = namer.unique_name("act", f"act{jidx}")
+            actuator_xml = f'<position name="{act_name}" joint="{jnt_name}" kv="50"/>'
+            actuators.append(actuator_xml)
         inertial_xml, geoms, new_assets = sobj_to_mjcf(lnk,
                                                        mesh_assets,
                                                        namer)
         assets.extend(new_assets)
+        is_childbody = (len(geoms) == 0)
         # build children (grand-children links)
         child_bodies = []
         for child_lidx in compiled.clnk_ids_of_lidx[lidx]:
             pjidx_of_clidx = compiled.pjidx_of_lidx[child_lidx]
             if pjidx_of_clidx < 0:
                 continue
-            child_bodies.append(_build_child_body_with_joint(pjidx_of_clidx,
-                                                             child_lidx,
-                                                             level=level + 1))
-        body_inner = join_nonempty([joint_xml, inertial_xml,
-                                    "\n".join(geoms),
-                                    "\n".join(child_bodies)])
-        body_name = namer.unique_name("body", lnk.name)
-        namer.reg_bdy(lnk, body_name)
-        body_xml = body_template.format(name=body_name,
-                                        px=px, py=py, pz=pz,
-                                        qw=qw, qx=qx, qy=qy, qz=qz,
-                                        body_inner=indent(body_inner, n=2))
-        return body_xml
+            child_bodies.append(
+                _build_child_body_with_joint(pjidx_of_clidx,
+                                             child_lidx,
+                                             level + 1,
+                                             is_childbody))
+        if geoms and not attach_to_parent_body:
+            body_inner = join_nonempty([joint_xml, inertial_xml,
+                                        "\n".join(geoms),
+                                        "\n".join(child_bodies)])
+            body_name = namer.unique_name("body", lnk.name)
+            namer.reg_bdy(lnk, body_name)
+            body_xml = body_template.format(name=body_name,
+                                            px=px, py=py, pz=pz,
+                                            qw=qw, qx=qx, qy=qy, qz=qz,
+                                            body_inner=indent(body_inner, n=2))
+            return body_xml
+        elif geoms and attach_to_parent_body:
+            return join_nonempty([joint_xml, inertial_xml,
+                                  "\n".join(geoms),
+                                  "\n".join(child_bodies)])
+        else:
+            return join_nonempty([joint_xml, "\n".join(child_bodies)])
 
     def _build_root_body():
         root_lnk_idx = compiled.root_lnk_idx
@@ -189,4 +206,4 @@ def state_to_mjcf_body(state, mesh_assets, namer):
         return body_xml
 
     root_body = _build_root_body()
-    return assets, root_body
+    return assets, actuators, root_body

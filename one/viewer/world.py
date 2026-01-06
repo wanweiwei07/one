@@ -64,7 +64,13 @@ class World(pyglet.window.Window):
         self.camera.orbit(angle_rad=angle_rad)
 
     def schedule_interval(self, function, interval=.01, *args, **kwargs):
-        pyglet.clock.schedule_interval(function, interval=interval, *args, **kwargs)
+        pyglet.clock.schedule_interval(function, interval, *args, **kwargs)
+
+    def schedule_once(self, function, delay=.01, *args, **kwargs):
+        pyglet.clock.schedule_once(function, delay, *args, **kwargs)
+
+    def stop(self, function):
+        pyglet.clock.unschedule(function)
 
     def run(self):
         pyglet.app.run()

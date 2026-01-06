@@ -77,7 +77,7 @@ class CapsuleCollisionShape(CollisionShape):
         radial_sq = np.maximum(radial_sq, 0.0)
         radius = np.sqrt(radial_sq).max()
         half_length = (mx - mn) * 0.5 - radius / 1.2
-        half_length = max(half_length, 0.0)
+        half_length = max(half_length, 0.001)
         shape = cls(radius=radius,
                     half_length=half_length,
                     rotmat=pcmat,

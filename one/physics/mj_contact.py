@@ -5,6 +5,17 @@ import one.utils.constant as ouc
 import one.scene.scene_object_primitive as osobp
 
 
+def debug_contacts(mjenv):
+    print("ncon =", mjenv.data.ncon)
+    for i in range(mjenv.data.ncon):
+        c = mjenv.data.contact[i]
+        g1, g2 = c.geom1, c.geom2
+        b1 = mjenv.model.geom_bodyid[g1]
+        b2 = mjenv.model.geom_bodyid[g2]
+        body1 = mujoco.mj_id2name(mjenv.model, mujoco.mjtObj.mjOBJ_BODY, b1)
+        body2 = mujoco.mj_id2name(mjenv.model, mujoco.mjtObj.mjOBJ_BODY, b2)
+        print(i, body1, "<->", body2, "dist=", c.dist)
+
 class MjContactViz:
     def __init__(self, scene, max_contacts=64, radius=0.01):
         self.scene = scene
