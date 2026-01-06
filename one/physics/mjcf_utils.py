@@ -1,3 +1,4 @@
+import numpy as np
 import one.utils.math as rm
 import one.utils.constant as const
 import one.scene.collision as sco
@@ -99,13 +100,13 @@ def sobj_to_mjcf_body(sobj, mesh_assets, namer):
     body_inner = join_nonempty([joint_xml, inertial_xml, "\n".join(geoms)])
     body_name = namer.unique_name("body", sobj.name)
     namer.reg_bdy(sobj, body_name)
-    body_xml = body_template.format(name=body_name,
-                                    px=px, py=py, pz=pz,
+    body_xml = body_template.format(name=body_name, px=px, py=py, pz=pz,
                                     qw=qw, qx=qx, qy=qy, qz=qz,
                                     body_inner=indent(body_inner, n=2))
     return assets, body_xml
 
 
+#
 def state_to_mjcf_body(state, mesh_assets, namer):
     compiled = state._compiled
     if compiled is None:
@@ -138,7 +139,7 @@ def state_to_mjcf_body(state, mesh_assets, namer):
                      f'range="{range_low} {range_high}"/>')
         if jtype_str == "hinge" or jtype_str == "slide":
             act_name = namer.unique_name("act", f"act{jidx}")
-            actuator_xml = f'<position name="{act_name}" joint="{jnt_name}" kv="50"/>'
+            actuator_xml = f'<position name="{act_name}" joint="{jnt_name}" kp="500"/>'
             actuators.append(actuator_xml)
         inertial_xml, geoms, new_assets = sobj_to_mjcf(lnk,
                                                        mesh_assets,
@@ -177,14 +178,8 @@ def state_to_mjcf_body(state, mesh_assets, namer):
     def _build_root_body():
         root_lnk_idx = compiled.root_lnk_idx
         root_lnk = state.runtime_lnks[root_lnk_idx]
-        base_pos = state.base_pos
-        base_rotmat = state.base_rotmat
-        root_loc_pos = root_lnk.pos
-        root_loc_rotmat = root_lnk.rotmat
-        root_wd_pos = base_rotmat @ root_loc_pos + base_pos
-        root_wd_rotmat = base_rotmat @ root_loc_rotmat
-        px, py, pz = root_wd_pos
-        qx, qy, qz, qw = rm.quat_from_rotmat(root_wd_rotmat)
+        px, py, pz = root_lnk.pos
+        qx, qy, qz, qw = rm.quat_from_rotmat( root_lnk.rotmat)
         inertial_xml, geoms, root_assets = sobj_to_mjcf(root_lnk,
                                                         mesh_assets,
                                                         namer)
@@ -195,8 +190,12 @@ def state_to_mjcf_body(state, mesh_assets, namer):
             pjidx_of_clidx = compiled.pjidx_of_lidx[clnk_idx]
             if pjidx_of_clidx < 0:
                 continue
-            child_bodies.append(_build_child_body_with_joint(pjidx_of_clidx, clnk_idx, level=1))
-        body_inner = join_nonempty([root_joint_xml, inertial_xml, "\n".join(geoms), "\n".join(child_bodies)])
+            child_bodies.append(
+                _build_child_body_with_joint(pjidx_of_clidx,
+                                             clnk_idx, level=1))
+        body_inner = join_nonempty(
+            [root_joint_xml, inertial_xml,
+             "\n".join(geoms), "\n".join(child_bodies)])
         body_name = namer.unique_name("body", root_lnk.name)
         namer.reg_bdy(root_lnk, body_name)
         body_xml = body_template.format(name=body_name,
@@ -207,3 +206,95 @@ def state_to_mjcf_body(state, mesh_assets, namer):
 
     root_body = _build_root_body()
     return assets, actuators, root_body
+
+
+# def state_to_mjcf_body(state, mesh_assets, namer):
+#     compiled = state._compiled
+#     if compiled is None:
+#         raise RuntimeError("structure must be compiled before exporting to MJCF")
+#     assets = []
+#     actuators = []
+#
+#     def build_subtree(lidx, tfmat_acc, parent_is_entity):
+#         lnk = state.runtime_lnks[lidx]
+#         pjidx = compiled.pjidx_of_lidx[lidx]
+#         # parent joint transform（joint->parent_link）
+#         if pjidx >= 0:
+#             tfmat_jnt = compiled.jotfmat_by_idx[pjidx]
+#             tfmat_here = tfmat_acc @ tfmat_jnt
+#         else:
+#             tfmat_here = tfmat_acc
+#         is_entity = (lnk.collision_type is not None)
+#         joint_xmls = []
+#         if pjidx >= 0:  # TODO is it necessary?
+#             jtype = compiled.jtypes_by_idx[pjidx]
+#             if jtype == const.JntType.REVOLUTE:
+#                 jtype_str = "hinge"
+#             elif jtype == const.JntType.PRISMATIC:
+#                 jtype_str = "slide"
+#             else:
+#                 jtype_str = "fixed"
+#             axis = compiled.jax_by_idx[pjidx]
+#             jname = namer.unique_name("joint", f"j{pjidx}_l{lidx}")
+#             namer.reg_jnt((state, pjidx), jname)
+#             joint_xmls.append(f'<joint name="{jname}" type="{jtype_str}" '
+#                               f'axis="{axis[0]} {axis[1]} {axis[2]}"/>')
+#             if jtype_str in ("hinge", "slide"):
+#                 an = namer.unique_name("act", f"act{pjidx}")
+#                 actuators.append(f'<position name="{an}" joint="{jname}" kp="500"/>')
+#         inertial_xml, geoms, new_assets = sobj_to_mjcf(lnk,
+#                                                        mesh_assets,
+#                                                        namer)
+#         assets.extend(new_assets)
+#         self_inline_xml = join_nonempty(["\n".join(joint_xmls),
+#                                          inertial_xml,
+#                                          "\n".join(geoms)])
+#         inline_xmls = [self_inline_xml]
+#         if not parent_is_entity:
+#             for clidx in compiled.clnk_ids_of_lidx[lidx]:
+#                 inline_xmls.append(build_subtree(clidx, tfmat_here,
+#                                                  parent_is_entity))
+#             return "\n".join(inline_xmls)
+#         if parent_is_entity and not is_entity:
+#             for clidx in compiled.clnk_ids_of_lidx[lidx]:
+#                 inline_xmls.append(build_subtree(clidx, tfmat_here,
+#                                                  parent_is_entity))
+#             return "\n".join(inline_xmls)
+#         # children
+#         for clidx in compiled.clnk_ids_of_lidx[lidx]:
+#             inline_xmls.append(build_subtree(clidx, tfmat_here, parent_is_entity))
+#         pos, quat = rm.pos_quat_from_tfmat(tfmat_here)
+#         qx, qy, qz, qw = quat
+#         body_inner = "\n".join(inline_xmls)
+#         bname = namer.unique_name("body", lnk.name)
+#         namer.reg_bdy(lnk, bname)
+#         return body_template.format(name=bname,
+#                                     px=pos[0], py=pos[1], pz=pos[2],
+#                                     qw=qw, qx=qx, qy=qy, qz=qz,
+#                                     body_inner=indent(body_inner, 2))
+#
+#     root_idx = compiled.root_lnk_idx
+#     root_lnk = state.runtime_lnks[root_idx]
+#     root_tfmat = np.eye(4)
+#     root_tfmat[:3, :3] = root_lnk.rotmat
+#     root_tfmat[:3, 3] = root_lnk.pos
+#     child_xmls = []
+#     parent_is_entity = (root_lnk.collision_type is not None)
+#     for cl in compiled.clnk_ids_of_lidx[root_idx]:
+#         child_xmls.append(build_subtree(cl, root_tfmat, parent_is_entity))
+#     inertial_xml, geoms, root_assets = sobj_to_mjcf(root_lnk, mesh_assets, namer)
+#     assets.extend(root_assets)
+#     root_joint_xml = "" if root_lnk.is_fixed else "<freejoint/>"
+#     px, py, pz = root_lnk.pos
+#     qx, qy, qz, qw = rm.quat_from_rotmat(root_lnk.rotmat)
+#     body_inner = join_nonempty([root_joint_xml,
+#                                 inertial_xml,
+#                                 "\n".join(geoms),
+#                                 "\n".join(child_xmls)])
+#     bname = namer.unique_name("body", root_lnk.name)
+#     namer.reg_bdy(root_lnk, bname)
+#     root_body = body_template.format(name=bname,
+#                                      px=px, py=py, pz=pz,
+#                                      qw=qw, qx=qx, qy=qy, qz=qz,
+#                                      body_inner=indent(body_inner, 2))
+#     return assets, actuators, root_body

@@ -15,6 +15,7 @@ base_box = ossop.gen_box(half_extents=(.5, .5, .5),
                          collision_type=ouc.CollisionType.AABB,
                          is_fixed=True)
 base_box.rgb = ouc.ExtendedColor.IVORY
+base_box.toggle_render_collision=True
 base_box.attach_to(base.scene)
 xyt_bot = xyt.XYThetaRobot()
 xyt_bot.rgb = ouc.ExtendedColor.LAWN_GREEN
@@ -22,19 +23,20 @@ xyt_bot.attach_to(base.scene)
 xyt_bot.base_pos = (0, 0, 1)
 xyt_bot.toggle_render_collision = True
 
-box = ossop.gen_box(half_extents=(.1, .1, .1),
-                    collision_type=ouc.CollisionType.CAPSULE,
+obstacle = ossop.gen_box(half_extents=(.1, .1, .1),
+                    collision_type=ouc.CollisionType.AABB,
                     is_fixed=False,
                     mass=2)
-box.rgb = ouc.ExtendedColor.CHOCOLATE
-box.toggle_render_collision = True
+obstacle.rgb = ouc.ExtendedColor.CHOCOLATE
+obstacle.toggle_render_collision = True
 for i in range(5):
-    box_i = box.clone()
+    obstacle_i = obstacle.clone()
     xy = np.random.uniform(-0.5, 0.5, 2)
-    box_i.pos = (xy[0], xy[1], i * 0.3 + 1.5)
-    box_i.attach_to(base.scene)
+    obstacle_i.pos = (xy[0], xy[1], i * 0.3 + 1.5)
+    obstacle_i.attach_to(base.scene)
 
 mjenv = mj.MjEnv(scene=base.scene)
+mjenv.save_xml("scene.xml")
 def stop(dt, function):
     base.stop(function)
 
@@ -55,22 +57,6 @@ def control(dt, base, xyt_bot, mjenv):
     mjenv.data.ctrl[1] += dq[1]
     mjenv.data.ctrl[2] += dq[2]
     mjenv.step(dt)
-    print(
-        "ctrl=", mjenv.data.ctrl[:3],
-        "qpos=", mjenv.data.qpos[:3],
-        "ncon=", mjenv.data.ncon
-    )
-    for i in range(mjenv.data.ncon):
-        c = mjenv.data.contact[i]
-        g1, g2 = c.geom1, c.geom2
-
-        b1 = mjenv.model.geom_bodyid[g1]
-        b2 = mjenv.model.geom_bodyid[g2]
-
-        body1 = mujoco.mj_id2name(mjenv.model, mujoco.mjtObj.mjOBJ_BODY, b1)
-        body2 = mujoco.mj_id2name(mjenv.model, mujoco.mjtObj.mjOBJ_BODY, b2)
-
-        print(i, body1, "<->", body2, "dist=", c.dist)
 
 base.schedule_interval(control, .01, base, xyt_bot, mjenv)
 base.run()

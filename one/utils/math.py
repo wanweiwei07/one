@@ -833,6 +833,14 @@ def pos_average(pos_list, bandwidth=10):
     else:
         return np.array(pos_list).mean(axis=0)
 
+def pos_quat_from_tfmat(tfmat, quat_order='xyzw'):
+    rotmat = tfmat[:3,:3]
+    pos = tfmat[:3,3]
+    qx, qy, qz, qw = quat_from_rotmat(rotmat)
+    if quat_order == 'wxyz':
+        return pos, np.array([qw, qx, qy, qz])
+    else:
+        return pos, np.array([qx, qy, qz, qw])
 
 def intersect_planes(p1, n1, p2, n2, tol=1e-6):
     # normalize normals

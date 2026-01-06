@@ -12,14 +12,14 @@ def prepare_mechstruct():
     dummy_ylnk = osrbms.Link(name="ylink")
     body_lnk = osrbms.Link(name="bodylink",
                            collision_type=ouc.CollisionType.AABB)
-    body_lnk.add_visual(osrmp.gen_cylinder(0.15, 0.1, 64))
-    body_lnk.set_inertia(mass=3.0)
+    body_lnk.add_visual(osrmp.gen_box((.1, .1, .1)))
+    body_lnk.set_inertia(mass=.1)
     joint_x = osrbms.Joint(name="joint_x",
                            jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=wd_lnk,
                            child_lnk=dummy_xlnk,
                            axis=ouc.StandardAxis.X,
-                           pos=(0,0,0.001), # avoid collision
+                           pos=(0,0,0.11), # avoid collision
                            lmt_low=-5.0, lmt_up=5.0)
     joint_y = osrbms.Joint(name="joint_y",
                            jnt_type=ouc.JntType.PRISMATIC,

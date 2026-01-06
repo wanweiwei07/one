@@ -144,7 +144,8 @@ class MjEnv:
             assets_xml.extend(assets)
             bodies_xml.append(body)
         assets = "\n".join(mju.indent(x, 4) for x in assets_xml)
-        actuators = "\n".join(mju.indent(x, 4) for x in actuators_xml)
+        # actuators = "\n".join(mju.indent(x, 4) for x in actuators_xml)
+        actuators=""
         bodies = "\n".join(mju.indent(x, 4) for x in bodies_xml)
         self.xml_string = mju.model_template.format(gx=self.gravity[0],
                                                     gy=self.gravity[1],
