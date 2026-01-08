@@ -1,7 +1,6 @@
 import warnings
 import numpy as np
 import numpy.typing as npt
-from sklearn import cluster
 from scipy.linalg import null_space
 from scipy.spatial.transform import Slerp
 from scipy.spatial.transform import Rotation
@@ -158,26 +157,14 @@ def rotmat_between_vecs(v1, v2):
     return rotmat_from_axangle(axis, theta)
 
 
-def rotmat_average(rotmat_list, bandwidth=10):
-    """
-    average a list of rotmat (3x3)
-    :param rotmat_list:
-    :param denoise: meanshift denoising is applied if True
-    :return:
-    author: weiwei
-    date: 20190422
-    """
-    if len(rotmat_list) == 0:
-        return False
-    quaternion_list = []
-    for rotmat in rotmat_list:
-        quaternion_list.append(quat_from_rotmat(rotmat))
-    quat_avg = quat_average(quaternion_list, bandwidth=bandwidth)
-    rotmat_avg = rotmat_from_quat(quat_avg)
-    return rotmat_avg
+def rotmat_average(rot_mats):
+    # rot_mats: (N, 3, 3)
+    rotvecs = Rotation.from_matrix(rot_mats).as_rotvec()
+    mean_rotvec = np.mean(rotvecs, axis=0)
+    return Rotation.from_rotvec(mean_rotvec).as_matrix()
 
 
-def slerp_rotmat(rotmat0, rotmat1, n):
+def rotmat_slerp(rotmat0, rotmat1, n):
     key_rots = Rotation.from_matrix((rotmat0, rotmat1))
     key_times = [0, 1]
     slerp = Slerp(key_times, key_rots)
@@ -187,14 +174,7 @@ def slerp_rotmat(rotmat0, rotmat1, n):
 
 ## (4,4) transformation matrix
 def tfmat_from_axangle(ax, angle):
-    """
-    Compute the rodrigues matrix using the given axis and angle
-    :param ax: (1, 3)
-    :param angle: radian
-    :return: (3,3)
-    author: weiwei
-    date: 20161220
-    """
+    """homogeneous matrix from the given axis and angle"""
     length, unit_ax = unit_vec(ax)
     if length == 0:
         return np.eye(3, dtype=np.float32)
@@ -252,6 +232,7 @@ def tfmat_from_quat_pos(quat, pos):
     tfmat = tfmat_from_quat(quat)
     tfmat[:3, 3] = pos
     return tfmat
+
 
 def tfmat_inverse(tfmat):
     """
@@ -325,7 +306,7 @@ def interplate_pos_rotmat(start_pos,
     if n_steps < 2:
         n_steps = 2
     pos_list = np.linspace(start_pos, goal_pos, n_steps)
-    rotmat_list = slerp_rotmat(start_rotmat, goal_rotmat, n_steps)
+    rotmat_list = rotmat_slerp(start_rotmat, goal_rotmat, n_steps)
     return zip(pos_list, rotmat_list)
 
 
@@ -347,7 +328,7 @@ def interplate_pos_rotmat_around_circle(circle_center_pos,
     n_angular_steps = np.ceil(np.pi * 2 / angular_step_length)
     if n_angular_steps < 2:
         n_angular_steps = 2
-    rotmat_list = slerp_rotmat(start_rotmat, end_rotmat, n_angular_steps)
+    rotmat_list = rotmat_slerp(start_rotmat, end_rotmat, n_angular_steps)
     pos_list = []
     for angle in np.linspace(0, np.pi * 2, n_angular_steps).tolist():
         pos_list.append(np.dot(rotmat_from_axangle(circle_normal_ax, angle), vec * radius) + circle_center_pos)
@@ -381,40 +362,15 @@ def quat_from_axangle(ax, angle):
     return Rotation.from_rotvec(rotvec).as_quat().astype(np.float32)
 
 
-def quat_average(quat_list, bandwidth=10):
-    """
-    average a list of quaternion (nx4)
-    this is the full version
-    :param rotmatlist:
-    :param bandwidth: meanshift denoising is applied if available
-    :return:
-    author: weiwei
-    date: 20190422
-    """
-    if len(quat_list) == 0:
-        return False
-    quaternionarray = np.array(quat_list)
-    if bandwidth is not None:
-        anglelist = []
-        for quaternion in quat_list:
-            anglelist.append([quaternion_to_axangle(quaternion)[0]])
-        mt = cluster.MeanShift(bandwidth=bandwidth)
-        quaternionarray = quaternionarray[np.where(mt.fit(anglelist).labels_ == 0)]
-    nquat = quaternionarray.shape[0]
-    weights = [1.0 / nquat] * nquat
-    # Form the symmetric accumulator matrix
-    accummat = np.zeros((4, 4))
-    wsum = 0
-    for i in range(nquat):
-        q = quaternionarray[i, :]
-        w_i = weights[i]
-        accummat += w_i * (np.outer(q, q))  # rank 1 update
-        wsum += w_i
-    # scale
-    accummat /= wsum
-    # Get the eigenvector corresponding to largest eigen value
-    quatavg = np.linalg.eigh(accummat)[1][:, -1]
-    return quatavg
+def average_quaternions(quats):
+    # quats: (N, 4), format [x, y, z, w]
+    A = np.zeros((4, 4))
+    for q in quats:
+        q = q / np.linalg.norm(q)
+        A += np.outer(q, q)
+    A /= len(quats)
+    eigvals, eigvecs = np.linalg.eigh(A)
+    return eigvecs[:, np.argmax(eigvals)]
 
 
 def quat_from_euler(ai, aj, ak, order='sxyz'):
