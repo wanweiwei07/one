@@ -34,6 +34,9 @@ class SpaceProvider:
                 return False
         return True
 
+    def is_state_valid(self, s):
+        return not self.collider.is_collided(s)
+
     def enforce_bounds(self, s):
         return self.ssp.enforce_bounds(s)
 

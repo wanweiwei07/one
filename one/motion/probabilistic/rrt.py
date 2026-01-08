@@ -1,6 +1,6 @@
 import time
 import numpy as np
-
+import one.motion.probabilistic.post_processor as omppp
 
 def shortcut_path(path, sspp, n_iter=200):
     path = list(path)
@@ -62,6 +62,7 @@ class RRTConnectPlanner:
     def __init__(self, ssp_provider, step_size=np.pi / 36,
                  goal_bias=0.7):
         self._sspp = ssp_provider
+        self._ppp = omppp.PathPostProcessor(self._sspp)
         self.goal_bias = goal_bias
         step = np.asarray(step_size, dtype=float)
         dim = self._sspp.ssp.dim
@@ -103,8 +104,8 @@ class RRTConnectPlanner:
                     path_goal = t_goal.path_from_root(new_idx_goal)
                     path_goal.reverse()  # from connection point to goal
                     raw_path = path_start + path_goal[1:]
-                    smooth_path = shortcut_path(raw_path, self._sspp)
-                    return densify_path(smooth_path, self._sspp.ssp)
+                    smooth_path = self._ppp.shortcut(raw_path)
+                    return self._ppp.densify(smooth_path)
             # Swap the trees every iteration
             t_start, t_goal = t_goal, t_start
         if verbose:
