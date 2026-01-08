@@ -1,5 +1,4 @@
 from one.scene.scene_object import SceneObject
-from one.robots.base.mech_structure import Link
 from one.robots.base.mech_state import MechState
 
 

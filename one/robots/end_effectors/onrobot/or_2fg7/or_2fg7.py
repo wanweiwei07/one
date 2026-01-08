@@ -2,48 +2,51 @@ import os
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
+import one.scene.scene_object as osso
 import one.robots.base.mech_structure as orstr
 import one.robots.end_effectors.ee_base as oreb
 
 
-def get_robot_structure():
+def get_structure():
     structure = orstr.MechStruct()
     mesh_dir = os.path.join(os.path.dirname(__file__), "meshes")
     # 3 links
-    base_link = orstr.Link.from_file(os.path.join(mesh_dir, "base_link.stl"),
-                                     local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
-                                     collision_type=ouc.CollisionType.AABB,
-                                     name="base",
-                                     rgb=ouc.ExtendedColor.ALUMINUM_ANODIZED)
-    left_finger_link = orstr.Link.from_file(os.path.join(mesh_dir, "inward_left_finger_link.stl"),
-                                            local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
-                                            collision_type=ouc.CollisionType.AABB,
-                                            name="inward_left_finger",
-                                            rgb=ouc.ExtendedColor.DIM_GRAY)
-    right_finger_link = orstr.Link.from_file(os.path.join(mesh_dir, "inward_right_finger_link.stl"),
-                                             local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
-                                             collision_type=ouc.CollisionType.AABB,
-                                             name="inward_right_finger",
-                                             rgb=ouc.ExtendedColor.DIM_GRAY)
+    base_lnk = osso.SceneObject.from_file(
+        os.path.join(mesh_dir, "base_link.stl"),
+        local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        collision_type=ouc.CollisionType.AABB,
+        name="base", rgb=ouc.ExtendedColor.ALUMINUM_ANODIZED)
+    lft_fgr_lnk = osso.SceneObject.from_file(
+        os.path.join(mesh_dir, "inward_left_finger_link.stl"),
+        local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        collision_type=ouc.CollisionType.AABB,
+        name="inward_left_finger", rgb=ouc.ExtendedColor.DIM_GRAY)
+    rgt_fgr_lnk = osso.SceneObject.from_file(
+        os.path.join(mesh_dir, "inward_right_finger_link.stl"),
+        local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        collision_type=ouc.CollisionType.AABB,
+        name="inward_right_finger", rgb=ouc.ExtendedColor.DIM_GRAY)
     # 1 joint
-    joint_bl_lf = orstr.Joint("joint_bl_lf", jnt_type=ouc.JntType.PRISMATIC,
-                              parent_lnk=base_link, child_lnk=left_finger_link,
-                              axis=ouc.StandardAxis.Y,
-                              pos=np.array([0, -0.019, 0], dtype=np.float32),
-                              lmt_low=0.0, lmt_up=0.019)
-    joint_bl_rf = orstr.Joint("joint_bl_rf", jnt_type=ouc.JntType.PRISMATIC,
-                              parent_lnk=base_link, child_lnk=right_finger_link,
-                              axis=-ouc.StandardAxis.Y,
-                              pos=np.array([0, 0.019, 0], dtype=np.float32),
-                              mmc=(joint_bl_lf, -1.0, 0.0),
-                              lmt_low=0.0, lmt_up=0.019)
+    jnt_bl_lf = orstr.Joint(
+        name="jnt_bl_lf", jnt_type=ouc.JntType.PRISMATIC,
+        parent_lnk=base_lnk, child_lnk=lft_fgr_lnk,
+        axis=ouc.StandardAxis.Y,
+        pos=np.array([0, -0.019, 0], dtype=np.float32),
+        lmt_low=0.0, lmt_up=0.019)
+    jnt_bl_rf = orstr.Joint(
+        name="jnt_bl_rf", jnt_type=ouc.JntType.PRISMATIC,
+        parent_lnk=base_lnk, child_lnk=rgt_fgr_lnk,
+        axis=-ouc.StandardAxis.Y,
+        pos=np.array([0, 0.019, 0], dtype=np.float32),
+        mmc=(jnt_bl_lf, -1.0, 0.0),
+        lmt_low=0.0, lmt_up=0.019)
     # add links
-    structure.add_lnk(base_link)
-    structure.add_lnk(left_finger_link)
-    structure.add_lnk(right_finger_link)
+    structure.add_lnk(base_lnk)
+    structure.add_lnk(lft_fgr_lnk)
+    structure.add_lnk(rgt_fgr_lnk)
     # add joints
-    structure.add_jnt(joint_bl_lf)
-    structure.add_jnt(joint_bl_rf)
+    structure.add_jnt(jnt_bl_lf)
+    structure.add_jnt(jnt_bl_rf)
     # order joints for quick access
     structure.compile()
     return structure
@@ -53,7 +56,7 @@ class OR2FG7(oreb.EndEffectorBase, oreb.GripperMixin):
 
     @classmethod
     def _build_structure(cls):
-        return get_robot_structure()
+        return get_structure()
 
     def __init__(self, base_pos=None, base_rotmat=None):
         super().__init__()

@@ -46,8 +46,8 @@ class MechState:
         return self.lnk_ref_tfmat_arr
 
     def update(self):
-        for i, link in enumerate(self.runtime_lnks):
-            link.tfmat = self.lnk_ref_tfmat_arr[i]
+        for i, lnk in enumerate(self.runtime_lnks):
+            lnk.tfmat = self.lnk_ref_tfmat_arr[i]
 
     def attach_to(self, scene):
         scene.add(self)
@@ -63,8 +63,13 @@ class MechState:
         new.base_pos = self.base_pos.copy()
         new.qs = self.qs.copy()
         new.lnk_ref_tfmat_arr = self.lnk_ref_tfmat_arr.copy()
-        new.runtime_lnks = [lnk.clone() for lnk in self.runtime_lnks]
+        new.runtime_lnks = [lnk.clone() for lnk in self._compiled._meta.lnks]
         return new
+
+    @property
+    def base_tfmat(self):
+        return oum.tfmat_from_rotmat_pos(
+            self.base_rotmat, self.base_pos)
 
     @property
     def toggle_render_collision(self):

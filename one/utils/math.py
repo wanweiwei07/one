@@ -231,6 +231,28 @@ def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     return tfmat_from_rotmat_pos(rotmat, pos)
 
 
+def tfmat_from_quat(quat):
+    """
+    convert a quaterion to homomat
+    """
+    q = np.array(quat, dtype=np.float32, copy=True)
+    n = np.dot(q, q)
+    if n < eps:
+        return np.identity(4)
+    q *= np.sqrt(2.0 / n)
+    q = np.outer(q, q)
+    return np.array([
+        [1.0 - q[2, 2] - q[3, 3], q[1, 2] - q[3, 0], q[1, 3] + q[2, 0], 0.0],
+        [q[1, 2] + q[3, 0], 1.0 - q[1, 1] - q[3, 3], q[2, 3] - q[1, 0], 0.0],
+        [q[1, 3] - q[2, 0], q[2, 3] + q[1, 0], 1.0 - q[1, 1] - q[2, 2], 0.0],
+        [0.0, 0.0, 0.0, 1.0]])
+
+
+def tfmat_from_quat_pos(quat, pos):
+    tfmat = tfmat_from_quat(quat)
+    tfmat[:3, 3] = pos
+    return tfmat
+
 def tfmat_inverse(tfmat):
     """
     compute the inverse of a homogeneous transformation matrix
@@ -260,23 +282,6 @@ def tfmat_average(tfmat_list, bandwidth=10):
     pos_avg = pos_average(tfmat_array[:, :3, 3], bandwidth)
     rotmat_avg = rotmat_average(tfmat_array[:, :3, :3], bandwidth)
     return tfmat_from_rotmat_pos(rotmat_avg, pos_avg)
-
-
-def tfmat_from_quat(quat):
-    """
-    convert a quaterion to homomat
-    """
-    q = np.array(quat, dtype=np.float32, copy=True)
-    n = np.dot(q, q)
-    if n < eps:
-        return np.identity(4)
-    q *= np.sqrt(2.0 / n)
-    q = np.outer(q, q)
-    return np.array([
-        [1.0 - q[2, 2] - q[3, 3], q[1, 2] - q[3, 0], q[1, 3] + q[2, 0], 0.0],
-        [q[1, 2] + q[3, 0], 1.0 - q[1, 1] - q[3, 3], q[2, 3] - q[1, 0], 0.0],
-        [q[1, 3] - q[2, 0], q[2, 3] + q[1, 0], 1.0 - q[1, 1] - q[2, 2], 0.0],
-        [0.0, 0.0, 0.0, 1.0]])
 
 
 def transform_points_by_tfmat(tfmat, pnts):
@@ -833,14 +838,16 @@ def pos_average(pos_list, bandwidth=10):
     else:
         return np.array(pos_list).mean(axis=0)
 
+
 def pos_quat_from_tfmat(tfmat, quat_order='xyzw'):
-    rotmat = tfmat[:3,:3]
-    pos = tfmat[:3,3]
+    rotmat = tfmat[:3, :3]
+    pos = tfmat[:3, 3]
     qx, qy, qz, qw = quat_from_rotmat(rotmat)
     if quat_order == 'wxyz':
         return pos, np.array([qw, qx, qy, qz])
     else:
         return pos, np.array([qx, qy, qz, qw])
+
 
 def intersect_planes(p1, n1, p2, n2, tol=1e-6):
     # normalize normals

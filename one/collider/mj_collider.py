@@ -1,5 +1,5 @@
 import one.scene.scene as oss
-import one.physics.mj_env as opme
+import one.physics.mj_env_bk as opme
 
 
 class MjCollider:

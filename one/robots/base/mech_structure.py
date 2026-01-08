@@ -2,18 +2,22 @@ import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.utils.decorator as oud
-import one.scene.scene_object as osob
+import one.scene.scene_object as osso
 import one.robots.base.kinematic_chain as orc
 import one.robots.base.kinematic_solver as ors
 
 
-class Link(osob.SceneObject):
-    """Links is essentially a SceneObject"""
-    _auto_counter = 0  # maintain new counter for Link class
+class Link(osso.SceneObject):
 
-    def __init__(self, name=None, rotmat=None, pos=None, collision_type=None, is_fixed=False):
-        super().__init__(name=name, rotmat=rotmat, pos=pos,
-                         collision_type=collision_type, is_fixed=is_fixed)
+    @classmethod
+    def auto_name(cls, flag_str=None):
+        if flag_str is None:
+            flag_str = "lnk"
+        if flag_str not in cls._auto_counter:
+            cls._auto_counter[flag_str] = 0
+        name = f"{flag_str}_{cls._auto_counter[flag_str]}"
+        cls._auto_counter[flag_str] += 1
+        return name
 
 
 class Joint:

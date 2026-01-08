@@ -119,11 +119,6 @@ class MechBase:
         self.state.toggle_render_collision = flag
 
     @property
-    def base_tfmat(self):
-        return oum.tfmat_from_rotmat_pos(self.state.base_rotmat,
-                                         self.state.base_pos)
-
-    @property
     def base_pos(self):
         return self.state.base_pos.copy()
 
@@ -140,6 +135,10 @@ class MechBase:
     def base_rotmat(self, rotmat):
         self.state.base_rotmat[:] = rotmat
         self.state.fk()
+
+    @property
+    def base_tfmat(self):
+        return self.state.base_tfmat
 
     @property
     def rgba(self):

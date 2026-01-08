@@ -7,7 +7,7 @@ model_template = """<mujoco>
   <option gravity="{gx} {gy} {gz}"/>
   <option timestep="{timestep}"/>
   <default>
-    <joint damping="5.0" armature="0.05" frictionloss="0.7"/>
+    <joint damping="5" armature="0.05" frictionloss="0.7"/>
     <geom friction="1 0.1 0.1"/>
   </default>
   <asset>
@@ -96,7 +96,7 @@ def sobj_to_mjcf_body(sobj, mesh_assets, namer):
     px, py, pz = sobj.pos
     qx, qy, qz, qw = sobj.quat
     inertial_xml, geoms, assets = sobj_to_mjcf(sobj, mesh_assets, namer)
-    joint_xml = "" if sobj.is_fixed else "<freejoint/>"
+    joint_xml = "" if not sobj.is_free else "<freejoint/>"
     body_inner = join_nonempty([joint_xml, inertial_xml, "\n".join(geoms)])
     body_name = namer.unique_name("body", sobj.name)
     namer.reg_bdy(sobj, body_name)
@@ -184,7 +184,7 @@ def state_to_mjcf_body(state, mesh_assets, namer):
                                                         mesh_assets,
                                                         namer)
         assets.extend(root_assets)
-        root_joint_xml = "" if root_lnk.is_fixed else "<freejoint/>"
+        root_joint_xml = "" if not root_lnk.is_free else "<freejoint/>"
         child_bodies = []
         for clnk_idx in compiled.clnk_ids_of_lidx[root_lnk_idx]:
             pjidx_of_clidx = compiled.pjidx_of_lidx[clnk_idx]

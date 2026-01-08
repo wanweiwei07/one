@@ -1,33 +1,34 @@
 import numpy as np
 import one.utils.constant as ouc
+import one.scene.render_model_primitive as osrmp
 import one.robots.base.mech_base as orb
 import one.robots.base.mech_structure as osrbms
-import one.scene.render_model_primitive as osrmp
 
 
 def prepare_mechstruct():
     structure = osrbms.MechStruct()
-    wd_lnk = osrbms.Link(name="wdlink", is_fixed=True)
-    dummy_xlnk = osrbms.Link(name="xlink")
-    dummy_ylnk = osrbms.Link(name="ylink")
-    body_lnk = osrbms.Link(name="bodylink",
+    wd_lnk = osrbms.Link(name="wdlnk",
+                         is_free=False)
+    dummy_xlnk = osrbms.Link(name="xlnk")
+    dummy_ylnk = osrbms.Link(name="ylnk")
+    body_lnk = osrbms.Link(name="bodylnk",
                            collision_type=ouc.CollisionType.AABB)
     body_lnk.add_visual(osrmp.gen_box((.1, .1, .1)))
-    body_lnk.set_inertia(mass=.1)
-    joint_x = osrbms.Joint(name="joint_x",
+    body_lnk.set_inertia(mass=0.1)
+    joint_x = osrbms.Joint(name="jnt_x",
                            jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=wd_lnk,
                            child_lnk=dummy_xlnk,
                            axis=ouc.StandardAxis.X,
-                           pos=(0,0,0.11), # avoid collision
+                           # pos=(0,0,0.11), # avoid collision
                            lmt_low=-5.0, lmt_up=5.0)
-    joint_y = osrbms.Joint(name="joint_y",
+    joint_y = osrbms.Joint(name="jnt_y",
                            jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=dummy_xlnk,
                            child_lnk=dummy_ylnk,
                            axis=ouc.StandardAxis.Y,
                            lmt_low=-5.0, lmt_up=5.0)
-    joint_t = osrbms.Joint(name="joint_theta",
+    joint_t = osrbms.Joint(name="jnt_t",
                            jnt_type=ouc.JntType.REVOLUTE,
                            parent_lnk=dummy_ylnk,
                            child_lnk=body_lnk,

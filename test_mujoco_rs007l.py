@@ -19,8 +19,8 @@ plane_bottom = ossop.gen_plane()
 plane_bottom.toggle_render_collision = True
 plane_bottom.attach_to(base.scene)
 
-mjenv = mj.MjEnv(scene=base.scene)
-mjenv.sync_mechstates_to_mujoco()
-mjenv.save_xml("scene.xml")
+mjenv = mj.MJEnv(scene=base.scene)
+# mjenv.sync_mechstates_to_mujoco()
+# mjenv.save_xml("scene.xml")
 base.schedule_interval(mjenv.step)
 base.run()

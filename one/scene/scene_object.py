@@ -1,3 +1,4 @@
+import os
 import one.utils.constant as ouc
 import one.scene.render_model as osrm
 import one.scene.scene_node as ossn
@@ -6,38 +7,42 @@ import one.scene.collision as osc
 
 
 class SceneObject:
-    _auto_counter = 0  # TODO thread safety
+    _auto_counter = {}  # TODO thread safety
 
     @classmethod
     def auto_name(cls, flag_str=None):
-        if flag_str is not None:
-            name = f"{cls.__name__}_{cls._auto_counter}_{flag_str}"
-        else:
-            name = f"{cls.__name__}_{cls._auto_counter}"
-        cls._auto_counter += 1
+        if flag_str is None:
+            flag_str = "sobj"
+        if flag_str not in cls._auto_counter:
+            cls._auto_counter[flag_str] = 0
+        name = f"{flag_str}_{cls._auto_counter[flag_str]}"
+        cls._auto_counter[flag_str] += 1
         return name
 
     @classmethod
     def from_file(cls, path, name=None,
                   local_rotmat=None, local_pos=None,  # render model offset
-                  rotmat=None, pos=None,
-                  collision_type=None,
-                  is_fixed=False,
-                  rgb=None, alpha=1.0):  # TODO do we expose rotmat/pos of render model here?
-        instance = cls(name=name, rotmat=rotmat, pos=pos,
-                       collision_type=collision_type, is_fixed=is_fixed)
+                  collision_type=None, is_free=False,
+                  rgb=None, alpha=1.0):
+        """only allows changing local pose of the visual model"""
+        if name is None:
+            name = os.path.splitext(os.path.basename(path))[0]
+        instance = cls(name=name,
+                       collision_type=collision_type,
+                       is_free=is_free)
         instance.file_path = path
-        instance.add_visual(osrm.RenderModel(geometry=osgl.load_geometry(path),
-                                             rotmat=local_rotmat, pos=local_pos,
-                                             rgb=rgb, alpha=alpha),
-                            auto_make_collision=True)
+        instance.add_visual(
+            osrm.RenderModel(geometry=osgl.load_geometry(path),
+                             rotmat=local_rotmat, pos=local_pos,
+                             rgb=rgb, alpha=alpha),
+            auto_make_collision=True)
         return instance
 
-    def __init__(self, name=None, rotmat=None, pos=None,
-                 collision_type=None, is_fixed=False):
+    def __init__(self, name=None, collision_type=None, is_free=False):
+        self._name = name  # _name is for compatibility
         self.name = self.auto_name(flag_str=name)
         self.file_path = None
-        self.node = ossn.SceneNode(rotmat=rotmat, pos=pos)
+        self.node = ossn.SceneNode()
         self.visuals = []
         self.collisions = []
         self.collision_type = collision_type  # None means no auto collider generation
@@ -46,7 +51,7 @@ class SceneObject:
         self._inrtmat = None
         self._com = None
         self._mass = None
-        self._is_fixed = is_fixed
+        self._is_free = is_free
 
     def attach_to(self, scene):
         scene.add(self)
@@ -67,13 +72,13 @@ class SceneObject:
 
     def clone(self):
         """DOES NOT clone the affiliated scene."""
-        new = self.__class__(name='Clone',
-                             rotmat=self.rotmat.copy(),
-                             pos=self.pos.copy(),
+        new = self.__class__(name=self._name + "(clone)",
                              collision_type=self.collision_type,
-                             is_fixed=self.is_fixed)
+                             is_free=self.is_free)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
+        new.set_rotmat_pos(rotmat=self.rotmat,
+                           pos=self.pos)
         new.set_inertia(self._inrtmat, self._com, self._mass)
         # clone all visuals
         for m in self.visuals:
@@ -174,8 +179,8 @@ class SceneObject:
         return self._mass
 
     @property
-    def is_fixed(self):
-        return self._is_fixed
+    def is_free(self):
+        return self._is_free
 
     def _auto_make_collision_from_model(self, m):
         if self.collision_type is None or self.collisions:

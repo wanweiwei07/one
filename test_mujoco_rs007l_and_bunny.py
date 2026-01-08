@@ -1,14 +1,18 @@
 import builtins
 import numpy as np
-import one.physics.mj_env as mj
+import one.physics.mj_env as opme
 from one import oum, ovw, ossop, ouc, osso, khi_rs007l
 
 oframe = ossop.gen_frame()
-bunny = osso.SceneObject.from_file("bunny.stl", collision_type=ouc.CollisionType.MESH)
+bunny = osso.SceneObject.from_file(
+    "bunny.stl", collision_type=ouc.CollisionType.MESH,
+    is_free=True)
 bunny.rgb = ouc.ExtendedColor.PINK
-bunny.alpha=0.4
+bunny.alpha = 0.4
 # bunny.toggle_render_collision = True
-base = ovw.World(cam_pos=(3.5, 1, 3.5), cam_lookat_pos=(0, 0, .5), toggle_auto_cam_orbit=False)
+base = ovw.World(cam_pos=(3.5, 1, 3.5),
+                 cam_lookat_pos=(0, 0, .5),
+                 toggle_auto_cam_orbit=False)
 builtins.base = base
 oframe.attach_to(base.scene)
 bunny.attach_to(base.scene)
@@ -23,22 +27,26 @@ plane_bottom.attach_to(base.scene)
 wall_left = ossop.gen_box(pos=(.5, .35, .2),
                           half_extents=(.355, .005, .2),
                           collision_type=ouc.CollisionType.AABB,
-                          alpha=ouc.ALPHA.TRANSPARENT, is_fixed=True)
+                          alpha=ouc.ALPHA.TRANSPARENT,
+                          is_free=False)
 wall_left.attach_to(base.scene)
 wall_right = ossop.gen_box(pos=(.5, -.35, .2),
                            half_extents=(.355, .005, .2),
                            collision_type=ouc.CollisionType.AABB,
-                           alpha=ouc.ALPHA.TRANSPARENT, is_fixed=True)
+                           alpha=ouc.ALPHA.TRANSPARENT,
+                           is_free=False)
 wall_right.attach_to(base.scene)
 wall_front = ossop.gen_box(pos=(.85, 0, .2),
                            half_extents=(.005, .355, .2),
                            collision_type=ouc.CollisionType.AABB,
-                           alpha=ouc.ALPHA.TRANSPARENT, is_fixed=True)
+                           alpha=ouc.ALPHA.TRANSPARENT,
+                           is_free=False)
 wall_front.attach_to(base.scene)
 wall_back = ossop.gen_box(pos=(.15, 0, .2),
                           half_extents=(.005, .355, .2),
                           collision_type=ouc.CollisionType.AABB,
-                          alpha=ouc.ALPHA.TRANSPARENT, is_fixed=True)
+                          alpha=ouc.ALPHA.TRANSPARENT,
+                          is_free=False)
 wall_back.attach_to(base.scene)
 
 # robot
@@ -49,10 +57,10 @@ robot1.attach_to(base.scene)
 robot1.set_base_rotmat_pos(rotmat=base_rotmat, pos=base_pos)
 robot1.toggle_render_collision = True
 robot1.fk(qs=[0, 0, -np.pi / 4, 0, 0, 0])
-robot1.alpha=0.1
+robot1.alpha = 0.1
 
-mjenv = mj.MjEnv(scene=base.scene)
-mjenv.sync_mechstates_to_mujoco()
-mjenv.save_xml("scene.xml")
+mjenv = opme.MJEnv(scene=base.scene)
+# mjenv.sync_mechstates_to_mujoco()
+mjenv.save("scene.xml")
 base.schedule_interval(mjenv.step)
 base.run()
