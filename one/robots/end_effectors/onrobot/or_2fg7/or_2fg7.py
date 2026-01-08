@@ -2,38 +2,37 @@ import os
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
-import one.scene.scene_object as osso
-import one.robots.base.mech_structure as orstr
+import one.robots.base.mech_structure as orbms
 import one.robots.end_effectors.ee_base as oreb
 
 
 def get_structure():
-    structure = orstr.MechStruct()
+    structure = orbms.MechStruct()
     mesh_dir = os.path.join(os.path.dirname(__file__), "meshes")
     # 3 links
-    base_lnk = osso.SceneObject.from_file(
+    base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base_link.stl"),
         local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
         collision_type=ouc.CollisionType.AABB,
         name="base", rgb=ouc.ExtendedColor.ALUMINUM_ANODIZED)
-    lft_fgr_lnk = osso.SceneObject.from_file(
+    lft_fgr_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "inward_left_finger_link.stl"),
         local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
         collision_type=ouc.CollisionType.AABB,
         name="inward_left_finger", rgb=ouc.ExtendedColor.DIM_GRAY)
-    rgt_fgr_lnk = osso.SceneObject.from_file(
+    rgt_fgr_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "inward_right_finger_link.stl"),
         local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
         collision_type=ouc.CollisionType.AABB,
         name="inward_right_finger", rgb=ouc.ExtendedColor.DIM_GRAY)
     # 1 joint
-    jnt_bl_lf = orstr.Joint(
+    jnt_bl_lf = orbms.Joint(
         name="jnt_bl_lf", jnt_type=ouc.JntType.PRISMATIC,
         parent_lnk=base_lnk, child_lnk=lft_fgr_lnk,
         axis=ouc.StandardAxis.Y,
         pos=np.array([0, -0.019, 0], dtype=np.float32),
         lmt_low=0.0, lmt_up=0.019)
-    jnt_bl_rf = orstr.Joint(
+    jnt_bl_rf = orbms.Joint(
         name="jnt_bl_rf", jnt_type=ouc.JntType.PRISMATIC,
         parent_lnk=base_lnk, child_lnk=rgt_fgr_lnk,
         axis=-ouc.StandardAxis.Y,

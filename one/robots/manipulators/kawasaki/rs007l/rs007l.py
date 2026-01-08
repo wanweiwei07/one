@@ -2,7 +2,6 @@ import os
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
-import one.scene.scene_object as osso
 import one.robots.base.mech_structure as orbms
 import one.robots.manipulators.manipulator_base as ormmb
 
@@ -12,42 +11,42 @@ def prepare_mechstruct():
     mesh_dir = os.path.join(
         os.path.dirname(__file__), "meshes")
     # 7 links
-    base_lnk = osso.SceneObject.from_file(
+    base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base_link.stl"),
         collision_type=ouc.CollisionType.MESH,
         is_free=True, name="base_lnk",
         rgb=ouc.ExtendedColor.BEIGE)
     base_lnk.set_inertia(mass=11.0)
-    lnk1 = osso.SceneObject.from_file(
+    lnk1 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link1.stl"),
         collision_type=ouc.CollisionType.MESH,
         name="lnk1", rgb=ouc.ExtendedColor.BEIGE)
     lnk1.set_inertia(mass=8.118)
-    lnk2 = osso.SceneObject.from_file(
+    lnk2 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link2.stl"),
         collision_type=ouc.CollisionType.MESH,
         local_rotmat=oum.rotmat_from_euler(0, np.pi / 2, 0),
         name="lnk2", rgb=ouc.ExtendedColor.BEIGE)
     lnk2.set_inertia(mass=6.826)
-    lnk3 = osso.SceneObject.from_file(
+    lnk3 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link3.stl"),
         collision_type=ouc.CollisionType.MESH,
         local_rotmat=oum.rotmat_from_euler(0, np.pi / 2, 0),
         name="lnk3", rgb=ouc.ExtendedColor.BEIGE)
     lnk3.set_inertia(mass=5.236)
-    lnk4 = osso.SceneObject.from_file(
+    lnk4 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link4.stl"),
         collision_type=ouc.CollisionType.MESH,
         local_pos=np.array([0.0, 0.0, 0.3852], dtype=np.float32),
         name="lnk4", rgb=ouc.ExtendedColor.BEIGE)
     lnk4.set_inertia(mass=5.066)
-    lnk5 = osso.SceneObject.from_file(
+    lnk5 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link5.stl"),
         collision_type=ouc.CollisionType.MESH,
         local_rotmat=oum.rotmat_from_euler(0, np.pi / 2, 0),
         name="lnk5", rgb=ouc.ExtendedColor.BEIGE)
     lnk5.set_inertia(mass=1.625)
-    lnk6 = osso.SceneObject.from_file(
+    lnk6 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link6.stl"),
         collision_type=ouc.CollisionType.MESH,
         name="lnk6", rgb=ouc.ExtendedColor.BEIGE)
