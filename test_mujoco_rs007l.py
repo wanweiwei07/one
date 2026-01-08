@@ -12,7 +12,7 @@ robot.fk(qs=[0, 0, -np.pi / 4, 0, 0, 0])
 
 for i in range(1,15):
     tmp_robot = robot.clone()
-    tmp_robot.base_pos=np.array([0,0,i])
+    tmp_robot.base_pos=np.array([0,0,i*1.5])
     tmp_robot.attach_to(base.scene)
 
 plane_bottom = ossop.gen_plane()
@@ -21,6 +21,6 @@ plane_bottom.attach_to(base.scene)
 
 mjenv = mj.MJEnv(scene=base.scene)
 # mjenv.sync_mechstates_to_mujoco()
-# mjenv.save_xml("scene.xml")
+mjenv.save("scene.xml")
 base.schedule_interval(mjenv.step)
 base.run()

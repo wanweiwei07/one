@@ -74,9 +74,9 @@ class JointNode:
         # self.pos = (0, 0, 0)
         # self.quat = (0, 0, 0, 1)
         self.range = None
-        self.damping = 5.0
-        self.frictionloss = 0.7
-        self.armature = 0.05
+        self.damping = 1
+        self.frictionloss = 0.01
+        self.armature = .02
 
 
 class InertialNode:
@@ -96,7 +96,7 @@ class GeomNode:
         self.quat = (0, 0, 0, 1)
         self.rgba = None
         self.mesh_ref = None
-        self.friction = (.2, 0.005, 0.0001)
+        self.friction = (2, 0.1, 0.01)
 
 
 class ActuatorNode:

@@ -4,9 +4,11 @@ from one.physics.mj_one_sync import MJSynchronizer
 
 
 class MJEnv:
-    def __init__(self, scene):
+    def __init__(self, scene, require_ctrl=False):
         self._cvter = MJOneConverter()
         self._world = self._cvter.convert(scene)
+        if not require_ctrl:
+            self._world.actuators = None
         self.xml_string = self._world.compile_mjcf()
         print(self.xml_string)
         self.runtime = MJRuntime(self.xml_string)
@@ -19,8 +21,8 @@ class MJEnv:
         n = int(round(dt / h))
         # self.sync.push_qpos()
         self.runtime.step(n)
-        self.sync.pull_qpos()
         self.sync.pull_body_pose()
+        self.sync.pull_qpos()
 
     def is_collided(self):
         self.runtime.enter_cd()

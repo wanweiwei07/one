@@ -36,6 +36,10 @@ def inertia_from_collisions(collisions, total_mass=10.0):
                             osco.OBBCollisionShape)):
             hx, hy, hz = c.half_extents
             vols.append(8*hx*hy*hz)
+        elif isinstance(c, osco.MeshCollisionShape):
+            verts = c.geometry.verts
+            hx, hy, hz = (verts.max(axis=0) - verts.min(axis=0)) * 0.5
+            vols.append(8*hx*hy*hz)
         else:
             vols.append(1.0)  # fallback
     vols = np.asarray(vols)
@@ -54,6 +58,10 @@ def inertia_from_collisions(collisions, total_mass=10.0):
         elif isinstance(c, (osco.AABBCollisionShape,
                             osco.OBBCollisionShape)):
             hx, hy, hz = c.half_extents
+            I_local = inertia_box(mi, hx, hy, hz)
+        elif isinstance(c, osco.MeshCollisionShape):
+            verts = c.geometry.verts
+            hx, hy, hz = (verts.max(axis=0) - verts.min(axis=0)) * 0.5
             I_local = inertia_box(mi, hx, hy, hz)
         else:
             I_local = np.eye(3) * 1e-6

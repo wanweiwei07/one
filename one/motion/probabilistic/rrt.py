@@ -2,6 +2,28 @@ import time
 import numpy as np
 
 
+def shortcut_path(path, sspp, n_iter=200):
+    path = list(path)
+    for _ in range(n_iter):
+        if len(path) <= 2:
+            break
+        i = np.random.randint(0, len(path) - 2)
+        j = np.random.randint(i + 2, len(path))
+        if sspp.is_motion_valid(path[i], path[j]):
+            path = path[:i + 1] + path[j:]
+    return path
+
+def densify_path(path, ssp, max_step=np.pi/12):
+    dense = [path[0]]
+    for q0, q1 in zip(path[:-1], path[1:]):
+        dist = ssp.distance(q0, q1)
+        n = max(1, int(np.ceil(dist / max_step)))
+        for i in range(1, n + 1):
+            t = i / n
+            q = ssp.interpolate(q0, q1, t)
+            dense.append(q)
+    return dense
+
 class RRTTree:
     def __init__(self, r_state):
         """r_state: np.ndarray (root state)"""
@@ -80,7 +102,9 @@ class RRTConnectPlanner:
                     path_start = t_start.path_from_root(new_idx_start)
                     path_goal = t_goal.path_from_root(new_idx_goal)
                     path_goal.reverse()  # from connection point to goal
-                    return path_start + path_goal[1:]  # avoid duplicate node
+                    raw_path = path_start + path_goal[1:]
+                    smooth_path = shortcut_path(raw_path, self._sspp)
+                    return densify_path(smooth_path, self._sspp.ssp)
             # Swap the trees every iteration
             t_start, t_goal = t_goal, t_start
         if verbose:

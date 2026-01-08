@@ -12,10 +12,10 @@ class MJOneConverter:
         self._opt.gravity = (0, 0, -9.81)
         self._opt.timestep = 0.002
         self._default = opmn.DefaultNode()
-        self._default.geom["friction"] = (1.0, 0.1, 0.1)
-        self._default.geom["margin"] = 0.002
+        # self._default.geom["friction"] = (1.0, 0.1, 0.1)
+        self._default.geom["margin"] = 0.007
         self._default.geom["solref"] = (0.02, 1.0)
-        self._default.geom["solimp"] = (0.9, 0.95, 0.001)
+        self._default.geom["solimp"] = (0.9, 0.95, 0.002)
         self._mesh_assets = {}  # key = file_path, value = MeshAsset
         self._actuators = []  # list of ActuatorNode
 
@@ -126,6 +126,7 @@ class MJOneConverter:
             elif sobj.mass is not None:
                 com, inrtmat = opi.inertia_from_collisions(
                     sobj.collisions, sobj.mass)
+                print(sobj.mass, com, inrtmat)
                 b.inertial = opmn.InertialNode(
                     mass=sobj.mass, com=com,
                     inertia=inrtmat)

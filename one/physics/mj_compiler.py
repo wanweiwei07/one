@@ -127,6 +127,9 @@ class MJCFCompiler:
             ge.set("rgba", f"{r[0]} {r[1]} {r[2]} {r[3]}")
         if g.mesh_ref:
             ge.set("mesh", g.mesh_ref.name)
+        if g.friction is not None:
+            mu, torsion, rolling = g.friction
+            ge.set("friction", f"{mu} {torsion} {rolling}")
 
     def compile_actuator(self, a, parent_el):
         ae = ET.SubElement(parent_el, a.atype)

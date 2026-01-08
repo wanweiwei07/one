@@ -1,5 +1,5 @@
 import one.scene.scene as oss
-import one.physics.mj_env_bk as opme
+import one.physics.mj_env as opme
 
 
 class MjCollider:
@@ -13,13 +13,12 @@ class MjCollider:
         self.scene.add(entity)
 
     def compile(self):
-        self._mjenv = opme.MjEnv(self.scene)
+        self._mjenv = opme.MJEnv(self.scene)
 
     def is_collided(self, qs):
         if self.actor is None:
             raise RuntimeError("MjCollider.actor is not set!")
         if self._mjenv is None:
             raise RuntimeError("MjCollider must be compiled!")
-        self._mjenv.sync_to_mujoco(self.actor.state, qs)
-        print(qs, self._mjenv.is_collided())
+        self._mjenv.sync.push_by_state(self.actor.state, qs)
         return self._mjenv.is_collided()

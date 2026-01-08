@@ -15,7 +15,7 @@ def prepare_mechstruct():
     base_lnk = osso.SceneObject.from_file(
         os.path.join(mesh_dir, "base_link.stl"),
         collision_type=ouc.CollisionType.MESH,
-        is_free=False, name="base_lnk",
+        is_free=True, name="base_lnk",
         rgb=ouc.ExtendedColor.BEIGE)
     base_lnk.set_inertia(mass=11.0)
     lnk1 = osso.SceneObject.from_file(
