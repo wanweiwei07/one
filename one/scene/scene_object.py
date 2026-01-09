@@ -186,12 +186,8 @@ class SceneObject:
         if self.collision_type is None or self.collisions:
             return
         if self.collision_type == ouc.CollisionType.MESH:
-            scale = .1 * min(m.geometry.verts.max(axis=0) -
-                              m.geometry.verts.min(axis=0))
-            verts = m.geometry.verts + m.geometry.vert_normals * scale
-            faces = m.geometry.faces
             shape = osc.MeshCollisionShape(file_path=self.file_path,
-                                           geometry=(verts, faces),
+                                           geometry=m.geometry,
                                            rotmat=m.rotmat, pos=m.pos)
         elif self.collision_type == ouc.CollisionType.SPHERE:
             shape = osc.SphereCollisionShape.fit_from_geometry(

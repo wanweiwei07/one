@@ -1,21 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from enum import Enum
-
 
 # color constants
-
 class BasicColor:
+    # RGB
     RED = np.array([1.0, 0.0, 0.0], dtype=np.float32)
     GREEN = np.array([0.0, 0.5, 0.0], dtype=np.float32)
     BLUE = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    # CMY
     CYAN = np.array([0.0, 1.0, 1.0], dtype=np.float32)
     MAGENTA = np.array([1.0, 0.0, 1.0], dtype=np.float32)
     YELLOW = np.array([1.0, 1.0, 0.0], dtype=np.float32)
+    # Black White
     BLACK = np.array([0.0, 0.0, 0.0], dtype=np.float32)
     WHITE = np.array([1.0, 1.0, 1.0], dtype=np.float32)
     GRAY = np.array([0.67, 0.67, 0.67], dtype=np.float32)
+    # Engineering
     ORANGE = np.array([1.0, 0.47, 0.0], dtype=np.float32)
     LIME = np.array([0.0, 1.0, 0.0], dtype=np.float32)
     DEFAULT = GRAY.copy()

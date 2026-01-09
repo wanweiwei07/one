@@ -120,13 +120,6 @@ class RS007L(ormmb.ManipulatorBase):
     def __init__(self, base_rotmat=None, base_pos=None):
         super().__init__(base_rotmat=base_rotmat, base_pos=base_pos)
 
-    def engage(self, child, engage_tfmat=None, update=True):
-        super().mount(child=child,
-                      plnk=self.structure.lnks[-1],
-                      engage_tfmat=engage_tfmat)
-        if update:
-            self._update_mounting(self._mountings[child])
-
     def mount(self, *args, **kwargs):
         """turn off mount() to avoid confusion"""
         raise RuntimeError("RS007L.mount() is disabled. "

@@ -51,8 +51,8 @@ class SphereCollisionShape(CollisionShape):
     def to_render_model(self):
         g = osgp.gen_icosphere_geom(radius=self._radius)
         return osrm.RenderModel(geometry=g, pos=self.pos,
-                                rgb=ouc.BasicColor.GRAY,
-                                alpha=ouc.ALPHA.LIGHT_SEMI)
+                                rgb=ouc.BasicColor.ORANGE,
+                                alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def radius(self):
@@ -96,9 +96,11 @@ class CapsuleCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
-        g = osgp.gen_capsule_geom(radius=self._radius, half_length=self._half_length)
-        return osrm.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
-                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
+        g = osgp.gen_capsule_geom(
+            radius=self._radius, half_length=self._half_length)
+        return osrm.RenderModel(
+            geometry=g, rotmat=self.rotmat, pos=self.pos,
+            rgb=ouc.BasicColor.ORANGE, alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def radius(self):
@@ -133,7 +135,8 @@ class AABBCollisionShape(CollisionShape):
     def to_render_model(self):
         g = osgp.gen_box_geom(half_extents=self._half_extents)
         return osrm.RenderModel(geometry=g, pos=self.pos,
-                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
+                                rgb=ouc.BasicColor.ORANGE,
+                                alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def half_extents(self):
@@ -170,7 +173,8 @@ class OBBCollisionShape(CollisionShape):
     def to_render_model(self):
         g = osgp.gen_box_geom(half_extents=self._half_extents)
         return osrm.RenderModel(geometry=g, rotmat=self.rotmat, pos=self.pos,
-                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
+                                rgb=ouc.BasicColor.ORANGE,
+                                alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def half_extents(self):
@@ -201,8 +205,8 @@ class PlaneCollisionShape(CollisionShape):
         return osrm.RenderModel(geometry=g,
                                 rotmat=self.rotmat,
                                 pos=self.pos,
-                                rgb=ouc.BasicColor.GRAY,
-                                alpha=ouc.ALPHA.LIGHT_SEMI)
+                                rgb=ouc.BasicColor.ORANGE,
+                                alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def normal(self):
@@ -224,9 +228,13 @@ class MeshCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
+        verts = self._geometry.verts
+        ext = min(verts.max(axis=0) - verts.min(axis=0)) * .05
+        verts = verts + self._geometry.vert_normals * ext
         return osrm.RenderModel(
-            geometry=self._geometry, rotmat=self.rotmat, pos=self.pos,
-            rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
+            geometry=(verts, self._geometry.faces),
+            rotmat=self.rotmat, pos=self.pos,
+            rgb=ouc.BasicColor.ORANGE, alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def file_path(self):

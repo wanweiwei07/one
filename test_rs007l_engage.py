@@ -1,19 +1,46 @@
-from one import oum, ovw, ossop, khi_rs007l, or_2fg7
+import numpy as np
+from one import oum, ouc, ovw, ossop, khi_rs007l, or_2fg7
 
-base = ovw.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
-                toggle_auto_cam_orbit=False)
+base = ovw.World(cam_pos=(2, 1, 1.5), cam_lookat_pos=(0, 0, .75),
+                 toggle_auto_cam_orbit=False)
 ossop.gen_frame().attach_to(base.scene)
-robot = khi_rs007l.RS007L()
-robot.toggle_render_collision = True
+robot = khi_rs007l.RS007L(base_pos=(.5, 0, 0))
 robot.attach_to(base.scene)
 
+tgt_pos = np.array([0, .5, .3])
+tgt_rotmat = oum.rotmat_from_euler(oum.pi, 0, 0)
+ossop.gen_frame(rotmat=tgt_rotmat, pos=tgt_pos).attach_to(base.scene)
+qs, _ = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+robot_ik = robot.clone()
+robot_ik.rgb = ouc.BasicColor.LIME
+robot_ik.fk(qs=qs)
+robot_ik.attach_to(base.scene)
+wd_tcp_rotmat = robot_ik.wd_tcp_tfmat[:3, :3]
+wd_tcp_pos = robot_ik.wd_tcp_tfmat[:3, 3]
+ossop.gen_frame(rotmat=wd_tcp_rotmat, pos=wd_tcp_pos,
+                color_mat=ouc.CoordColor.MYC).attach_to(base.scene)
+
+robot2 = robot.clone()
+robot2.set_base_rotmat_pos(pos=(-.5, 0, 0))
 gripper = or_2fg7.OR2FG7()
-gripper.attach_to(base.scene)
-# grasp first
-box = ossop.gen_cylinder(spos=(.3,0,0), epos=(.3,0,.1), radius=.03)
+robot2.engage(gripper)
+robot2.attach_to(base.scene)
+qs2, _ = robot2.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+
+
+box = ossop.gen_cylinder(spos=(-.3, 0, .3), epos=(.3, 0, .1), radius=.03)
 box.attach_to(base.scene)
 gripper.grasp(box)
-# engage later
-robot.engage(gripper)
-robot.fk(qs=[0, -oum.pi/4, 0, -oum.pi/2, 0, oum.pi/3])
+gripper.release(box)
+# base.run()
+
+robot2_ik = robot2.clone()
+robot2_ik.rgb = ouc.BasicColor.YELLOW
+robot2_ik.fk(qs=qs2)
+robot2_ik.attach_to(base.scene)
 base.run()
+
+# # engage later
+# robot.engage(gripper)
+# robot.fk(qs=[0, -oum.pi / 4, 0, -oum.pi / 2, 0, oum.pi / 3])
+# base.run()

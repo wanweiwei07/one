@@ -15,21 +15,28 @@ class ManipulatorBase(orbmb.MechBase):
                                                compiled.tip_lnks[0])
         self._solver = self.structure.get_solver(compiled.root_lnk,
                                                  compiled.tip_lnks[0])
+        
 
-    def set_tcp(self, rotmat=None, pos=None, tfmat=None):
-        if tfmat is not None:
-            self._tcp_tfmat = np.asarray(tfmat, dtype=np.float32)
-        else:
-            if rotmat is not None:
-                self._tcp_tfmat[:3, :3] = rotmat
-            if pos is not None:
-                self._tcp_tfmat[:3, 3] = pos
+    def engage(self, ee, engage_tfmat=None,
+               update=True, auto_tcp=True):
+        super().mount(child=ee,
+                      plnk=self.structure.lnks[-1],
+                      engage_tfmat=engage_tfmat)
+        ee._is_engaged = True
+        if update:
+            self._update_mounting(self._mountings[ee])
+        if auto_tcp:
+            flange_tfmat = self._mountings[ee].engage_tfmat
+            self._tcp_tfmat[:] = flange_tfmat @ ee.tcp_tfmat
+
+    def set_tcp_rotmat_pos(self, rotmat=None, pos=None):
+        self._tcp_tfmat[:3, :3] = oum.ensure_tfmat(rotmat)
+        self._tcp_tfmat[:3, 3] = oum.ensure_pos(pos)
 
     def reset_tcp(self):
         self._tcp_tfmat[:] = np.eye(4, dtype=np.float32)
 
-    def ik_tcp(self, tgt_rotmat, tgt_pos,
-               qs_active_init=None):
+    def ik_tcp(self, tgt_rotmat, tgt_pos, qs_active_init=None):
         tgt_tcp_tfmat = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
         qs_active, info = self._solver.ik(
@@ -54,3 +61,8 @@ class ManipulatorBase(orbmb.MechBase):
             self.structure.compiled.root_lnk,
             self.structure.compiled.tip_lnks[0])
         return new
+
+    @property
+    def wd_tcp_tfmat(self):
+        flange_lnk = self.structure.lnks[-1]
+        return self.get_wd_lnk_tfmat(flange_lnk) @ self._tcp_tfmat
