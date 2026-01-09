@@ -36,7 +36,8 @@ for i in range(5):
     obstacle_i.pos = (xy[0], xy[1], i * 0.3 + 1.5)
     obstacle_i.attach_to(base.scene)
 
-mjenv = mj.MJEnv(scene=base.scene)
+mjenv = mj.MJEnv(scene=base.scene,
+                 require_ctrl=True)
 mjenv.save("scene.xml")
 
 def stop(dt, function):

@@ -22,24 +22,17 @@ class Link(osso.SceneObject):
 
 class Joint:
 
-    def __init__(self,
-                 name,
-                 jnt_type,
-                 parent_lnk,
-                 child_lnk,
-                 axis,
-                 rotmat=np.eye(3, dtype=np.float32),
-                 pos=np.zeros(3, dtype=np.float32),
-                 mmc=None,
-                 lmt_low=None,
-                 lmt_up=None):
+    def __init__(self, name, jnt_type,
+                 parent_lnk, child_lnk,
+                 axis, rotmat=None, pos=None,
+                 mmc=None, lmt_low=None, lmt_up=None):
         self.name = name
-        self.jnt_type = jnt_type
+        self.jtype = jnt_type
         self.axis = oum.unit_vec(axis, return_length=False)
-        self.rotmat = rotmat
-        self.pos = pos
-        self.parent_lnk = parent_lnk
-        self.child_lnk = child_lnk
+        self.rotmat = oum.ensure_rotmat(rotmat)
+        self.pos = oum.ensure_pos(pos)
+        self.plnk = parent_lnk
+        self.clnk = child_lnk
         # mimic
         self.mmc = mmc
         # joint limits
@@ -59,6 +52,16 @@ class Joint:
     @oud.readonly_view
     def origin_tfmat(self):
         return oum.tfmat_from_rotmat_pos(self.rotmat, self.pos)
+
+    def motion_tfmat(self, q):
+        if self.jtype == ouc.JntType.FIXED:
+            return np.eye(4, dtype=np.float32)
+        if self.jtype == ouc.JntType.REVOLUTE:
+            return oum.tfmat_from_rotmat_pos(
+                rotmat=oum.rotmat_from_axangle(self.axis, q))
+        if self.jtype == ouc.JntType.PRISMATIC:
+            return oum.tfmat_from_rotmat_pos(pos=self.axis * q)
+        raise TypeError(f"Unknown joint type: {self.jtype}")
 
 
 class MechStruct:
@@ -94,7 +97,7 @@ class MechStruct:
         self.lnks.append(lnk)
 
     def add_jnt(self, jnt, auto_add_lnks=True):
-        for link in (jnt.parent_lnk, jnt.child_lnk):
+        for link in (jnt.plnk, jnt.clnk):
             if link not in self.lnks:
                 if auto_add_lnks:
                     self.add_lnk(link)
@@ -104,6 +107,14 @@ class MechStruct:
 
     def compile(self):
         self._compiled = FlatMechStructure(self)
+
+    @property
+    def n_jnts(self):
+        return len(self.jnts)
+
+    @property
+    def n_lnks(self):
+        return len(self.lnks)
 
     @property
     def compiled(self):
@@ -116,9 +127,9 @@ class FlatMechStructure:
     """flat representation of RobotStructure for efficient computation"""
 
     def __init__(self, structure):
-        self._meta = structure
-        self.n_lnks = len(structure.lnks)
-        self.n_jnts = len(structure.jnts)
+        # self._meta = structure
+        self.n_lnks = structure.n_lnks
+        self.n_jnts = structure.n_jnts
         # indexing
         self.lidx_map = {lnk: i for i, lnk in enumerate(structure.lnks)}
         self.jidx_map = {j: i for i, j in enumerate(structure.jnts)}
@@ -167,30 +178,30 @@ class FlatMechStructure:
         return self.active_jnt_ids_mask[jnt_idx]
 
     def _build_from_structure(self, structure):
-        for joint in structure.jnts:
+        for jnt in structure.jnts:
             # topology
-            jnt_idx = self.jidx_map[joint]
-            plnk_idx = self.lidx_map[joint.parent_lnk]
-            clnk_idx = self.lidx_map[joint.child_lnk]
-            self.plidx_of_jidx[jnt_idx] = plnk_idx
-            self.clidx_of_jidx[jnt_idx] = clnk_idx
-            self.plidx_of_lidx[clnk_idx] = plnk_idx
-            self.pjidx_of_lidx[clnk_idx] = jnt_idx
+            jidx = self.jidx_map[jnt]
+            plidx = self.lidx_map[jnt.plnk]
+            clidx = self.lidx_map[jnt.clnk]
+            self.plidx_of_jidx[jidx] = plidx
+            self.clidx_of_jidx[jidx] = clidx
+            self.plidx_of_lidx[clidx] = plidx
+            self.pjidx_of_lidx[clidx] = jidx
             # link children
-            self.clnk_ids_of_lidx[plnk_idx].append(clnk_idx)
-            # joint attributes
-            self.jtypes_by_idx[jnt_idx] = joint.jnt_type
-            self.jax_by_idx[jnt_idx] = joint.axis
-            self.jotfmat_by_idx[jnt_idx] = joint.origin_tfmat
+            self.clnk_ids_of_lidx[plidx].append(clidx)
+            # jnt attributes
+            self.jtypes_by_idx[jidx] = jnt.jtype
+            self.jax_by_idx[jidx] = jnt.axis
+            self.jotfmat_by_idx[jidx] = jnt.origin_tfmat
             # mimic
-            if joint.mmc is not None:
-                src, mult, offset = joint.mmc
-                self.mmc_src_by_idx[jnt_idx] = self.jidx_map[src]
-                self.mmc_mult_by_idx[jnt_idx] = float(mult)
-                self.mmc_offset_by_idx[jnt_idx] = float(offset)
+            if jnt.mmc is not None:
+                src, mult, offset = jnt.mmc
+                self.mmc_src_by_idx[jidx] = self.jidx_map[src]
+                self.mmc_mult_by_idx[jidx] = float(mult)
+                self.mmc_offset_by_idx[jidx] = float(offset)
             # limits
-            self.jlmt_low_by_idx[jnt_idx] = float(joint.lmt_low)
-            self.jlmt_high_by_idx[jnt_idx] = float(joint.lmt_up)
+            self.jlmt_low_by_idx[jidx] = float(jnt.lmt_low)
+            self.jlmt_high_by_idx[jidx] = float(jnt.lmt_up)
 
     def _find_root_idx(self):
         roots = np.where(self.plidx_of_lidx < 0)[0]

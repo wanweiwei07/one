@@ -1,7 +1,7 @@
 import numpy as np
 import one.utils.constant as ouc
 import one.scene.render_model_primitive as osrmp
-import one.robots.base.mech_base as orb
+import one.robots.base.mech_base as orbmb
 import one.robots.base.mech_structure as osrbms
 
 
@@ -20,7 +20,6 @@ def prepare_mechstruct():
                            parent_lnk=wd_lnk,
                            child_lnk=dummy_xlnk,
                            axis=ouc.StandardAxis.X,
-                           # pos=(0,0,0.11), # avoid collision
                            lmt_low=-5.0, lmt_up=5.0)
     joint_y = osrbms.Joint(name="jnt_y",
                            jnt_type=ouc.JntType.PRISMATIC,
@@ -45,7 +44,7 @@ def prepare_mechstruct():
     return structure
 
 
-class XYThetaRobot(orb.MechBase):
+class XYThetaRobot(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):

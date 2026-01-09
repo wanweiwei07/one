@@ -27,8 +27,8 @@ class MJOneConverter:
         world.default = self._default
         root = opmn.BodyNode("world_root")
         world.root_body = root
-        for state in scene.states:
-            robot = self._cvt_robot(state)
+        for mecba in scene.mecbas:
+            robot = self._cvt_robot(mecba)
             self._merge_empty_geoms(robot, is_root=True)
             robot.parent = root
             root.children.append(robot)

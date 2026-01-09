@@ -10,10 +10,8 @@ class KinematicSolver:
         self._compiled = structure._compiled
         self.chain = chain
         # cache per-joint constants for chain joints (ordered base->tip)
-        self._jnt_ids = chain.jnt_ids
-        self._loc_jnt_origin_tfmats = self._compiled.jotfmat_by_idx[self._jnt_ids]  # (m,4,4)
-        self._loc_jnt_axes = self._compiled.jax_by_idx[self._jnt_ids]  # (m,3)
-        self._jnt_types = self._compiled.jtypes_by_idx[self._jnt_ids]  # (m,)
+        self._jnt_ids = chain.jnt_ids_in_structure
+        self._jnts = [structure.jnts[j] for j in self._jnt_ids]
         # active subset mapping: chain-index -> active-index
         self._active_mask = chain.active_mask
         self._active_pos_in_chain = np.nonzero(self._active_mask)[0].astype(np.int32)
@@ -25,37 +23,17 @@ class KinematicSolver:
         _, _, tip_tfmat = self._forward_to_lnk(qs_active, root_tfmat)
         return tip_tfmat
 
-    def ik(self,
-           root_rotmat,
-           root_pos,
-           tgt_romat,
-           tgt_pos,
-           qs_active_init=None,
-           max_iter=50,
-           tol_pos=1e-4,
-           tol_rot=1e-3,
-           step_scale=1.0,
-           pos_err_max=0.1,
-           rot_err_max=0.3):
-        """
-        :param tgt_romat:
-        :param tgt_pos:
-        :param qs_active_init:
-        :param max_iter:
-        :param tol_pos:
-        :param tol_rot:
-        :param step_scale:
-        :param pos_err_max: parameter for trust region
-        :param rot_err_max: parameter for trust region
-        :return:
-        """
+    def ik(self, root_rotmat, root_pos, tgt_romat, tgt_pos,
+           qs_active_init=None, max_iter=50,
+           tol_pos=1e-4, tol_rot=1e-3, step_scale=1.0,
+           pos_err_max=0.1, rot_err_max=0.3):
         root_tfmat = oum.tfmat_from_rotmat_pos(root_rotmat, root_pos)
         tgt_tfmat = oum.tfmat_from_rotmat_pos(tgt_romat, tgt_pos)
         if qs_active_init is None:
             qs = (self.lmt_low + self.lmt_up) * 0.5
         else:
             qs = np.array(qs_active_init, dtype=np.float32)
-            assert qs.shape[0] == self.n_active_jnts
+            assert qs.shape[0] == self.chain.n_active_jnts
         for it in range(int(max_iter)):
             _, jacmat, cur_tfmat = self._forward_to_lnk(qs, root_tfmat)
             delta_p = tgt_tfmat[:3, 3] - cur_tfmat[:3, 3]
@@ -81,9 +59,12 @@ class KinematicSolver:
             # print(delta_x)
         return qs, {"converged": False, "iters": max_iter, "err": delta_x}
 
-    def _forward_to_lnk(self, qs_active, root_tfmat, tgt_lnk=None, local_point=None):
-        assert qs_active.shape[0] == self.n_active_jnts, \
-            f"Expected {self.n_active_jnts} active joints, got {len(qs_active)}"
+    def _forward_to_lnk(self, qs_active, root_tfmat,
+                        tgt_lnk=None, local_point=None):
+        if qs_active.shape[0] != self.chain.n_active_jnts:
+            raise ValueError(
+                f"Expected {self.chain.n_active_jnts} active joints, "
+                f"got {len(qs_active)}")
         if tgt_lnk is None:
             tgt_lidx = self.chain.tip_lidx
         else:
@@ -92,47 +73,30 @@ class KinematicSolver:
             up_to_pos = self.chain.lnk_pos_in_chain[tgt_lidx]
         except KeyError:
             raise ValueError("Specified link is not on this kinematic chain")
-        q_chain = np.zeros(self.n_jnts)
+        q_chain = np.zeros(self.chain.n_jnts)
         q_chain[self._active_pos_in_chain] = qs_active
         wd_lnk_tfmat_arr = np.empty((up_to_pos + 1, 4, 4))
         wd_lnk_tfmat_arr[0] = root_tfmat
         wd_jnt_tfmat_arr = np.empty((up_to_pos, 4, 4))
         for k in range(up_to_pos):
-            wd_jnt_tfmat_arr[k] = wd_lnk_tfmat_arr[k] @ self._loc_jnt_origin_tfmats[k]
-            wd_lnk_tfmat_arr[k + 1] = (wd_jnt_tfmat_arr[k] @
-                                       self._jnt_motion_tfmat(self._jnt_types[k],
-                                                              self._loc_jnt_axes[k],
-                                                              q_chain[k]))
+            wd_jnt_tfmat_arr[k] = wd_lnk_tfmat_arr[k] @ self._jnts[k].origin_tfmat
+            wd_lnk_tfmat_arr[k + 1] = (
+                    wd_jnt_tfmat_arr[k] @ self._jnts[k].motion_tfmat(q_chain[k]))
         if local_point is None:
             wd_p_tgt = wd_lnk_tfmat_arr[-1, :3, 3]
         else:
             wd_p_tgt = wd_lnk_tfmat_arr[-1, :3, :3] @ local_point + wd_lnk_tfmat_arr[-1, :3, 3]
-        jacmat = np.zeros((6, self.n_active_jnts))
+        jacmat = np.zeros((6, self.chain.n_active_jnts))
         for col, k in enumerate(self._active_pos_in_chain):
             if k >= up_to_pos:
                 continue
-            wd_ax_k = wd_jnt_tfmat_arr[k, :3, :3] @ self._loc_jnt_axes[k]
+            wd_ax_k = wd_jnt_tfmat_arr[k, :3, :3] @ self._jnts[k].axis
             wd_p_k = wd_jnt_tfmat_arr[k, :3, 3]
-            if self._jnt_types[k] == 1:  # REVOLUTE
+            if self._jnts[k].jtype == 1:  # REVOLUTE
                 jacmat[3:6, col] = wd_ax_k
                 jacmat[0:3, col] = np.cross(wd_ax_k, wd_p_tgt - wd_p_k)
-            elif self._jnt_types[k] == 2:  # PRISMATIC
+            elif self._jnts[k].jtype == 2:  # PRISMATIC
                 jacmat[0:3, col] = wd_ax_k
-        return wd_p_tgt.astype(np.float32), jacmat.astype(np.float32), wd_lnk_tfmat_arr[-1].astype(np.float32)
-
-    def _jnt_motion_tfmat(self, jnt_type, loc_jnt_ax, q):
-        if jnt_type == ouc.JntType.FIXED:
-            return np.eye(4, dtype=np.float32)
-        if jnt_type == ouc.JntType.REVOLUTE:
-            return oum.tfmat_from_rotmat_pos(rotmat=oum.rotmat_from_axangle(loc_jnt_ax, q))
-        if jnt_type == ouc.JntType.PRISMATIC:
-            return oum.tfmat_from_rotmat_pos(pos=loc_jnt_ax * q)
-        raise TypeError(f"Unknown joint type: {jnt_type}")
-
-    @property
-    def n_jnts(self):
-        return len(self._jnt_ids)
-
-    @property
-    def n_active_jnts(self):
-        return len(self._active_pos_in_chain)
+        return (wd_p_tgt.astype(np.float32),
+                jacmat.astype(np.float32),
+                wd_lnk_tfmat_arr[-1].astype(np.float32))

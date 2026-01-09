@@ -31,8 +31,8 @@ class CollisionShape:
 class SphereCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_model(cls, m):
-        verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
+    def fit_from_geometry(cls, geometry, rotmat, pos):
+        verts = (rotmat @ geometry.verts.T).T + pos
         mins = verts.min(axis=0)
         maxs = verts.max(axis=0)
         center = (mins + maxs) * 0.5
@@ -62,9 +62,9 @@ class SphereCollisionShape(CollisionShape):
 class CapsuleCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_model(cls, m):
-        verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
-        faces = m.geometry.faces
+    def fit_from_geometry(cls, geometry, rotmat, pos):
+        verts = (rotmat @ geometry.verts.T).T + pos
+        faces = geometry.faces
         mean, pcmat = oum.area_weighted_pca(verts, faces)
         pc_ax = pcmat[:, -1]
         proj = (verts - mean) @ pc_ax
@@ -112,8 +112,8 @@ class CapsuleCollisionShape(CollisionShape):
 class AABBCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_model(cls, m):
-        verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
+    def fit_from_geometry(cls, geometry, rotmat, pos):
+        verts = (rotmat @ geometry.verts.T).T + pos
         vmin = verts.min(axis=0)
         vmax = verts.max(axis=0)
         half_extents = (vmax - vmin) * 0.5
@@ -143,9 +143,9 @@ class AABBCollisionShape(CollisionShape):
 class OBBCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_model(cls, m):
-        verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
-        faces = m.geometry.faces
+    def fit_from_geometry(cls, geometry, rotmat, pos):
+        verts = (rotmat @ geometry.verts.T).T + pos
+        faces = geometry.faces
         mean, pcmat = oum.area_weighted_pca(verts, faces)
         local = (verts - mean) @ pcmat
         loc_vmin = local.min(axis=0)
@@ -179,9 +179,9 @@ class OBBCollisionShape(CollisionShape):
 
 class PlaneCollisionShape(CollisionShape):
     @classmethod
-    def fit_from_model(cls, m):
-        verts = (m.rotmat @ m.geometry.verts.T).T + m.pos
-        faces = m.geometry.faces
+    def fit_from_geometry(cls, geometry, rotmat, pos):
+        verts = (rotmat @ geometry.verts.T).T + pos
+        faces = geometry.faces
         mean, pcmat = oum.area_weighted_pca(verts, faces)
         center = mean
         normal = pcmat[:, 0]
@@ -211,7 +211,8 @@ class PlaneCollisionShape(CollisionShape):
 
 class MeshCollisionShape(CollisionShape):
 
-    def __init__(self, file_path=None, geometry=None, rotmat=None, pos=None):
+    def __init__(self, file_path=None, geometry=None,
+                 rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
         self._file_path = file_path
         self._geometry = geometry
@@ -223,8 +224,9 @@ class MeshCollisionShape(CollisionShape):
                               pos=self.pos)
 
     def to_render_model(self):
-        return osrm.RenderModel(geometry=self._geometry, rotmat=self.rotmat, pos=self.pos,
-                                rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
+        return osrm.RenderModel(
+            geometry=self._geometry, rotmat=self.rotmat, pos=self.pos,
+            rgb=ouc.BasicColor.GRAY, alpha=ouc.ALPHA.LIGHT_SEMI)
 
     @property
     def file_path(self):

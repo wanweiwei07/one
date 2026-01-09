@@ -20,5 +20,5 @@ class MjCollider:
             raise RuntimeError("MjCollider.actor is not set!")
         if self._mjenv is None:
             raise RuntimeError("MjCollider must be compiled!")
-        self._mjenv.sync.push_by_state(self.actor.state, qs)
+        self._mjenv.sync.push_by_mecba(self.actor, qs)
         return self._mjenv.is_collided()

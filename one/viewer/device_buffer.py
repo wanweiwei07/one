@@ -29,20 +29,20 @@ class MeshBuffer(DeviceBufferBase):
             buf = (gl.GLuint * 1)()
             gl.glGenBuffers(1, buf)
             self.instance_tfmat_vbo = buf[0]
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.instance_tfmat_vbo)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER,
+                        self.instance_tfmat_vbo)
         gl.glBufferData(
             gl.GL_ARRAY_BUFFER,
             tf_mat_array.nbytes,
             tf_mat_array.ctypes.data,
-            gl.GL_DYNAMIC_DRAW,
-        )
+            gl.GL_DYNAMIC_DRAW)
         stride = 16 * 4
         for i in range(4):
             loc = 2 + i  # location = 2,3,4,5
             gl.glEnableVertexAttribArray(loc)
             gl.glVertexAttribPointer(
-                loc, 4, gl.GL_FLOAT, False, stride, ctypes.c_void_p(i * 16)
-            )
+                loc, 4, gl.GL_FLOAT, False, stride,
+                ctypes.c_void_p(i * 16))
             gl.glVertexAttribDivisor(loc, 1)
         if rgba_array is not None:
             # instance color VBO
@@ -50,23 +50,25 @@ class MeshBuffer(DeviceBufferBase):
                 buf = (gl.GLuint * 1)()
                 gl.glGenBuffers(1, buf)
                 self.instance_rgba_vbo = buf[0]
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.instance_rgba_vbo)
-            gl.glBufferData(gl.GL_ARRAY_BUFFER, rgba_array.nbytes,
-                            rgba_array.ctypes.data, gl.GL_DYNAMIC_DRAW)
+            gl.glBindBuffer(
+                gl.GL_ARRAY_BUFFER, self.instance_rgba_vbo)
+            gl.glBufferData(
+                gl.GL_ARRAY_BUFFER, rgba_array.nbytes,
+                rgba_array.ctypes.data, gl.GL_DYNAMIC_DRAW)
             gl.glEnableVertexAttribArray(6)  # location = 6
-            gl.glVertexAttribPointer(
-                6, 4, gl.GL_FLOAT, False, 0, ctypes.c_void_p(0)  # index  # vec4
-            )
+            gl.glVertexAttribPointer(  # index  # vec4
+                6, 4, gl.GL_FLOAT, False, 0, ctypes.c_void_p(0))
             gl.glVertexAttribDivisor(6, 1)
-        gl.glBindVertexArray(0)
+            gl.glBindVertexArray(0)
 
     def draw_instanced(self):
         if self.instance_count <= 0:
             return
         gl.glBindVertexArray(self.vao)
         # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-        gl.glDrawElementsInstanced(gl.GL_TRIANGLES, self.count, gl.GL_UNSIGNED_INT,
-                                   ctypes.c_void_p(0), self.instance_count)
+        gl.glDrawElementsInstanced(
+            gl.GL_TRIANGLES, self.count, gl.GL_UNSIGNED_INT,
+            ctypes.c_void_p(0), self.instance_count)
         # gl.glDrawArraysInstanced(gl.GL_TRIANGLES, 0, self.count, self.instance_count)
         # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
         gl.glBindVertexArray(0)
@@ -84,7 +86,9 @@ class MeshBuffer(DeviceBufferBase):
         # bind VAO
         gl.glBindVertexArray(self.vao)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, array.nbytes, array.ctypes.data, gl.GL_STATIC_DRAW)
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER, array.nbytes,
+            array.ctypes.data, gl.GL_STATIC_DRAW)
         stride = 6 * 4  # float32 * 6
         # a_pos (0)
         gl.glEnableVertexAttribArray(0)

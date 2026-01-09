@@ -1,8 +1,8 @@
 import numpy as np
-import one.robots.base.mech_base as orb
+import one.robots.base.mech_base as orbmb
 
 
-class EndEffectorBase(orb.MechBase):
+class EndEffectorBase(orbmb.MechBase):
 
     def __init__(self):
         super().__init__()
@@ -34,7 +34,7 @@ class GripperMixin:
         """
         jaw_width = self.jaw_range[0] if jaw_width is None else jaw_width
         self.set_jaw_width(jaw_width)
-        parent_tfmat = self.get_lnk_ref_tfmat(self.structure.lnks[0])
+        parent_tfmat = self.get_lnk_tfmat(self.structure.lnks[0])
         engage_tfmat = np.linalg.inv(parent_tfmat).dot(child.tfmat)
         self.mount(child, self.structure.lnks[0], engage_tfmat=engage_tfmat)
 

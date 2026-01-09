@@ -122,7 +122,7 @@ class RS007L(ormmb.ManipulatorBase):
 
     def engage(self, child, engage_tfmat=None, update=True):
         super().mount(child=child,
-                      parent_link=self.structure.lnks[-1],
+                      plnk=self.structure.lnks[-1],
                       engage_tfmat=engage_tfmat)
         if update:
             self._update_mounting(self._mountings[child])

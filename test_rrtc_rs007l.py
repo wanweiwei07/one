@@ -22,7 +22,7 @@ box3.attach_to(base.scene)
 
 
 collider = ocm.MjCollider()
-collider.append(robot.state)
+collider.append(robot)
 collider.append(box)
 collider.append(box2)
 collider.append(box3)

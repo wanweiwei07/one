@@ -18,12 +18,13 @@ class Camera(ossn.SceneNode):
                  parent=None):
         self._pos = np.asarray(pos, dtype=np.float32)
         self._look_at = np.asarray(look_at, dtype=np.float32)
-        self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, up),
-                              dtype=np.float32)
-        self._rotmat = oum.rotmat_from_look_at(pos=self._pos,
-                                               look_at=self._look_at,
-                                               up=self._up)
-        super().__init__(rotmat=self._rotmat, pos=self._pos, parent=parent)
+        self._up = np.asarray(
+            self._fix_up_vector(self._pos, self._look_at, up),
+            dtype=np.float32)
+        self._rotmat = oum.rotmat_from_look_at(
+            pos=self._pos, look_at=self._look_at, up=self._up)
+        super().__init__(
+            rotmat=self._rotmat, pos=self._pos, parent=parent)
         self._fov = fov
         self._aspect = aspect  # default 16:9
         self._near = near

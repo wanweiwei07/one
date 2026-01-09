@@ -1,5 +1,5 @@
 from one.scene.scene_object import SceneObject
-from one.robots.base.mech_state import MechState
+from one.robots.base.mech_base import MechBase
 
 
 class Scene:
@@ -8,7 +8,7 @@ class Scene:
         self.dirty = True  # shader group needs update
         self._sobjs = []
         self._lnks = []
-        self._states = []
+        self._mecbas = []
 
     def __iter__(self): # for rendering order
         yield from self._sobjs
@@ -25,8 +25,8 @@ class Scene:
             if entity not in self._sobjs:
                 self._sobjs.append(entity)
                 # entity.scene = self
-        elif isinstance(entity, MechState):
-            self._states.append(entity)
+        elif isinstance(entity, MechBase):
+            self._mecbas.append(entity)
             for lnk in entity.runtime_lnks:
                 if lnk not in self._lnks:
                     self._lnks.append(lnk)
@@ -40,12 +40,12 @@ class Scene:
             if entity in self._sobjs:
                 self._sobjs.remove(entity)
                 # entity.scene = None
-        elif isinstance(entity, MechState):
+        elif isinstance(entity, MechBase):
             for lnk in entity.runtime_lnks:
                 if lnk in self._lnks:
                     self._lnks.remove(lnk)
-            if entity in self._states:
-                self._states.remove(entity)
+            if entity in self._mecbas:
+                self._mecbas.remove(entity)
         self.dirty = True
 
     @property
@@ -57,5 +57,5 @@ class Scene:
         return tuple(self._lnks)
 
     @property
-    def states(self):
-        return tuple(self._states)
+    def mecbas(self):
+        return tuple(self._mecbas)

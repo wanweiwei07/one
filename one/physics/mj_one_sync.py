@@ -17,21 +17,21 @@ class MJSynchronizer:
             bid = mujoco.mj_name2id(
                 model, mujoco.mjtObj.mjOBJ_BODY, obj.name)
             self._body_map[obj] = bid
-        for state in self.scene.states:
-            lnk = state.runtime_lnks[0]
+        for mecba in self.scene.mecbas:
+            lnk = mecba.runtime_lnks[0]
             if lnk.is_free:
                 bid = mujoco.mj_name2id(
                     model, mujoco.mjtObj.mjOBJ_BODY, lnk.name)
-                self._freebase_map[state] = bid
-            compiled = state._compiled
+                self._freebase_map[mecba] = bid
+            compiled = mecba._compiled
             for jidx in range(compiled.n_jnts):
                 lidx = compiled.clidx_of_jidx[jidx]
-                lnk = state.runtime_lnks[lidx]
+                lnk = mecba.runtime_lnks[lidx]
                 jname = f"j{jidx}({lnk.name})"
                 jid = mujoco.mj_name2id(
                     model, mujoco.mjtObj.mjOBJ_JOINT, jname)
                 qadr = model.jnt_qposadr[jid]
-                self._qpos_map[(state, jidx)] = qadr
+                self._qpos_map[(mecba, jidx)] = qadr
 
     def push_qpos(self):
         data = self.mj_runtime.data
@@ -40,16 +40,15 @@ class MJSynchronizer:
 
     def pull_qpos(self):
         data = self.mj_runtime.data
-        for state, bid in self._freebase_map.items():
+        for mecba, bid in self._freebase_map.items():
             pos = data.xpos[bid]
             rot = data.xmat[bid].reshape(3,3)
-            state.base_rotmat[:] = rot
-            state.base_pos[:] = pos
-        for (state, jidx), adr in self._qpos_map.items():
-            state.qs[jidx] = data.qpos[adr]
-        for state in self.scene.states:
-            state.fk()
-            state.update()
+            mecba.base_rotmat[:] = rot
+            mecba.base_pos[:] = pos
+        for (mecba, jidx), adr in self._qpos_map.items():
+            mecba.qs[jidx] = data.qpos[adr]
+        for mecba in self.scene.mecbas:
+            mecba.fk(update=True)
 
     def pull_body_pose(self):
         data = self.mj_runtime.data
@@ -58,8 +57,8 @@ class MJSynchronizer:
             rot = data.xmat[bid].reshape(3,3)
             obj.set_rotmat_pos(rot, pos)
 
-    def push_by_state(self, state, qs):
+    def push_by_mecba(self, mecba, qs):
         data = self.mj_runtime.data
         for jidx, q in enumerate(qs):
-            qadr = self._qpos_map[(state, jidx)]
+            qadr = self._qpos_map[(mecba, jidx)]
             data.qpos[qadr] = q

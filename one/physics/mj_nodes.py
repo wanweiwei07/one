@@ -104,7 +104,7 @@ class ActuatorNode:
         self.name = name
         self.atype = "position"  # position/velocity/motor
         self.joint = None
-        self.kp = 500.0
+        self.kp = 200.0
         self.kv = None
 
 # class SensorNode:
