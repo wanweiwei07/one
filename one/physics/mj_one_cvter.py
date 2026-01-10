@@ -35,7 +35,7 @@ class MJOneConverter:
         for sobj in scene.sobjs:
             if not getattr(sobj, "collisions", None):
                 continue
-            body = self._cvt_sobj(sobj, ref_tfmat=sobj.tfmat)
+            body = self._cvt_sobj(sobj, ref_tfmat=sobj.tf)
             body.parent = root
             root.children.append(body)
         world.assets = list(self._mesh_assets.values())
@@ -58,12 +58,12 @@ class MJOneConverter:
     def timestep(self, value):
         self._opt.timestep = value
 
-    def _cvt_robot(self, state):
-        compiled = state._compiled
+    def _cvt_robot(self, mecba):
+        compiled = mecba._compiled
 
-        def _scan_child(state, jidx, lidx):
+        def _scan_child(mecba, jidx, lidx):
             # lnk
-            lnk = state.runtime_lnks[lidx]
+            lnk = mecba.runtime_lnks[lidx]
             if lnk.is_free:
                 raise ValueError(
                     "Free link cannot be child link of a joint")
@@ -93,18 +93,18 @@ class MJOneConverter:
             for clidx in compiled.clnk_ids_of_lidx[lidx]:
                 pjidx = compiled.pjidx_of_lidx[clidx]
                 if pjidx >= 0:
-                    child = _scan_child(state, pjidx, clidx)
+                    child = _scan_child(mecba, pjidx, clidx)
                     child.parent = body
                     body.children.append(child)
             return body
 
         ridx = compiled.root_lnk_idx
-        root_lnk = state.runtime_lnks[ridx]
-        root = self._cvt_sobj(root_lnk, ref_tfmat=state.base_tfmat)
+        root_lnk = mecba.runtime_lnks[ridx]
+        root = self._cvt_sobj(root_lnk, ref_tfmat=mecba.base_tfmat)
         for clidx in compiled.clnk_ids_of_lidx[ridx]:
             pjidx = compiled.pjidx_of_lidx[clidx]
             if pjidx >= 0:
-                child = _scan_child(state, pjidx, clidx)
+                child = _scan_child(mecba, pjidx, clidx)
                 child.parent = root
                 root.children.append(child)
         return root
@@ -115,7 +115,7 @@ class MJOneConverter:
             jnode = opmn.JointNode("free_root")
             jnode.jtype_str = "free"
             b.hosting_jnts.append(jnode)
-        b.pos, b.quat = oum.pos_quat_from_tfmat(ref_tfmat)
+        b.pos, b.quat = oum.pos_quat_from_tf(ref_tfmat)
         if sobj.collisions:
             if (sobj.mass is not None and
                     sobj.com is not None and
@@ -177,10 +177,10 @@ class MJOneConverter:
             merge = 2
         if merge == 0:
             return
-        ptfmat = oum.tfmat_from_quat_pos(parent.quat, parent.pos)
-        ctfmat = oum.tfmat_from_quat_pos(body.quat, body.pos)
+        ptfmat = oum.tf_from_quat_pos(parent.quat, parent.pos)
+        ctfmat = oum.tf_from_quat_pos(body.quat, body.pos)
         newtfmat = ptfmat @ ctfmat
-        parent.pos, parent.quat = oum.pos_quat_from_tfmat(newtfmat)
+        parent.pos, parent.quat = oum.pos_quat_from_tf(newtfmat)
         if merge == 1:
             parent.geoms.extend(body.geoms)
             parent.inertial=body.inertial

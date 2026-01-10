@@ -18,8 +18,8 @@ class Ana6RSWSolver:
 
     def ik(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
            qs_seed=None, tol_pos=1e-4, tol_rot=1e-3):
-        root_tf = oum.tfmat_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
+        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         if qs_seed is None:
             qs_seed = 0.5 * (self._lmt_low + self._lmt_up)
         # wrist center target in world

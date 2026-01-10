@@ -171,4 +171,4 @@ class MechBase:
             mounting.child.state.base_tfmat = child_tfmat
             mounting.child.fk(update=True)
         else:
-            mounting.child.tfmat = child_tfmat
+            mounting.child.tf = child_tfmat

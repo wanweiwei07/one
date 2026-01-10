@@ -50,8 +50,8 @@ class SELIKSolver(orbkin.NumIKSolver):
            max_solutions=8, max_iter=12, **kwargs):
         if self._tree is None:
             raise RuntimeError("CVT database not loaded.")
-        root_tf = oum.tfmat_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
+        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         seeds, ids = self.query_seeds(
             np.linalg.inv(root_tf) @ tgt_tf, k=self._k)
         sols = []

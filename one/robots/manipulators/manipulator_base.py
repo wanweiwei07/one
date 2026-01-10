@@ -29,14 +29,14 @@ class ManipulatorBase(orbmb.MechBase):
             self._tcp_tfmat[:] = flange_tfmat @ ee.tcp_tfmat
 
     def set_tcp_rotmat_pos(self, rotmat=None, pos=None):
-        self._tcp_tfmat[:3, :3] = oum.ensure_tfmat(rotmat)
+        self._tcp_tfmat[:3, :3] = oum.ensure_tf(rotmat)
         self._tcp_tfmat[:3, 3] = oum.ensure_pos(pos)
 
     def reset_tcp(self):
         self._tcp_tfmat[:] = np.eye(4, dtype=np.float32)
 
     def ik_tcp(self, tgt_rotmat, tgt_pos, max_solutions=8):
-        tgt_tcp_tfmat = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_tcp_tfmat = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
         result_list = self._solver.ik(
             root_rotmat=self.base_rotmat,
@@ -66,4 +66,4 @@ class ManipulatorBase(orbmb.MechBase):
     @property
     def wd_tcp_tfmat(self):
         flange_lnk = self.structure.lnks[-1]
-        return self.get_wd_lnk_tfmat(flange_lnk) @ self._tcp_tfmat
+        return self.get_wd_lnk_tf(flange_lnk) @ self._tcp_tfmat

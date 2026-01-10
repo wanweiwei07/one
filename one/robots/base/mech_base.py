@@ -31,16 +31,18 @@ class MechBase:
         self._base_rotmat = oum.ensure_rotmat(base_rotmat)
         self._base_pos = oum.ensure_pos(base_pos)
         if qs is None:
-            self.qs = np.zeros(self._compiled.n_jnts, dtype=np.float32)
+            self.qs = np.zeros(
+                self._compiled.n_jnts, dtype=np.float32)
         else:
             self.qs = np.asarray(qs, dtype=np.float32)
         # runtime geometry
         self.runtime_lnks = [lnk.clone() for lnk in self.structure.lnks]
         # FK cache
-        self.wd_lnk_tfmat_arr = np.tile(np.eye(4, dtype=np.float32),
-                                        (self._compiled.n_lnks, 1, 1))
+        self.wd_lnk_tfarr = np.tile(
+            np.eye(4, dtype=np.float32),
+            (self._compiled.n_lnks, 1, 1))
         # mountings
-        self._mountings: dict[object, Mounting] = {}
+        self._mountings = {}
         # home
         self.home_qs = self.qs.copy()
         self.fk(update=True)
@@ -68,8 +70,8 @@ class MechBase:
                 raise ValueError(f"Expected {len(self.qs)} qs, got {qs}")
         q_resolved = self._compiled.resolve_all_qs(self.qs)  # TODO: should this be active only?
         rlidx = self._compiled.root_lnk_idx
-        self.wd_lnk_tfmat_arr[rlidx][:3, :3] = self._base_rotmat
-        self.wd_lnk_tfmat_arr[rlidx][:3, 3] = self._base_pos
+        self.wd_lnk_tfarr[rlidx][:3, :3] = self._base_rotmat
+        self.wd_lnk_tfarr[rlidx][:3, 3] = self._base_pos
         # traversal
         for lidx in self._compiled.lnk_ids_traversal_order:
             if lidx == rlidx:
@@ -77,13 +79,13 @@ class MechBase:
             plidx = self._compiled.plidx_of_lidx[lidx]
             pjidx = self._compiled.pjidx_of_lidx[lidx]
             jnt = self.structure.jnts[pjidx]
-            plnk_tfmat = self.wd_lnk_tfmat_arr[plidx]
+            plnk_tfmat = self.wd_lnk_tfarr[plidx]
             loc_tfmat = (self._compiled.jotfmat_by_idx[pjidx] @
                          jnt.motion_tfmat(q_resolved[pjidx]))
-            self.wd_lnk_tfmat_arr[lidx] = plnk_tfmat @ loc_tfmat
+            self.wd_lnk_tfarr[lidx] = plnk_tfmat @ loc_tfmat
         if update:
             self._update_runtime()
-        return self.wd_lnk_tfmat_arr
+        return self.wd_lnk_tfarr
 
     def mount(self, child, plnk, engage_tfmat=None):
         # TODO updated attach_to?
@@ -101,9 +103,9 @@ class MechBase:
         except KeyError:
             raise ValueError("Child not mounted")
 
-    def get_wd_lnk_tfmat(self, lnk):
+    def get_wd_lnk_tf(self, lnk):
         lidx = self._compiled.lidx_map[lnk]
-        return self.wd_lnk_tfmat_arr[lidx]
+        return self.wd_lnk_tfarr[lidx]
 
     def clone(self):
         """DOES NOT clone the affiliated scene"""
@@ -113,7 +115,7 @@ class MechBase:
         new._base_pos = self._base_pos.copy()
         new.qs = self.qs.copy()
         new.runtime_lnks = [lnk.clone() for lnk in self.runtime_lnks]
-        new.wd_lnk_tfmat_arr = self.wd_lnk_tfmat_arr.copy()
+        new.wd_lnk_tfarr = self.wd_lnk_tfarr.copy()
         new._mountings = {}
         for k, m in self._mountings.items():
             child = m.child.clone()
@@ -123,18 +125,18 @@ class MechBase:
         return new
 
     def _update_mounting(self, mounting: Mounting):
-        parent_tf = self.get_wd_lnk_tfmat(mounting.plnk)
+        parent_tf = self.get_wd_lnk_tf(mounting.plnk)
         child_tf = parent_tf @ mounting.engage_tfmat
         if isinstance(mounting.child, MechBase):
             mounting.child._base_rotmat[:] = child_tf[:3, :3]
             mounting.child._base_pos[:] = child_tf[:3, 3]
             mounting.child.fk(update=True)
         else:
-            mounting.child.tfmat = child_tf
+            mounting.child.tf = child_tf
 
     @property
     def base_tfmat(self):
-        return oum.tfmat_from_rotmat_pos(self._base_rotmat, self._base_pos)
+        return oum.tf_from_rotmat_pos(self._base_rotmat, self._base_pos)
 
     @property
     def base_rotmat(self):
@@ -184,7 +186,7 @@ class MechBase:
     def _update_runtime(self):
         # push FK result to runtime links
         for i, lnk in enumerate(self.runtime_lnks):
-            lnk.tfmat = self.wd_lnk_tfmat_arr[i]
+            lnk.tf = self.wd_lnk_tfarr[i]
         # update mountings
         for m in self._mountings.values():
             self._update_mounting(m)

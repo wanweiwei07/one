@@ -173,7 +173,7 @@ def rotmat_slerp(rotmat0, rotmat1, n):
 
 
 ## (4,4) transformation matrix
-def tfmat_from_axangle(ax, angle):
+def tf_from_axangle(ax, angle):
     """homogeneous matrix from the given axis and angle"""
     length, unit_ax = unit_vec(ax)
     if length == 0:
@@ -188,16 +188,16 @@ def tfmat_from_axangle(ax, angle):
                      [0, 0, 0, 1]], dtype=np.float32)
 
 
-def tfmat_from_rotmat_pos(rotmat=None, pos=None):
+def tf_from_rotmat_pos(rotmat=None, pos=None):
     rotmat = ensure_rotmat(rotmat)
     pos = ensure_pos(pos)
-    tfmat = np.eye(4)
-    tfmat[:3, :3] = rotmat
-    tfmat[:3, 3] = pos
-    return tfmat.astype(np.float32)
+    tf = np.eye(4)
+    tf[:3, :3] = rotmat
+    tf[:3, 3] = pos
+    return tf.astype(np.float32)
 
 
-def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
+def tf_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     """
     build a (4,4) transformation matrix from position and rotation vector
     :param pos: (1,3)
@@ -208,13 +208,11 @@ def tfmat_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     """
     angle, axis = unit_vec(rotvec, return_length=True)
     rotmat = rotmat_from_axangle(axis, angle)
-    return tfmat_from_rotmat_pos(rotmat, pos)
+    return tf_from_rotmat_pos(rotmat, pos)
 
 
-def tfmat_from_quat(quat):
-    """
-    convert a quaterion to homomat
-    """
+def tf_from_quat(quat):
+    """convert a quaterion to (4,4) homogeneous transformation matrix"""
     q = np.array(quat, dtype=np.float32, copy=True)
     n = np.dot(q, q)
     if n < eps:
@@ -228,54 +226,54 @@ def tfmat_from_quat(quat):
         [0.0, 0.0, 0.0, 1.0]])
 
 
-def tfmat_from_quat_pos(quat, pos):
-    tfmat = tfmat_from_quat(quat)
-    tfmat[:3, 3] = pos
-    return tfmat
+def tf_from_quat_pos(quat, pos):
+    tf = tf_from_quat(quat)
+    tf[:3, 3] = pos
+    return tf
 
 
-def tfmat_inverse(tfmat):
+def tf_inverse(tf):
     """
     compute the inverse of a homogeneous transformation matrix
-    :param tfmat: (4,4)
+    :param tf: (4,4)
     :return:
     author: weiwei
     date :20161213, 20251201
     """
-    R = tfmat[:3, :3]
-    t = tfmat[:3, 3]
+    R = tf[:3, :3]
+    t = tf[:3, 3]
     inv = np.eye(4, dtype=np.float32)
     inv[:3, :3] = R.T
     inv[:3, 3] = -R.T @ t
     return inv
 
 
-def tfmat_average(tfmat_list, bandwidth=10):
-    """TODO: tfmat list or (n,4,4) array
-    average a list of tfmat (4,4)
-    :param tfmat_list:
+def tf_average(tf_list, bandwidth=10):
+    """TODO: tf list or (n,4,4) array
+    average a list of tf (4,4)
+    :param tf_list:
     :param bandwidth:
     :return:
     author: weiwei
     date: 20200109
     """
-    tfmat_array = np.asarray(tfmat_list)
-    pos_avg = pos_average(tfmat_array[:, :3, 3], bandwidth)
-    rotmat_avg = rotmat_average(tfmat_array[:, :3, :3], bandwidth)
-    return tfmat_from_rotmat_pos(rotmat_avg, pos_avg)
+    tfarr = np.asarray(tf_list)
+    pos_avg = pos_average(tfarr[:, :3, 3], bandwidth)
+    rotmat_avg = rotmat_average(tfarr[:, :3, :3], bandwidth)
+    return tf_from_rotmat_pos(rotmat_avg, pos_avg)
 
 
-def transform_points_by_tfmat(tfmat, pnts):
+def transform_points_by_tf(tf, pnts):
     """
     do homotransform on a point or an array of points using pos
-    :param tfmat: (4,4)
+    :param tf: (4,4)
     :param pnts: (n,3)
     :return:
     author: weiwei
     date: 20161213
     """
-    if tfmat.shape != (4, 4):
-        raise ValueError(f"Homomat must be (4,4), got {tfmat.shape}")
+    if tf.shape != (4, 4):
+        raise ValueError(f"Homomat must be (4,4), got {tf.shape}")
     if pnts.ndim == 1:
         if pnts.shape[0] != 3:
             raise ValueError("Single point must have shape (3,).")
@@ -285,8 +283,8 @@ def transform_points_by_tfmat(tfmat, pnts):
             raise ValueError("Points must have shape (N,3).")
     else:
         raise ValueError("pnts must be shape (3,) or (N,3).")
-    R = tfmat[:3, :3]  # (3,3)
-    t = tfmat[:3, 3]  # (3,)
+    R = tf[:3, :3]  # (3,3)
+    t = tf[:3, 3]  # (3,)
     return pnts @ R.T + t
 
 
@@ -834,9 +832,9 @@ def pos_average(pos_list, bandwidth=10):
         return np.array(pos_list).mean(axis=0)
 
 
-def pos_quat_from_tfmat(tfmat, quat_order='xyzw'):
-    rotmat = tfmat[:3, :3]
-    pos = tfmat[:3, 3]
+def pos_quat_from_tf(tf, quat_order='xyzw'):
+    rotmat = tf[:3, :3]
+    pos = tf[:3, 3]
     qx, qy, qz, qw = quat_from_rotmat(rotmat)
     if quat_order == 'wxyz':
         return pos, np.array([qw, qx, qy, qz])
@@ -1280,7 +1278,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True):
         q = V[:, np.argmax(w)]
         q /= np.linalg.norm(q)  # unit quaternion
         # homogeneous transformation matrix
-        M = tfmat_from_quat(q)
+        M = tf_from_quat(q)
 
     if scale and not shear:
         # Affine transformation; scale is ratio of RMS deviations from centroid
@@ -1363,12 +1361,12 @@ def ensure_pos(pos=None):
     return pos
 
 
-def ensure_tfmat(tfmat=None):
-    if tfmat is None:
+def ensure_tf(tf=None):
+    if tf is None:
         return np.eye(4, dtype=np.float32)
-    tfmat = np.asarray(tfmat, dtype=np.float32)
-    assert tfmat.shape == (4, 4)
-    return tfmat
+    tf = np.asarray(tf, dtype=np.float32)
+    assert tf.shape == (4, 4)
+    return tf
 
 
 def ensure_rgb(rgb=None):  # TODO make an independent util file

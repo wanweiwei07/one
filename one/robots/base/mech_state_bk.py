@@ -47,7 +47,7 @@ class MechState:
 
     def update(self):
         for i, lnk in enumerate(self.runtime_lnks):
-            lnk.tfmat = self.lnk_ref_tfmat_arr[i]
+            lnk.tf = self.lnk_ref_tfmat_arr[i]
 
     def attach_to(self, scene):
         scene.add(self)
@@ -68,7 +68,7 @@ class MechState:
 
     @property
     def base_tfmat(self):
-        return oum.tfmat_from_rotmat_pos(
+        return oum.tf_from_rotmat_pos(
             self.base_rotmat, self.base_pos)
 
     @property
@@ -123,7 +123,7 @@ class MechState:
         if jnt_type == ouc.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
         if jnt_type == ouc.JntType.REVOLUTE:
-            return oum.tfmat_from_rotmat_pos(rotmat=oum.rotmat_from_axangle(jnt_ax, q))
+            return oum.tf_from_rotmat_pos(rotmat=oum.rotmat_from_axangle(jnt_ax, q))
         if jnt_type == ouc.JntType.PRISMATIC:
-            return oum.tfmat_from_rotmat_pos(pos=jnt_ax * q)
+            return oum.tf_from_rotmat_pos(pos=jnt_ax * q)
         raise TypeError(f"Unknown joint type: {jnt_type}")

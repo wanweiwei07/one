@@ -7,7 +7,7 @@ import one.scene.render_model as osrm
 
 class CollisionShape:
     def __init__(self, rotmat=None, pos=None):
-        self._tfmat = oum.tfmat_from_rotmat_pos(rotmat, pos)
+        self._tfmat = oum.tf_from_rotmat_pos(rotmat, pos)
 
     def to_render_model(self):
         raise NotImplementedError

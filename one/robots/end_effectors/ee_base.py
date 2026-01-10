@@ -8,7 +8,7 @@ class EndEffectorBase(orbmb.MechBase):
     def __init__(self, tcp_tfmat=None):
         super().__init__()
         self._is_engaged = False
-        self._tcp_tfmat = oum.ensure_tfmat(tcp_tfmat)
+        self._tcp_tfmat = oum.ensure_tf(tcp_tfmat)
 
     def clone(self):
         new = super().clone()
@@ -16,7 +16,7 @@ class EndEffectorBase(orbmb.MechBase):
         return new
 
     def set_tcp_rotmat_pos(self, rotmat=None, pos=None):
-        self._tcp_tfmat[:3, :3] = oum.ensure_tfmat(rotmat)
+        self._tcp_tfmat[:3, :3] = oum.ensure_tf(rotmat)
         self._tcp_tfmat[:3, 3] = oum.ensure_pos(pos)
 
     @property
@@ -29,7 +29,7 @@ class EndEffectorBase(orbmb.MechBase):
 
     @tcp_tfmat.setter
     def tcp_tfmat(self, tfmat):
-        self._tcp_tfmat[:] = oum.ensure_tfmat(tfmat)
+        self._tcp_tfmat[:] = oum.ensure_tf(tfmat)
 
 
 class GripperMixin:
@@ -48,8 +48,8 @@ class GripperMixin:
         """
         jaw_width = self.jaw_range[0] if jaw_width is None else jaw_width
         self.set_jaw_width(jaw_width)
-        parent_tfmat = self.get_wd_lnk_tfmat(self.structure.lnks[0])
-        engage_tfmat = np.linalg.inv(parent_tfmat).dot(child.tfmat)
+        parent_tf = self.get_wd_lnk_tf(self.structure.lnks[0])
+        engage_tfmat = np.linalg.inv(parent_tf).dot(child.tf)
         self.mount(child, self.structure.lnks[0], engage_tfmat=engage_tfmat)
 
     def release(self, child, jaw_width=None):

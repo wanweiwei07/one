@@ -30,7 +30,7 @@ class Camera(ossn.SceneNode):
         self._near = near
         self._far = far
         # cached
-        self._projmat = None
+        self._proj_mat = None
         self._proj_dirty = True
 
     def set_to(self, pos, look_at, up=None):
@@ -50,14 +50,14 @@ class Camera(ossn.SceneNode):
         self._dirty = True
 
     def mouse_orbit(self, dx, dy, sensitivity=0.002):
-        right_axis = self.wd_tfmat[:3, 0]
-        up_axis = self.wd_tfmat[:3, 1]
+        right_axis = self.wd_tf[:3, 0]
+        up_axis = self.wd_tf[:3, 1]
         self.orbit(axis=up_axis, angle_rad=-dx * sensitivity)
         self.orbit(axis=right_axis, angle_rad=dy * sensitivity)
 
     def mouse_pan(self, dx, dy, sensitivity=0.0003):
-        right_axis = self.wd_tfmat[:3, 0]
-        up_axis = self.wd_tfmat[:3, 1]
+        right_axis = self.wd_tf[:3, 0]
+        up_axis = self.wd_tf[:3, 1]
         self.pos = self.pos - right_axis * dx * sensitivity - up_axis * dy * sensitivity
         self.look_at = self.look_at - right_axis * dx * sensitivity - up_axis * dy * sensitivity
 
@@ -118,14 +118,14 @@ class Camera(ossn.SceneNode):
 
     # getters for matrices, setting matrices should be done via other methods
     @property
-    @oud.lazy_update('_dirty', '_rebuild_tfmat')
+    @oud.lazy_update('_dirty', '_rebuild_tf')
     def view_mat(self):
-        return oum.tfmat_inverse(self._wd_tfmat)
+        return oum.tf_inverse(self._wd_tf)
 
     @property
     @oud.lazy_update('_proj_dirty', '_rebuild_projmat')
-    def projmat(self):
-        return self._projmat
+    def proj_mat(self):
+        return self._proj_mat
 
     def _mark_proj_dirty(self):
         self._proj_dirty = True
@@ -143,7 +143,7 @@ class Camera(ossn.SceneNode):
                 up = (0, 0, 1)
         return up
 
-    def _rebuild_tfmat(self):
+    def _rebuild_tf(self):
         if not self._dirty:
             return
         self._up = np.asarray(self._fix_up_vector(self._pos, self._look_at, self._up),
@@ -151,13 +151,13 @@ class Camera(ossn.SceneNode):
         self._rotmat = oum.rotmat_from_look_at(pos=self._pos,
                                                look_at=self._look_at,
                                                up=self._up)
-        super()._rebuild_tfmat()
+        super()._rebuild_tf()
 
     def _rebuild_projmat(self, width=None, height=None):
         if width is not None and height is not None:
             self._aspect = width / height
-        self._projmat = np.array(pm.Mat4.perspective_projection(aspect=self._aspect,
-                                                                z_near=self._near,
-                                                                z_far=self._far,
-                                                                fov=self._fov)).reshape(4, 4).T
+        self._proj_mat = np.array(pm.Mat4.perspective_projection(aspect=self._aspect,
+                                                                 z_near=self._near,
+                                                                 z_far=self._far,
+                                                                 fov=self._fov)).reshape(4, 4).T
         self._proj_dirty = False

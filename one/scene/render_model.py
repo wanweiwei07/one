@@ -34,7 +34,7 @@ class RenderModel:
         self._rotmat = oum.ensure_rotmat(rotmat)
         self._pos = oum.ensure_pos(pos)
         # cached
-        self._tfmat = oum.tfmat_from_rotmat_pos(self._rotmat, self._pos)
+        self._tf = oum.tf_from_rotmat_pos(self._rotmat, self._pos)
         self._dirty = True
 
     def clone(self):
@@ -70,21 +70,21 @@ class RenderModel:
         self._rotmat[:] = oum.ensure_rotmat(rotmat)
 
     @property
-    @oud.lazy_update("_dirty", "_rebuild_tfmat")
-    def tfmat(self):
-        return self._tfmat.copy()
+    @oud.lazy_update("_dirty", "_rebuild_tf")
+    def tf(self):
+        return self._tf.copy()
 
     @oud.mark_dirty('_mark_dirty')
     def set_rotmat_pos(self, rotmat, pos):
         self._rotmat[:] = oum.ensure_rotmat(rotmat)
         self._pos[:] = oum.ensure_pos(pos)
 
-    def _rebuild_tfmat(self):
+    def _rebuild_tf(self):
         if not self._dirty:
             return
-        self._tfmat[:] = np.eye(4, dtype=np.float32)
-        self._tfmat[:3, :3] = self._rotmat
-        self._tfmat[:3, 3] = self._pos
+        self._tf[:] = np.eye(4, dtype=np.float32)
+        self._tf[:3, :3] = self._rotmat
+        self._tf[:3, 3] = self._pos
         self._dirty = False
 
     def _mark_dirty(self):

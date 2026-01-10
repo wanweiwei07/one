@@ -54,16 +54,16 @@ class Joint:
     @property
     @oud.readonly_view
     def origin_tfmat(self):
-        return oum.tfmat_from_rotmat_pos(self.rotmat, self.pos)
+        return oum.tf_from_rotmat_pos(self.rotmat, self.pos)
 
     def motion_tfmat(self, q):
         if self.jtype == ouc.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
         if self.jtype == ouc.JntType.REVOLUTE:
-            return oum.tfmat_from_rotmat_pos(
+            return oum.tf_from_rotmat_pos(
                 rotmat=oum.rotmat_from_axangle(self.axis, q))
         if self.jtype == ouc.JntType.PRISMATIC:
-            return oum.tfmat_from_rotmat_pos(pos=self.axis * q)
+            return oum.tf_from_rotmat_pos(pos=self.axis * q)
         raise TypeError(f"Unknown joint type: {self.jtype}")
 
 
@@ -83,8 +83,10 @@ class MechStruct:
         caller_file = frame.filename
         caller_dir = os.path.dirname(os.path.abspath(caller_file))
         self.res_dir = caller_dir
-        self.data_dir = os.path.join(caller_dir, "data")
-        self.mesh_dir = os.path.join(caller_dir, "meshes")
+        self.default_data_dir = os.path.join(caller_dir, "data")
+        self.default_mesh_dir = os.path.join(caller_dir, "meshes")
+        os.makedirs(self.default_data_dir, exist_ok=True)
+        os.makedirs(self.default_mesh_dir, exist_ok=True)
 
     def __repr__(self):
         return f"<MechDefinition: {len(self.lnks)} links, {len(self.jnts)} joints>"
@@ -98,7 +100,8 @@ class MechStruct:
     def get_solver(self, root_lnk, tip_lnk):
         chain = self.get_chain(root_lnk, tip_lnk)
         if chain not in self._solvers:
-            self._solvers[chain] = orbkis.SELIKSolver(self, chain, self.data_dir)
+            self._solvers[chain] = orbkis.SELIKSolver(
+                self, chain, self.default_data_dir)
         return self._solvers[chain]
 
     def add_lnk(self, lnk):

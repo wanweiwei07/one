@@ -6,7 +6,7 @@ class AnaSphWstSolver:
     def __init__(self, structure, chain, T6TCP0=None):
         self._chain = chain
         self._jnts = chain.joints
-        T6TCP0 = oum.ensure_tfmat(T6TCP0)
+        T6TCP0 = oum.ensure_tf(T6TCP0)
         # cache zero-pose joint frames in root
         self.T0J0 = self._zero_pose_joint_frames_in_root()
         # extract key points in root frame at zero pose

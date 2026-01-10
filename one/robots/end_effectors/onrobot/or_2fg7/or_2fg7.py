@@ -8,7 +8,7 @@ import one.robots.end_effectors.ee_base as oreb
 
 def get_structure():
     structure = orbms.MechStruct()
-    mesh_dir = os.path.join(os.path.dirname(__file__), "meshes")
+    mesh_dir=structure.default_mesh_dir
     # 3 links
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base_link.stl"),
@@ -61,7 +61,7 @@ class OR2FG7(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def __init__(self):
         super().__init__(
-            tcp_tfmat=oum.tfmat_from_rotmat_pos(pos=(0, 0, 0.15)))
+            tcp_tfmat=oum.tf_from_rotmat_pos(pos=(0, 0, 0.15)))
         self.jaw_range = np.array([0.0, 0.038], dtype=np.float32)  # min, max
 
     def set_jaw_width(self, jaw_width):

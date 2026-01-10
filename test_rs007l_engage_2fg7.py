@@ -10,10 +10,10 @@ robot.attach_to(base.scene)
 tgt_pos = np.array([0, .5, .3])
 tgt_rotmat = oum.rotmat_from_euler(oum.pi, 0, 0)
 ossop.gen_frame(rotmat=tgt_rotmat, pos=tgt_pos).attach_to(base.scene)
-qs, _ = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+qs_list = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
 robot_ik = robot.clone()
 robot_ik.rgb = ouc.BasicColor.LIME
-robot_ik.fk(qs=qs)
+robot_ik.fk(qs=qs_list[0])
 robot_ik.attach_to(base.scene)
 wd_tcp_rotmat = robot_ik.wd_tcp_tfmat[:3, :3]
 wd_tcp_pos = robot_ik.wd_tcp_tfmat[:3, 3]
@@ -25,8 +25,7 @@ robot2.set_base_rotmat_pos(pos=(-.5, 0, 0))
 gripper = or_2fg7.OR2FG7()
 robot2.engage(gripper)
 robot2.attach_to(base.scene)
-qs2, _ = robot2.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
-
+qs2_list = robot2.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
 
 box = ossop.gen_cylinder(spos=(-.3, 0, .3), epos=(.3, 0, .1), radius=.03)
 box.attach_to(base.scene)
@@ -36,7 +35,7 @@ gripper.release(box)
 
 robot2_ik = robot2.clone()
 robot2_ik.rgb = ouc.BasicColor.YELLOW
-robot2_ik.fk(qs=qs2)
+robot2_ik.fk(qs=qs2_list[0])
 robot2_ik.attach_to(base.scene)
 base.run()
 

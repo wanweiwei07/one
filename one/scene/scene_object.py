@@ -117,12 +117,12 @@ class SceneObject:
         self.node.rotmat = value
 
     @property
-    def tfmat(self):
-        return self.node.tfmat
+    def tf(self):
+        return self.node.tf
 
-    @tfmat.setter
-    def tfmat(self, value):
-        self.node.tfmat = value
+    @tf.setter
+    def tf(self, value):
+        self.node.tf = value
 
     @property
     def rgb(self):

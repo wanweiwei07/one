@@ -30,8 +30,8 @@ class NumIKSolver:
                   qs_active_init=None, max_iter=50,
                   tol_pos=1e-4, tol_rot=1e-3, step_scale=1.0,
                   pos_err_max=0.1, rot_err_max=0.3):
-        root_tf = oum.tfmat_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
+        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         if qs_active_init is None:
             qs = (self._chain.lmt_low + self._chain.lmt_up) * 0.5
         else:
