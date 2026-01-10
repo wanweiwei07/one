@@ -1,10 +1,13 @@
+import os
+import inspect
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.utils.decorator as oud
 import one.scene.scene_object as osso
-import one.robots.base.kinematic_chain as orc
-import one.robots.base.kinematic_solver as ors
+import one.robots.base.kinematics.kinematic_chain as orbkkc
+import one.robots.base.kinematics.ik_sel as orbkis
+import one.robots.base.kinematics.ik_num as orbkim
 
 
 class Link(osso.SceneObject):
@@ -72,9 +75,16 @@ class MechStruct:
         self.jnts = []
         # compiled data
         self._compiled = None  # MechStructHelper
-        # kinematic chain and solver
+        # kinematic chain and solver cache
         self._chains = {}
         self._solvers = {}
+        # infer resource directories
+        frame = inspect.stack()[1]
+        caller_file = frame.filename
+        caller_dir = os.path.dirname(os.path.abspath(caller_file))
+        self.res_dir = caller_dir
+        self.data_dir = os.path.join(caller_dir, "data")
+        self.mesh_dir = os.path.join(caller_dir, "meshes")
 
     def __repr__(self):
         return f"<MechDefinition: {len(self.lnks)} links, {len(self.jnts)} joints>"
@@ -82,13 +92,13 @@ class MechStruct:
     def get_chain(self, root_lnk, tip_lnk):
         key = (root_lnk, tip_lnk)
         if key not in self._chains:
-            self._chains[key] = orc.KinematicChain(self, root_lnk, tip_lnk)
+            self._chains[key] = orbkkc.KinematicChain(self, root_lnk, tip_lnk)
         return self._chains[key]
 
     def get_solver(self, root_lnk, tip_lnk):
         chain = self.get_chain(root_lnk, tip_lnk)
         if chain not in self._solvers:
-            self._solvers[chain] = ors.KinematicSolver(self, chain)
+            self._solvers[chain] = orbkis.SELIKSolver(self, chain, self.data_dir)
         return self._solvers[chain]
 
     def add_lnk(self, lnk):

@@ -15,7 +15,6 @@ class ManipulatorBase(orbmb.MechBase):
                                                compiled.tip_lnks[0])
         self._solver = self.structure.get_solver(compiled.root_lnk,
                                                  compiled.tip_lnks[0])
-        
 
     def engage(self, ee, engage_tfmat=None,
                update=True, auto_tcp=True):
@@ -36,19 +35,21 @@ class ManipulatorBase(orbmb.MechBase):
     def reset_tcp(self):
         self._tcp_tfmat[:] = np.eye(4, dtype=np.float32)
 
-    def ik_tcp(self, tgt_rotmat, tgt_pos, qs_active_init=None):
+    def ik_tcp(self, tgt_rotmat, tgt_pos, max_solutions=8):
         tgt_tcp_tfmat = oum.tfmat_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tfmat)
-        qs_active, info = self._solver.ik(
+        result_list = self._solver.ik(
             root_rotmat=self.base_rotmat,
             root_pos=self.base_pos,
-            tgt_romat=tgt_flange_tfmat[:3, :3],
+            tgt_rotmat=tgt_flange_tfmat[:3, :3],
             tgt_pos=tgt_flange_tfmat[:3, 3],
-            qs_active_init=qs_active_init)
-        if not info["converged"]:
-            return None, info
-        qs_full = self._chain.embed_active_qs(qs_active, self.qs)
-        return qs_full, info
+            max_solutions=max_solutions)
+        if len(result_list) == 0:
+            return result_list
+        return_list = []
+        for result in result_list:
+            return_list.append(self._chain.embed_active_qs(result[0], self.qs))
+        return return_list
 
     def clone(self):
         new = super().clone()

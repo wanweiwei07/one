@@ -554,36 +554,75 @@ def rand_rotmat():
     return rotmat_from_quat(rand_quaternion())
 
 
-def skew_symmetric(pos_vec):
-    """
-    compute the skew symmetric maxtix that corresponds to a cross
-    :param pos_vec: 1x3 nparray
-    :return: 3x3 skew symmetric matrix
-    author: weiwei
-    date: 20170421
-    """
-    return np.array([[0, -pos_vec[2], pos_vec[1]],
-                     [pos_vec[2], 0, -pos_vec[0]],
-                     [-pos_vec[1], pos_vec[0], 0]])
+def skew(vec):
+    return np.array([[0, -vec[2], vec[1]],
+                     [vec[2], 0, -vec[0]],
+                     [-vec[1], vec[0], 0]],
+                    dtype=np.float32)
 
 
 def orth_vec(vec, toggle_unit=True):
-    """
-    given a vector np.array([a,b,c]),
-    this function computes an orthogonal wrs using np.array([b-c, -a+c, a-c])
-    and then make it unit
-    :param vec: (1,3)
-    :return: (1,3)
-    author: weiwei
-    date: 20200528
-    """
+    """compute an orthogonal vector of the given vector
+    using [a,b,c] -> [b-c, -a+c, a-b]    """
     a = vec[0]
     b = vec[1]
     c = vec[2]
     if toggle_unit:
-        return unit_vec(np.array([b - c, -a + c, a - b]), return_length=False)
+        return unit_vec(
+            np.array([b - c, -a + c, a - b]),
+            return_length=False)
     else:
-        return np.array([b - c, -a + c, a - b])
+        return np.array(
+            [b - c, -a + c, a - b])
+
+
+def closest_point_between_lines(p1, d1, p2, d2):
+    """line1=p1 + t*d1, line2=p2 + s*d2"""
+    if np.linalg.norm(d1) < eps or np.linalg.norm(d2) < eps:
+        raise ValueError("Direction vector cannot be zero!")
+    d1 = d1 / np.linalg.norm(d1)
+    d2 = d2 / np.linalg.norm(d2)
+    r = p1 - p2
+    a = np.dot(d1, d1)
+    b = np.dot(d1, d2)
+    c = np.dot(d2, d2)
+    d = np.dot(d1, r)
+    e = np.dot(d2, r)
+    denom = a * c - b * b
+    if abs(denom) < eps:
+        return None
+    t = (b * e - c * d) / denom
+    s = (a * e - b * d) / denom
+    q1 = p1 + t * d1
+    q2 = p2 + s * d2
+    return 0.5 * (q1 + q2), np.linalg.norm(q1 - q2)
+
+def intersect_lines(lines, cond_thresh=1e12):
+    """least-squares intersection point of multiple 3D lines"""
+    if len(lines) < 2:
+        return None, np.inf
+    # stack
+    P = np.stack([l[0] for l in lines], axis=0)
+    D = np.stack([l[1] for l in lines], axis=0)
+    # normalize directions
+    D = D / (np.linalg.norm(D, axis=1, keepdims=True) + eps)
+    # M_i = I - d_i d_i^T
+    I = np.eye(3)
+    M = I[None, :, :] - D[:, :, None] * D[:, None, :] # (N,3,3)
+    # A x = b
+    A = np.sum(M, axis=0) # (3,3)
+    b = np.sum(M @ P[:, :, None], axis=0).ravel() # (3,)
+    # degeneracy check
+    cond = np.linalg.cond(A)
+    if not np.isfinite(cond) or cond > cond_thresh:
+        return None, np.inf
+    # solve
+    x = np.linalg.solve(A, b)
+    # compute distances to each line
+    diff = x[None, :] - P
+    cross = np.cross(diff, D)
+    dists = np.linalg.norm(cross, axis=1)
+    return x.astype(np.float32), float(np.max(dists))
 
 
 def rel_pose(pos0, rotmat0, pos1, rotmat1):
@@ -925,8 +964,8 @@ def compute_pca(nparray):
     date: 20200701osaka
     """
     ca = np.cov(nparray, y=None, rowvar=False, bias=True)  # rowvar row=point, bias biased covariance
-    pcv, pcaxmat = np.linalg.eig(ca)
-    return pcv, pcaxmat
+    pcv, pcamat = np.linalg.eig(ca)
+    return pcv, pcamat
 
 
 def transform_data_pcv(data, random_rot=True):
@@ -1063,13 +1102,13 @@ def gaussian_ellipsoid(pointsarray):
     author: weiwei
     date: 20200701
     """
-    pcv, pcaxmat = compute_pca(pointsarray)
+    pcv, pcamat = compute_pca(pointsarray)
     center = np.mean(pointsarray, axis=0)
     axmat = np.eye(3)
     # TODO is there a better way to do this?
-    axmat[:, 0] = 2 * np.sqrt(5.991 * pcv[0]) * pcaxmat[:, 0]
-    axmat[:, 1] = 2 * np.sqrt(5.991 * pcv[1]) * pcaxmat[:, 1]
-    axmat[:, 2] = 2 * np.sqrt(5.991 * pcv[2]) * pcaxmat[:, 2]
+    axmat[:, 0] = 2 * np.sqrt(5.991 * pcv[0]) * pcamat[:, 0]
+    axmat[:, 1] = 2 * np.sqrt(5.991 * pcv[1]) * pcamat[:, 1]
+    axmat[:, 2] = 2 * np.sqrt(5.991 * pcv[2]) * pcamat[:, 2]
     return center, axmat
 
 
@@ -1289,6 +1328,16 @@ def area_weighted_pca(verts, faces, eps=eps):
     eig_vals, eig_vecs = np.linalg.eigh(cov)
     eig_vecs = ensure_right_handed(eig_vecs)
     return mean, eig_vecs.astype(np.float32)
+
+
+def wrap_to_pi(angle):
+    """wrap angle to [-pi, pi]"""
+    return (angle + np.pi) % (2 * np.pi) - np.pi
+
+
+def clamp(x, lo, hi):
+    """clamp x to [lo, hi]"""
+    return max(lo, min(x, hi))
 
 
 def ensure_right_handed(rotmat):
