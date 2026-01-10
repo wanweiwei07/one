@@ -6,13 +6,16 @@ from one.physics.mj_one_sync import MJSynchronizer
 class MJEnv:
     def __init__(self, scene, require_ctrl=False):
         self._cvter = MJOneConverter()
-        self._world = self._cvter.convert(scene)
+        self._world, sobj2mjbdy, lnk2mjbdy, mecj2mjjnt = (
+            self._cvter.convert(scene))
         if not require_ctrl:
             self._world.actuators = None
         self.xml_string = self._world.compile_mjcf()
         print(self.xml_string)
         self.runtime = MJRuntime(self.xml_string)
-        self.sync = MJSynchronizer(self.runtime, scene)
+        self.sync = MJSynchronizer(
+            self.runtime, scene,
+            sobj2mjbdy, lnk2mjbdy, mecj2mjjnt)
         self.reset()
 
     def step(self, dt):

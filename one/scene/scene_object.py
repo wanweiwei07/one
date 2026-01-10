@@ -7,28 +7,13 @@ import one.scene.collision as osc
 
 
 class SceneObject:
-    _auto_counter = {}  # TODO thread safety
 
     @classmethod
-    def auto_name(cls, flag_str=None):
-        if flag_str is None:
-            flag_str = "sobj"
-        if flag_str not in cls._auto_counter:
-            cls._auto_counter[flag_str] = 0
-        name = f"{flag_str}_{cls._auto_counter[flag_str]}"
-        cls._auto_counter[flag_str] += 1
-        return name
-
-    @classmethod
-    def from_file(cls, path, name=None,
-                  local_rotmat=None, local_pos=None,  # render model offset
+    def from_file(cls, path, local_rotmat=None, local_pos=None,  # render model offset
                   collision_type=None, is_free=False,
                   rgb=None, alpha=1.0):
         """only allows changing local pose of the visual model"""
-        if name is None:
-            name = os.path.splitext(os.path.basename(path))[0]
-        instance = cls(name=name,
-                       collision_type=collision_type,
+        instance = cls(collision_type=collision_type,
                        is_free=is_free)
         instance.file_path = path
         instance.add_visual(
@@ -38,9 +23,7 @@ class SceneObject:
             auto_make_collision=True)
         return instance
 
-    def __init__(self, name=None, collision_type=None, is_free=False):
-        self._name = name  # _name is for compatibility
-        self.name = self.auto_name(flag_str=name)
+    def __init__(self, collision_type=None, is_free=False):
         self.file_path = None
         self.node = ossn.SceneNode()
         self.visuals = []
@@ -70,10 +53,9 @@ class SceneObject:
     def set_rotmat_pos(self, rotmat, pos):
         self.node.set_rotmat_pos(rotmat, pos)
 
-    def clone(self):
+    def clone(self, postfix="(clone)"):
         """DOES NOT clone the affiliated scene."""
-        new = self.__class__(name=self._name + "(clone)",
-                             collision_type=self.collision_type,
+        new = self.__class__(collision_type=self.collision_type,
                              is_free=self.is_free)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path

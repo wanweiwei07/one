@@ -12,24 +12,17 @@ import one.robots.base.kinematics.ik_num as orbkim
 
 class Link(osso.SceneObject):
 
-    @classmethod
-    def auto_name(cls, flag_str=None):
-        if flag_str is None:
-            flag_str = "lnk"
-        if flag_str not in cls._auto_counter:
-            cls._auto_counter[flag_str] = 0
-        name = f"{flag_str}_{cls._auto_counter[flag_str]}"
-        cls._auto_counter[flag_str] += 1
-        return name
+    def __init__(self, collision_type=None,
+                 is_free=False):
+        super().__init__(collision_type=collision_type,
+                         is_free=is_free)
 
 
 class Joint:
 
-    def __init__(self, name, jnt_type,
-                 parent_lnk, child_lnk,
+    def __init__(self, jnt_type, parent_lnk, child_lnk,
                  axis, rotmat=None, pos=None,
                  mmc=None, lmt_low=None, lmt_up=None):
-        self.name = name
         self.jtype = jnt_type
         self.axis = oum.unit_vec(axis, return_length=False)
         self.rotmat = oum.ensure_rotmat(rotmat)

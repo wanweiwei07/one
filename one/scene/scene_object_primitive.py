@@ -15,7 +15,7 @@ def _parse_phys(kwargs):
             kwargs.get("is_free", False))
 
 
-def gen_cylinder(name="cylinder", spos=(0, 0, 0),
+def gen_cylinder(spos=(0, 0, 0),
                  epos=(0.01, 0.01, 0.01),
                  radius=0.05, segments=8,
                  rgb=ouc.BasicColor.DEFAULT,
@@ -28,8 +28,7 @@ def gen_cylinder(name="cylinder", spos=(0, 0, 0),
                                    return_length=True)
     geometry = osgp.gen_cylinder_geom(length, radius, segments)
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    o = osso.SceneObject(name=name,
-                         collision_type=collision_type,
+    o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=spos)
     o.add_visual(osrm.RenderModel(
@@ -38,7 +37,7 @@ def gen_cylinder(name="cylinder", spos=(0, 0, 0),
     return o
 
 
-def gen_cone(name="cone", spos=(0, 0, 0),
+def gen_cone(spos=(0, 0, 0),
              epos=(0.01, 0.01, 0.01),
              radius=0.05, segments=8,
              rgb=ouc.BasicColor.DEFAULT,
@@ -53,8 +52,7 @@ def gen_cone(name="cone", spos=(0, 0, 0),
         length, radius, segments)
     rotmat = oum.rotmat_between_vecs(
         ouc.StandardAxis.Z, dir_vec)
-    o = osso.SceneObject(name=name,
-                         collision_type=collision_type,
+    o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=spos)
     o.add_visual(osrm.RenderModel(
@@ -63,15 +61,14 @@ def gen_cone(name="cone", spos=(0, 0, 0),
     return o
 
 
-def gen_sphere(name="sphere", pos=(0, 0, 0),
+def gen_sphere(pos=(0, 0, 0),
                radius=0.05, segments=8,
                rgb=ouc.BasicColor.DEFAULT,
                alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     geometry = osgp.gen_sphere_geom(radius, segments)
-    o = osso.SceneObject(name=name,
-                         collision_type=collision_type,
+    o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.pos = pos
     o.add_visual(osrm.RenderModel(
@@ -80,15 +77,14 @@ def gen_sphere(name="sphere", pos=(0, 0, 0),
     return o
 
 
-def gen_icosphere(name="icosphere", pos=(0, 0, 0),
+def gen_icosphere(pos=(0, 0, 0),
                   radius=0.05, subdivisions=2,
                   rgb=ouc.BasicColor.DEFAULT,
                   alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     geometry = osgp.gen_icosphere_geom(radius, subdivisions)
-    o = osso.SceneObject(name=name,
-                         collision_type=collision_type,
+    o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.pos = pos
     o.add_visual(osrm.RenderModel(
@@ -97,7 +93,7 @@ def gen_icosphere(name="icosphere", pos=(0, 0, 0),
     return o
 
 
-def gen_box(name="box", pos=(0, 0, 0),
+def gen_box(pos=(0, 0, 0),
             half_extents=(0.05, 0.05, 0.05),
             rotmat=None, rgb=ouc.BasicColor.DEFAULT,
             alpha=1.0, **kwargs):
@@ -105,8 +101,7 @@ def gen_box(name="box", pos=(0, 0, 0),
     inertia, com, mass, collision_type, is_free = _psd
     half_extents = np.asarray(half_extents, np.float32)
     geometry = osgp.gen_box_geom(half_extents)
-    o = osso.SceneObject(name=name,
-                         collision_type=collision_type,
+    o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=pos)
     o.add_visual(osrm.RenderModel(
@@ -195,8 +190,7 @@ def gen_plane(name="ground", pos=(0, 0, 0),
     geometry = osgp.gen_box_geom(half_extents)
     rotmat = oum.rotmat_between_vecs(
         ouc.StandardAxis.Z, normal)
-    o = osso.SceneObject(name=name,
-                         collision_type=collision_type,
+    o = osso.SceneObject(collision_type=collision_type,
                          is_free=False)
     o.set_rotmat_pos(rotmat=rotmat, pos=pos)
     o.add_visual(osrm.RenderModel(

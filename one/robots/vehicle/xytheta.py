@@ -7,28 +7,23 @@ import one.robots.base.mech_structure as osrbms
 
 def prepare_mechstruct():
     structure = osrbms.MechStruct()
-    wd_lnk = osrbms.Link(name="wdlnk",
-                         is_free=False)
-    dummy_xlnk = osrbms.Link(name="xlnk")
-    dummy_ylnk = osrbms.Link(name="ylnk")
-    body_lnk = osrbms.Link(name="bodylnk",
-                           collision_type=ouc.CollisionType.AABB)
+    wd_lnk = osrbms.Link(is_free=False)
+    dummy_xlnk = osrbms.Link()
+    dummy_ylnk = osrbms.Link()
+    body_lnk = osrbms.Link(collision_type=ouc.CollisionType.AABB)
     body_lnk.add_visual(osrmp.gen_box((.1, .1, .1)))
     body_lnk.set_inertia(mass=0.1)
-    joint_x = osrbms.Joint(name="jnt_x",
-                           jnt_type=ouc.JntType.PRISMATIC,
+    joint_x = osrbms.Joint(jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=wd_lnk,
                            child_lnk=dummy_xlnk,
                            axis=ouc.StandardAxis.X,
                            lmt_low=-5.0, lmt_up=5.0)
-    joint_y = osrbms.Joint(name="jnt_y",
-                           jnt_type=ouc.JntType.PRISMATIC,
+    joint_y = osrbms.Joint(jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=dummy_xlnk,
                            child_lnk=dummy_ylnk,
                            axis=ouc.StandardAxis.Y,
                            lmt_low=-5.0, lmt_up=5.0)
-    joint_t = osrbms.Joint(name="jnt_t",
-                           jnt_type=ouc.JntType.REVOLUTE,
+    joint_t = osrbms.Joint(jnt_type=ouc.JntType.REVOLUTE,
                            parent_lnk=dummy_ylnk,
                            child_lnk=body_lnk,
                            axis=ouc.StandardAxis.Z,

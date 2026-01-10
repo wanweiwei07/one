@@ -47,8 +47,8 @@ class Render:
         groups = {"mesh_solid": {},  # vao -> [(model, node), ...]
                   "mesh_transparent": {},  # vao -> [(model, node), ...]
                   "pcd": {}}  # vao -> [(model, node), ...]
-        for scn_obj in scene:
-            for model in scn_obj.visuals:
+        for sobj in scene:
+            for model in sobj.visuals:
                 shader = self._pick_shader(model)
                 device_buffer = model.geometry.get_device_buffer()
                 if shader is self.mesh_shader:
@@ -59,9 +59,9 @@ class Render:
                     target = groups["pcd"]
                 if device_buffer.vao not in target:
                     target[device_buffer.vao] = []
-                target[device_buffer.vao].append((model, scn_obj.node))
-            if scn_obj.toggle_render_collision:
-                for c in scn_obj.collisions:
+                target[device_buffer.vao].append((model, sobj.node))
+            if sobj.toggle_render_collision:
+                for c in sobj.collisions:
                     model = c.to_render_model()
                     shader = self._pick_shader(model)
                     device_buffer = model.geometry.get_device_buffer()
@@ -73,7 +73,7 @@ class Render:
                         target = groups["pcd"]
                     if device_buffer.vao not in target:
                         target[device_buffer.vao] = []
-                    target[device_buffer.vao].append((model, scn_obj.node))
+                    target[device_buffer.vao].append((model, sobj.node))
         return groups
 
     def _draw_solid_mesh_with_outline(self, solid_groups, cam_view, cam_proj):
@@ -162,8 +162,7 @@ class Render:
         for instance_list in pcd_groups.values():
             for model, node in instance_list:
                 self.pcd_shader.program["u_model"] = (
-                        node.wd_tf @ model.local_tfmat
-                ).T.ravel()
+                        node.wd_tf @ model.local_tfmat).T.ravel()
                 model.get_device_buffer().draw()
 
     def _gl_setup(self):

@@ -5,7 +5,7 @@ import one.robots.base.mech_base as orbmb
 
 class ManipulatorBase(orbmb.MechBase):
 
-    def __init__(self, base_rotmat=None, base_pos=None):
+    def __init__(self, base_rotmat=None, base_pos=None, name="manipulator"):
         compiled = self.structure._compiled
         if len(compiled.tip_lnks) != 1:
             raise ValueError("ManipulatorBase must have a single tip.")
