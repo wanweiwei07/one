@@ -1,10 +1,10 @@
 class MJSynchronizer:
     def __init__(self, mj_runtime, scene,
-                 sobj2bdy, lnk2bdy, mecj2jnt):
+                 sobj2bdy, rutl2bdy, mecj2jnt):
         self.mj_runtime = mj_runtime
         self.scene = scene
         self.sobj2bdy = sobj2bdy
-        self.lnk2bdy = lnk2bdy
+        self.rutl2bdy = rutl2bdy
         self.mecj2jnt = mecj2jnt
         self._body_map = {}
         self._qpos_map = {}
@@ -17,9 +17,9 @@ class MJSynchronizer:
             bid = self.mj_runtime.model.body(body.name).id
             self._body_map[obj] = bid
         for mecba in self.scene.mecbas:
-            root_lnk = mecba.structure.compiled.root_lnk
+            root_lnk = mecba.runtime_root_lnk
             if root_lnk.is_free:
-                body = self.lnk2bdy[(mecba, root_lnk)]
+                body = self.rutl2bdy[root_lnk]
                 bid = model.body(body.name).id
                 self._freebase_map[mecba] = bid
         for (mecba, jidx), jnode in self.mecj2jnt.items():
@@ -35,10 +35,9 @@ class MJSynchronizer:
     def pull_qpos(self):
         data = self.mj_runtime.data
         for mecba, bid in self._freebase_map.items():
+            rotmat = data.xmat[bid].reshape(3, 3)
             pos = data.xpos[bid]
-            rot = data.xmat[bid].reshape(3, 3)
-            mecba.base_rotmat[:] = rot
-            mecba.base_pos[:] = pos
+            mecba.set_rotmat_pos(rotmat, pos)
         for (mecba, jidx), adr in self._qpos_map.items():
             mecba.qs[jidx] = data.qpos[adr]
         for mecba in self.scene.mecbas:

@@ -2,7 +2,7 @@ import mujoco
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
-import one.scene.scene_object_primitive as osobp
+import one.scene.scene_object_primitive as ossop
 
 
 def debug_contacts(mjenv):
@@ -25,7 +25,7 @@ class MjContactViz:
 
     def _init_spheres(self, radius):
         for _ in range(self.max_contacts):
-            s = osobp.gen_sphere(radius=radius,
+            s = ossop.gen_sphere(radius=radius,
                                  rgb=(1, 0, 0),
                                  alpha=ouc.ALPHA.SEMI,
                                  collision_type=None,
@@ -62,7 +62,7 @@ class MjContactForceViz:
 
     def _init_arrows(self):
         for _ in range(self.max_contacts):
-            a = osobp.gen_arrow(spos=np.zeros(3),
+            a = ossop.gen_arrow(spos=np.zeros(3),
                                 epos=np.array([0.0, 0.0, self.base_length]),
                                 shaft_radius=ouc.ForceArrowSize.SHAFT_RADIUS,
                                 head_radius=ouc.ForceArrowSize.HEAD_RADIUS,

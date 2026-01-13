@@ -45,5 +45,5 @@ class XYThetaRobot(orbmb.MechBase):
     def _build_structure(cls):
         return prepare_mechstruct()
 
-    def __init__(self, base_rotmat=None, base_pos=None):
-        super().__init__(base_rotmat, base_pos)
+    def __init__(self, rotmat=None, pos=None):
+        super().__init__(rotmat, pos)

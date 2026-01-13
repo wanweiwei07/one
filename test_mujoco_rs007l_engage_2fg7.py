@@ -1,4 +1,5 @@
 import numpy as np
+import one.physics.mj_env as opme
 from one import oum, ouc, ovw, ossop, khi_rs007l, or_2fg7
 
 base = ovw.World(cam_pos=(2, 1, 1.5), cam_lookat_pos=(0, 0, .75),
@@ -27,16 +28,20 @@ robot2.engage(gripper)
 robot2.attach_to(base.scene)
 qs2_list = robot2.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
 
-box = ossop.gen_cylinder(spos=(-.3, 0, .3), epos=(.3, 0, .1), radius=.03)
+box = ossop.gen_cylinder(spos=(-.3, 0, .3), epos=(.3, 0, .1),
+                         radius=.03, is_free=True)
 box.attach_to(base.scene)
 gripper.grasp(box)
-gripper.release(box)
+# gripper.release(box)
 # base.run()
 
 robot2_ik = robot2.clone()
 robot2_ik.rgb = ouc.BasicColor.YELLOW
 robot2_ik.fk(qs=qs2_list[0])
 robot2_ik.attach_to(base.scene)
+
+mjenv = opme.MJEnv(scene=base.scene)
+base.schedule_interval(mjenv.step)
 base.run()
 
 # # engage later

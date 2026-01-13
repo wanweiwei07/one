@@ -6,10 +6,10 @@ import one.robots.base.mech_structure as orbms
 
 
 class Mounting:
-    def __init__(self, child, parent_link, engage_tfmat):
+    def __init__(self, child, parent_link, engage_tf):
         self.child = child
         self.plnk = parent_link
-        self.engage_tfmat = engage_tfmat
+        self.engage_tf = engage_tf
 
 
 class MechBase:
@@ -26,17 +26,21 @@ class MechBase:
             cls._structure = cls._build_structure()
         return cls._structure
 
-    def __init__(self, base_rotmat=None, base_pos=None, qs=None):
+    def __init__(self, rotmat=None, pos=None,
+                 home_qs=None, is_free=True):
         self._compiled = self.structure._compiled
-        self._base_rotmat = oum.ensure_rotmat(base_rotmat)
-        self._base_pos = oum.ensure_pos(base_pos)
-        if qs is None:
+        self._rotmat = oum.ensure_rotmat(rotmat)
+        self._pos = oum.ensure_pos(pos)
+        if home_qs is None:
             self.qs = np.zeros(
                 self._compiled.n_jnts, dtype=np.float32)
         else:
-            self.qs = np.asarray(qs, dtype=np.float32)
+            self.qs = np.asarray(home_qs, dtype=np.float32)
         # runtime geometry
-        self.runtime_lnks = [lnk.clone() for lnk in self.structure.lnks]
+        self.runtime_lnks = [
+            lnk.clone() for lnk in self.structure.lnks]
+        self.runtime_lidx_map = {
+            lnk: i for i, lnk in enumerate(self.runtime_lnks)}
         # FK cache
         self.wd_lnk_tfarr = np.tile(
             np.eye(4, dtype=np.float32),
@@ -44,7 +48,10 @@ class MechBase:
         # mountings
         self._mountings = {}
         # home
-        self.home_qs = self.qs.copy()
+        self._home_qs = self.qs.copy()
+        # free root lnk
+        ridx = self.structure.compiled.root_lnk_idx
+        self.runtime_lnks[ridx]._is_free = is_free
         self.fk(update=True)
 
     def attach_to(self, scene):
@@ -57,9 +64,9 @@ class MechBase:
             scene.remove(m.child)
         scene.remove(self)
 
-    def set_base_rotmat_pos(self, rotmat=None, pos=None):
-        self._base_rotmat[:] = oum.ensure_rotmat(rotmat)
-        self._base_pos[:] = oum.ensure_pos(pos)
+    def set_rotmat_pos(self, rotmat=None, pos=None):
+        self._rotmat[:] = oum.ensure_rotmat(rotmat)
+        self._pos[:] = oum.ensure_pos(pos)
         self.fk(update=True)
 
     def fk(self, qs=None, update=True):
@@ -70,8 +77,8 @@ class MechBase:
                 raise ValueError(f"Expected {len(self.qs)} qs, got {qs}")
         q_resolved = self._compiled.resolve_all_qs(self.qs)  # TODO: should this be active only?
         rlidx = self._compiled.root_lnk_idx
-        self.wd_lnk_tfarr[rlidx][:3, :3] = self._base_rotmat
-        self.wd_lnk_tfarr[rlidx][:3, 3] = self._base_pos
+        self.wd_lnk_tfarr[rlidx][:3, :3] = self._rotmat
+        self.wd_lnk_tfarr[rlidx][:3, 3] = self._pos
         # traversal
         for lidx in self._compiled.lnk_ids_traversal_order:
             if lidx == rlidx:
@@ -87,64 +94,105 @@ class MechBase:
             self._update_runtime()
         return self.wd_lnk_tfarr
 
-    def mount(self, child, plnk, engage_tfmat=None):
+    def mount(self, child, plnk, engage_tf=None):
         # TODO updated attach_to?
-        if child in self._mountings or child is self:
-            raise ValueError("Child already mounted or self-mounting")
-        if engage_tfmat is None:
-            engage_tfmat = np.eye(4, dtype=np.float32)
+        if child is self:
+            raise ValueError("Self-mounting not allowed")
+        if child in self._mountings:
+            raise ValueError("Child already mounted")
+        if not child.is_free:
+            raise ValueError("Child is not free")
+        if engage_tf is None:
+            engage_tf = np.eye(4, dtype=np.float32)
         else:
-            engage_tfmat = np.asarray(engage_tfmat, dtype=np.float32)
-        self._mountings[child] = Mounting(child, plnk, engage_tfmat)
+            engage_tf = np.asarray(engage_tf, dtype=np.float32)
+        self._mountings[child] = Mounting(child, plnk, engage_tf)
+        child.is_free = False
 
     def unmount(self, child):
         try:
-            return self._mountings.pop(child)
+            m = self._mountings.pop(child)
         except KeyError:
             raise ValueError("Child not mounted")
+        child.is_free = True
+        return m
 
     def get_wd_lnk_tf(self, lnk):
-        lidx = self._compiled.lidx_map[lnk]
+        lidx = self.runtime_lidx_map[lnk]
         return self.wd_lnk_tfarr[lidx]
 
     def clone(self):
         """DOES NOT clone the affiliated scene"""
         new = self.__class__.__new__(self.__class__)
         new._compiled = self._compiled
-        new._base_rotmat = self._base_rotmat.copy()
-        new._base_pos = self._base_pos.copy()
+        new._rotmat = self._rotmat.copy()
+        new._pos = self._pos.copy()
         new.qs = self.qs.copy()
         new.runtime_lnks = [lnk.clone() for lnk in self.runtime_lnks]
+        new.runtime_lidx_map = {
+            lnk: i for i, lnk in enumerate(new.runtime_lnks)}
         new.wd_lnk_tfarr = self.wd_lnk_tfarr.copy()
         new._mountings = {}
         for k, m in self._mountings.items():
             child = m.child.clone()
+            plidx = self.runtime_lidx_map[m.plnk]
             new._mountings[child] = Mounting(
-                child, m.plnk, m.engage_tfmat.copy())
-        new.home_qs = self.home_qs.copy()
+                child, new.runtime_lnks[plidx], m.engage_tf.copy())
+        new._home_qs = self._home_qs.copy()
         return new
 
-    def _update_mounting(self, mounting: Mounting):
+    def _update_mounting(self, mounting):
         parent_tf = self.get_wd_lnk_tf(mounting.plnk)
-        child_tf = parent_tf @ mounting.engage_tfmat
+        child_tf = parent_tf @ mounting.engage_tf
         if isinstance(mounting.child, MechBase):
-            mounting.child._base_rotmat[:] = child_tf[:3, :3]
-            mounting.child._base_pos[:] = child_tf[:3, 3]
+            mounting.child._rotmat[:] = child_tf[:3, :3]
+            mounting.child._pos[:] = child_tf[:3, 3]
             mounting.child.fk(update=True)
         else:
             mounting.child.tf = child_tf
 
     @property
-    def base_tfmat(self):
-        return oum.tf_from_rotmat_pos(self._base_rotmat, self._base_pos)
+    def runtime_root_lnk(self):
+        ridx = self.structure.compiled.root_lnk_idx
+        return self.runtime_lnks[ridx]
 
     @property
-    def base_rotmat(self):
-        return self._base_rotmat
+    def is_free(self):
+        return self.runtime_root_lnk.is_free
+
+    @is_free.setter
+    def is_free(self, flag):
+        self.runtime_root_lnk.is_free = flag
 
     @property
-    def base_pos(self):
-        return self._base_pos
+    def home_qs(self):
+        return self._home_qs.copy()
+
+    @home_qs.setter
+    def home_qs(self, value):
+        self._home_qs[:] = np.asarray(value, dtype=np.float32)
+
+    @property
+    def tf(self):
+        return oum.tf_from_rotmat_pos(self._rotmat, self._pos)
+
+    @property
+    def rotmat(self):
+        return self._rotmat.copy()
+
+    @rotmat.setter
+    def rotmat(self, value):  # TODO: delay update
+        self._rotmat[:] = oum.ensure_rotmat(value)
+        self.fk(update=True)
+
+    @property
+    def pos(self):
+        return self._pos.copy()
+
+    @pos.setter
+    def pos(self, value):  # TODO: delay update
+        self._pos[:] = oum.ensure_pos(value)
+        self.fk(update=True)
 
     @property
     def toggle_render_collision(self):
@@ -163,6 +211,8 @@ class MechBase:
     def rgba(self, value):  # only allow uniform color change
         for lnk in self.runtime_lnks:
             lnk.rgba = value
+        for m in self._mountings.values():
+            m.child.rgba = value
 
     @property
     def rgb(self):
@@ -172,6 +222,8 @@ class MechBase:
     def rgb(self, value):  # only allow uniform color change
         for lnk in self.runtime_lnks:
             lnk.rgb = value
+        for m in self._mountings.values():
+            m.child.rgb = value
 
     @property
     def alpha(self):
@@ -181,6 +233,8 @@ class MechBase:
     def alpha(self, value):  # only allow uniform color change
         for lnk in self.runtime_lnks:
             lnk.alpha = value
+        for m in self._mountings.values():
+            m.child.alpha = value
 
     # internal helpers
     def _update_runtime(self):

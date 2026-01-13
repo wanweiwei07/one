@@ -6,7 +6,7 @@ from one import oum, ovw, ossop, khi_rs007l
 base = ovw.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
                  toggle_auto_cam_orbit=True)
 oframe = ossop.gen_frame().attach_to(base.scene)
-robot = khi_rs007l.RS007L(base_rotmat=oum.rotmat_from_euler(0, 0, -oum.pi / 2))
+robot = khi_rs007l.RS007L(rotmat=oum.rotmat_from_euler(0, 0, -oum.pi / 2))
 robot.attach_to(base.scene)
 builtins.robot = robot  # for debug access
 builtins.base = base

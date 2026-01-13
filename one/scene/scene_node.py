@@ -41,16 +41,16 @@ class SceneNode:
         self._tf[:] = oum.tf_from_rotmat_pos(self._rotmat, self._pos)
         if self.parent is None:
             self._wd_tf[:3, :3] = self._rotmat
-            self._wd_tf[:3,3] = self._pos
+            self._wd_tf[:3, 3] = self._pos
         else:
             self.parent._rebuild_tf()
             p_wd_tf = self.parent._wd_tf
             self._wd_tf[:3, :3] = p_wd_tf[:3, :3] @ self._rotmat
-            self._wd_tf[:3,3] = p_wd_tf[:3, :3] @ self._pos + p_wd_tf[:3, 3]
+            self._wd_tf[:3, 3] = p_wd_tf[:3, :3] @ self._pos + p_wd_tf[:3, 3]
         self._dirty = False
 
     @oud.mark_dirty('_mark_dirty')
-    def set_rotmat_pos(self, rotmat, pos):
+    def set_rotmat_pos(self, rotmat=None, pos=None):
         self._rotmat[:] = oum.ensure_rotmat(rotmat)
         self._pos[:] = oum.ensure_pos(pos)
 

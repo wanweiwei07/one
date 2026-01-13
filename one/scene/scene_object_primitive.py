@@ -118,6 +118,10 @@ def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
               alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
+    # if is_free:
+    #     print("Warning: frame is usually not free. Setting to False.")
+    #     is_free = False
+    is_free = False
     # collider must be ignored for arrow
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
@@ -144,6 +148,10 @@ def gen_frame(pos=np.zeros(3), rotmat=np.eye(3),
               alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
+    # if is_free:
+    #     print("Warning: frame is usually not free. Setting to False.")
+    #     is_free = False
+    is_free = False
     # collider must be ignored for frame
     arrow_length = ouc.StandardAxis.ARROW_LENGTH * length_scale
     shaft_radius = ouc.StandardAxis.ARROW_SHAFT_RADIUS * radius_scale

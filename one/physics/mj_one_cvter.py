@@ -1,6 +1,8 @@
+import numpy as np
 import one.utils.math as oum
 import one.utils.constant as const
 import one.scene.collision as sco
+import one.robots.base.mech_base as orbmb
 import one.physics.inertial as opi
 import one.physics.mj_nodes as opmno
 import one.physics.mj_naming as opmna
@@ -21,38 +23,47 @@ class MJOneConverter:
         self._actuators = []  # list of ActuatorNode
         # mappings
         self._sobj2bdy = {}
-        self._mecl2jnt = {} # use (mecba, link) as key, avoid runtime lnks
-        self._mecj2jnt = {} # use (mecba, jidx) as key
+        self._rutl2jnt = {}  # use runtime lnk as key
+        self._mecj2jnt = {}  # use (mecba, jidx) as key
         self._bdy_alias = {}
+        # mounted children
+        self._mounted_children = set()
 
     def convert(self, scene):
         self._mesh_assets.clear()
         self._actuators.clear()
         self._sobj2bdy.clear()
-        self._mecl2jnt.clear()
+        self._rutl2jnt.clear()
         self._mecj2jnt.clear()
         self._bdy_alias.clear()
+        self._mounted_children.clear()
+        for mecba in scene.mecbas:
+            self._collect_mounted_children(mecba)
         world = opmno.WorldNode()
         world.option = self._opt
         world.default = self._default
         root = opmno.BodyNode("world_root")
         world.root_body = root
         for mecba in scene.mecbas:
+            if mecba in self._mounted_children:
+                continue
             robot = self._cvt_robot(mecba)
             self._merge_empty_geoms(robot, is_root=True)
             robot.parent = root
             root.children.append(robot)
         for sobj in scene.sobjs:
+            if sobj in self._mounted_children:
+                continue
             if not getattr(sobj, "collisions", None):
                 continue
-            body = self._cvt_sobj(sobj, ref_tfmat=sobj.tf)
+            body = self._cvt_sobj(sobj, ref_tf=sobj.tf)
             self._sobj2bdy[sobj] = body
             body.parent = root
             root.children.append(body)
         world.assets = list(self._mesh_assets.values())
         world.actuators = self._actuators
         self._finalize_alias_maps()
-        return world, self._sobj2bdy, self._mecl2jnt, self._mecj2jnt
+        return world, self._sobj2bdy, self._rutl2jnt, self._mecj2jnt
 
     @property
     def gravity(self):
@@ -74,15 +85,6 @@ class MJOneConverter:
         compiled = mecba._compiled
 
         def _scan_child(mecba, jidx, lidx):
-            # lnk
-            lnk = mecba.structure.lnks[lidx]
-            if lnk.is_free:
-                raise ValueError(
-                    "Free link cannot be child link of a joint")
-            # body
-            jotfmat = compiled.jotfmat_by_idx[jidx]
-            body = self._cvt_sobj(lnk, ref_tfmat=jotfmat)
-            self._mecl2jnt[(mecba, lnk)] = body
             # hosting joint frame
             jnode = opmno.JointNode(opmna.alloc_name("jnt"))
             self._mecj2jnt[(mecba, jidx)] = jnode
@@ -102,6 +104,14 @@ class MJOneConverter:
             jnode.axis = tuple(compiled.jax_by_idx[jidx])
             jnode.range = (float(compiled.jlmt_low_by_idx[jidx]),
                            float(compiled.jlmt_high_by_idx[jidx]))
+            # lnk
+            lnk = mecba.runtime_lnks[lidx]
+            if lnk.is_free:
+                raise ValueError(
+                    "Free link cannot be child link of a joint")
+            jotfmat = compiled.jotfmat_by_idx[jidx]
+            body = self._cvt_sobj(lnk, ref_tf=jotfmat)
+            self._rutl2jnt[lnk] = body
             # attach joint to parent body
             body.hosting_jnts.append(jnode)
             # recurse into grandchildren
@@ -114,24 +124,27 @@ class MJOneConverter:
             return body
 
         ridx = compiled.root_lnk_idx
-        root_lnk = mecba.structure.compiled.root_lnk
-        root = self._cvt_sobj(root_lnk, ref_tfmat=mecba.base_tfmat)
-        self._mecl2jnt[(mecba, root_lnk)] = root
+        root_lnk = mecba.runtime_lnks[ridx]
+        root = self._cvt_sobj(root_lnk, ref_tf=mecba.tf)
+        self._rutl2jnt[root_lnk] = root
         for clidx in compiled.clnk_ids_of_lidx[ridx]:
             pjidx = compiled.pjidx_of_lidx[clidx]
             if pjidx >= 0:
                 child = _scan_child(mecba, pjidx, clidx)
                 child.parent = root
                 root.children.append(child)
+        self._attach_mountings(mecba)
         return root
 
-    def _cvt_sobj(self, sobj, ref_tfmat):
+    def _cvt_sobj(self, sobj, ref_tf=None):
+        if ref_tf is None:
+            ref_tf = np.eye(4, dtype=np.float32)
         b = opmno.BodyNode(opmna.alloc_name("sobj"))
         if sobj.is_free:
             jnode = opmno.JointNode("free_root")
             jnode.jtype_str = "free"
             b.hosting_jnts.append(jnode)
-        b.pos, b.quat = oum.pos_quat_from_tf(ref_tfmat)
+        b.pos, b.quat = oum.pos_quat_from_tf(ref_tf)
         if sobj.collisions:
             if (sobj.mass is not None and
                     sobj.com is not None and
@@ -177,6 +190,30 @@ class MJOneConverter:
             raise NotImplementedError(f"Unsupported collision: {type(c)}")
         return g
 
+    def _collect_mounted_children(self, mecba):
+        for m in mecba._mountings.values():
+            self._mounted_children.add(m.child)
+            if isinstance(m.child, orbmb.MechBase):  # TODO type is not the standdard
+                self._collect_mounted_children(m.child)
+
+    def _attach_mountings(self, mecba):
+        for m in mecba._mountings.values():
+            child = m.child
+            engage_tf = m.engage_tf
+            # child subtree
+            if isinstance(child, orbmb.MechBase):  # MechBase
+                child_root = self._cvt_robot(child)
+            else:  # SceneObject
+                child_root = self._cvt_sobj(child)
+                self._sobj2bdy[child] = child_root
+            child_root.pos, child_root.quat = oum.pos_quat_from_tf(engage_tf)
+            # find parent link body
+            plnk_bdy = self._rutl2jnt[m.plnk]
+            child_root.parent = plnk_bdy
+            plnk_bdy.children.append(child_root)
+            if isinstance(child, type(mecba)):
+                self._attach_mountings(child)
+
     def _merge_empty_geoms(self, body, is_root=False):
         for child in list(body.children):
             self._merge_empty_geoms(child, is_root=False)
@@ -209,8 +246,8 @@ class MJOneConverter:
     def _finalize_alias_maps(self):
         for k, b in list(self._sobj2bdy.items()):
             self._sobj2bdy[k] = self._resolve_body(b)
-        for k, b in list(self._mecl2jnt.items()):
-            self._mecl2jnt[k] = self._resolve_body(b)
+        for k, b in list(self._rutl2jnt.items()):
+            self._rutl2jnt[k] = self._resolve_body(b)
 
     def _resolve_body(self, b):
         while b in self._bdy_alias:

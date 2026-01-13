@@ -30,6 +30,8 @@ class MJRuntime:
     def is_collided(self):
         mujoco.mj_kinematics(self.model, self.data)
         mujoco.mj_collision(self.model, self.data)
+        # import one.physics.mj_contact as mjc
+        # mjc.debug_contacts(self)
         return self.data.ncon > 0
 
     def _backup(self):

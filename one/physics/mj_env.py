@@ -1,12 +1,13 @@
 from one.physics.mj_one_cvter import MJOneConverter
 from one.physics.mj_runtime import MJRuntime
 from one.physics.mj_one_sync import MJSynchronizer
+from one.physics.mj_contact import MjContactForceViz
 
 
 class MJEnv:
     def __init__(self, scene, require_ctrl=False):
         self._cvter = MJOneConverter()
-        self._world, sobj2mjbdy, lnk2mjbdy, mecj2mjjnt = (
+        self._world, sobj2bdy, rutl2bdy, mecj2jnt = (
             self._cvter.convert(scene))
         if not require_ctrl:
             self._world.actuators = None
@@ -15,7 +16,9 @@ class MJEnv:
         self.runtime = MJRuntime(self.xml_string)
         self.sync = MJSynchronizer(
             self.runtime, scene,
-            sobj2mjbdy, lnk2mjbdy, mecj2mjjnt)
+            sobj2bdy, rutl2bdy, mecj2jnt)
+        # contact viz
+        # self.contact_viz = MjContactForceViz(scene, radius=0.2)
         self.reset()
 
     def step(self, dt):
@@ -26,11 +29,11 @@ class MJEnv:
         self.runtime.step(n)
         self.sync.pull_body_pose()
         self.sync.pull_qpos()
+        # self.contact_viz.update_from_data(self.model, self.data)
 
     def is_collided(self):
         self.runtime.enter_cd()
         collided = self.runtime.is_collided()
-        self.runtime.exit_cd()
         return collided
 
     def reset(self):

@@ -13,7 +13,7 @@ def prepare_mechstruct():
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base_link.stl"),
         collision_type=ouc.CollisionType.MESH,
-        is_free=True, rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ouc.ExtendedColor.BEIGE)
     base_lnk.set_inertia(mass=11.0)
     lnk1 = orbms.Link.from_file(
         os.path.join(mesh_dir, "link1.stl"),
@@ -115,8 +115,8 @@ class RS007L(ormmb.ManipulatorBase):
     def _build_structure(cls):
         return prepare_mechstruct()
 
-    def __init__(self, base_rotmat=None, base_pos=None):
-        super().__init__(base_rotmat=base_rotmat, base_pos=base_pos)
+    def __init__(self, rotmat=None, pos=None):
+        super().__init__(rotmat=rotmat, pos=pos)
 
     def mount(self, *args, **kwargs):
         """turn off mount() to avoid confusion"""

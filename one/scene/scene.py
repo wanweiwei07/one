@@ -48,6 +48,7 @@ class Scene:
                 self._mecbas.remove(entity)
         self.dirty = True
 
+
     @property
     def sobjs(self):
         return tuple(self._sobjs)

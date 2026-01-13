@@ -39,7 +39,7 @@ class SceneObject:
     def attach_to(self, scene):
         scene.add(self)
 
-    def remove_from(self, scene):
+    def detach_from(self, scene):
         scene.remove(self)
 
     def add_visual(self, model, auto_make_collision=True):
@@ -50,7 +50,7 @@ class SceneObject:
     def add_collision(self, model):
         self.collisions.append(model)
 
-    def set_rotmat_pos(self, rotmat, pos):
+    def set_rotmat_pos(self, rotmat=None, pos=None):
         self.node.set_rotmat_pos(rotmat, pos)
 
     def clone(self, postfix="(clone)"):
@@ -77,6 +77,14 @@ class SceneObject:
             self._com = com.copy()
         if mass is not None:
             self._mass = mass
+
+    @property
+    def is_free(self):
+        return self._is_free
+
+    @is_free.setter
+    def is_free(self, flag):
+        self._is_free = flag
 
     @property
     def quat(self):
@@ -159,10 +167,6 @@ class SceneObject:
         if self._mass is None:
             return None
         return self._mass
-
-    @property
-    def is_free(self):
-        return self._is_free
 
     def _auto_make_collision_from_model(self, m):
         if self.collision_type is None or self.collisions:

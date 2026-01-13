@@ -17,8 +17,8 @@ for i in np.linspace(.5, 10.5, 50):
     tmp_bunny = bunny.clone()
     tmp_bunny.pos = (0, 0, i)
     tmp_bunny.attach_to(base.scene)
-plane_bottom = ossop.gen_plane()
-plane_bottom.attach_to(base.scene)
+plane_ground = ossop.gen_plane()
+plane_ground.attach_to(base.scene)
 wall_left = ossop.gen_box(name="wall", pos=(.0, .35, .2),
                           half_extents=(.355, .005, .2),
                           collision_type=ouc.CollisionType.AABB,
