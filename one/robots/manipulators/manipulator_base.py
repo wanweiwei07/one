@@ -63,5 +63,9 @@ class ManipulatorBase(orbmb.MechBase):
         return new
 
     @property
+    def ndof(self):
+        return self._chain.n_active_jnts
+
+    @property
     def wd_tcp_tf(self):
         return self.runtime_lnks[-1].tf @ self._tcp_tf
