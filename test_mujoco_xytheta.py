@@ -41,13 +41,8 @@ mjenv = mj.MJEnv(scene=base.scene,
                  require_ctrl=True)
 mjenv.save("scene.xml")
 
-
-def stop(dt, function):
-    base.stop(function)
-
-
 base.schedule_interval(mjenv.step)
-base.schedule_once(stop, 2, mjenv.step)
+base.stop_after(mjenv.step, 2)
 
 
 def control(dt, base, mjenv):

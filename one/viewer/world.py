@@ -69,8 +69,20 @@ class World(pyglet.window.Window):
     def schedule_once(self, function, delay=.01, *args, **kwargs):
         pyglet.clock.schedule_once(function, delay, *args, **kwargs)
 
+    def schedule_interval_after(self, function, delay, interval=.01, *args, **kwargs):
+        def _start_cb(dt):
+            pyglet.clock.schedule_interval(function, interval, *args, **kwargs)
+
+        pyglet.clock.schedule_once(_start_cb, delay)
+
     def stop(self, function):
         pyglet.clock.unschedule(function)
+
+    def stop_after(self, function, delay):
+        def _stop_cb(dt):
+            self.stop(function)
+
+        pyglet.clock.schedule_once(_stop_cb, delay)
 
     def run(self):
         pyglet.app.run()

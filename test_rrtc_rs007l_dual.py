@@ -1,8 +1,9 @@
 import numpy as np
+import one.physics.mj_env as opme
 from one import ouc, oum, ovw, ocm, ossop, ompsp, ompr, khi_rs007l
 
-base = ovw.World(cam_pos=(1.6, .3, .7), cam_lookat_pos=(0, 0, .45),
-                toggle_auto_cam_orbit=False)
+base = ovw.World(cam_pos=(2, .5, .7), cam_lookat_pos=(0, 0, .45),
+                 toggle_auto_cam_orbit=False)
 # world origin
 oframe = ossop.gen_frame().attach_to(base.scene)
 base_pos1 = np.array([0, 0.5, 0])
@@ -32,7 +33,6 @@ collider.append(robot2)
 collider.actors = [robot1, robot2]
 collider.compile()
 
-
 r1_jlmt_low = robot1.structure.compiled.jlmt_low_by_idx
 r1_jlmt_high = robot1.structure.compiled.jlmt_high_by_idx
 r2_jlmt_low = robot1.structure.compiled.jlmt_low_by_idx
@@ -42,29 +42,28 @@ jlmt_high = np.hstack([r1_jlmt_high, r2_jlmt_high])
 sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
                                            lmt_high=jlmt_high,
                                            collider=collider,
-                                           max_edge_step=np.pi/180)
+                                           max_edge_step=np.pi / 180)
 planner = ompr.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
 start = np.hstack([r1s, r2s])
 goal = np.hstack([r1g, r2g])
 state_list = planner.solve(start=start, goal=goal, verbose=True)
-print(state_list)
-robot1scp = robot1.clone()
-robot1scp.fk(qs=r1s)
-robot1scp.rgba = (1, 0, 0, 0.5)
-robot1scp.attach_to(base.scene)
-robot2scp = robot2.clone()
-robot2scp.fk(qs=r2s)
-robot2scp.rgba = (1, 0, 0, 0.5)
-robot2scp.attach_to(base.scene)
-robot1gcp = robot1.clone()
-robot1gcp.fk(qs=r1g)
-robot1gcp.rgba = (0, 0, 1, 0.5)
-robot1gcp.attach_to(base.scene)
-robot2gcp = robot2.clone()
-robot2gcp.fk(qs=r2g)
-robot2gcp.rgba = (0, 0, 1, 0.5)
-robot2gcp.attach_to(base.scene)
-counter = [0]
+# print(state_list)
+# robot1scp = robot1.clone()
+# robot1scp.fk(qs=r1s)
+# robot1scp.rgba = (1, 0, 0, 0.5)
+# robot1scp.attach_to(base.scene)
+# robot2scp = robot2.clone()
+# robot2scp.fk(qs=r2s)
+# robot2scp.rgba = (1, 0, 0, 0.5)
+# robot2scp.attach_to(base.scene)
+# robot1gcp = robot1.clone()
+# robot1gcp.fk(qs=r1g)
+# robot1gcp.rgba = (0, 0, 1, 0.5)
+# robot1gcp.attach_to(base.scene)
+# robot2gcp = robot2.clone()
+# robot2gcp.fk(qs=r2g)
+# robot2gcp.rgba = (0, 0, 1, 0.5)
+# robot2gcp.attach_to(base.scene)
 
 def update_pose(dt, counter, collider):
     if counter[0] < len(state_list):
@@ -76,5 +75,15 @@ def update_pose(dt, counter, collider):
     else:
         counter[0] = 0
 
+counter = [0]
 base.schedule_interval(update_pose, interval=0.1, counter=counter, collider=collider)
+delay = 6
+base.stop_after(update_pose, delay=delay)
+
+def start_mjenv(dt):
+    mjenv = opme.MJEnv(scene=base.scene)
+    base.schedule_interval(mjenv.step)
+
+base.schedule_once(start_mjenv, delay=delay + 0.01)
+
 base.run()
