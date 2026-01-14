@@ -17,6 +17,9 @@ class Link(osso.SceneObject):
         super().__init__(collision_type=collision_type,
                          is_free=is_free)
 
+    def _update_collision_group(self):
+        """override to use unique collision group"""
+        self._collision_group = ouc.CollisionGroup.ROBOT
 
 class Joint:
 
@@ -66,6 +69,7 @@ class MechStruct:
         # raw data
         self.lnks = []
         self.jnts = []
+        self.collision_ignores = set()   # {(lnkA, lnkB)}
         # compiled data
         self._compiled = None  # MechStructHelper
         # kinematic chain and solver cache
@@ -111,8 +115,19 @@ class MechStruct:
                     raise RuntimeError("Link not in RobotStructure")
         self.jnts.append(jnt)
 
+    def ignore_collision(self, a, b):
+        if a is b:
+            raise ValueError("Parameters a and b are the same")
+        self.collision_ignores.add((a, b))
+
+    def ignore_env_collision(self, lnk):
+        lnk.collision_affinity &= ~ouc.CollisionGroup.ENV
+
     def compile(self):
         self._compiled = FlatMechStructure(self)
+        # ignore collisions of connected links
+        for j in self.jnts:
+            self.ignore_collision(j.plnk, j.clnk)
 
     @property
     def n_jnts(self):

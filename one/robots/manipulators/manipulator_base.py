@@ -64,5 +64,4 @@ class ManipulatorBase(orbmb.MechBase):
 
     @property
     def wd_tcp_tf(self):
-        flange_lnk = self.runtime_lnks[-1]
-        return self.get_wd_lnk_tf(flange_lnk) @ self._tcp_tf
+        return self.runtime_lnks[-1].tf @ self._tcp_tf

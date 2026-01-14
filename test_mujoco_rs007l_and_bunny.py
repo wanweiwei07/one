@@ -53,6 +53,7 @@ wall_back.attach_to(base.scene)
 base_rotmat = oum.rotmat_from_euler(0, 0, -np.pi / 2)
 base_pos = np.array([0, 0.7, 0])
 robot1 = khi_rs007l.RS007L()
+# robot1.is_free=True
 robot1.attach_to(base.scene)
 robot1.set_rotmat_pos(rotmat=base_rotmat, pos=base_pos)
 robot1.toggle_render_collision = True

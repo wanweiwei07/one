@@ -18,7 +18,7 @@ class MJEnv:
             self.runtime, scene,
             sobj2bdy, rutl2bdy, mecj2jnt)
         # contact viz
-        # self.contact_viz = MjContactForceViz(scene, radius=0.2)
+        self.contact_viz = MjContactForceViz(scene)
         self.reset()
 
     def step(self, dt):
@@ -29,7 +29,7 @@ class MJEnv:
         self.runtime.step(n)
         self.sync.pull_body_pose()
         self.sync.pull_qpos()
-        # self.contact_viz.update_from_data(self.model, self.data)
+        self.contact_viz.update_from_data(self.model, self.data)
 
     def is_collided(self):
         self.runtime.enter_cd()

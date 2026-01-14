@@ -41,7 +41,7 @@ class MJSynchronizer:
         for (mecba, jidx), adr in self._qpos_map.items():
             mecba.qs[jidx] = data.qpos[adr]
         for mecba in self.scene.mecbas:
-            mecba.fk(update=True)
+            mecba.fk()
 
     def pull_body_pose(self):
         data = self.mj_runtime.data

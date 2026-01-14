@@ -42,7 +42,7 @@ class GripperMixin:
         """
         jaw_width = self.jaw_range[0] if jaw_width is None else jaw_width
         self.set_jaw_width(jaw_width)
-        parent_tf = self.get_wd_lnk_tf(self.runtime_root_lnk)
+        parent_tf = self.runtime_root_lnk.tf
         engage_tf = np.linalg.inv(parent_tf).dot(child.tf)
         self.mount(child, self.runtime_root_lnk, engage_tf)
 

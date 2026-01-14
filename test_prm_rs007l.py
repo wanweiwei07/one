@@ -7,7 +7,6 @@ builtins.base = base
 oframe = ossop.gen_frame()
 oframe.attach_to(base.scene)
 robot = khi_rs007l.RS007L()
-robot.is_free=True
 robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 

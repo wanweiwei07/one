@@ -10,6 +10,7 @@ class WorldNode:
         self.root_body = None
         self.sensors = []
         self.actuators = []
+        self.contact_excludes = []
         self._compiler = mjc.MJCFCompiler()
 
     def compile_mjcf(self):
@@ -97,6 +98,8 @@ class GeomNode:
         self.rgba = None
         self.mesh_ref = None
         self.friction = (2, 0.1, 0.01)
+        self.contype = None
+        self.conaffinity = None
 
 
 class ActuatorNode:

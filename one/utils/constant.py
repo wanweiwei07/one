@@ -174,6 +174,21 @@ class CollisionType:
     PLANE = 5
 
 
+class CollisionGroup:
+    ROBOT = 1 << 0  # 1
+    ENV = 1 << 1  # 2
+    OBJECT = 1 << 2  # 4
+    ALL = ROBOT | ENV | OBJECT
+
+
+class CollisionMatrix:
+    """Default collision permission table"""
+    DEFAULT = {
+        CollisionGroup.ROBOT:  CollisionGroup.ENV | CollisionGroup.OBJECT | CollisionGroup.ROBOT,
+        CollisionGroup.ENV:    CollisionGroup.ROBOT | CollisionGroup.OBJECT,
+        CollisionGroup.OBJECT: CollisionGroup.ROBOT | CollisionGroup.ENV | CollisionGroup.OBJECT,
+    }
+
 class DefaultPhy:
     INERTIA = np.eye(3, dtype=np.float32)
     COM = np.zeros(3, dtype=np.float32)

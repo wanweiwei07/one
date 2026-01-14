@@ -7,7 +7,7 @@ import one.robots.base.mech_structure as osrbms
 
 def prepare_mechstruct():
     structure = osrbms.MechStruct()
-    wd_lnk = osrbms.Link(is_free=False)
+    wd_lnk = osrbms.Link()
     dummy_xlnk = osrbms.Link()
     dummy_ylnk = osrbms.Link()
     body_lnk = osrbms.Link(collision_type=ouc.CollisionType.AABB)

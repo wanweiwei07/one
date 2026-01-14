@@ -30,6 +30,12 @@ class MJCFCompiler:
             act_el = ET.SubElement(mj, "actuator")
             for a in world.actuators:
                 self.compile_actuator(a, act_el)
+        if world.contact_excludes:
+            contact_el = ET.SubElement(mj, "contact")
+            for b1, b2 in world.contact_excludes:
+                ex = ET.SubElement(contact_el, "exclude")
+                ex.set("body1", b1.name)
+                ex.set("body2", b2.name)
         # compiler settings
         compiler = ET.SubElement(mj, "compiler")
         compiler.set("angle", "radian")
@@ -130,6 +136,10 @@ class MJCFCompiler:
         if g.friction is not None:
             mu, torsion, rolling = g.friction
             ge.set("friction", f"{mu} {torsion} {rolling}")
+        if g.contype is not None:
+            ge.set("contype", str(int(g.contype)))
+        if g.conaffinity is not None:
+            ge.set("conaffinity", str(int(g.conaffinity)))
 
     def compile_actuator(self, a, parent_el):
         ae = ET.SubElement(parent_el, a.atype)

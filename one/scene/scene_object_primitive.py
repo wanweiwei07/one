@@ -31,8 +31,10 @@ def gen_cylinder(spos=(0, 0, 0),
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    amc = False if collision_type is None else True
     o.add_visual(osrm.RenderModel(
-        geometry=geometry, rgb=rgb, alpha=alpha))
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -55,8 +57,10 @@ def gen_cone(spos=(0, 0, 0),
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    amc = False if collision_type is None else True
     o.add_visual(osrm.RenderModel(
-        geometry=geometry, rgb=rgb, alpha=alpha))
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -71,8 +75,10 @@ def gen_sphere(pos=(0, 0, 0),
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.pos = pos
+    amc = False if collision_type is None else True
     o.add_visual(osrm.RenderModel(
-        geometry=geometry, rgb=rgb, alpha=alpha))
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -87,8 +93,10 @@ def gen_icosphere(pos=(0, 0, 0),
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.pos = pos
+    amc = False if collision_type is None else True
     o.add_visual(osrm.RenderModel(
-        geometry=geometry, rgb=rgb, alpha=alpha))
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -104,8 +112,10 @@ def gen_box(pos=(0, 0, 0),
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    amc = False if collision_type is None else True
     o.add_visual(osrm.RenderModel(
-        geometry=geometry, rgb=rgb, alpha=alpha))
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -136,8 +146,10 @@ def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    amc = False if collision_type is None else True
     o.add_visual(osrm.RenderModel(
-        geometry=geometry, rgb=rgb, alpha=alpha))
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -165,29 +177,32 @@ def gen_frame(pos=np.zeros(3), rotmat=np.eye(3),
     o = osso.SceneObject(collision_type=collision_type,
                          is_free=is_free)
     o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    amc = False if collision_type is None else True
     # x-axis
     loc_rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, ouc.StandardAxis.X)
     o.add_visual(osrm.RenderModel(
         geometry=geometry, rotmat=loc_rotmat,
-        rgb=color_mat[:, 0], alpha=alpha))
+        rgb=color_mat[:, 0], alpha=alpha),
+        auto_make_collision=amc)
     # y-axis
     loc_rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, ouc.StandardAxis.Y)
     o.add_visual(osrm.RenderModel(
         geometry=geometry, rotmat=loc_rotmat,
-        rgb=color_mat[:, 1], alpha=alpha))
+        rgb=color_mat[:, 1], alpha=alpha),
+        auto_make_collision=amc)
     # z-axis
     o.add_visual(osrm.RenderModel(
         geometry=geometry, rotmat=np.eye(3, dtype=np.float32),
-        rgb=color_mat[:, 2], alpha=alpha))
+        rgb=color_mat[:, 2], alpha=alpha),
+        auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
 
 
-def gen_plane(name="ground", pos=(0, 0, 0),
+def gen_plane(pos=(0, 0, 0),
               normal=ouc.StandardAxis.Z,
               size=(100.0, 100.0),
               thickness=1e-3,
-              collision_type=ouc.CollisionType.PLANE,
               rgb=ouc.BasicColor.GRAY, alpha=1.0):
     pos = np.asarray(pos, np.float32)
     size = np.asarray(size, np.float32)
@@ -198,8 +213,9 @@ def gen_plane(name="ground", pos=(0, 0, 0),
     geometry = osgp.gen_box_geom(half_extents)
     rotmat = oum.rotmat_between_vecs(
         ouc.StandardAxis.Z, normal)
-    o = osso.SceneObject(collision_type=collision_type,
-                         is_free=False)
+    o = osso.SceneObject(
+        collision_type=ouc.CollisionType.PLANE,
+        is_free=False)
     o.set_rotmat_pos(rotmat=rotmat, pos=pos)
     o.add_visual(osrm.RenderModel(
         geometry=geometry, rgb=rgb, alpha=alpha))

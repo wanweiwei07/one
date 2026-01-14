@@ -28,13 +28,15 @@ class SceneObject:
         self.node = ossn.SceneNode()
         self.visuals = []
         self.collisions = []
-        self.collision_type = collision_type  # None means no auto collider generation
         self.toggle_render_collision = False
         # self.scene = None # TODO: do we need to track the affiliated scene?
         self._inrtmat = None
         self._com = None
         self._mass = None
         self._is_free = is_free
+        self._collision_type = collision_type  # None means no auto collider generation
+        self._update_collision_group()
+        self._collision_affinity_override = None
 
     def attach_to(self, scene):
         scene.add(self)
@@ -55,7 +57,7 @@ class SceneObject:
 
     def clone(self, postfix="(clone)"):
         """DOES NOT clone the affiliated scene."""
-        new = self.__class__(collision_type=self.collision_type,
+        new = self.__class__(collision_type=self._collision_type,
                              is_free=self.is_free)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
@@ -79,12 +81,27 @@ class SceneObject:
             self._mass = mass
 
     @property
+    def collision_group(self):
+        return self._collision_group
+
+    @property
+    def collision_affinity(self):
+        if self._collision_affinity_override is not None:
+            return int(self._collision_affinity_override)
+        return int(ouc.CollisionMatrix.DEFAULT[self._collision_group])
+
+    @collision_affinity.setter
+    def collision_affinity(self, mask):
+        self._collision_affinity_override = int(mask)
+
+    @property
     def is_free(self):
         return self._is_free
 
     @is_free.setter
     def is_free(self, flag):
         self._is_free = flag
+        self._update_collision_group()
 
     @property
     def quat(self):
@@ -169,25 +186,35 @@ class SceneObject:
         return self._mass
 
     def _auto_make_collision_from_model(self, m):
-        if self.collision_type is None or self.collisions:
+        if self._collision_type is None:
+            print("Auto collision generation skipped for collision_type None.")
             return
-        if self.collision_type == ouc.CollisionType.MESH:
+        # if self.collisions: TODO: this check seems unnecessary?
+        #     print("Auto collision generation skipped because collisions already exist.")
+        #     return
+        if self._collision_type == ouc.CollisionType.MESH:
             shape = osc.MeshCollisionShape(file_path=self.file_path,
                                            geometry=m.geometry,
                                            rotmat=m.rotmat, pos=m.pos)
-        elif self.collision_type == ouc.CollisionType.SPHERE:
+        elif self._collision_type == ouc.CollisionType.SPHERE:
             shape = osc.SphereCollisionShape.fit_from_geometry(
                 m.geometry, m.rotmat, m.pos)
-        elif self.collision_type == ouc.CollisionType.CAPSULE:
+        elif self._collision_type == ouc.CollisionType.CAPSULE:
             shape = osc.CapsuleCollisionShape.fit_from_geometry(
                 m.geometry, m.rotmat, m.pos)
-        elif self.collision_type == ouc.CollisionType.AABB:
+        elif self._collision_type == ouc.CollisionType.AABB:
             shape = osc.AABBCollisionShape.fit_from_geometry(
                 m.geometry, m.rotmat, m.pos)
-        elif self.collision_type == ouc.CollisionType.OBB:
+        elif self._collision_type == ouc.CollisionType.OBB:
             shape = osc.OBBCollisionShape.fit_from_geometry(
                 m.geometry, m.rotmat, m.pos)
-        elif self.collision_type == ouc.CollisionType.PLANE:
+        elif self._collision_type == ouc.CollisionType.PLANE:
             shape = osc.PlaneCollisionShape.fit_from_geometry(
                 m.geometry, m.rotmat, m.pos)
         self.add_collision(shape)
+
+    def _update_collision_group(self):
+        if self._is_free:
+            self._collision_group = ouc.CollisionGroup.OBJECT
+        else:
+            self._collision_group = ouc.CollisionGroup.ENV

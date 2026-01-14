@@ -1,6 +1,6 @@
 import numpy as np
 import one.utils.math as oum
-import one.utils.constant as const
+import one.utils.constant as ouc
 import one.scene.collision as sco
 import one.robots.base.mech_base as orbmb
 import one.physics.inertial as opi
@@ -23,7 +23,7 @@ class MJOneConverter:
         self._actuators = []  # list of ActuatorNode
         # mappings
         self._sobj2bdy = {}
-        self._rutl2jnt = {}  # use runtime lnk as key
+        self._rutl2bdy = {}  # use runtime lnk as key
         self._mecj2jnt = {}  # use (mecba, jidx) as key
         self._bdy_alias = {}
         # mounted children
@@ -33,7 +33,7 @@ class MJOneConverter:
         self._mesh_assets.clear()
         self._actuators.clear()
         self._sobj2bdy.clear()
-        self._rutl2jnt.clear()
+        self._rutl2bdy.clear()
         self._mecj2jnt.clear()
         self._bdy_alias.clear()
         self._mounted_children.clear()
@@ -63,7 +63,18 @@ class MJOneConverter:
         world.assets = list(self._mesh_assets.values())
         world.actuators = self._actuators
         self._finalize_alias_maps()
-        return world, self._sobj2bdy, self._rutl2jnt, self._mecj2jnt
+        # process collision ignores
+        for mecba in scene.mecbas:
+            struct = mecba.structure
+            for a, b in struct.collision_ignores:
+                alidx = struct.compiled.lidx_map[a]
+                blidx = struct.compiled.lidx_map[b]
+                rta = mecba.runtime_lnks[alidx]
+                rtb = mecba.runtime_lnks[blidx]
+                body_a = self._rutl2bdy[rta]
+                body_b = self._rutl2bdy[rtb]
+                world.contact_excludes.append((body_a, body_b))
+        return world, self._sobj2bdy, self._rutl2bdy, self._mecj2jnt
 
     @property
     def gravity(self):
@@ -89,12 +100,12 @@ class MJOneConverter:
             jnode = opmno.JointNode(opmna.alloc_name("jnt"))
             self._mecj2jnt[(mecba, jidx)] = jnode
             jtype = compiled.jtypes_by_idx[jidx]
-            if jtype == const.JntType.REVOLUTE:
+            if jtype == ouc.JntType.REVOLUTE:
                 jnode.jtype_str = "hinge"
                 act = opmno.ActuatorNode(opmna.alloc_name("ra"))
                 act.joint = jnode
                 self._actuators.append(act)
-            elif jtype == const.JntType.PRISMATIC:
+            elif jtype == ouc.JntType.PRISMATIC:
                 jnode.jtype_str = "slide"
                 act = opmno.ActuatorNode(opmna.alloc_name("sa"))
                 act.joint = jnode
@@ -111,7 +122,7 @@ class MJOneConverter:
                     "Free link cannot be child link of a joint")
             jotfmat = compiled.jotfmat_by_idx[jidx]
             body = self._cvt_sobj(lnk, ref_tf=jotfmat)
-            self._rutl2jnt[lnk] = body
+            self._rutl2bdy[lnk] = body
             # attach joint to parent body
             body.hosting_jnts.append(jnode)
             # recurse into grandchildren
@@ -126,7 +137,7 @@ class MJOneConverter:
         ridx = compiled.root_lnk_idx
         root_lnk = mecba.runtime_lnks[ridx]
         root = self._cvt_sobj(root_lnk, ref_tf=mecba.tf)
-        self._rutl2jnt[root_lnk] = root
+        self._rutl2bdy[root_lnk] = root
         for clidx in compiled.clnk_ids_of_lidx[ridx]:
             pjidx = compiled.pjidx_of_lidx[clidx]
             if pjidx >= 0:
@@ -159,8 +170,10 @@ class MJOneConverter:
                     mass=sobj.mass, com=com,
                     inertia=inrtmat)
             for c in sobj.collisions:
-                b.geoms.append(
-                    self._cvt_geom(c, opmna.alloc_name("geom")))
+                g = self._cvt_geom(
+                    c, opmna.alloc_name("geom"))
+                self._apply_collision_filter(sobj, g)
+                b.geoms.append(g)
         return b
 
     def _cvt_geom(self, c, name=None):
@@ -208,11 +221,15 @@ class MJOneConverter:
                 self._sobj2bdy[child] = child_root
             child_root.pos, child_root.quat = oum.pos_quat_from_tf(engage_tf)
             # find parent link body
-            plnk_bdy = self._rutl2jnt[m.plnk]
+            plnk_bdy = self._rutl2bdy[m.plnk]
             child_root.parent = plnk_bdy
             plnk_bdy.children.append(child_root)
             if isinstance(child, type(mecba)):
                 self._attach_mountings(child)
+
+    def _apply_collision_filter(self, sobj, geom):
+        geom.contype = int(sobj.collision_group)
+        geom.conaffinity = int(sobj.collision_affinity)
 
     def _merge_empty_geoms(self, body, is_root=False):
         for child in list(body.children):
@@ -246,8 +263,8 @@ class MJOneConverter:
     def _finalize_alias_maps(self):
         for k, b in list(self._sobj2bdy.items()):
             self._sobj2bdy[k] = self._resolve_body(b)
-        for k, b in list(self._rutl2jnt.items()):
-            self._rutl2jnt[k] = self._resolve_body(b)
+        for k, b in list(self._rutl2bdy.items()):
+            self._rutl2bdy[k] = self._resolve_body(b)
 
     def _resolve_body(self, b):
         while b in self._bdy_alias:
