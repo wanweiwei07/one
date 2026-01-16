@@ -2,7 +2,7 @@ import numpy as np
 import one.physics.mj_env as opme
 from one import ouc, oum, ovw, ocm, ossop, ompsp, ompr, khi_rs007l
 
-base = ovw.World(cam_pos=(2, .5, .7), cam_lookat_pos=(0, 0, .45),
+base = ovw.World(cam_pos=(2.2, .7, .7), cam_lookat_pos=(0, 0, .6),
                  toggle_auto_cam_orbit=False)
 # world origin
 oframe = ossop.gen_frame().attach_to(base.scene)
@@ -27,7 +27,7 @@ r1g = np.array([-1.3982087, -1.103838, 1.3426441, -1.7039007, 1.4606364, -2.2585
 r2s = np.array([-1.3217797, 2.0543678, 1.3168408, -1.3847662, 1.737289, 0.8488352], dtype=np.float32)
 r2g = np.array([-1.2636756, 0.7292364, -1.2745408, 1.4385052, 1.2928442, -5.83168], dtype=np.float32)
 
-collider = ocm.MjCollider()
+collider = ocm.MJCollider()
 collider.append(robot1)
 collider.append(robot2)
 collider.actors = [robot1, robot2]
@@ -77,7 +77,7 @@ def update_pose(dt, counter, collider):
 
 counter = [0]
 base.schedule_interval(update_pose, interval=0.1, counter=counter, collider=collider)
-delay = 6
+delay = 5.4
 base.stop_after(update_pose, delay=delay)
 
 def start_mjenv(dt):

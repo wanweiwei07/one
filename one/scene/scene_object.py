@@ -9,7 +9,8 @@ import one.scene.collision as osc
 class SceneObject:
 
     @classmethod
-    def from_file(cls, path, local_rotmat=None, local_pos=None,  # render model offset
+    def from_file(cls, path,
+                  local_rotmat=None, local_pos=None,  # render model offset
                   collision_type=None, is_free=False,
                   rgb=None, alpha=1.0):
         """only allows changing local pose of the visual model"""

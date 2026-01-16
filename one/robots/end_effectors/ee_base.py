@@ -11,6 +11,7 @@ class EndEffectorBase(orbmb.MechBase):
 
     def clone(self):
         new = super().clone()
+        new._tcp_tf = self._tcp_tf.copy()
         return new
 
     def set_tcp_rotmat_pos(self, rotmat=None, pos=None):
@@ -18,12 +19,12 @@ class EndEffectorBase(orbmb.MechBase):
         self._tcp_tf[:3, 3] = oum.ensure_pos(pos)
 
     @property
-    def tcp_tfmat(self):
+    def tcp_tf(self):
         return self._tcp_tf
 
-    @tcp_tfmat.setter
-    def tcp_tfmat(self, tfmat):
-        self._tcp_tf[:] = oum.ensure_tf(tfmat)
+    @tcp_tf.setter
+    def tcp_tf(self, value):
+        self._tcp_tf[:] = oum.ensure_tf(value)
 
 
 class GripperMixin:
@@ -54,6 +55,25 @@ class GripperMixin:
     def set_jaw_width(self, width):
         raise NotImplementedError
 
+    def grip_at(self, tgt_pos, tgt_rotmat, tgt_jaw_width):
+        """
+        Move TCP to target pose, set jaw width, return base tf.
+        :param tgt_pos: (3,)
+        :param tgt_rotmat: (3,3)
+        :param tgt_jaw_width: float
+        :return: base_tf (4,4)
+        """
+        if (tgt_jaw_width < self.jaw_range[0] or
+                tgt_jaw_width > self.jaw_range[1]):
+            raise ValueError(f"jaw_width {tgt_jaw_width}"
+                             f" out of range {self.jaw_range}")
+        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        base_tf = tgt_tf @ np.linalg.inv(self.tcp_tf)
+        self.set_rotmat_pos(base_tf[:3, :3], base_tf[:3, 3])
+        self.set_jaw_width(tgt_jaw_width)
+        return base_tf
+
     def _require_attr(self, name):
         if not hasattr(self, name):
             raise AttributeError(f"{type(self).__name__} must define {name}")
+

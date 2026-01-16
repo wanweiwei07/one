@@ -21,7 +21,7 @@ box3 = ossop.gen_box(half_extents=(.01, 1, .15), pos=(.3, 0.0, 1),
                     collision_type=ouc.CollisionType.AABB)
 box3.attach_to(base.scene)
 
-collider = ocm.MjCollider()
+collider = ocm.MJCollider()
 collider.append(robot)
 collider.append(box)
 collider.append(box2)

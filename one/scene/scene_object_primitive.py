@@ -220,3 +220,19 @@ def gen_plane(pos=(0, 0, 0),
     o.add_visual(osrm.RenderModel(
         geometry=geometry, rgb=rgb, alpha=alpha))
     return o
+
+
+def gen_custom(verts, faces, rgb=ouc.BasicColor.RED, alpha=1.0):
+    """
+    Build a SceneObject from user-specified vertices/faces.
+    verts: (N,3)
+    faces: (M,3)
+    """
+    verts = np.asarray(verts, np.float32)
+    faces = np.asarray(faces, np.uint32)
+    geometry = (verts, faces)
+    o = osso.SceneObject(collision_type=None, is_free=False)
+    o.add_visual(osrm.RenderModel(
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=False)
+    return o

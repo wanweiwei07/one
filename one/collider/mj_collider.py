@@ -2,7 +2,7 @@ import one.scene.scene as oss
 import one.physics.mj_env as opme
 
 
-class MjCollider:
+class MJCollider:
 
     def __init__(self):
         self.scene = oss.Scene()
@@ -13,8 +13,9 @@ class MjCollider:
     def append(self, entity):
         self.scene.add(entity)
 
-    def compile(self):
-        self._mjenv = opme.MJEnv(self.scene)
+    def compile(self, margin=0.0):
+        self._mjenv = opme.MJEnv(
+            self.scene, margin=margin)
 
     def is_collided(self, qs):
         if not self.actors:
@@ -26,7 +27,11 @@ class MjCollider:
                 raise RuntimeError(
                     "All MjCollider.actors must be"
                     " added to the scene!")
-            self._mjenv.sync.push_by_mecba(actor, qs[sl])
+            # free base sync (the func has no-op if not free)
+            self._mjenv.sync.push_by_mecba_pose(
+                actor, actor.quat, actor.pos)
+            # joint qpos sync
+            self._mjenv.sync.push_by_mecba_qpos(actor, qs[sl])
         return self._mjenv.is_collided()
 
     def get_slice(self, actor):

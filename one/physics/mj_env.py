@@ -5,14 +5,14 @@ from one.physics.mj_contact import MjContactForceViz
 
 
 class MJEnv:
-    def __init__(self, scene, require_ctrl=False):
-        self._cvter = MJOneConverter()
+    def __init__(self, scene, margin=0.0, require_ctrl=False):
+        self._cvter = MJOneConverter(margin)
         self._world, sobj2bdy, rutl2bdy, mecj2jnt = (
             self._cvter.convert(scene))
         if not require_ctrl:
             self._world.actuators = None
         self.xml_string = self._world.compile_mjcf()
-        print(self.xml_string)
+        # print(self.xml_string)
         self.runtime = MJRuntime(self.xml_string)
         self.sync = MJSynchronizer(
             self.runtime, scene,
@@ -27,8 +27,9 @@ class MJEnv:
         n = int(round(dt / h))
         # self.sync.push_qpos()
         self.runtime.step(n)
-        self.sync.pull_body_pose()
+        self.sync.pull_sobj_pose()
         self.sync.pull_qpos()
+        self.sync.pull_freeroot_pose()
         self.contact_viz.update_from_data(self.model, self.data)
 
     def is_collided(self):
@@ -39,7 +40,7 @@ class MJEnv:
     def reset(self):
         self.sync.push_qpos()
         self.runtime.forward()
-        self.sync.pull_body_pose()
+        self.sync.pull_sobj_pose()
 
     def get_timestep(self):
         return float(self.runtime.model.opt.timestep)

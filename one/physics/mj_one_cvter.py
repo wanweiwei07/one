@@ -10,13 +10,13 @@ import one.physics.mj_naming as opmna
 
 class MJOneConverter:
 
-    def __init__(self):
+    def __init__(self, margin=0.0):
         self._opt = opmno.OptionNode()
         self._opt.gravity = (0, 0, -9.81)
         self._opt.timestep = 0.002
         self._default = opmno.DefaultNode()
         # self._default.geom["friction"] = (1.0, 0.1, 0.1)
-        self._default.geom["margin"] = 0.007
+        self._default.geom["margin"] = margin
         self._default.geom["solref"] = (0.02, 1.0)
         self._default.geom["solimp"] = (0.9, 0.95, 0.002)
         self._mesh_assets = {}  # key = file_path, value = MeshAsset

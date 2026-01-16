@@ -185,6 +185,7 @@ class FlatMechStructure:
         self.active_jnt_ids_mask = np.ones(self.n_jnts, dtype=bool)
         self.active_jnt_ids_mask[self.jtypes_by_idx == ouc.JntType.FIXED] = False
         self.active_jnt_ids_mask[self.mmc_src_by_idx >= 0] = False
+        self.n_active_jnts = int(np.sum(self.active_jnt_ids_mask))
         # traversal order (O(n) FK)
         self.lnk_ids_traversal_order = self._build_traversal_order()
 

@@ -138,6 +138,10 @@ class MechBase:
         return new
 
     @property
+    def ndof(self):
+        return self._compiled.n_active_jnts
+
+    @property
     def runtime_root_lnk(self):
         ridx = self.structure.compiled.root_lnk_idx
         return self.runtime_lnks[ridx]
@@ -170,6 +174,10 @@ class MechBase:
     def rotmat(self, value):  # TODO: delay update
         self._rotmat[:] = oum.ensure_rotmat(value)
         self.fk()
+
+    @property
+    def quat(self):
+        return oum.quat_from_rotmat(self._rotmat)
 
     @property
     def pos(self):

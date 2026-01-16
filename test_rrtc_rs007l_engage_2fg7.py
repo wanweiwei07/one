@@ -33,7 +33,7 @@ box5.attach_to(base.scene)
 plane_ground = ossop.gen_plane()
 plane_ground.attach_to(base.scene)
 
-collider = ocm.MjCollider()
+collider = ocm.MJCollider()
 collider.append(robot)
 collider.append(box)
 collider.append(box2)

@@ -9,6 +9,7 @@ class MJSynchronizer:
         self._body_map = {}
         self._qpos_map = {}
         self._freebase_map = {}
+        self._freebase_qpos_adr = {}
         self._build_maps()
 
     def _build_maps(self):
@@ -22,6 +23,9 @@ class MJSynchronizer:
                 body = self.rutl2bdy[root_lnk]
                 bid = model.body(body.name).id
                 self._freebase_map[mecba] = bid
+                jid = model.body_jntadr[bid]
+                qadr = model.jnt_qposadr[jid]
+                self._freebase_qpos_adr[mecba] = qadr
         for (mecba, jidx), jnode in self.mecj2jnt.items():
             jid = self.mj_runtime.model.joint(jnode.name).id
             qadr = model.jnt_qposadr[jid]
@@ -34,24 +38,39 @@ class MJSynchronizer:
 
     def pull_qpos(self):
         data = self.mj_runtime.data
-        for mecba, bid in self._freebase_map.items():
-            rotmat = data.xmat[bid].reshape(3, 3)
-            pos = data.xpos[bid]
-            mecba.set_rotmat_pos(rotmat, pos)
         for (mecba, jidx), adr in self._qpos_map.items():
             mecba.qs[jidx] = data.qpos[adr]
         for mecba in self.scene.mecbas:
             mecba.fk()
 
-    def pull_body_pose(self):
+    def pull_freeroot_pose(self):
+        data = self.mj_runtime.data
+        for mecba, bid in self._freebase_map.items():
+            rotmat = data.xmat[bid].reshape(3, 3)
+            pos = data.xpos[bid]
+            mecba.set_rotmat_pos(rotmat, pos)
+
+    def pull_sobj_pose(self):
         data = self.mj_runtime.data
         for obj, bid in self._body_map.items():
             pos = data.xpos[bid]
             rot = data.xmat[bid].reshape(3, 3)
             obj.set_rotmat_pos(rot, pos)
 
-    def push_by_mecba(self, mecba, qs):
+    def push_by_mecba_qpos(self, mecba, qs):
         data = self.mj_runtime.data
         for jidx, q in enumerate(qs):
             qadr = self._qpos_map[(mecba, jidx)]
             data.qpos[qadr] = q
+
+    def push_by_mecba_pose(self, mecba, quat, pos):
+        """
+        Only for free base. Writes free joint qpos (pos + quat) then mj_forward.
+        """
+        if mecba not in self._freebase_qpos_adr:
+            return
+        qadr = self._freebase_qpos_adr[mecba]
+        data = self.mj_runtime.data
+        data.qpos[qadr:qadr + 3] = pos
+        qx, qy, qz, qw = quat
+        data.qpos[qadr + 3:qadr + 7] = [qw, qx, qy, qz]

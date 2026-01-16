@@ -16,7 +16,8 @@ def debug_contacts(mjenv):
         body2 = mujoco.mj_id2name(mjenv.model, mujoco.mjtObj.mjOBJ_BODY, b2)
         print(i, body1, "<->", body2, "dist=", c.dist)
 
-class MjContactViz:
+
+class MJContactViz:
     def __init__(self, scene, max_contacts=64, radius=0.01):
         self.scene = scene
         self.max_contacts = max_contacts
@@ -62,16 +63,16 @@ class MjContactForceViz:
 
     def _init_arrows(self):
         for _ in range(self.max_contacts):
-            a = ossop.gen_arrow(spos=np.zeros(3),
-                                epos=np.array([0.0, 0.0, self.base_length]),
-                                shaft_radius=ouc.ForceArrowSize.SHAFT_RADIUS,
-                                head_radius=ouc.ForceArrowSize.HEAD_RADIUS,
-                                head_length=ouc.ForceArrowSize.HEAD_LENGTH,
-                                segments=8,
-                                rgb=(1, 0, 0),
-                                alpha=ouc.ALPHA.SEMI,
-                                collision_type=None,
-                                is_fixed=True)
+            a = ossop.gen_arrow(
+                spos=np.zeros(3),
+                epos=np.array([0.0, 0.0, self.base_length]),
+                shaft_radius=ouc.ForceArrowSize.SHAFT_RADIUS,
+                head_radius=ouc.ForceArrowSize.HEAD_RADIUS,
+                head_length=ouc.ForceArrowSize.HEAD_LENGTH,
+                segments=8, rgb=(1, 0, 0),
+                alpha=ouc.ALPHA.SEMI,
+                collision_type=None,
+                is_fixed=True)
             a.attach_to(self.scene)
             self._arrows.append(a)
 
@@ -87,7 +88,7 @@ class MjContactForceViz:
             cp = mj_data.contact[i]
             spos = cp.pos
             mujoco.mj_contactForce(mj_model, mj_data, i, force)
-            fn_vec =  -cp.frame.reshape(3,3) @ force[:3]
+            fn_vec = -cp.frame.reshape(3, 3) @ force[:3]
             fn = np.linalg.norm(fn_vec)
             if fn < 1e-10:
                 continue

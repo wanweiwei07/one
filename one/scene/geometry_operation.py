@@ -1,6 +1,7 @@
 import numpy as np
 import one.utils.math as oum
 
+
 def revolve(profile, segments=36):
     """
     Revolve a 2D profile (r,z) around Z-axis to produce a mesh
@@ -64,6 +65,7 @@ def revolve(profile, segments=36):
     faces = np.concatenate(faces_list, axis=0)
     return (verts, faces)
 
+
 def subdivide_once(verts, faces):
     edges = np.sort(np.stack([faces[:, [0, 1]],
                               faces[:, [1, 2]],
@@ -82,29 +84,103 @@ def subdivide_once(verts, faces):
     new_verts /= np.linalg.norm(new_verts, axis=1, keepdims=True)
     return new_verts, new_faces
 
+
 def icosahedron():
     """Generate vertices and faces of a unit icosahedron."""
     t = (1 + np.sqrt(5)) / 2
     verts = np.array([
-        [-1,  t,  0],
-        [ 1,  t,  0],
-        [-1, -t,  0],
-        [ 1, -t,  0],
-        [ 0, -1,  t],
-        [ 0,  1,  t],
-        [ 0, -1, -t],
-        [ 0,  1, -t],
-        [ t,  0, -1],
-        [ t,  0,  1],
-        [-t,  0, -1],
-        [-t,  0,  1],
+        [-1, t, 0],
+        [1, t, 0],
+        [-1, -t, 0],
+        [1, -t, 0],
+        [0, -1, t],
+        [0, 1, t],
+        [0, -1, -t],
+        [0, 1, -t],
+        [t, 0, -1],
+        [t, 0, 1],
+        [-t, 0, -1],
+        [-t, 0, 1],
     ], dtype=np.float32)
     faces = np.array([
-        [0,11,5],  [0,5,1],   [0,1,7],   [0,7,10],  [0,10,11],
-        [1,5,9],   [5,11,4],  [11,10,2], [10,7,6],  [7,1,8],
-        [3,9,4],   [3,4,2],   [3,2,6],   [3,6,8],   [3,8,9],
-        [4,9,5],   [2,4,11],  [6,2,10],  [8,6,7],   [9,8,1]
+        [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+        [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+        [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+        [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
     ], dtype=np.uint32)
     # normalize (unit sphere)
     verts /= np.linalg.norm(verts, axis=1, keepdims=True)
     return verts, faces
+
+
+def sample_surface(vertices, faces, n_samples):
+    v0 = vertices[faces[:, 0]]
+    v1 = vertices[faces[:, 1]]
+    v2 = vertices[faces[:, 2]]
+    areas = 0.5 * np.linalg.norm(np.cross(v1 - v0, v2 - v0), axis=1)
+    prob = areas / np.sum(areas)
+    face_ids = np.random.choice(len(faces), size=n_samples, p=prob)
+    r1 = np.sqrt(np.random.rand(n_samples))
+    r2 = np.random.rand(n_samples)
+    a = 1 - r1
+    b = r1 * (1 - r2)
+    c = r1 * r2
+    pts = a[:, None] * v0[face_ids] + b[:, None] * v1[face_ids] + c[:, None] * v2[face_ids]
+    nrms = np.cross(v1[face_ids] - v0[face_ids],
+                    v2[face_ids] - v0[face_ids])
+    nrms /= np.linalg.norm(nrms, axis=1, keepdims=True)
+    return pts, nrms, face_ids
+
+
+def ray_shoot_flat(orig, dir, verts, faces,
+                   face_normals, eps=oum.eps):
+    v0 = verts[faces[:, 0]]
+    v1 = verts[faces[:, 1]]
+    v2 = verts[faces[:, 2]]
+    # AABB mask
+    tri_min = np.minimum(np.minimum(v0, v1), v2)
+    tri_max = np.maximum(np.maximum(v0, v1), v2)
+    inv_dir = 1.0 / np.where(dir == 0, oum.eps, dir)
+    t1 = (tri_min - orig) * inv_dir
+    t2 = (tri_max - orig) * inv_dir
+    tmin = np.max(np.minimum(t1, t2), axis=1)
+    tmax = np.min(np.maximum(t1, t2), axis=1)
+    mask = tmax >= np.maximum(tmin, 0.0)
+    if not np.any(mask):
+        return None
+    ids = np.where(mask)[0]
+    v0 = v0[ids]
+    v1 = v1[ids]
+    v2 = v2[ids]
+    # Moller-Trumbore
+    e1 = v1 - v0
+    e2 = v2 - v0
+    h = np.cross(dir, e2)
+    a = np.sum(e1 * h, axis=1)
+    m = np.abs(a) > eps
+    f = np.zeros_like(a)
+    f[m] = 1.0 / a[m]
+    s = orig - v0
+    u = f * np.sum(s * h, axis=1)
+    m &= (u >= 0.0) & (u <= 1.0)
+    q = np.cross(s, e1)
+    v = f * np.sum(dir * q, axis=1)
+    m &= (v >= 0.0) & (u + v <= 1.0)
+    # t is the ray parameter: P = orig + t * dir
+    t = f * np.sum(e2 * q, axis=1)
+    m &= (t > eps)
+    hit_ids = ids[m]
+    if len(hit_ids) == 0:
+        return None
+    hit_t = t[m]
+    hit_pos = orig + hit_t[:, None] * dir
+    hit_n = face_normals[hit_ids]
+    order = np.argsort(hit_t)
+    return (hit_pos[order], hit_n[order],
+            hit_t[order], hit_ids[order])
+
+
+def ray_shoot(orig, dir, geometry):
+    return ray_shoot_flat(
+        orig, dir, geometry.verts, geometry.faces,
+        geometry.face_normals)
