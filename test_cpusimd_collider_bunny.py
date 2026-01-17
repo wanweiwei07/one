@@ -15,8 +15,12 @@ bunny2 = osso.SceneObject.from_file(
     collision_type=ouc.CollisionType.MESH)
 bunny2.alpha = .3
 bunny1.set_rotmat_pos(rotmat=np.eye(3), pos=np.array([0.0, 0.0, 0.0]))
-bunny2.set_rotmat_pos(rotmat=np.eye(3), pos=np.array([0.02, 0.0, 0.0]))
+bunny2.set_rotmat_pos(rotmat=np.eye(3), pos=np.array([0.03, 0.05, 0.0]))
+import time
+tic=time.time()
 hit_points = cpu_simd.is_sobj_collided(bunny1, bunny2)
+toc = time.time()
+print(f"Collision check time: {toc - tic} seconds")
 bunny1.attach_to(base.scene)
 bunny2.attach_to(base.scene)
 if hit_points is not None:

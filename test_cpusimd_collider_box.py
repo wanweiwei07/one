@@ -16,7 +16,11 @@ box1.set_rotmat_pos(rotmat=oum.rotmat_from_axangle(
     ouc.StandardAxis.X, oum.pi / 4), pos=np.array([0.0, 0.0, 0.01]))
 box2.set_rotmat_pos(rotmat=np.eye(3), pos=np.array([0.02, 0.0, 0.0]))
 
+import time
+tic=time.time()
 hit_points = cpu_simd.is_sobj_collided(box1, box2)
+toc = time.time()
+print(f"Collision check time: {toc - tic} seconds")
 
 base = ovw.World(cam_pos=(.5, .5, .5), cam_lookat_pos=(0, 0, .1),
                  toggle_auto_cam_orbit=True)
