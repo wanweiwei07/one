@@ -182,5 +182,5 @@ def ray_shoot_flat(orig, dir, verts, faces,
 
 def ray_shoot(orig, dir, geometry):
     return ray_shoot_flat(
-        orig, dir, geometry.verts, geometry.faces,
-        geometry.face_normals)
+        orig, dir, geometry._vs, geometry._fs,
+        geometry._fns)

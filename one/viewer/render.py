@@ -24,10 +24,10 @@ class Render:
         if scene.dirty or self._groups_cache is None:
             self._groups_cache = self._build_shader_groups(scene)
             scene.dirty = False
-        solid_group = self._groups_cache["mesh_solid"]
+        opaque_group = self._groups_cache["mesh_solid"]
         transparent_group = self._groups_cache["mesh_transparent"]
         pcd_group = self._groups_cache["pcd"]
-        self._draw_solid_mesh_with_outline(solid_group, cam_view, cam_proj)
+        self._draw_outlined_mesh(opaque_group, cam_view, cam_proj)
         self._draw_transparent_mesh(transparent_group, cam_view, cam_proj)
         self._draw_pcd(pcd_group, cam_view, cam_proj)
 
@@ -76,8 +76,8 @@ class Render:
                     target[device_buffer.vao].append((model, sobj.node))
         return groups
 
-    def _draw_solid_mesh_with_outline(self, solid_groups, cam_view, cam_proj):
-        if not solid_groups:
+    def _draw_outlined_mesh(self, opaque_group, cam_view, cam_proj):
+        if not opaque_group:
             return
         # normal pass
         gl.glEnable(gl.GL_STENCIL_TEST)
@@ -90,14 +90,14 @@ class Render:
         self.mesh_shader.program["u_view"] = cam_view
         self.mesh_shader.program["u_proj"] = cam_proj
         self.mesh_shader.program["u_view_pos"] = self.camera.pos
-        for instance_list in solid_groups.values():
-            tf = np.empty((len(instance_list), 4, 4), np.float32)
-            rgba = np.empty((len(instance_list), 4), np.float32)
+        for instance_list in opaque_group.values():
+            tf_arr = np.empty((len(instance_list), 4, 4), np.float32)
+            rgba_arr = np.empty((len(instance_list), 4), np.float32)
             for i, (model, node) in enumerate(instance_list):
-                tf[i] = (node.wd_tf @ model.tf).T
-                rgba[i] = (*model.rgb, model.alpha)
+                tf_arr[i] = (node.wd_tf @ model.tf).T
+                rgba_arr[i] = (*model.rgb, model.alpha)
             device = instance_list[0][0].geometry.get_device_buffer()
-            device.update_instances(tf, rgba)
+            device.update_instances(tf_arr, rgba_arr)
             device.draw_instanced()
         # outline pass
         gl.glEnable(gl.GL_STENCIL_TEST)
@@ -108,12 +108,12 @@ class Render:
         self.outline_shader.use()
         self.outline_shader.program["u_view"] = cam_view
         self.outline_shader.program["u_proj"] = cam_proj
-        for instance_list in solid_groups.values():
-            tf = np.empty((len(instance_list), 4, 4), np.float32)
+        for instance_list in opaque_group.values():
+            tf_arr = np.empty((len(instance_list), 4, 4), np.float32)
             for i, (model, node) in enumerate(instance_list):
-                tf[i] = (node.wd_tf @ model.tf).T
+                tf_arr[i] = (node.wd_tf @ model.tf).T
             device = instance_list[0][0].geometry.get_device_buffer()
-            device.update_instances(tf)
+            device.update_instances(tf_arr)
             device.draw_instanced()
         # restore state
         gl.glStencilMask(0xFF)
@@ -179,7 +179,7 @@ class Render:
     def _pick_shader(self, model):
         if model.shader is not None:
             return model.shader
-        if model.geometry.faces is not None:
+        if model.geometry._fs is not None:
             return self.mesh_shader
         else:
             return self.pcd_shader

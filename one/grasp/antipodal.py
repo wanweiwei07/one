@@ -1,6 +1,7 @@
 import numpy as np
 import one.utils.math as oum
 import one.scene.geometry_operation as osgop
+from one.collider import collider
 
 
 def _triangle_areas(verts, faces):
@@ -55,11 +56,11 @@ def _merge_collision_meshes(scene_obj):
     offset = 0
     for col in scene_obj.collisions:
         geom = col.geometry
-        if geom.faces is None:
+        if geom.fs is None:
             continue
-        verts = geom.verts
-        faces = geom.faces
-        fn = geom.face_normals
+        verts = geom.vs
+        faces = geom.fs
+        fn = geom._fns
         rot = col.rotmat
         pos = col.pos
         verts_s = (rot @ verts.T).T + pos
@@ -138,7 +139,8 @@ def _antipodal_candidates(
     v2 = verts[faces[:, 2]]
     origins = pts
     directions = -nrms
-    hit_t, hit_id = _ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=float(oum.eps))
+    hit_t, hit_id = _ray_triangles_batch_far(
+        origins, directions, v0, v1, v2, eps=float(oum.eps))
     valid = hit_id >= 0
     if not np.any(valid):
         return None
@@ -161,24 +163,35 @@ def _antipodal_candidates(
     return center, jaw_width, n_all, nq_all, cos_vals, normal_cos_th, roll_step
 
 
-def antipodal_iter(scene_obj, gripper, mj_collider,
+def antipodal_iter(scene_obj, gripper, obstacles=None,
                    density=0.02, normal_tol_deg=20,
                    roll_step_deg=30, clearance=0.002,
                    score_weights=(0.7, 0.3)):
     """
     Generator: yields (pose_tf, jaw_width, score, collided)
-    Also collects non-colliding grasps and returns them on StopIteration.
+    :param scene_obj: target object to grasp
+    :param gripper: gripper instance
+    :param obstacles: list of scene objects to check collision against (default: [scene_obj])
+    :param density: surface sampling density
+    :param normal_tol_deg: normal tolerance in degrees
+    :param roll_step_deg: roll angle step in degrees
+    :param clearance: additional clearance for jaw width
+    :param score_weights: (normal_align_weight, jaw_close_weight)
+    :return: yields (pose_tf, jaw_width, score, collided)
     """
+    if obstacles is None:
+        obstacles = [scene_obj]
     cand = _antipodal_candidates(
-        scene_obj, density, normal_tol_deg,
-        roll_step_deg, clearance)
+        scene_obj, density, normal_tol_deg, roll_step_deg, clearance)
     if cand is None:
         return []
     center, jaw_width, n_all, nq_all, cos_vals, normal_cos_th, roll_step = cand
     jaw_min, jaw_max = gripper.jaw_range
     jaw_mid = 0.5 * (jaw_min + jaw_max)
     jaw_span = jaw_max - jaw_min + oum.eps
-    mask = (cos_vals >= normal_cos_th) & (jaw_width >= jaw_min) & (jaw_width <= jaw_max)
+    mask = ((cos_vals >= normal_cos_th) &
+            (jaw_width >= jaw_min) &
+            (jaw_width <= jaw_max))
     if not np.any(mask):
         return []
     center_sel = center[mask]
@@ -186,10 +199,10 @@ def antipodal_iter(scene_obj, gripper, mj_collider,
     n_sel = n_all[mask]
     nq_sel = nq_all[mask]
     ray_dirs = -n_sel
-    rot_base = build_grasp_rotmat_batch(ray_dirs)  # (N,3,3)
+    rot_base = build_grasp_rotmat_batch(ray_dirs)
     angles = np.arange(0.0, 2 * np.pi, roll_step)
-    roll_rots = _rotmat_about_axis_batch_vec(rot_base[:, :, 1], angles)  # (N,K,3,3)
-    rot_all = roll_rots @ rot_base[:, None, :, :]  # (N,K,3,3)
+    roll_rots = _rotmat_about_axis_batch_vec(rot_base[:, :, 1], angles)
+    rot_all = roll_rots @ rot_base[:, None, :, :]
     pose_tf = np.tile(np.eye(4, dtype=np.float32),
                       (rot_all.shape[0], rot_all.shape[1], 1, 1))
     pose_tf[:, :, :3, :3] = rot_all
@@ -197,8 +210,7 @@ def antipodal_iter(scene_obj, gripper, mj_collider,
     pose_all = pose_tf.reshape(-1, 4, 4)
     jaw_all = np.repeat(jaw_sel, len(angles))
     normal_align = (1.0 + np.einsum("ij,ij->i", n_sel, -nq_sel) /
-                    (np.linalg.norm(n_sel, axis=1) *
-                     np.linalg.norm(nq_sel, axis=1) + oum.eps)) * 0.5
+                    (np.linalg.norm(n_sel, axis=1) * np.linalg.norm(nq_sel, axis=1) + oum.eps)) * 0.5
     jaw_close = 1.0 - np.abs(jaw_sel - jaw_mid) / jaw_span
     score = score_weights[0] * normal_align + score_weights[1] * jaw_close
     score_all = np.repeat(score, len(angles))
@@ -208,18 +220,35 @@ def antipodal_iter(scene_obj, gripper, mj_collider,
     score_all = score_all[order]
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
         gripper.grip_at(pose[:3, 3], pose[:3, :3], jw)
-        collided = mj_collider.is_collided(gripper.qs)
+        collided = False
+        for obstacle in obstacles:
+            for lnk in gripper.runtime_lnks:
+                if collider.is_collided(lnk, obstacle) is not None:
+                    collided = True
+                    break
         yield pose, jw, float(sc), collided
 
 
-def antipodal(scene_obj, gripper, mj_collider,
+def antipodal(scene_obj, gripper, obstacles=None,
               density=0.02, normal_tol_deg=20,
               roll_step_deg=30, clearance=0.002,
               max_grasps=50, score_weights=(0.7, 0.3)):
-    """  Collects non-colliding grasps only.   """
+    """
+    Collects non-colliding grasps only.
+    :param scene_obj: target object to grasp
+    :param gripper: gripper instance
+    :param obstacles: list of scene objects to check collision against (default: [scene_obj])
+    :param density: surface sampling density
+    :param normal_tol_deg: normal tolerance in degrees
+    :param roll_step_deg: roll angle step in degrees
+    :param clearance: additional clearance for jaw width
+    :param max_grasps: maximum number of grasps to return
+    :param score_weights: (normal_align_weight, jaw_close_weight)
+    :return: list of (pose_tf, jaw_width, score)
+    """
     results = []
     for pose, jw, sc, collided in antipodal_iter(
-            scene_obj, gripper, mj_collider,
+            scene_obj, gripper, obstacles,
             density, normal_tol_deg, roll_step_deg,
             clearance, score_weights):
         if not collided:

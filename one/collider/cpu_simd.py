@@ -18,10 +18,8 @@ def aabb_intersect(min_a, max_a, min_b, max_b):
 
 def compute_triangle_planes(tris):
     """
-    tris: (N,3,3)
-    return:
-        normals: (N,3)
-        offsets: (N,)
+    :param tris: (N,3,3)
+    :return: normals: (N,3), offsets: (N,)
     """
     edge1 = tris[:, 1] - tris[:, 0]
     edge2 = tris[:, 2] - tris[:, 0]
@@ -33,34 +31,27 @@ def compute_triangle_planes(tris):
 def tripair_planeprojection_filter(tris_a, tris_b, eps=1e-4):
     """
     Find first intersecting triangle pair.
-    tris_a, tris_b: (N,3,3)
-    return: (hit_found, (ia, ib)) or (False, None)
+    :param tris_a, tris_b: (N,3,3)
+    :return: (hit_found, (ia, ib)) or (False, None)
     """
-    # plane tests
     normals_a, offsets_a = compute_triangle_planes(tris_a)
     normals_b, offsets_b = compute_triangle_planes(tris_b)
-    dist_to_plane_a = (
-            np.einsum("nij,nj->ni", tris_b, normals_a) +
-            offsets_a[:, None])
-    dist_to_plane_b = (
-            np.einsum("nij,nj->ni", tris_a, normals_b) +
-            offsets_b[:, None])
-    separated_by_a = (
-            (dist_to_plane_a > eps).all(axis=1) |
-            (dist_to_plane_a < -eps).all(axis=1))
-    separated_by_b = (
-            (dist_to_plane_b > eps).all(axis=1) |
-            (dist_to_plane_b < -eps).all(axis=1))
+    dist_to_plane_a = (np.einsum("nij,nj->ni", tris_b, normals_a) +
+                       offsets_a[:, None])
+    dist_to_plane_b = (np.einsum("nij,nj->ni", tris_a, normals_b) +
+                       offsets_b[:, None])
+    separated_by_a = ((dist_to_plane_a > eps).all(axis=1) |
+                      (dist_to_plane_a < -eps).all(axis=1))
+    separated_by_b = ((dist_to_plane_b > eps).all(axis=1) |
+                      (dist_to_plane_b < -eps).all(axis=1))
     candidate_mask = ~(separated_by_a | separated_by_b)
     if not np.any(candidate_mask):
         return False, None
-    # filter candidates
     idx = np.where(candidate_mask)[0]
     tris_a = tris_a[idx]
     tris_b = tris_b[idx]
     normals_a = normals_a[idx]
     normals_b = normals_b[idx]
-    # intersection direction tests
     intersection_dirs = np.cross(normals_a, normals_b)
     dir_norms = np.linalg.norm(intersection_dirs, axis=1)
     non_coplanar = dir_norms > eps
@@ -80,7 +71,6 @@ def tripair_planeprojection_filter(tris_a, tris_b, eps=1e-4):
 
 
 def tripair_fine_filter(tris_a, tris_b, eps=1e-9):
-    # tris_a, tris_b: (N,3,3)
     nA = np.cross(tris_a[:, 1] - tris_a[:, 0], tris_a[:, 2] - tris_a[:, 0])
     nB = np.cross(tris_b[:, 1] - tris_b[:, 0], tris_b[:, 2] - tris_b[:, 0])
     nA /= (np.linalg.norm(nA, axis=1, keepdims=True) + eps)
@@ -90,7 +80,6 @@ def tripair_fine_filter(tris_a, tris_b, eps=1e-9):
     dir_vec = np.cross(nA, nB)
     dir_norm = np.linalg.norm(dir_vec, axis=1)
     valid = dir_norm >= 1e-4
-    # p0 shape (N,3)
     p0 = np.cross((dB[:, None] * nA - dA[:, None] * nB),
                   dir_vec) / (dir_norm[:, None] ** 2 + eps)
     dir_vec = dir_vec / (dir_norm[:, None] + eps)
@@ -100,38 +89,46 @@ def tripair_fine_filter(tris_a, tris_b, eps=1e-9):
     t1 = np.minimum(proj_a.max(axis=1), proj_b.max(axis=1))
     valid &= (t0 < t1)
     points = p0 + dir_vec * ((t0 + t1) * 0.5)[:, None]
-    # TODO: check if points are within both triangles
     inside_a = _point_in_tri_batch(points, tris_a)
     inside_b = _point_in_tri_batch(points, tris_b)
     valid &= inside_a & inside_b
     return points, valid
 
 
-def is_sobj_collided(sobj_a, sobj_b, eps=1e-9):
-    merged_a = _merge_collisions(sobj_a)
-    merged_b = _merge_collisions(sobj_b)
-    if merged_a is None or merged_b is None:
+def detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-9):
+    """
+    detect collision between two collision shapes using CPU
+    :param col_a, col_b: CollisionShape instances
+    :param tf_a, tf_b: (4,4) world transform matrices
+    :param eps: numerical tolerance (default 1e-9)
+    :return: (K,3) collision points or None
+    """
+    geom_a = col_a.geometry
+    geom_b = col_b.geometry
+    if geom_a is None or geom_b is None:
         return None
-    verts_a, faces_a = merged_a
-    verts_b, faces_b = merged_b
-    tris_a = verts_a[faces_a]
-    tris_b = verts_b[faces_b]
-    # mesh AABB early-out
+    if geom_a.fs is None or geom_b.fs is None:
+        return None
+    rotmat_a = tf_a[:3, :3]
+    pos_a = tf_a[:3, 3]
+    verts_a = (rotmat_a @ geom_a._vs.T).T + pos_a
+    rotmat_b = tf_b[:3, :3]
+    pos_b = tf_b[:3, 3]
+    verts_b = (rotmat_b @ geom_b._vs.T).T + pos_b
+    tris_a = verts_a[geom_a.fs]
+    tris_b = verts_b[geom_b.fs]
     min_a = tris_a.min(axis=(0, 1))
     max_a = tris_a.max(axis=(0, 1))
     min_b = tris_b.min(axis=(0, 1))
     max_b = tris_b.max(axis=(0, 1))
     if not aabb_intersect(min_a, max_a, min_b, max_b):
         return None
-    # tri AABB overlap pairs
     tri_min_a = tris_a.min(axis=1)
     tri_max_a = tris_a.max(axis=1)
     tri_min_b = tris_b.min(axis=1)
     tri_max_b = tris_b.max(axis=1)
-    overlap_mask = (
-            (tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
-            (tri_max_a[:, None, :] >= tri_min_b[None, :, :])
-    ).all(axis=-1)
+    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
+                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
     pair_indices = np.argwhere(overlap_mask)
     if len(pair_indices) == 0:
         return None
@@ -144,31 +141,6 @@ def is_sobj_collided(sobj_a, sobj_b, eps=1e-9):
     if not np.any(valid):
         return None
     return points[valid]
-
-
-def _merge_collisions(sobj):
-    verts_all = []
-    faces_all = []
-    offset = 0
-    for col in sobj.collisions:
-        geom = col.geometry
-        if geom is None or geom.faces is None:
-            continue
-        verts = geom.verts
-        faces = geom.faces
-        # world transform: sobj.node.wd_tf @ col._tfmat
-        world_tf = sobj.node.wd_tf @ col._tf
-        R = world_tf[:3, :3]
-        t = world_tf[:3, 3]
-        verts_w = (R @ verts.T).T + t
-        verts_all.append(verts_w)
-        faces_all.append(faces + offset)
-        offset += verts.shape[0]
-    if not verts_all:
-        return None
-    verts_all = np.vstack(verts_all)
-    faces_all = np.vstack(faces_all)
-    return verts_all, faces_all
 
 
 def _point_in_tri_batch(pts, tris, eps=1e-9):

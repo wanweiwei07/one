@@ -31,7 +31,7 @@ python test_<name>.py
 
 # Examples:
 python test_2fg7.py
-python test_cpusimd_collider_bunny.py
+python test_collider_bunny.py
 python test_rrtc_rs007l.py
 python test_mujoco_bunny.py
 ```

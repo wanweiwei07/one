@@ -30,9 +30,9 @@ def ray_shoot_scene_object(scene_obj, orig, direction):
         if isinstance(c, osc.MeshCollisionShape):
             res = osgop.ray_shoot_flat(
                 orig_l, dir_l,
-                c.geometry.verts,
-                c.geometry.faces,
-                c.geometry.face_normals)
+                c.geometry._vs,
+                c.geometry._fs,
+                c.geometry._fns)
             if res is None:
                 continue
             hit_pos, hit_n, hit_t, hit_fid = res

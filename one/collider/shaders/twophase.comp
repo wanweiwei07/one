@@ -1,0 +1,315 @@
+#version 430 core
+
+// Unified collision detection compute shader
+// Combines broad phase (AABB filtering) and narrow phase (precise intersection)
+// into a single pass for optimal performance.
+//
+// Each thread tests one triangle pair:
+// 1. Fast AABB test (registers only, 99%+ early exit)
+// 2. Precise Möller intersection test (only for AABB hits)
+// 3. Direct output to collision points buffer
+
+layout(local_size_x = 256) in;
+
+// SSBO Binding 0: Object A vertices (interleaved: pos + normal)
+// Format: [x, y, z, nx, ny, nz, x, y, z, nx, ny, nz, ...]
+layout(std430, binding = 0) readonly buffer VertexBufferA {
+    float verticesA[];
+};
+
+// SSBO Binding 1: Object A face indices
+// Format: [i0, i1, i2, i0, i1, i2, ...]
+layout(std430, binding = 1) readonly buffer IndexBufferA {
+    uint indicesA[];
+};
+
+// SSBO Binding 2: Object B vertices (interleaved)
+layout(std430, binding = 2) readonly buffer VertexBufferB {
+    float verticesB[];
+};
+
+// SSBO Binding 3: Object B face indices
+layout(std430, binding = 3) readonly buffer IndexBufferB {
+    uint indicesB[];
+};
+
+// SSBO Binding 4: Output collision points (xyz + validity flag in w)
+layout(std430, binding = 4) writeonly buffer CollisionPoints {
+    vec4 collisionPoints[];
+};
+
+// SSBO Binding 5: Atomic counter for collision points
+layout(std430, binding = 5) coherent buffer Counter {
+    uint pointCount;
+};
+
+// Uniforms
+uniform mat4 u_transformA;      // World transform for object A
+uniform mat4 u_transformB;      // World transform for object B
+uniform uint u_numTrianglesA;   // Number of triangles in object A
+uniform uint u_numTrianglesB;   // Number of triangles in object B
+uniform float u_eps;            // Epsilon for numerical stability
+uniform uint u_maxPoints;       // Maximum collision points buffer capacity
+
+// Read position from interleaved vertex buffer for object A (stride = 6 floats)
+vec3 readPositionA(uint vertexIndex) {
+    uint baseIdx = vertexIndex * 6u;  // 6 floats per vertex: [x,y,z, nx,ny,nz]
+    return vec3(verticesA[baseIdx], verticesA[baseIdx + 1u], verticesA[baseIdx + 2u]);
+}
+
+// Read position from interleaved vertex buffer for object B (stride = 6 floats)
+vec3 readPositionB(uint vertexIndex) {
+    uint baseIdx = vertexIndex * 6u;  // 6 floats per vertex: [x,y,z, nx,ny,nz]
+    return vec3(verticesB[baseIdx], verticesB[baseIdx + 1u], verticesB[baseIdx + 2u]);
+}
+
+// AABB intersection test in 3D
+bool aabbIntersect(vec3 minA, vec3 maxA, vec3 minB, vec3 maxB) {
+    return all(lessThanEqual(minA, maxB)) && all(greaterThanEqual(maxA, minB));
+}
+
+// Compute triangle AABB in world space and output transformed vertices
+void computeAABBAndTransform(vec3 v0_local, vec3 v1_local, vec3 v2_local,
+                             mat4 transform,
+                             out vec3 minBound, out vec3 maxBound,
+                             out vec3 v0_world, out vec3 v1_world, out vec3 v2_world) {
+    // Transform vertices from local to world space
+    v0_world = (transform * vec4(v0_local, 1.0)).xyz;
+    v1_world = (transform * vec4(v1_local, 1.0)).xyz;
+    v2_world = (transform * vec4(v2_local, 1.0)).xyz;
+    
+    // Compute axis-aligned bounds
+    minBound = min(min(v0_world, v1_world), v2_world);
+    maxBound = max(max(v0_world, v1_world), v2_world);
+}
+
+// Fetch triangle A and transform to world space
+void fetchTriangleA(uint triangleIdx, mat4 transform,
+                   out vec3 v0, out vec3 v1, out vec3 v2) {
+    uint baseIdx = triangleIdx * 3u;
+    uint idx0 = indicesA[baseIdx];
+    uint idx1 = indicesA[baseIdx + 1u];
+    uint idx2 = indicesA[baseIdx + 2u];
+    
+    // Read vertices in local space
+    vec3 p0 = readPositionA(idx0);
+    vec3 p1 = readPositionA(idx1);
+    vec3 p2 = readPositionA(idx2);
+    
+    // Transform to world space
+    v0 = (transform * vec4(p0, 1.0)).xyz;
+    v1 = (transform * vec4(p1, 1.0)).xyz;
+    v2 = (transform * vec4(p2, 1.0)).xyz;
+}
+
+// Fetch triangle B and transform to world space
+void fetchTriangleB(uint triangleIdx, mat4 transform,
+                   out vec3 v0, out vec3 v1, out vec3 v2) {
+    uint baseIdx = triangleIdx * 3u;
+    uint idx0 = indicesB[baseIdx];
+    uint idx1 = indicesB[baseIdx + 1u];
+    uint idx2 = indicesB[baseIdx + 2u];
+    
+    // Read vertices in local space
+    vec3 p0 = readPositionB(idx0);
+    vec3 p1 = readPositionB(idx1);
+    vec3 p2 = readPositionB(idx2);
+    
+    // Transform to world space
+    v0 = (transform * vec4(p0, 1.0)).xyz;
+    v1 = (transform * vec4(p1, 1.0)).xyz;
+    v2 = (transform * vec4(p2, 1.0)).xyz;
+}
+
+// Check if a point is inside a triangle using barycentric coordinates
+bool pointInTriangle(vec3 point, vec3 v0, vec3 v1, vec3 v2, float eps) {
+    // Compute barycentric coordinates
+    vec3 e0 = v2 - v0;
+    vec3 e1 = v1 - v0;
+    vec3 e2 = point - v0;
+    
+    float dot00 = dot(e0, e0);
+    float dot01 = dot(e0, e1);
+    float dot02 = dot(e0, e2);
+    float dot11 = dot(e1, e1);
+    float dot12 = dot(e1, e2);
+    
+    float invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01 + eps);
+    float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    
+    // Check if point is in triangle
+    return (u >= -eps) && (v >= -eps) && (u + v <= 1.0 + eps);
+}
+
+// Möller's fast triangle-triangle intersection test
+// Returns true if triangles intersect, and outputs the collision point
+bool triTriIntersect(vec3 a0, vec3 a1, vec3 a2,
+                     vec3 b0, vec3 b1, vec3 b2,
+                     float eps,
+                     out vec3 hitPoint) {
+    // 1. Compute triangle normals
+    vec3 nA = cross(a1 - a0, a2 - a0);
+    vec3 nB = cross(b1 - b0, b2 - b0);
+    
+    float nALen = length(nA);
+    float nBLen = length(nB);
+    
+    // Check for degenerate triangles
+    if (nALen < eps || nBLen < eps) {
+        return false;
+    }
+    
+    nA /= nALen;
+    nB /= nBLen;
+    
+    // 2. Check if triangles are coplanar (cross product ≈ 0)
+    vec3 dir = cross(nA, nB);
+    float dirLen = length(dir);
+    
+    if (dirLen < eps) {
+        // Triangles are coplanar - skip for now
+        return false;
+    }
+    
+    dir /= dirLen;
+    
+    // 3. Compute plane equations: nA·x + dA = 0, nB·x + dB = 0
+    float dA = -dot(nA, a0);
+    float dB = -dot(nB, b0);
+    
+    // 4. Check if triangles are on opposite sides of each other's planes
+    // Project triangle B vertices onto plane A
+    float distB0 = dot(nA, b0) + dA;
+    float distB1 = dot(nA, b1) + dA;
+    float distB2 = dot(nA, b2) + dA;
+    
+    // Check if all vertices of B are on same side of plane A
+    if ((distB0 > eps && distB1 > eps && distB2 > eps) ||
+        (distB0 < -eps && distB1 < -eps && distB2 < -eps)) {
+        return false;
+    }
+    
+    // Project triangle A vertices onto plane B
+    float distA0 = dot(nB, a0) + dB;
+    float distA1 = dot(nB, a1) + dB;
+    float distA2 = dot(nB, a2) + dB;
+    
+    // Check if all vertices of A are on same side of plane B
+    if ((distA0 > eps && distA1 > eps && distA2 > eps) ||
+        (distA0 < -eps && distA1 < -eps && distA2 < -eps)) {
+        return false;
+    }
+    
+    // 5. Compute intersection line origin
+    // The line L = p0 + t*dir lies on both planes
+    // p0 is the point on the line closest to origin
+    float dirLenSq = dirLen * dirLen;
+    vec3 p0 = cross(dB * nA - dA * nB, dir) / dirLenSq;
+    
+    // 6. Project triangle vertices onto intersection line
+    float projA[3];
+    projA[0] = dot(a0 - p0, dir);
+    projA[1] = dot(a1 - p0, dir);
+    projA[2] = dot(a2 - p0, dir);
+    
+    float projB[3];
+    projB[0] = dot(b0 - p0, dir);
+    projB[1] = dot(b1 - p0, dir);
+    projB[2] = dot(b2 - p0, dir);
+    
+    // 7. Find projection intervals for each triangle
+    float minA = min(min(projA[0], projA[1]), projA[2]);
+    float maxA = max(max(projA[0], projA[1]), projA[2]);
+    
+    float minB = min(min(projB[0], projB[1]), projB[2]);
+    float maxB = max(max(projB[0], projB[1]), projB[2]);
+    
+    // 8. Check if intervals overlap
+    float t0 = max(minA, minB);
+    float t1 = min(maxA, maxB);
+    
+    if (t0 >= t1 - eps) {
+        // No overlap - no collision
+        return false;
+    }
+    
+    // 9. Compute collision point as midpoint of overlapping interval
+    float tMid = (t0 + t1) * 0.5;
+    hitPoint = p0 + dir * tMid;
+    
+    // 10. Verify the collision point is inside both triangles
+    // This filters out false positives where the line intersects
+    // but the triangles don't actually overlap
+    if (!pointInTriangle(hitPoint, a0, a1, a2, eps)) {
+        return false;
+    }
+    if (!pointInTriangle(hitPoint, b0, b1, b2, eps)) {
+        return false;
+    }
+    
+    return true;
+}
+
+void main() {
+    uint globalID = gl_GlobalInvocationID.x;
+    uint totalPairs = u_numTrianglesA * u_numTrianglesB;
+    
+    // Early exit if thread ID exceeds work
+    if (globalID >= totalPairs) return;
+    
+    // Map linear thread ID to 2D triangle pair index
+    uint triIdxA = globalID / u_numTrianglesB;
+    uint triIdxB = globalID % u_numTrianglesB;
+    
+    // === PHASE 1: BROAD PHASE - AABB FILTERING ===
+    // Fetch triangle A vertex indices
+    uint faceBaseA = triIdxA * 3u;
+    uint idx_a0 = indicesA[faceBaseA];
+    uint idx_a1 = indicesA[faceBaseA + 1u];
+    uint idx_a2 = indicesA[faceBaseA + 2u];
+    
+    // Fetch triangle A vertices in local space
+    vec3 a0_local = readPositionA(idx_a0);
+    vec3 a1_local = readPositionA(idx_a1);
+    vec3 a2_local = readPositionA(idx_a2);
+    
+    // Fetch triangle B vertex indices
+    uint faceBaseB = triIdxB * 3u;
+    uint idx_b0 = indicesB[faceBaseB];
+    uint idx_b1 = indicesB[faceBaseB + 1u];
+    uint idx_b2 = indicesB[faceBaseB + 2u];
+    
+    // Fetch triangle B vertices in local space
+    vec3 b0_local = readPositionB(idx_b0);
+    vec3 b1_local = readPositionB(idx_b1);
+    vec3 b2_local = readPositionB(idx_b2);
+    
+    // Compute triangle AABBs in world space and cache transformed vertices
+    vec3 minA, maxA, minB, maxB;
+    vec3 a0, a1, a2;  // World-space vertices for triangle A
+    vec3 b0, b1, b2;  // World-space vertices for triangle B
+    
+    computeAABBAndTransform(a0_local, a1_local, a2_local, u_transformA, minA, maxA, a0, a1, a2);
+    computeAABBAndTransform(b0_local, b1_local, b2_local, u_transformB, minB, maxB, b0, b1, b2);
+    
+    // Test AABB overlap (99%+ of threads exit here)
+    if (!aabbIntersect(minA, maxA, minB, maxB)) {
+        return;  // Early exit - no collision
+    }
+    
+    // === PHASE 2: NARROW PHASE - PRECISE INTERSECTION ===
+    // Reuse cached world-space vertices (no redundant transforms)
+    
+    // Perform precise triangle-triangle intersection test
+    vec3 hitPoint;
+    bool hasCollision = triTriIntersect(a0, a1, a2, b0, b1, b2, u_eps, hitPoint);
+    
+    if (hasCollision) {
+        // Atomically allocate slot and write result if within buffer capacity
+        uint outIdx = atomicAdd(pointCount, 1u);
+        if (outIdx < u_maxPoints) {
+            collisionPoints[outIdx] = vec4(hitPoint, 1.0);
+        }
+    }
+}

@@ -46,7 +46,7 @@ class SphereCollisionShape(CollisionShape):
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
         verts = (rotmat @
-                 geometry.verts.T).T + pos
+                 geometry._vs.T).T + pos
         mins = verts.min(axis=0)
         maxs = verts.max(axis=0)
         center = (mins + maxs) * 0.5
@@ -84,8 +84,8 @@ class CapsuleCollisionShape(CollisionShape):
 
     @classmethod
     def fit_from_geometry(cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry.verts.T).T + pos
-        faces = geometry.faces
+        verts = (rotmat @ geometry._vs.T).T + pos
+        faces = geometry._fs
         mean, pcmat = oum.area_weighted_pca(verts, faces)
         pc_ax = pcmat[:, -1]
         proj = (verts - mean) @ pc_ax
@@ -146,7 +146,7 @@ class AABBCollisionShape(CollisionShape):
     @classmethod
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry.verts.T).T + pos
+        verts = (rotmat @ geometry._vs.T).T + pos
         vmin = verts.min(axis=0)
         vmax = verts.max(axis=0)
         half_extents = (vmax - vmin) * 0.5
@@ -187,8 +187,8 @@ class OBBCollisionShape(CollisionShape):
     @classmethod
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry.verts.T).T + pos
-        faces = geometry.faces
+        verts = (rotmat @ geometry._vs.T).T + pos
+        faces = geometry._fs
         mean, pcmat = oum.area_weighted_pca(
             verts, faces)
         local = (verts - mean) @ pcmat
@@ -234,8 +234,8 @@ class PlaneCollisionShape(CollisionShape):
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
         verts = (rotmat @
-                 geometry.verts.T).T + pos
-        faces = geometry.faces
+                 geometry._vs.T).T + pos
+        faces = geometry._fs
         mean, pcmat = oum.area_weighted_pca(
             verts, faces)
         center = mean
@@ -291,11 +291,11 @@ class MeshCollisionShape(CollisionShape):
             pos=self.pos)
 
     def to_render_model(self):
-        verts = self._geometry.verts
-        ext = min(verts.max(axis=0) - verts.min(axis=0)) * .05
-        verts = verts + self._geometry.vert_normals * ext
+        verts = self._geometry._vs
+        ext = min(verts.max(axis=0) - verts.min(axis=0)) * .01
+        verts = verts + self._geometry._vns * ext
         return osrm.RenderModel(
-            geometry=(verts, self._geometry.faces),
+            geometry=(verts, self._geometry._fs),
             rotmat=self.rotmat, pos=self.pos,
             rgb=ouc.BasicColor.ORANGE, alpha=ouc.ALPHA.TRANSPARENT)
 
