@@ -18,31 +18,31 @@ pip install -r requirements.txt
 ```
 
 ### Dependencies
-- Python 3.12+
-- Core: numpy, scipy, pyglet, mujoco
+- **Python 3.12+** (required)
+- **Core libraries:** numpy, scipy, pyglet, mujoco
 - No external collision libraries (uses MuJoCo native)
 
 ### Running Tests
-There is no formal test framework (pytest/unittest) configured. Tests are standalone Python scripts:
+No formal test framework (pytest/unittest) is configured. Tests are standalone Python scripts in the root directory:
 
 ```bash
-# Run a single test/demo script
+# Run any single test script
 python test_<name>.py
 
 # Examples:
-python test_2fg7.py
-python test_collider_bunny.py
-python test_rrtc_rs007l.py
-python test_mujoco_bunny.py
+python test_2fg7.py                    # Gripper visualization
+python test_collider_bunny.py          # CPU/GPU collision detection
+python test_rrtc_rs007l.py             # RRT-Connect motion planning
+python test_mujoco_bunny.py            # Physics simulation
+python test_2fg7_antipodal.py          # Grasp planning
 ```
 
-Test files are located in the repository root and demonstrate specific features or components.
+**Important:** Test files serve dual purpose as examples and documentation.
 
-### No Build Step
-This is a pure Python package with no build/compile step required.
-
-### Linting/Formatting
-No formal linter configuration (pylint, flake8, black) is present. Follow the code style patterns observed in the codebase.
+### No Build/Lint Step
+- Pure Python package - no build/compile step required
+- No formal linter (pylint, flake8, black) configured
+- Follow code style patterns observed in the codebase
 
 ## Code Style Guidelines
 
@@ -62,10 +62,12 @@ import one.utils.constant as ouc
 - `import one.utils.math as oum`
 - `import one.utils.helper as ouh`
 - `import one.utils.constant as ouc`
-- `import one.scene.scene as oss`
+- `import one.scene.scene_object as osso`
+- `import one.scene.scene_object_primitive as ossop`
 - `import one.viewer.world as ovw`
 - `import one.collider.mj_collider as ocm`
-- etc.
+- `import one.motion.probabilistic.rrt as ompr`
+- `import one.motion.probabilistic.space_provider as ompsp`
 
 See `one/__init__.py` for canonical abbreviations.
 

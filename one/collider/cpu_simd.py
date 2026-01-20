@@ -6,7 +6,7 @@ def build_triangles(vertices, faces):
     return vertices[faces]
 
 
-def compute_mesh_aabb(tris):
+def compute_aabb(tris):
     mins = tris.min(axis=(0, 1))
     maxs = tris.max(axis=(0, 1))
     return mins, maxs

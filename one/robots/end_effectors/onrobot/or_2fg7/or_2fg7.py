@@ -46,6 +46,8 @@ def get_structure():
     # add joints
     structure.add_jnt(jnt_bl_lf)
     structure.add_jnt(jnt_bl_rf)
+    # ignore colllision between fingers
+    structure.ignore_collision(lft_fgr_lnk, rgt_fgr_lnk)
     # order joints for quick access
     structure.compile()
     return structure

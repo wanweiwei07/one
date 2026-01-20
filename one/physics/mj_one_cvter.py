@@ -66,9 +66,7 @@ class MJOneConverter:
         # process collision ignores
         for mecba in scene.mecbas:
             struct = mecba.structure
-            for a, b in struct.collision_ignores:
-                alidx = struct.compiled.lidx_map[a]
-                blidx = struct.compiled.lidx_map[b]
+            for alidx, blidx in struct.compiled.collision_ignores_idx:
                 rta = mecba.runtime_lnks[alidx]
                 rtb = mecba.runtime_lnks[blidx]
                 body_a = self._rutl2bdy[rta]

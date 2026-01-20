@@ -28,9 +28,9 @@ class RenderModel:
                                          per_vert_rgbs=per_vert_rgbs)
         else:
             self.geometry = geometry
-        self.rgb = oum.ensure_rgb(rgb)
-        self.alpha = alpha
         self.shader = shader
+        self._rgb = oum.ensure_rgb(rgb)
+        self._alpha = alpha
         self._rotmat = oum.ensure_rotmat(rotmat)
         self._pos = oum.ensure_pos(pos)
         # cached
@@ -45,6 +45,22 @@ class RenderModel:
                              alpha=self.alpha,
                              shader=self.shader)
         return new
+
+    @property
+    def rgb(self):
+        return self._rgb.copy()
+
+    @rgb.setter
+    def rgb(self, rgb):
+        self._rgb = oum.ensure_rgb(rgb)
+
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @alpha.setter
+    def alpha(self, alpha):
+        self._alpha = alpha
 
     @property
     def quat(self):

@@ -69,7 +69,7 @@ class MechStruct:
         # raw data
         self.lnks = []
         self.jnts = []
-        self.collision_ignores = set()   # {(lnkA, lnkB)}
+        self._collision_ignores_objs = set()  # {(Link, Link)}
         # compiled data
         self._compiled = None  # MechStructHelper
         # kinematic chain and solver cache
@@ -118,7 +118,8 @@ class MechStruct:
     def ignore_collision(self, a, b):
         if a is b:
             raise ValueError("Parameters a and b are the same")
-        self.collision_ignores.add((a, b))
+        pair = (a, b) if id(a) < id(b) else (b, a)
+        self._collision_ignores_objs.add(pair)
 
     def ignore_env_collision(self, lnk):
         lnk.collision_affinity &= ~ouc.CollisionGroup.ENV
@@ -128,6 +129,16 @@ class MechStruct:
         # ignore collisions of connected links
         for j in self.jnts:
             self.ignore_collision(j.plnk, j.clnk)
+        self._compiled.collision_ignores_idx = set()
+        for lnk_a, lnk_b in self._collision_ignores_objs:
+            lidx_a = self._compiled.lidx_map[lnk_a]
+            lidx_b = self._compiled.lidx_map[lnk_b]
+            pair = (min(lidx_a, lidx_b), max(lidx_a, lidx_b))
+            self._compiled.collision_ignores_idx.add(pair)
+
+    @property
+    def collision_ignores_objs(self):
+        return self._collision_ignores_objs
 
     @property
     def n_jnts(self):
@@ -154,6 +165,7 @@ class FlatMechStructure:
         # indexing
         self.lidx_map = {lnk: i for i, lnk in enumerate(structure.lnks)}
         self.jidx_map = {j: i for i, j in enumerate(structure.jnts)}
+        self.collision_ignores_idx = set()  # {(lidx, lidx)}
         # topology
         self.plidx_of_lidx = np.full(self.n_lnks, -1, dtype=np.int32)
         self.pjidx_of_lidx = np.full(self.n_lnks, -1, dtype=np.int32)
