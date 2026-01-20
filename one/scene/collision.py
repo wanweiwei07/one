@@ -10,6 +10,7 @@ class CollisionShape:
         self._tf = oum.tf_from_rotmat_pos(
             rotmat, pos)
         self._geometry = None  # lazy geometry cache
+        self._aabb = None
 
     def to_render_model(self):
         raise NotImplementedError
@@ -36,6 +37,10 @@ class CollisionShape:
     def pos(self):
         return self._tf[:3, 3].copy()
 
+    @property
+    def aabb(self):
+        raise NotImplementedError
+
     def _build_geometry(self):
         raise NotImplementedError
 
@@ -46,7 +51,7 @@ class SphereCollisionShape(CollisionShape):
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
         verts = (rotmat @
-                 geometry._vs.T).T + pos
+                 geometry.vs.T).T + pos
         mins = verts.min(axis=0)
         maxs = verts.max(axis=0)
         center = (mins + maxs) * 0.5
@@ -75,6 +80,14 @@ class SphereCollisionShape(CollisionShape):
     def radius(self):
         return self._radius
 
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        min_corner = self.pos - self._radius
+        max_corner = self.pos + self._radius
+        return min_corner, max_corner
+
     def _build_geometry(self):
         return osgp.gen_icosphere_geom(
             radius=self._radius)
@@ -84,8 +97,8 @@ class CapsuleCollisionShape(CollisionShape):
 
     @classmethod
     def fit_from_geometry(cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry._vs.T).T + pos
-        faces = geometry._fs
+        verts = (rotmat @ geometry.vs.T).T + pos
+        faces = geometry.fs
         mean, pcmat = oum.area_weighted_pca(verts, faces)
         pc_ax = pcmat[:, -1]
         proj = (verts - mean) @ pc_ax
@@ -140,13 +153,26 @@ class CapsuleCollisionShape(CollisionShape):
     def half_length(self):
         return self._half_length
 
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        half = np.array([self._radius,
+                         self._radius,
+                         self._half_length + self._radius],
+                        dtype=np.float32)
+        ext = np.abs(self.rotmat) @ half
+        min_corner = self.pos - ext
+        max_corner = self.pos + ext
+        return min_corner, max_corner
+
 
 class AABBCollisionShape(CollisionShape):
 
     @classmethod
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry._vs.T).T + pos
+        verts = (rotmat @ geometry.vs.T).T + pos
         vmin = verts.min(axis=0)
         vmax = verts.max(axis=0)
         half_extents = (vmax - vmin) * 0.5
@@ -177,6 +203,17 @@ class AABBCollisionShape(CollisionShape):
     def half_extents(self):
         return self._half_extents
 
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        half = np.asarray(self._half_extents,
+                          dtype=np.float32)
+        ext = np.abs(self.rotmat) @ half
+        min_corner = self.pos - ext
+        max_corner = self.pos + ext
+        return min_corner, max_corner
+
     def _build_geometry(self):
         return osgp.gen_box_geom(
             half_extents=self._half_extents)
@@ -187,8 +224,8 @@ class OBBCollisionShape(CollisionShape):
     @classmethod
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry._vs.T).T + pos
-        faces = geometry._fs
+        verts = (rotmat @ geometry.vs.T).T + pos
+        faces = geometry.fs
         mean, pcmat = oum.area_weighted_pca(
             verts, faces)
         local = (verts - mean) @ pcmat
@@ -224,6 +261,17 @@ class OBBCollisionShape(CollisionShape):
     def half_extents(self):
         return self._half_extents
 
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        half = np.asarray(self._half_extents,
+                          dtype=np.float32)
+        ext = np.abs(self.rotmat) @ half
+        min_corner = self.pos - ext
+        max_corner = self.pos + ext
+        return min_corner, max_corner
+
     def _build_geometry(self):
         return osgp.gen_box_geom(
             half_extents=self._half_extents)
@@ -234,8 +282,8 @@ class PlaneCollisionShape(CollisionShape):
     def fit_from_geometry(
             cls, geometry, rotmat, pos):
         verts = (rotmat @
-                 geometry._vs.T).T + pos
-        faces = geometry._fs
+                 geometry.vs.T).T + pos
+        faces = geometry.fs
         mean, pcmat = oum.area_weighted_pca(
             verts, faces)
         center = mean
@@ -266,6 +314,16 @@ class PlaneCollisionShape(CollisionShape):
     def normal(self):
         return self.rotmat[:, 2].copy()
 
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        half = np.array([100.0, 100.0, 1e-3], dtype=np.float32)
+        ext = np.abs(self.rotmat) @ half
+        min_corner = self.pos - ext
+        max_corner = self.pos + ext
+        return min_corner, max_corner
+
     def _build_geometry(self):
         half_extents = np.array(
             [100.0, 100.0, 1e-3],
@@ -291,11 +349,11 @@ class MeshCollisionShape(CollisionShape):
             pos=self.pos)
 
     def to_render_model(self):
-        verts = self._geometry._vs
+        verts = self._geometry.vs
         ext = min(verts.max(axis=0) - verts.min(axis=0)) * .01
         verts = verts + self._geometry._vns * ext
         return osrm.RenderModel(
-            geometry=(verts, self._geometry._fs),
+            geometry=(verts, self._geometry.fs),
             rotmat=self.rotmat, pos=self.pos,
             rgb=ouc.BasicColor.ORANGE, alpha=ouc.ALPHA.TRANSPARENT)
 
@@ -306,3 +364,14 @@ class MeshCollisionShape(CollisionShape):
     @property
     def geometry(self):
         return self._geometry
+
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        geom = self.geometry
+        verts = geom.vs
+        transformed = verts @ self.rotmat.T + self.pos
+        min_corner = transformed.min(axis=0)
+        max_corner = transformed.max(axis=0)
+        return min_corner, max_corner
