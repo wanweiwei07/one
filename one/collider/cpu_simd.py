@@ -103,6 +103,8 @@ def detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-9):
     :param eps: numerical tolerance (default 1e-9)
     :return: (K,3) collision points or None
     """
+    tf_a = tf_a @ col_a.tf
+    tf_b = tf_b @ col_b.tf
     geom_a = col_a.geometry
     geom_b = col_b.geometry
     if geom_a is None or geom_b is None:
@@ -111,10 +113,10 @@ def detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-9):
         return None
     rotmat_a = tf_a[:3, :3]
     pos_a = tf_a[:3, 3]
-    verts_a = (rotmat_a @ geom_a._vs.T).T + pos_a
+    verts_a = (rotmat_a @ geom_a.vs.T).T + pos_a
     rotmat_b = tf_b[:3, :3]
     pos_b = tf_b[:3, 3]
-    verts_b = (rotmat_b @ geom_b._vs.T).T + pos_b
+    verts_b = (rotmat_b @ geom_b.vs.T).T + pos_b
     tris_a = verts_a[geom_a.fs]
     tris_b = verts_b[geom_b.fs]
     min_a = tris_a.min(axis=(0, 1))

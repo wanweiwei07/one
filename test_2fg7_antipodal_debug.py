@@ -40,5 +40,5 @@ def play(dt):
     print("jaw_width =", f"{jaw_width:.8f}")
 
 
-base.schedule_interval(play, interval=.01)
+base.schedule_interval(play, interval=.5)
 base.run()

@@ -23,17 +23,16 @@ def is_collided(sobj_a, sobj_b, eps=1e-9, max_points=1000):
     if is_single_mesh_a and is_single_mesh_b:
         col_a = sobj_a.collisions[0]
         col_b = sobj_b.collisions[0]
-        tf_a = sobj_a.node.wd_tf @ col_a._tf
-        tf_b = sobj_b.node.wd_tf @ col_b._tf
         try:
-            return ocgs.detect_collision(col_a, tf_a, col_b, tf_b,
-                                         eps=eps,
-                                         max_points=max_points)
+            return ocgs.detect_collision(
+                col_a, sobj_a.tf, col_b, sobj_b.tf,
+                eps=eps, max_points=max_points)
         except Exception as e:
             import sys
             print(f"GPU collision detection failed: {e}", file=sys.stderr)
             print("Falling back to CPU collision detection...", file=sys.stderr)
-            return occs.detect_collision(col_a, tf_a, col_b, tf_b, eps=eps)
+            return occs.detect_collision(
+                col_a, sobj_a.tf, col_b, sobj_b.tf, eps=eps)
     else:
         raise NotImplementedError(
             f"Collision detection not yet implemented for:\n"

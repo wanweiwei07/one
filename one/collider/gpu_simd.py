@@ -24,6 +24,8 @@ class GPUCollider:
         :param max_points: max collision points to return (default 200)
         :return: (N,3) collision points or None
         """
+        tf_a = tf_a @ col_a.tf
+        tf_b = tf_b @ col_b.tf
         geom_a = col_a.geometry
         geom_b = col_b.geometry
         device_a = geom_a.get_device_buffer()

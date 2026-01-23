@@ -182,10 +182,12 @@ def antipodal_iter(scene_obj, gripper, obstacles=None,
     if obstacles is None:
         obstacles = [scene_obj]
     cand = _antipodal_candidates(
-        scene_obj, density, normal_tol_deg, roll_step_deg, clearance)
+        scene_obj, density, normal_tol_deg,
+        roll_step_deg, clearance)
     if cand is None:
         return []
-    center, jaw_width, n_all, nq_all, cos_vals, normal_cos_th, roll_step = cand
+    (center, jaw_width, n_all, nq_all,
+     cos_vals, normal_cos_th, roll_step) = cand
     jaw_min, jaw_max = gripper.jaw_range
     jaw_mid = 0.5 * (jaw_min + jaw_max)
     jaw_span = jaw_max - jaw_min + oum.eps
@@ -210,7 +212,8 @@ def antipodal_iter(scene_obj, gripper, obstacles=None,
     pose_all = pose_tf.reshape(-1, 4, 4)
     jaw_all = np.repeat(jaw_sel, len(angles))
     normal_align = (1.0 + np.einsum("ij,ij->i", n_sel, -nq_sel) /
-                    (np.linalg.norm(n_sel, axis=1) * np.linalg.norm(nq_sel, axis=1) + oum.eps)) * 0.5
+                    (np.linalg.norm(n_sel, axis=1) *
+                     np.linalg.norm(nq_sel, axis=1) + oum.eps)) * 0.5
     jaw_close = 1.0 - np.abs(jaw_sel - jaw_mid) / jaw_span
     score = score_weights[0] * normal_align + score_weights[1] * jaw_close
     score_all = np.repeat(score, len(angles))
@@ -253,6 +256,7 @@ def antipodal(scene_obj, gripper, obstacles=None,
             clearance, score_weights):
         if not collided:
             results.append((pose.copy(), jw, float(sc)))
-            if max_grasps is not None and len(results) >= max_grasps:
+            if (max_grasps is not None and
+                    len(results) >= max_grasps):
                 break
     return results

@@ -69,7 +69,7 @@ class MechBase:
         self._pos[:] = oum.ensure_pos(pos)
         self.fk()
 
-    def fk(self, qs=None, ):
+    def fk(self, qs=None):
         if qs is not None:
             if len(qs) == len(self.qs):
                 self.qs[:] = qs

@@ -25,6 +25,10 @@ class CollisionShape:
         return self._geometry
 
     @property
+    def tf(self):
+        return self._tf.copy()
+
+    @property
     def quat(self):
         return oum.quat_from_rotmat(
             self._tf[:3, :3])
