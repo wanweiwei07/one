@@ -1,6 +1,117 @@
 import numpy as np
 
 
+
+def cols_to_tris(cols):
+    """
+    convert collision geometries to triangle meshes
+    :param cols: list of collision shapes
+    :return: (N,3,3) triangle array or None when empty
+    """
+    tris_list = []
+    for col in cols:
+        geom = col.geometry
+        if geom is None or geom.fs is None:
+            continue
+        if geom.vs is None or geom.fs.size == 0 or geom.vs.size == 0:
+            continue
+        tf = col.tf
+        rot = tf[:3, :3]
+        pos = tf[:3, 3]
+        verts = (rot @ geom.vs.T).T + pos
+        tris = verts[geom.fs]
+        if tris.size == 0:
+            continue
+        tris_list.append(tris.astype(np.float32, copy=False))
+    if not tris_list:
+        return None
+    return np.concatenate(tris_list, axis=0).astype(np.float32, copy=False)
+
+
+def detect_collision(tris_a, tris_b, eps=1e-9):
+    """
+    detect collision between two sets of triangles using CPU
+    """
+    # Compute AABBs and check for overlap
+    min_a = tris_a.min(axis=(0, 1))
+    max_a = tris_a.max(axis=(0, 1))
+    min_b = tris_b.min(axis=(0, 1))
+    max_b = tris_b.max(axis=(0, 1))
+    if not aabb_intersect(min_a, max_a, min_b, max_b):
+        return None
+    tri_min_a = tris_a.min(axis=1)
+    tri_max_a = tris_a.max(axis=1)
+    tri_min_b = tris_b.min(axis=1)
+    tri_max_b = tris_b.max(axis=1)
+    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
+                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
+    pair_indices = np.argwhere(overlap_mask)
+    if len(pair_indices) == 0:
+        return None
+    # Detailed triangle-triangle intersection test
+    tris_a_pairs = tris_a[pair_indices[:, 0]]
+    tris_b_pairs = tris_b[pair_indices[:, 1]]
+    hit, tris_pairs = tripair_planeprojection_filter(tris_a_pairs, tris_b_pairs, eps=eps)
+    if not hit:
+        return None
+    points, valid = tripair_fine_filter(tris_pairs[0], tris_pairs[1], eps=eps)
+    if not np.any(valid):
+        return None
+    return points[valid]
+
+
+def detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-9):
+    """
+    detect collision between two collision shapes using CPU
+    :param col_a, col_b: CollisionShape instances
+    :param tf_a, tf_b: (4,4) world transform matrices
+    :param eps: numerical tolerance (default 1e-9)
+    :return: (K,3) collision points or None
+    """
+    tf_a = tf_a @ col_a.tf
+    tf_b = tf_b @ col_b.tf
+    geom_a = col_a.geometry
+    geom_b = col_b.geometry
+    if geom_a is None or geom_b is None:
+        return None
+    if geom_a.fs is None or geom_b.fs is None:
+        return None
+    rotmat_a = tf_a[:3, :3]
+    pos_a = tf_a[:3, 3]
+    verts_a = (rotmat_a @ geom_a.vs.T).T + pos_a
+    rotmat_b = tf_b[:3, :3]
+    pos_b = tf_b[:3, 3]
+    verts_b = (rotmat_b @ geom_b.vs.T).T + pos_b
+    tris_a = verts_a[geom_a.fs]
+    tris_b = verts_b[geom_b.fs]
+    # Compute AABBs and check for overlap
+    min_a = tris_a.min(axis=(0, 1))
+    max_a = tris_a.max(axis=(0, 1))
+    min_b = tris_b.min(axis=(0, 1))
+    max_b = tris_b.max(axis=(0, 1))
+    if not aabb_intersect(min_a, max_a, min_b, max_b):
+        return None
+    tri_min_a = tris_a.min(axis=1)
+    tri_max_a = tris_a.max(axis=1)
+    tri_min_b = tris_b.min(axis=1)
+    tri_max_b = tris_b.max(axis=1)
+    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
+                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
+    pair_indices = np.argwhere(overlap_mask)
+    if len(pair_indices) == 0:
+        return None
+    # Detailed triangle-triangle intersection test
+    tris_a_pairs = tris_a[pair_indices[:, 0]]
+    tris_b_pairs = tris_b[pair_indices[:, 1]]
+    hit, tris_pairs = tripair_planeprojection_filter(tris_a_pairs, tris_b_pairs, eps=eps)
+    if not hit:
+        return None
+    points, valid = tripair_fine_filter(tris_pairs[0], tris_pairs[1], eps=eps)
+    if not np.any(valid):
+        return None
+    return points[valid]
+
+
 def build_triangles(vertices, faces):
     """(V,3) + (F,3) -> (F,3,3)"""
     return vertices[faces]
@@ -93,56 +204,6 @@ def tripair_fine_filter(tris_a, tris_b, eps=1e-9):
     inside_b = _point_in_tri_batch(points, tris_b)
     valid &= inside_a & inside_b
     return points, valid
-
-
-def detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-9):
-    """
-    detect collision between two collision shapes using CPU
-    :param col_a, col_b: CollisionShape instances
-    :param tf_a, tf_b: (4,4) world transform matrices
-    :param eps: numerical tolerance (default 1e-9)
-    :return: (K,3) collision points or None
-    """
-    tf_a = tf_a @ col_a.tf
-    tf_b = tf_b @ col_b.tf
-    geom_a = col_a.geometry
-    geom_b = col_b.geometry
-    if geom_a is None or geom_b is None:
-        return None
-    if geom_a.fs is None or geom_b.fs is None:
-        return None
-    rotmat_a = tf_a[:3, :3]
-    pos_a = tf_a[:3, 3]
-    verts_a = (rotmat_a @ geom_a.vs.T).T + pos_a
-    rotmat_b = tf_b[:3, :3]
-    pos_b = tf_b[:3, 3]
-    verts_b = (rotmat_b @ geom_b.vs.T).T + pos_b
-    tris_a = verts_a[geom_a.fs]
-    tris_b = verts_b[geom_b.fs]
-    min_a = tris_a.min(axis=(0, 1))
-    max_a = tris_a.max(axis=(0, 1))
-    min_b = tris_b.min(axis=(0, 1))
-    max_b = tris_b.max(axis=(0, 1))
-    if not aabb_intersect(min_a, max_a, min_b, max_b):
-        return None
-    tri_min_a = tris_a.min(axis=1)
-    tri_max_a = tris_a.max(axis=1)
-    tri_min_b = tris_b.min(axis=1)
-    tri_max_b = tris_b.max(axis=1)
-    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
-                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
-    pair_indices = np.argwhere(overlap_mask)
-    if len(pair_indices) == 0:
-        return None
-    tris_a_pairs = tris_a[pair_indices[:, 0]]
-    tris_b_pairs = tris_b[pair_indices[:, 1]]
-    hit, tris_pairs = tripair_planeprojection_filter(tris_a_pairs, tris_b_pairs, eps=eps)
-    if not hit:
-        return None
-    points, valid = tripair_fine_filter(tris_pairs[0], tris_pairs[1], eps=eps)
-    if not np.any(valid):
-        return None
-    return points[valid]
 
 
 def _point_in_tri_batch(pts, tris, eps=1e-9):

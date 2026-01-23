@@ -271,17 +271,17 @@ class SIMDCollider:
         :param tf_a, tf_b: world transform matrices (4x4)
         :return: collision points array or None
         """
-        # # AABB Broad Phase
-        # min_a, max_a = col_a.aabb
-        # min_b, max_b = col_b.aabb
-        # if min_a is not None and min_b is not None:
-        #     # Transform AABBs to world space (only 8 corners per shape)
-        #     min_a, max_a = self._transform_aabb(min_a, max_a, tf_a)
-        #     min_b, max_b = self._transform_aabb(min_b, max_b, tf_b)
-        #     # Quick AABB intersection test (reuse cpu_simd.aabb_intersect)
-        #     if not cpu_simd.aabb_intersect(min_a, max_a, min_b, max_b):
-        #         self._stats['aabb_culled'] += 1
-        #         return None  # Early exit - skip expensive SIMD call
+        # AABB Broad Phase
+        min_a, max_a = col_a.aabb
+        min_b, max_b = col_b.aabb
+        if min_a is not None and min_b is not None:
+            # Transform AABBs to world space (only 8 corners per shape)
+            min_a, max_a = self._transform_aabb(min_a, max_a, tf_a)
+            min_b, max_b = self._transform_aabb(min_b, max_b, tf_b)
+            # Quick AABB intersection test (reuse cpu_simd.aabb_intersect)
+            if not cpu_simd.aabb_intersect(min_a, max_a, min_b, max_b):
+                self._stats['aabb_culled'] += 1
+                return None  # Early exit - skip expensive SIMD call
         # Narrow Phase - Precise SIMD Collision Detection
         self._stats['actual_simd_calls'] += 1
         if self._use_gpu:

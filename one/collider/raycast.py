@@ -1,6 +1,6 @@
 import numpy as np
 import one.scene.geometry_operation as osgop
-import one.scene.collision as osc
+import one.scene.collision_shape as osc
 
 
 def _ray_to_local(orig, direction, tf):

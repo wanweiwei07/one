@@ -1,0 +1,109 @@
+#version 430 core
+layout(local_size_x = 256) in;
+
+// SSBO 0: local centers (vec4)
+layout(std430, binding = 0) readonly buffer Centers {
+    vec4 centers[];
+};
+
+// SSBO 1: half extents (vec4)
+layout(std430, binding = 1) readonly buffer Extents {
+    vec4 half_extents[];
+};
+
+// SSBO 2: transforms (mat4)
+layout(std430, binding = 2) readonly buffer Transforms {
+    mat4 transforms[];
+};
+
+// SSBO 3: pairs (uvec2)
+layout(std430, binding = 3) readonly buffer Pairs {
+    uvec2 pairs[];
+};
+
+// SSBO 4: counter
+layout(std430, binding = 4) buffer Counter {
+    uint counter;
+};
+
+bool obb_intersect(vec3 ca, vec3 ea, mat3 Ra,
+                   vec3 cb, vec3 eb, mat3 Rb) {
+    // Relative center
+    vec3 T = cb - ca;
+    // R = A^T * B
+    mat3 R = transpose(Ra) * Rb;
+    vec3 r0 = vec3(R[0][0], R[1][0], R[2][0]);
+    vec3 r1 = vec3(R[0][1], R[1][1], R[2][1]);
+    vec3 r2 = vec3(R[0][2], R[1][2], R[2][2]);
+    vec3 ar0 = abs(r0) + vec3(1e-6);
+    vec3 ar1 = abs(r1) + vec3(1e-6);
+    vec3 ar2 = abs(r2) + vec3(1e-6);
+    // t in A frame
+    vec3 tA = transpose(Ra) * T;
+    // Test axes A0, A1, A2
+    for (int i = 0; i < 3; ++i) {
+        float ra = ea[i];
+        float rb = dot(i == 0 ? ar0 : (i == 1 ? ar1 : ar2), eb);
+        if (abs(tA[i]) > ra + rb) return false;
+    }
+    // Test axes B0, B1, B2
+    for (int i = 0; i < 3; ++i) {
+        float ra = ea.x * ar0[i] + ea.y * ar1[i] + ea.z * ar2[i];
+        float rb = eb[i];
+        vec3 col = vec3(r0[i], r1[i], r2[i]);
+        float t = abs(dot(col, tA));
+        if (t > ra + rb) return false;
+    }
+    // Cross-product axes A0 x B0..B2
+    float ra = ea.y * ar2[0] + ea.z * ar1[0];
+    float rb = eb.y * ar0[2] + eb.z * ar0[1];
+    if (abs(tA.z * r1[0] - tA.y * r2[0]) > ra + rb) return false;
+    ra = ea.y * ar2[1] + ea.z * ar1[1];
+    rb = eb.z * ar0[0] + eb.x * ar0[2];
+    if (abs(tA.z * r1[1] - tA.y * r2[1]) > ra + rb) return false;
+    ra = ea.y * ar2[2] + ea.z * ar1[2];
+    rb = eb.x * ar0[1] + eb.y * ar0[0];
+    if (abs(tA.z * r1[2] - tA.y * r2[2]) > ra + rb) return false;
+    // Cross-product axes A1 x B0..B2
+    ra = ea.z * ar0[0] + ea.x * ar2[0];
+    rb = eb.y * ar1[2] + eb.z * ar1[1];
+    if (abs(tA.x * r2[0] - tA.z * r0[0]) > ra + rb) return false;
+    ra = ea.z * ar0[1] + ea.x * ar2[1];
+    rb = eb.z * ar1[0] + eb.x * ar1[2];
+    if (abs(tA.x * r2[1] - tA.z * r0[1]) > ra + rb) return false;
+    ra = ea.z * ar0[2] + ea.x * ar2[2];
+    rb = eb.x * ar1[1] + eb.y * ar1[0];
+    if (abs(tA.x * r2[2] - tA.z * r0[2]) > ra + rb) return false;
+    // Cross-product axes A2 x B0..B2
+    ra = ea.x * ar1[0] + ea.y * ar0[0];
+    rb = eb.y * ar2[2] + eb.z * ar2[1];
+    if (abs(tA.y * r0[0] - tA.x * r1[0]) > ra + rb) return false;
+    ra = ea.x * ar1[1] + ea.y * ar0[1];
+    rb = eb.z * ar2[0] + eb.x * ar2[2];
+    if (abs(tA.y * r0[1] - tA.x * r1[1]) > ra + rb) return false;
+    ra = ea.x * ar1[2] + ea.y * ar0[2];
+    rb = eb.x * ar2[1] + eb.y * ar2[0];
+    if (abs(tA.y * r0[2] - tA.x * r1[2]) > ra + rb) return false;
+    return true;
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= pairs.length()) return;
+    uvec2 p = pairs[idx];
+    uint ia = p.x;
+    uint ib = p.y;
+    vec3 ca = centers[ia].xyz;
+    vec3 cb = centers[ib].xyz;
+    vec3 ea = half_extents[ia].xyz;
+    vec3 eb = half_extents[ib].xyz;
+    mat4 Ta = transpose(transforms[ia]);
+    mat4 Tb = transpose(transforms[ib]);
+    mat3 Ra = mat3(Ta);
+    mat3 Rb = mat3(Tb);
+    vec3 ca_w = Ra * ca + Ta[3].xyz;
+    vec3 cb_w = Rb * cb + Tb[3].xyz;
+    if (obb_intersect(ca_w, ea, Ra, cb_w, eb, Rb)) {
+        atomicAdd(counter, 1u);
+    }
+}

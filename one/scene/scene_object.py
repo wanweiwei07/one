@@ -3,7 +3,7 @@ import one.utils.constant as ouc
 import one.scene.render_model as osrm
 import one.scene.scene_node as ossn
 import one.scene.geometry_loader as osgl
-import one.scene.collision as osc
+import one.scene.collision_shape as osc
 
 
 class SceneObject:

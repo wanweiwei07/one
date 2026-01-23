@@ -1,5 +1,5 @@
 import numpy as np
-import one.scene.collision as osco
+import one.scene.collision_shape as osco
 
 def inertia_box(m, hx, hy, hz):
     Ixx = 1 / 3 * m * (hy * hy + hz * hz)

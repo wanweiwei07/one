@@ -31,22 +31,20 @@ class Geometry:
         return self._device_buffer
 
     @property
-    def vs(self): # verts
+    def vs(self):  # verts
         return self._vs
 
     @property
-    def fs(self): # faces
+    def fs(self):  # faces
         return self._fs
 
     @property
-    def vns(self): # vertex normals
+    def vns(self):  # vertex normals
         return self._vns
 
     @property
-    def fns(self): # face normals
+    def fns(self):  # face normals
         return self._fns
-
-
 
     def _compute_vns(self):
         v1 = self._vs[self._fs[:, 1]] - self._vs[self._fs[:, 0]]
