@@ -14,9 +14,9 @@ The internal data structures are designed to be compatible with both URDF and MJ
 Overall, `one` is intended as a lightweight yet expressive research framework for studying motion planning, learning, and their interaction under a single, coherent simulation backend.
 
 
-<table>
-<tr>
-<td width="40%">
+<table style="width:100%; border:none; border-collapse:collapse;">
+<tr style="border:none;">
+<td style="width:50%; border:none; padding:0; vertical-align:top;">
 
 ## Table of Contents
 
@@ -35,9 +35,8 @@ Overall, `one` is intended as a lightweight yet expressive research framework fo
 - [Acknowledgments](#acknowledgments)
 
 </td>
-<td width="60%" align="center">
+<td style="width:50%; border:none; padding:0; text-align:center; vertical-align:middle;">
 <img src="collision.gif" width="320">
-
 </td>
 </tr>
 </table>
