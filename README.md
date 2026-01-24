@@ -16,7 +16,7 @@ Overall, `one` is intended as a lightweight yet expressive research framework fo
 
 <table style="width:100%; border:none; border-collapse:collapse;">
 <tr style="border:none;">
-<td style="width:60%; border:none; padding:0 32px 16px 0; vertical-align:top;">
+<td style="width:60%; border:none; padding:0; vertical-align:top;">
 
 ## Table of Contents
 
