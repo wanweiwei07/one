@@ -1,5 +1,7 @@
-import builtins
+import builtins, time
 import numpy as np
+from torch.backends.mkl import verbose
+
 from one import oum, ovw, ouc, ossop, ocm, ompsp, ompp, khi_rs007l
 
 base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5))
@@ -33,12 +35,27 @@ jlmt_high = robot.structure.compiled.jlmt_high_by_idx
 sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
                                            lmt_high=jlmt_high,
                                            collider=collider,
-                                           max_edge_step=np.pi/36)
+                                           cd_step_size=np.pi / 36)
 # planner = ompp.PRMPlanner(ssp_provider=sspp)
 planner = ompp.LazyPRMPlanner(ssp_provider=sspp)
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, -oum.pi / 2, oum.pi / 4, oum.pi / 3])
-state_list = planner.solve(start=start, goal=goal)
+
+# Run planning with iteration limit
+print("\nStarting RRT-Connect planning with AABBCollider...")
+print("Note: RRT is probabilistic - if planning fails, simply run the script again")
+t0 = time.time()
+state_list = planner.solve(start=start, goal=goal, verbose=True)
+t1 = time.time()
+# Print results
+print(f"\n{'='*60}")
+print(f"Planning completed in {t1-t0:.3f}s")
+if state_list:
+    print(f"Path found with {len(state_list)} waypoints")
+else:
+    print("No path found")
+print(f"{'='*60}")
+
 robot1 = robot.clone()
 robot1.fk(qs=start)
 robot1.rgba = (1, 0, 0, 0.5)

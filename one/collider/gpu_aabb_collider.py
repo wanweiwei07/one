@@ -8,24 +8,37 @@ import one.collider.cpu_simd as occs
 
 class GPUAABBCollider(ocb.ColliderBase):
     """
-    GPU OBB/SAT collider. Interface compatible with AABBCollider.
+    GPU OBB/SAT collider with full async pipeline optimization.
     """
+
     def __init__(self):
         super().__init__()
-        self._local_centers = None      # (N,3)
-        self._half_extents = None       # (N,3)
-        self._transforms = None         # (N,4,4)
+        self._local_centers = None
+        self._half_extents = None
+        self._transforms = None
         self._num_pairs = 0
         # GPU resources
         self._program = None
         self._centers_ssbo = None
         self._extents_ssbo = None
-        self._transforms_ssbo = None
         self._pairs_ssbo = None
-        self._counter_ssbo = None
+        # Triple buffering with persistent mapping
+        self._num_buffers = 3
+        self._current_frame = 0
+        self._transforms_ssbos = []
+        self._counter_ssbos = []
+        self._transforms_ptrs = []  # Persistent mapped pointers
+        self._counter_ptrs = []
+        self._fences = [None] * self._num_buffers
+        # Performance profiling
+        self._enable_profiling = True
+        self._profile_stats = {
+            'fk': [], 'update_tf': [], 'fence_wait': [],
+            'memcpy': [], 'dispatch': [], 'read': [], 'total': []
+        }
+        self._call_count = 0
 
     def _post_compile(self):
-        # Build local AABB for each object (union of all collisions)
         centers = []
         extents = []
         for obj in self._pair_items:
@@ -45,55 +58,190 @@ class GPUAABBCollider(ocb.ColliderBase):
         self._half_extents = np.zeros((extents.shape[0], 4), dtype=np.float32)
         self._local_centers[:, :3] = centers
         self._half_extents[:, :3] = extents
-        self._num_pairs = 0 if self._check_pairs is None \
-            else len(self._check_pairs)
-        # Pre-allocate transforms buffer
+        self._num_pairs = 0 if self._check_pairs is None else len(self._check_pairs)
+
         n_items = len(self._pair_items)
-        self._transforms = np.zeros(
-            (n_items, 4, 4), dtype=np.float32)
-        # GPU init + upload
+        self._transforms = np.zeros((n_items, 4, 4), dtype=np.float32)
+
         self._lazy_init()
         self._upload_static_buffers()
+
+    def _upload_static_buffers(self):
+        # static data
+        self._centers_ssbo = self._create_ssbo(self._local_centers, persistent=False)
+        self._extents_ssbo = self._create_ssbo(self._half_extents, persistent=False)
+        pairs = self._check_pairs.astype(np.uint32, copy=False)
+        self._pairs_ssbo = self._create_ssbo(pairs, persistent=False)
+        # clear lists for triple buffering
+        self._transforms_ssbos = []
+        self._counter_ssbos = []
+        self._transforms_ptrs = []
+        self._counter_ptrs = []
+
+        # 创建3份持久化映射的动态buffer
+        for _ in range(self._num_buffers):
+            # Transforms buffer with persistent mapping
+            ssbo, ptr = self._create_persistent_ssbo(self._transforms.nbytes)
+            self._transforms_ssbos.append(ssbo)
+            self._transforms_ptrs.append(ptr)
+
+            # Counter buffer with persistent mapping
+            ssbo, ptr = self._create_persistent_ssbo(4)  # 4 bytes for uint32
+            self._counter_ssbos.append(ssbo)
+            self._counter_ptrs.append(ptr)
+
+        # 绑定静态buffer
+        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 0, self._centers_ssbo)
+        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 1, self._extents_ssbo)
+        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 3, self._pairs_ssbo)
 
     def is_collided(self, qs):
         if not self._compiled:
             raise RuntimeError('GPUAABBCollider must be compiled!')
-        # FK update
+
+        import time
+        t_start = time.perf_counter()
+
+        # === 1. FK Update ===
+        t0 = time.perf_counter()
         for actor, sl in self._actor_qs_slice.items():
             actor.fk(qs[sl])
+        t1 = time.perf_counter()
+
         if self._num_pairs == 0:
             return False
-        # Update transforms
+
+        # === 2. Update Transforms ===
+        t2 = time.perf_counter()
         for i, obj in enumerate(self._pair_items):
             self._transforms[i] = obj.tf
-        # Upload transforms
-        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, self._transforms_ssbo)
-        gl.glBufferSubData(gl.GL_SHADER_STORAGE_BUFFER, 0,
-                           self._transforms.nbytes,
-                           self._transforms.ctypes.data_as(ctypes.c_void_p))
-        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, 0)
-        # Clear counter
-        zero = np.zeros(1, dtype=np.uint32)
-        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, self._counter_ssbo)
-        gl.glBufferSubData(gl.GL_SHADER_STORAGE_BUFFER, 0,
-                           zero.nbytes, zero.ctypes.data_as(ctypes.c_void_p))
-        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, 0)
-        # Dispatch
+        t3 = time.perf_counter()
+
+        frame_idx = self._current_frame
+        transforms_ssbo = self._transforms_ssbos[frame_idx]
+        counter_ssbo = self._counter_ssbos[frame_idx]
+        transforms_ptr = self._transforms_ptrs[frame_idx]
+        counter_ptr = self._counter_ptrs[frame_idx]
+
+        # === 3. Fence Wait ===
+        t4 = time.perf_counter()
+        if self._fences[frame_idx] is not None:
+            result = gl.glClientWaitSync(
+                self._fences[frame_idx],
+                0,  # 不flush命令队列
+                0  # 立即返回,不等待
+            )
+            # 如果还没完成,等待最多100微秒
+            if result == gl.GL_TIMEOUT_EXPIRED:
+                gl.glClientWaitSync(
+                    self._fences[frame_idx],
+                    gl.GL_SYNC_FLUSH_COMMANDS_BIT,
+                    100000  # 100us
+                )
+            gl.glDeleteSync(self._fences[frame_idx])
+            self._fences[frame_idx] = None
+        t5 = time.perf_counter()
+
+        # === 4. Memory Copy ===
+        t6 = time.perf_counter()
+        ctypes.memmove(transforms_ptr,
+                       self._transforms.ctypes.data_as(ctypes.c_void_p),
+                       self._transforms.nbytes)
+        ctypes.memset(counter_ptr, 0, 4)
+        t7 = time.perf_counter()
+
+        # 绑定当前帧的buffer
+        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 2, transforms_ssbo)
+        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 4, counter_ssbo)
+
+        # === 5. GPU Dispatch ===
+        t8 = time.perf_counter()
         gl.glUseProgram(self._program)
         num_groups = (self._num_pairs + 255) // 256
         gl.glDispatchCompute(num_groups, 1, 1)
         gl.glMemoryBarrier(gl.GL_SHADER_STORAGE_BARRIER_BIT)
         gl.glUseProgram(0)
-        # Read counter
-        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, self._counter_ssbo)
-        ptr = gl.glMapBufferRange(gl.GL_SHADER_STORAGE_BUFFER, 0, 4, gl.GL_MAP_READ_BIT)
-        result = np.zeros(1, dtype=np.uint32)
-        ctypes.memmove(result.ctypes.data_as(ctypes.c_void_p), ptr, 4)
-        gl.glUnmapBuffer(gl.GL_SHADER_STORAGE_BUFFER)
-        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, 0)
-        return bool(result[0] > 0)
+        t9 = time.perf_counter()
 
-    # helpers
+        # 插入fence
+        self._fences[frame_idx] = gl.glFenceSync(
+            gl.GL_SYNC_GPU_COMMANDS_COMPLETE, 0)
+
+        # === 6. Read Result ===
+        t10 = time.perf_counter()
+        if self._current_frame < self._num_buffers - 1:
+            self._current_frame += 1
+            return False
+
+        read_idx = (frame_idx + 1) % self._num_buffers
+        result_ptr = self._counter_ptrs[read_idx]
+        result = ctypes.cast(result_ptr, ctypes.POINTER(ctypes.c_uint32))[0]
+        t11 = time.perf_counter()
+
+        self._current_frame = (self._current_frame + 1) % self._num_buffers
+
+        # === Performance Logging ===
+        t_end = time.perf_counter()
+        if self._enable_profiling:
+            self._profile_stats['fk'].append((t1 - t0) * 1000)
+            self._profile_stats['update_tf'].append((t3 - t2) * 1000)
+            self._profile_stats['fence_wait'].append((t5 - t4) * 1000)
+            self._profile_stats['memcpy'].append((t7 - t6) * 1000)
+            self._profile_stats['dispatch'].append((t9 - t8) * 1000)
+            self._profile_stats['read'].append((t11 - t10) * 1000)
+            self._profile_stats['total'].append((t_end - t_start) * 1000)
+
+            self._call_count += 1
+
+            # 每100次调用打印一次统计
+            if self._call_count % 100 == 0:
+                self._print_profile_stats()
+
+        return bool(result > 0)
+
+    def _print_profile_stats(self):
+        """打印性能统计"""
+        print("\n" + "=" * 70)
+        print(f"Performance Stats (last 100 calls, {self._num_pairs} collision pairs)")
+        print("=" * 70)
+
+        for name, times in self._profile_stats.items():
+            if not times:
+                continue
+            avg = np.mean(times[-100:])
+            std = np.std(times[-100:])
+            min_t = np.min(times[-100:])
+            max_t = np.max(times[-100:])
+
+            # 计算占总时间的百分比
+            total_avg = np.mean(self._profile_stats['total'][-100:])
+            pct = (avg / total_avg * 100) if total_avg > 0 else 0
+
+            print(f"{name:12s}: {avg:6.3f}ms ± {std:5.3f}ms  "
+                  f"[{min_t:6.3f} - {max_t:6.3f}]  ({pct:5.1f}%)")
+
+        print("=" * 70)
+
+        # 清空旧数据,只保留最近1000次
+        for key in self._profile_stats:
+            self._profile_stats[key] = self._profile_stats[key][-1000:]
+
+    def get_profile_summary(self):
+        """获取性能摘要(用于外部调用)"""
+        if not self._profile_stats['total']:
+            return "No profiling data available"
+
+        summary = {}
+        for name, times in self._profile_stats.items():
+            if times:
+                summary[name] = {
+                    'avg_ms': np.mean(times),
+                    'std_ms': np.std(times),
+                    'min_ms': np.min(times),
+                    'max_ms': np.max(times)
+                }
+        return summary
+
     def _lazy_init(self):
         if self._program is not None:
             return
@@ -103,43 +251,46 @@ class GPUAABBCollider(ocb.ColliderBase):
             unified_src = f.read()
         self._program = self._compile_shader(unified_src)
 
-    def _upload_static_buffers(self):
-        # centers
-        self._centers_ssbo = self._create_ssbo(
-            self._local_centers)
-        # extents
-        self._extents_ssbo = self._create_ssbo(
-            self._half_extents)
-        # pairs
-        pairs = self._check_pairs.astype(np.uint32, copy=False)
-        self._pairs_ssbo = self._create_ssbo(pairs)
-        # transforms (dynamic)
-        self._transforms_ssbo = self._create_ssbo(
-            self._transforms)
-        # counter
-        counter = np.zeros(1, dtype=np.uint32)
-        self._counter_ssbo = self._create_ssbo(counter)
-        # Bind to slots
-        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER,
-                            0, self._centers_ssbo)
-        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER,
-                            1, self._extents_ssbo)
-        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER,
-                            2, self._transforms_ssbo)
-        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER,
-                            3, self._pairs_ssbo)
-        gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER,
-                            4, self._counter_ssbo)
-
-    def _create_ssbo(self, data):
+    def _create_ssbo(self, data, persistent=False):
+        """创建普通SSBO (用于静态数据)"""
         ssbo = gl.GLuint()
         gl.glGenBuffers(1, ctypes.byref(ssbo))
         gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, ssbo)
         gl.glBufferData(gl.GL_SHADER_STORAGE_BUFFER, data.nbytes,
                         data.ctypes.data_as(ctypes.c_void_p),
-                        gl.GL_DYNAMIC_DRAW)
+                        gl.GL_STATIC_DRAW)
         gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, 0)
         return ssbo.value
+
+    def _create_persistent_ssbo(self, size_bytes):
+        """创建持久化映射的SSBO (用于动态数据)"""
+        ssbo = gl.GLuint()
+        gl.glGenBuffers(1, ctypes.byref(ssbo))
+        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, ssbo)
+
+        # 使用BufferStorage创建可持久化映射的buffer
+        flags = (gl.GL_MAP_WRITE_BIT |
+                 gl.GL_MAP_READ_BIT |
+                 gl.GL_MAP_PERSISTENT_BIT |
+                 gl.GL_MAP_COHERENT_BIT)
+
+        gl.glBufferStorage(
+            gl.GL_SHADER_STORAGE_BUFFER,
+            size_bytes,
+            None,  # 不初始化数据
+            flags
+        )
+
+        # 创建持久化映射
+        ptr = gl.glMapBufferRange(
+            gl.GL_SHADER_STORAGE_BUFFER,
+            0,
+            size_bytes,
+            flags
+        )
+
+        gl.glBindBuffer(gl.GL_SHADER_STORAGE_BUFFER, 0)
+        return ssbo.value, ptr
 
     def _compile_shader(self, source):
         shader = gl.glCreateShader(gl.GL_COMPUTE_SHADER)
@@ -147,39 +298,32 @@ class GPUAABBCollider(ocb.ColliderBase):
         src_ptr = ctypes.cast(ctypes.c_char_p(src_bytes),
                               ctypes.POINTER(ctypes.c_char))
         src_len = ctypes.c_int(len(src_bytes))
-        gl.glShaderSource(
-            shader, 1, ctypes.byref(src_ptr), src_len)
+        gl.glShaderSource(shader, 1, ctypes.byref(src_ptr), src_len)
         gl.glCompileShader(shader)
+
         status = gl.GLint()
-        gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS,
-                         ctypes.byref(status))
+        gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS, ctypes.byref(status))
         if not status.value:
             log_len = gl.GLint()
-            gl.glGetShaderiv(
-                shader, gl.GL_INFO_LOG_LENGTH,
-                ctypes.byref(log_len))
+            gl.glGetShaderiv(shader, gl.GL_INFO_LOG_LENGTH, ctypes.byref(log_len))
             log = (gl.GLchar * log_len.value)()
-            gl.glGetShaderInfoLog(
-                shader, log_len.value, None, log)
+            gl.glGetShaderInfoLog(shader, log_len.value, None, log)
             gl.glDeleteShader(shader)
             raise RuntimeError(log.value.decode('utf-8'))
+
         program = gl.glCreateProgram()
         gl.glAttachShader(program, shader)
         gl.glLinkProgram(program)
+
         link_status = gl.GLint()
-        gl.glGetProgramiv(program, gl.GL_LINK_STATUS,
-                          ctypes.byref(link_status))
+        gl.glGetProgramiv(program, gl.GL_LINK_STATUS, ctypes.byref(link_status))
         if not link_status.value:
             log_len = gl.GLint()
-            gl.glGetProgramiv(program, gl.GL_INFO_LOG_LENGTH,
-                              ctypes.byref(log_len))
+            gl.glGetProgramiv(program, gl.GL_INFO_LOG_LENGTH, ctypes.byref(log_len))
             log = (gl.GLchar * log_len.value)()
-            gl.glGetProgramInfoLog(
-                program, log_len.value, None, log)
+            gl.glGetProgramInfoLog(program, log_len.value, None, log)
             gl.glDeleteProgram(program)
             raise RuntimeError(log.value.decode('utf-8'))
+
         gl.glDeleteShader(shader)
         return program
-
-    def _shader_source(self):
-        return GPU_AABB_SHADER

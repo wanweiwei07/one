@@ -49,9 +49,9 @@ jlmt_high = robot.structure.compiled.jlmt_high_by_idx
 sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
                                            lmt_high=jlmt_high,
                                            collider=collider,
-                                           max_edge_step=np.pi / 180)
+                                           cd_step_size=np.pi / 180)
 planner = ompr.RRTConnectPlanner(
-    ssp_provider=sspp, step_size=np.pi / 36)
+    ssp_provider=sspp, extend_step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, -oum.pi / 2, oum.pi / 4, oum.pi / 3])
 robot1 = robot.clone()

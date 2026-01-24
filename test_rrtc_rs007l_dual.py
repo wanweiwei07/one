@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import one.physics.mj_env as opme
 from one import ouc, oum, ovw, ocm, ossop, ompsp, ompr, khi_rs007l
@@ -42,28 +43,43 @@ jlmt_high = np.hstack([r1_jlmt_high, r2_jlmt_high])
 sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
                                            lmt_high=jlmt_high,
                                            collider=collider,
-                                           max_edge_step=np.pi / 180)
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
+                                           cd_step_size=np.pi / 180)
+planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
 start = np.hstack([r1s, r2s])
 goal = np.hstack([r1g, r2g])
-state_list = planner.solve(start=start, goal=goal, verbose=True)
+
+# Run planning with iteration limit
+print("\nStarting RRT-Connect planning with AABBCollider...")
+print("Note: RRT is probabilistic - if planning fails, simply run the script again")
+t0 = time.time()
+state_list = planner.solve(start=start, goal=goal, verbose=False, max_iters=3000)
+t1 = time.time()
+# Print results
+print(f"\n{'='*60}")
+print(f"Planning completed in {t1-t0:.3f}s")
+if state_list:
+    print(f"Path found with {len(state_list)} waypoints")
+else:
+    print("No path found")
+print(f"{'='*60}")
+
 # print(state_list)
-# robot1scp = robot1.clone()
-# robot1scp.fk(qs=r1s)
-# robot1scp.rgba = (1, 0, 0, 0.5)
-# robot1scp.attach_to(base.scene)
-# robot2scp = robot2.clone()
-# robot2scp.fk(qs=r2s)
-# robot2scp.rgba = (1, 0, 0, 0.5)
-# robot2scp.attach_to(base.scene)
-# robot1gcp = robot1.clone()
-# robot1gcp.fk(qs=r1g)
-# robot1gcp.rgba = (0, 0, 1, 0.5)
-# robot1gcp.attach_to(base.scene)
-# robot2gcp = robot2.clone()
-# robot2gcp.fk(qs=r2g)
-# robot2gcp.rgba = (0, 0, 1, 0.5)
-# robot2gcp.attach_to(base.scene)
+robot1scp = robot1.clone()
+robot1scp.fk(qs=r1s)
+robot1scp.rgba = (1, 0, 0, 0.5)
+robot1scp.attach_to(base.scene)
+robot2scp = robot2.clone()
+robot2scp.fk(qs=r2s)
+robot2scp.rgba = (1, 0, 0, 0.5)
+robot2scp.attach_to(base.scene)
+robot1gcp = robot1.clone()
+robot1gcp.fk(qs=r1g)
+robot1gcp.rgba = (0, 0, 1, 0.5)
+robot1gcp.attach_to(base.scene)
+robot2gcp = robot2.clone()
+robot2gcp.fk(qs=r2g)
+robot2gcp.rgba = (0, 0, 1, 0.5)
+robot2gcp.attach_to(base.scene)
 
 def update_pose(dt, counter, collider):
     if counter[0] < len(state_list):

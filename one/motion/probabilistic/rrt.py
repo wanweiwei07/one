@@ -59,12 +59,13 @@ class RRTTree:
 
 
 class RRTConnectPlanner:
-    def __init__(self, ssp_provider, step_size=np.pi / 36,
+    def __init__(self, ssp_provider,
+                 extend_step_size=np.pi / 36,
                  goal_bias=0.7):
         self._sspp = ssp_provider
         self._ppp = omppp.PathPostProcessor(self._sspp)
         self.goal_bias = goal_bias
-        step = np.asarray(step_size, dtype=float)
+        step = np.asarray(extend_step_size, dtype=float)
         dim = self._sspp.ssp.dim
         if step.size == 1:
             self.max_step = np.full(dim, float(step))  # ← broadcast
@@ -122,6 +123,7 @@ class RRTConnectPlanner:
     def solve_iter(self, start, goal, max_iters=1000,
                    time_limit=None, verbose=False):
         start_time = time.time()
+        self._sspp.clear_cache()
         t_start = RRTTree(start)
         t_goal = RRTTree(goal)
         for it in range(max_iters):

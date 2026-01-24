@@ -51,9 +51,9 @@ sspp = ompsp.SpaceProvider.from_box_bounds(
     lmt_low=jlmt_low,
     lmt_high=jlmt_high,
     collider=collider,
-    max_edge_step=np.pi/180)
+    cd_step_size=np.pi / 180)
 
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
+planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
 
 # Define start and goal (same as original test)
 start = np.array([0, 0, 0, 0, 0, 0])

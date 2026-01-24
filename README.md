@@ -229,7 +229,7 @@ import numpy as np
 from one import oum, ovw, ouc, ossop, ocm, ompsp, ompr, khi_rs007l
 
 # Setup world and robot
-base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5), 
+base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5),
                  toggle_auto_cam_orbit=False)
 builtins.base = base
 
@@ -270,12 +270,12 @@ sspp = ompsp.SpaceProvider.from_box_bounds(
     lmt_low=jlmt_low,
     lmt_high=jlmt_high,
     collider=collider,
-    max_edge_step=np.pi/180)
+    cd_step_size=np.pi / 180)
 
 # Plan path with RRT-Connect
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
+planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
-goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, 
+goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2,
                  -oum.pi / 2, oum.pi / 4, oum.pi / 3])
 state_list = planner.solve(start=start, goal=goal, verbose=True)
 print(f"Path found with {len(state_list)} waypoints")
@@ -294,12 +294,14 @@ robot2.attach_to(base.scene)
 # Animate the planned path
 counter = [0]
 
+
 def update_pose(dt, counter):
     if counter[0] < len(state_list):
         robot.fk(qs=state_list[counter[0]])
         counter[0] += 1
     else:
         counter[0] = 0
+
 
 base.schedule_interval(update_pose, interval=0.1, counter=counter)
 base.run()

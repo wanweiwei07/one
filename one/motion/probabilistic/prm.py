@@ -81,8 +81,9 @@ class PRMPlanner:
         self._Q = None
         self._kdtree = None
 
-    def solve(self, start, goal, rm=None):
+    def solve(self, start, goal, rm=None, verbose=False):
         sspp = self._sspp
+        sspp.clear_cache()
         start = np.asarray(start, dtype=np.float32)
         goal = np.asarray(goal, dtype=np.float32)
         if not sspp.is_state_valid(start):
@@ -99,7 +100,7 @@ class PRMPlanner:
         s_idx = rm.add_state(start)
         g_idx = rm.add_state(goal)
         # rebuild KD-tree because nodes changed
-        self._build_kdtree(rm)
+        self._build_kdtree(rm, verbose=verbose)
         self._connect_node_to_roadmap(rm, s_idx)
         self._connect_node_to_roadmap(rm, g_idx)
         # 5) shortest path
@@ -111,10 +112,11 @@ class PRMPlanner:
         smooth_path = self._ppp.shortcut(raw_path)
         return self._ppp.densify(smooth_path)
 
-    def _build_roadmap(self):
+    def _build_roadmap(self, verbose=False):
         rm = PRMRoadmap()
         # 1) sample valid states
-        samples = self._sample_valid_states(self.n_samples)
+        samples = self._sample_valid_states(
+            self.n_samples, verbose=verbose)
         if not samples:
             return None
         for q in samples:
@@ -173,7 +175,7 @@ class PRMPlanner:
                 rm.add_edge_undirected(
                     node_idx, int(j), float(dist))
 
-    def _sample_valid_states(self, n):
+    def _sample_valid_states(self, n, verbose=False):
         sspp = self._sspp
         ssp = sspp.ssp
         out = []
@@ -183,9 +185,11 @@ class PRMPlanner:
             tries += 1
             q = ssp.sample_uniform()
             q = sspp.enforce_bounds(q) if hasattr(sspp, "enforce_bounds") else q
-            if sspp.is_state_valid(q):
+            if sspp.is_state_valid(q): # TODO: batch?
                 out.append(np.asarray(q, dtype=np.float32))
-            print(f"[PRM] sampling: got {len(out)}/{n} valid states in {tries} tries.")
+            if verbose:
+                print(f"[PRM] sampling: got {len(out)}/{n} "
+                      f"valid states in {tries} tries.")
         return out
 
 
@@ -205,8 +209,9 @@ class LazyPRMPlanner(PRMPlanner):
                     continue
                 rm.add_edge_undirected(i, j, float(dist))
 
-    def solve(self, start, goal, rm=None):
+    def solve(self, start, goal, rm=None, verbose=False):
         sspp = self._sspp
+        sspp.clear_cache()
         start = np.asarray(start, dtype=np.float32)
         goal = np.asarray(goal, dtype=np.float32)
         if not sspp.is_state_valid(start):
@@ -216,7 +221,7 @@ class LazyPRMPlanner(PRMPlanner):
             print("[LazyPRM] goal is invalid.")
             return None
         if rm is None:
-            rm = self._build_roadmap()
+            rm = self._build_roadmap(verbose=verbose)
             if rm is None:
                 print("[LazyPRM] failed to build roadmap.")
                 return None

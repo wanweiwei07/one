@@ -1,4 +1,4 @@
-import builtins
+import builtins, time
 import numpy as np
 from one import oum, ovw, ouc, ossop, ocm, ompsp, ompr, khi_rs007l
 
@@ -34,12 +34,26 @@ jlmt_high = robot.structure.compiled.jlmt_high_by_idx
 sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
                                            lmt_high=jlmt_high,
                                            collider=collider,
-                                           max_edge_step=np.pi/180)
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, step_size=np.pi / 36)
+                                           cd_step_size=np.pi / 180)
+planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, -oum.pi / 2, oum.pi / 4, oum.pi / 3])
-state_list = planner.solve(start=start, goal=goal, verbose=True)
-print(state_list)
+
+# Run planning with iteration limit
+print("\nStarting RRT-Connect planning with AABBCollider...")
+print("Note: RRT is probabilistic - if planning fails, simply run the script again")
+t0 = time.time()
+state_list = planner.solve(start=start, goal=goal, verbose=False, max_iters=3000)
+t1 = time.time()
+# Print results
+print(f"\n{'='*60}")
+print(f"Planning completed in {t1-t0:.3f}s")
+if state_list:
+    print(f"Path found with {len(state_list)} waypoints")
+else:
+    print("No path found")
+print(f"{'='*60}")
+
 robot1 = robot.clone()
 robot1.fk(qs=start)
 robot1.rgba = (1, 0, 0, 0.5)
@@ -48,6 +62,7 @@ robot2 = robot.clone()
 robot2.fk(qs=goal)
 robot2.rgba = (0, 0, 1, 0.5)
 robot2.attach_to(base.scene)
+
 counter = [0]
 
 # rrt_iter = planner.solve_iter(start=start, goal=goal,

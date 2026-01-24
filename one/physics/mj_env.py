@@ -27,9 +27,9 @@ class MJEnv:
         n = int(round(dt / h))
         # self.sync.push_qpos()
         self.runtime.step(n)
-        self.sync.pull_sobj_pose()
-        self.sync.pull_qpos()
-        self.sync.pull_freeroot_pose()
+        self.sync.pull_all_sobj_pose()
+        self.sync.pull_all_mecba_qpos()
+        self.sync.pull_all_mecba_freebase_pose()
         self.contact_viz.update_from_data(self.model, self.data)
 
     def is_collided(self):
@@ -38,9 +38,9 @@ class MJEnv:
         return collided
 
     def reset(self):
-        self.sync.push_qpos()
+        self.sync.push_all_mecba_qpos()
         self.runtime.forward()
-        self.sync.pull_sobj_pose()
+        self.sync.pull_all_sobj_pose()
 
     def get_timestep(self):
         return float(self.runtime.model.opt.timestep)

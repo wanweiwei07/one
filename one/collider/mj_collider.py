@@ -28,11 +28,12 @@ class MJCollider:
                     "All MjCollider.actors must be"
                     " added to the scene!")
             # free base sync (the func has no-op if not free)
-            self._mjenv.sync.push_by_mecba_pose(
+            self._mjenv.sync.push_one_mecba_freebase_pose(
                 actor, actor.quat, actor.pos)
             # joint qpos sync
-            self._mjenv.sync.push_by_mecba_qpos(actor, qs[sl])
-        return self._mjenv.is_collided()
+            self._mjenv.sync.push_one_mecba_qpos(actor, qs[sl])
+        self._mjenv.sync.push_all_sobj_qpos()
+        return self._mjenv.runtime.is_collided()
 
     def get_slice(self, actor):
         return self._actor_qs_slice.get(actor, None)
