@@ -13,6 +13,9 @@ The internal data structures are designed to be compatible with both URDF and MJ
 
 Overall, `one` is intended as a lightweight yet expressive research framework for studying motion planning, learning, and their interaction under a single, coherent simulation backend.
 
+
+![Collision Detection Demo](collision.gif)
+
 ## Table of Contents
 
 - [Features](#features)
@@ -186,9 +189,6 @@ if hit_points is not None:
 
 base.run()
 ```
-
-![Collision Detection Demo](docs/images/collision_demo.gif)
-*CPU SIMD collision detection visualizing contact points between two meshes*
 
 #### GPU Collision Support
 
