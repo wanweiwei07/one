@@ -1,7 +1,8 @@
 import numpy as np
 import one.utils.math as oum
 import one.scene.geometry_operation as osgop
-from one.collider import collider
+import one.collider.cpu_simd as occs
+import one.collider.collision_batch as occb
 
 
 def _triangle_areas(verts, faces):
@@ -47,35 +48,6 @@ def _ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=1e-6):
     hit_t = np.where(no_hit, -1.0, hit_t)
     hit_id = np.where(no_hit, -1, hit_id)
     return hit_t, hit_id
-
-
-def _merge_collision_meshes(scene_obj):
-    verts_all = []
-    faces_all = []
-    normals_all = []
-    offset = 0
-    for col in scene_obj.collisions:
-        geom = col.geometry
-        if geom.fs is None:
-            continue
-        verts = geom.vs
-        faces = geom.fs
-        fn = geom._fns
-        rot = col.rotmat
-        pos = col.pos
-        verts_s = (rot @ verts.T).T + pos
-        fn_s = (rot @ fn.T).T
-        verts_all.append(verts_s)
-        normals_all.append(fn_s)
-        faces_all.append(faces + offset)
-        offset += verts.shape[0]
-    if not verts_all:
-        return None
-    verts_all = np.vstack(verts_all)
-    faces_all = np.vstack(faces_all)
-    normals_all = np.vstack(normals_all)
-    return verts_all, faces_all, normals_all
-
 
 def build_grasp_rotmat_batch(ray_dirs):
     """
@@ -124,19 +96,16 @@ def _rotmat_about_axis_batch_vec(axes, angles):
 
 
 def _antipodal_candidates(
-        scene_obj, density, normal_tol_deg,
+        tgt_vs, tgt_fs, tgt_fns,
+        density, normal_tol_deg,
         roll_step_deg, clearance):
-    merged = _merge_collision_meshes(scene_obj)
-    if merged is None:
-        return None
-    verts, faces, face_normals = merged
     normal_cos_th = np.cos(np.deg2rad(180.0 - normal_tol_deg))
     roll_step = np.deg2rad(roll_step_deg)
-    n_samples = _sample_count_from_area(verts, faces, density)
-    pts, nrms, _ = osgop.sample_surface(verts, faces, n_samples)
-    v0 = verts[faces[:, 0]]
-    v1 = verts[faces[:, 1]]
-    v2 = verts[faces[:, 2]]
+    n_samples = _sample_count_from_area(tgt_vs, tgt_fs, density)
+    pts, nrms, _ = osgop.sample_surface(tgt_vs, tgt_fs, n_samples)
+    v0 = tgt_vs[tgt_fs[:, 0]]
+    v1 = tgt_vs[tgt_fs[:, 1]]
+    v2 = tgt_vs[tgt_fs[:, 2]]
     origins = pts
     directions = -nrms
     hit_t, hit_id = _ray_triangles_batch_far(
@@ -149,7 +118,7 @@ def _antipodal_candidates(
     hit_t_v = hit_t[valid]
     hit_id_v = hit_id[valid]
     hit_pos = origins_v + hit_t_v[:, None] * directions_v
-    hit_n = face_normals[hit_id_v]
+    hit_n = tgt_fns[hit_id_v]
     p_all = origins_v
     n_all = nrms[valid]
     q_all = hit_pos
@@ -163,15 +132,14 @@ def _antipodal_candidates(
     return center, jaw_width, n_all, nq_all, cos_vals, normal_cos_th, roll_step
 
 
-def antipodal_iter(scene_obj, gripper, obstacles=None,
+def antipodal_iter(gripper, tgt_sobj,
                    density=0.02, normal_tol_deg=20,
                    roll_step_deg=30, clearance=0.002,
                    score_weights=(0.7, 0.3)):
     """
     Generator: yields (pose_tf, jaw_width, score, collided)
-    :param scene_obj: target object to grasp
     :param gripper: gripper instance
-    :param obstacles: list of scene objects to check collision against (default: [scene_obj])
+    :param: target_sobj: target object to grasp
     :param density: surface sampling density
     :param normal_tol_deg: normal tolerance in degrees
     :param roll_step_deg: roll angle step in degrees
@@ -179,11 +147,11 @@ def antipodal_iter(scene_obj, gripper, obstacles=None,
     :param score_weights: (normal_align_weight, jaw_close_weight)
     :return: yields (pose_tf, jaw_width, score, collided)
     """
-    if obstacles is None:
-        obstacles = [scene_obj]
+    tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vfns(
+        tgt_sobj.collisions)
     cand = _antipodal_candidates(
-        scene_obj, density, normal_tol_deg,
-        roll_step_deg, clearance)
+        tgt_vs, tgt_fs, tgt_fns, density,
+        normal_tol_deg, roll_step_deg, clearance)
     if cand is None:
         return []
     (center, jaw_width, n_all, nq_all,
@@ -221,26 +189,28 @@ def antipodal_iter(scene_obj, gripper, obstacles=None,
     pose_all = pose_all[order]
     jaw_all = jaw_all[order]
     score_all = score_all[order]
+    # prepare collision batch
+    items = gripper.runtime_lnks + [tgt_sobj]
+    tgt_idx = len(items) - 1
+    pairs = [(i, tgt_idx) for i in range(len(gripper.runtime_lnks))]
+    batch = occb.CollisionBatch(items, pairs=pairs)
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
-        gripper.grip_at(pose[:3, 3], pose[:3, :3], jw)
         collided = False
-        for obstacle in obstacles:
-            for lnk in gripper.runtime_lnks:
-                if collider.is_collided(lnk, obstacle) is not None:
-                    collided = True
-                    break
+        gripper.grip_at(pose[:3, 3], pose[:3, :3], jw)
+        results = occs.detect_collision_batch(batch)
+        if results is not None:
+            collided = True
         yield pose, jw, float(sc), collided
 
 
-def antipodal(scene_obj, gripper, obstacles=None,
+def antipodal(gripper, target_sobj,
               density=0.02, normal_tol_deg=20,
               roll_step_deg=30, clearance=0.002,
               max_grasps=50, score_weights=(0.7, 0.3)):
     """
     Collects non-colliding grasps only.
-    :param scene_obj: target object to grasp
     :param gripper: gripper instance
-    :param obstacles: list of scene objects to check collision against (default: [scene_obj])
+    :param target_sobj: target object to grasp
     :param density: surface sampling density
     :param normal_tol_deg: normal tolerance in degrees
     :param roll_step_deg: roll angle step in degrees
@@ -251,7 +221,7 @@ def antipodal(scene_obj, gripper, obstacles=None,
     """
     results = []
     for pose, jw, sc, collided in antipodal_iter(
-            scene_obj, gripper, obstacles,
+            gripper, target_sobj,
             density, normal_tol_deg, roll_step_deg,
             clearance, score_weights):
         if not collided:

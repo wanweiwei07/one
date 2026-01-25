@@ -7,7 +7,6 @@ class ColliderBase:
         self.scene = oss.Scene()
         self._actors = ()
         self._actor_qs_slice = {}
-        self._compiled = False
         self._check_pairs = None
         self._pair_items = None
 
@@ -22,12 +21,12 @@ class ColliderBase:
         item_index = {}
         check_pairs = []
 
-        def get_idx(obj):
-            idx = item_index.get(obj)
+        def get_idx(item):
+            idx = item_index.get(item)
             if idx is None:
                 idx = len(pair_items)
-                pair_items.append(obj)
-                item_index[obj] = idx
+                pair_items.append(item)
+                item_index[item] = idx
             return idx
 
         # 1) Self-collision
@@ -102,7 +101,6 @@ class ColliderBase:
                         check_pairs.append([idx_a, idx_b])
         self._pair_items = pair_items
         self._check_pairs = np.array(check_pairs, dtype=np.int32)
-        self._compiled = True
         self._post_compile()
 
     @property

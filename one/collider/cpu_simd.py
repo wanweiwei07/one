@@ -1,115 +1,155 @@
 import numpy as np
+import one.collider.collision_batch as occb
 
 
-
-def cols_to_tris(cols):
+def detect_collision(vs_a, fs_a, tf_a, vs_b, fs_b, tf_b, eps=1e-9):
     """
-    convert collision geometries to triangle meshes
-    :param cols: list of collision shapes
-    :return: (N,3,3) triangle array or None when empty
+    detect collision between two sets of triangles using CPU
     """
-    tris_list = []
+    # Transform
+    local_tris_a = vs_a[fs_a]
+    local_tris_b = vs_b[fs_b]
+    rot_a = tf_a[:3, :3]
+    pos_a = tf_a[:3, 3]
+    rot_b = tf_b[:3, :3]
+    pos_b = tf_b[:3, 3]
+    tris_a = local_tris_a @ rot_a.T + pos_a
+    tris_b = local_tris_b @ rot_b.T + pos_b
+    # Compute AABBs and check for overlap
+    min_a = tris_a.min(axis=(0, 1))
+    max_a = tris_a.max(axis=(0, 1))
+    min_b = tris_b.min(axis=(0, 1))
+    max_b = tris_b.max(axis=(0, 1))
+    if not aabb_intersect(min_a, max_a, min_b, max_b):
+        return None
+    tri_min_a = tris_a.min(axis=1)
+    tri_max_a = tris_a.max(axis=1)
+    tri_min_b = tris_b.min(axis=1)
+    tri_max_b = tris_b.max(axis=1)
+    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
+                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
+    pair_indices = np.argwhere(overlap_mask)
+    if len(pair_indices) == 0:
+        return None
+    # Detailed triangle-triangle intersection test
+    tris_a_pairs = tris_a[pair_indices[:, 0]]
+    tris_b_pairs = tris_b[pair_indices[:, 1]]
+    hit, tris_pairs = tripair_planeprojection_filter(
+        tris_a_pairs, tris_b_pairs, eps=eps)
+    if not hit:
+        return None
+    points, valid = tripair_fine_filter(
+        tris_pairs[0], tris_pairs[1], eps=eps)
+    if not np.any(valid):
+        return None
+    return points[valid]
+
+
+def detect_collision_batch(batch, eps=1e-9, max_points=200):
+    if batch is None or batch.pairs is None or len(batch.pairs) == 0:
+        return None
+    # update transforms
+    batch.update_transforms()
+    # whole-body AABB
+    wd_min, wd_max = occb.compute_wd_aabb_batch(
+        batch.aabb_mins, batch.aabb_maxs, batch.tfs)
+    ia = batch.pairs[:, 0]
+    ib = batch.pairs[:, 1]
+    overlap = (wd_min[ia] <= wd_max[ib]).all(axis=1) & \
+              (wd_max[ia] >= wd_min[ib]).all(axis=1)
+    cand = np.where(overlap)[0]
+    if cand.size == 0:
+        return None
+    points_out = []
+    pair_ids_out = []
+    desc = batch.geom_descs
+    cand=range(len(batch.pairs))
+    for id in cand:
+        i, j = batch.pairs[id]
+        v_off_a, v_cnt_a, f_off_a, f_cnt_a = desc[i]
+        v_off_b, v_cnt_b, f_off_b, f_cnt_b = desc[j]
+        if f_cnt_a == 0 or f_cnt_b == 0:
+            continue
+        vs_a = batch.vss[v_off_a:v_off_a + v_cnt_a]
+        fs_a = batch.fss[f_off_a:f_off_a + f_cnt_a] - v_off_a
+        tf_a = batch.tfs[i]
+        vs_b = batch.vss[v_off_b:v_off_b + v_cnt_b]
+        fs_b = batch.fss[f_off_b:f_off_b + f_cnt_b] - v_off_b
+        tf_b = batch.tfs[j]
+        pts = detect_collision(
+            vs_a, fs_a, tf_a, vs_b, fs_b, tf_b, eps=eps)
+        if pts is None:
+            continue
+        for p in pts:
+            points_out.append(p)
+            pair_ids_out.append(id)
+            if len(points_out) >= max_points:
+                break
+        if len(points_out) >= max_points:
+            break
+    if not points_out:
+        return None
+    return (np.asarray(points_out, np.float32),
+            np.asarray(pair_ids_out, np.uint32))
+
+
+def cols_to_vf(cols):
+    if not cols:
+        return None
+    verts_all = []
+    faces_all = []
+    offset = 0
     for col in cols:
         geom = col.geometry
-        if geom is None or geom.fs is None:
-            continue
-        if geom.vs is None or geom.fs.size == 0 or geom.vs.size == 0:
-            continue
         tf = col.tf
         rot = tf[:3, :3]
         pos = tf[:3, 3]
         verts = (rot @ geom.vs.T).T + pos
-        tris = verts[geom.fs]
-        if tris.size == 0:
-            continue
-        tris_list.append(tris.astype(np.float32, copy=False))
-    if not tris_list:
-        return None
-    return np.concatenate(tris_list, axis=0).astype(np.float32, copy=False)
+        faces = geom.fs + offset
+        verts_all.append(verts)
+        faces_all.append(faces)
+        offset += verts.shape[0]
+    verts_all = np.vstack(verts_all).astype(
+        np.float32, copy=False)
+    faces_all = np.vstack(faces_all).astype(
+        np.int32, copy=False)
+    return verts_all, faces_all
 
 
-def detect_collision(tris_a, tris_b, eps=1e-9):
-    """
-    detect collision between two sets of triangles using CPU
-    """
-    # Compute AABBs and check for overlap
-    min_a = tris_a.min(axis=(0, 1))
-    max_a = tris_a.max(axis=(0, 1))
-    min_b = tris_b.min(axis=(0, 1))
-    max_b = tris_b.max(axis=(0, 1))
-    if not aabb_intersect(min_a, max_a, min_b, max_b):
+def cols_to_vfns(cols):
+    if not cols:
         return None
-    tri_min_a = tris_a.min(axis=1)
-    tri_max_a = tris_a.max(axis=1)
-    tri_min_b = tris_b.min(axis=1)
-    tri_max_b = tris_b.max(axis=1)
-    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
-                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
-    pair_indices = np.argwhere(overlap_mask)
-    if len(pair_indices) == 0:
-        return None
-    # Detailed triangle-triangle intersection test
-    tris_a_pairs = tris_a[pair_indices[:, 0]]
-    tris_b_pairs = tris_b[pair_indices[:, 1]]
-    hit, tris_pairs = tripair_planeprojection_filter(tris_a_pairs, tris_b_pairs, eps=eps)
-    if not hit:
-        return None
-    points, valid = tripair_fine_filter(tris_pairs[0], tris_pairs[1], eps=eps)
-    if not np.any(valid):
-        return None
-    return points[valid]
+    verts_all = []
+    faces_all = []
+    fn_all = []
+    offset = 0
+    for col in cols:
+        geom = col.geometry
+        tf = col.tf
+        rot = tf[:3, :3]
+        pos = tf[:3, 3]
+        verts = (rot @ geom.vs.T).T + pos
+        faces = geom.fs + offset
+        fn = (rot @ geom.fns.T).T
+        verts_all.append(verts)
+        faces_all.append(faces)
+        fn_all.append(fn)
+        offset += verts.shape[0]
+    verts_all = np.vstack(verts_all).astype(
+        np.float32, copy=False)
+    faces_all = np.vstack(faces_all).astype(
+        np.int32, copy=False)
+    fn_all = np.vstack(fn_all).astype(
+        np.float32, copy=False)
+    return verts_all, faces_all, fn_all
 
 
-def detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-9):
-    """
-    detect collision between two collision shapes using CPU
-    :param col_a, col_b: CollisionShape instances
-    :param tf_a, tf_b: (4,4) world transform matrices
-    :param eps: numerical tolerance (default 1e-9)
-    :return: (K,3) collision points or None
-    """
-    tf_a = tf_a @ col_a.tf
-    tf_b = tf_b @ col_b.tf
-    geom_a = col_a.geometry
-    geom_b = col_b.geometry
-    if geom_a is None or geom_b is None:
+def cols_to_tris(cols):
+    out = cols_to_vf(cols)
+    if out is None:
         return None
-    if geom_a.fs is None or geom_b.fs is None:
-        return None
-    rotmat_a = tf_a[:3, :3]
-    pos_a = tf_a[:3, 3]
-    verts_a = (rotmat_a @ geom_a.vs.T).T + pos_a
-    rotmat_b = tf_b[:3, :3]
-    pos_b = tf_b[:3, 3]
-    verts_b = (rotmat_b @ geom_b.vs.T).T + pos_b
-    tris_a = verts_a[geom_a.fs]
-    tris_b = verts_b[geom_b.fs]
-    # Compute AABBs and check for overlap
-    min_a = tris_a.min(axis=(0, 1))
-    max_a = tris_a.max(axis=(0, 1))
-    min_b = tris_b.min(axis=(0, 1))
-    max_b = tris_b.max(axis=(0, 1))
-    if not aabb_intersect(min_a, max_a, min_b, max_b):
-        return None
-    tri_min_a = tris_a.min(axis=1)
-    tri_max_a = tris_a.max(axis=1)
-    tri_min_b = tris_b.min(axis=1)
-    tri_max_b = tris_b.max(axis=1)
-    overlap_mask = ((tri_min_a[:, None, :] <= tri_max_b[None, :, :]) &
-                    (tri_max_a[:, None, :] >= tri_min_b[None, :, :])).all(axis=-1)
-    pair_indices = np.argwhere(overlap_mask)
-    if len(pair_indices) == 0:
-        return None
-    # Detailed triangle-triangle intersection test
-    tris_a_pairs = tris_a[pair_indices[:, 0]]
-    tris_b_pairs = tris_b[pair_indices[:, 1]]
-    hit, tris_pairs = tripair_planeprojection_filter(tris_a_pairs, tris_b_pairs, eps=eps)
-    if not hit:
-        return None
-    points, valid = tripair_fine_filter(tris_pairs[0], tris_pairs[1], eps=eps)
-    if not np.any(valid):
-        return None
-    return points[valid]
+    verts, faces = out
+    return verts[faces]
 
 
 def build_triangles(vertices, faces):
