@@ -1,7 +1,7 @@
 import numpy as np
 import one.scene.scene as oss
 import one.collider.cpu_simd as cpu_simd
-import one.collider.gpu_simd as gpu_simd
+import one.collider.gpu_simd_batch as gpu_simd
 
 
 class SIMDCollider:

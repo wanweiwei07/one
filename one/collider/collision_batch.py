@@ -13,7 +13,7 @@ class CollisionBatch:
         self.aabb_mins = None
         self.aabb_maxs = None
         self.geom_descs = None
-        self.pairs = np.asarray(pairs, dtype=np.int32)
+        self.pairs = np.asarray(pairs, dtype=np.uint32)
         self.tfs = np.zeros((len(items), 4, 4), dtype=np.float32)
         self._compile()
 
@@ -81,9 +81,8 @@ class CollisionBatch:
             aabb_max_all).astype(np.float32, copy=False)
 
     def update_transforms(self):
-        for i, obj in enumerate(self.items):
-            self.tfs[i] = obj.tf
-
+        for i, itm in enumerate(self.items):
+            self.tfs[i] = itm.tf
 
 def compute_wd_obb_batch(local_mins, local_maxs, tfs):
     """

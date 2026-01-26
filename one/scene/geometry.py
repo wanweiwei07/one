@@ -11,7 +11,7 @@ class Geometry:
                  per_vert_rgbs=None):
         if faces is not None:
             self._vs, self._fs = self._merge_vs_and_fs(verts, faces)
-            self._fns, self._vns = self._compute_vns()
+            self._fns, self._vns, self._fareas = self._compute_vns()
         else:
             self._vs = np.asarray(verts, dtype=np.float32)
             self._fs = None
@@ -50,14 +50,15 @@ class Geometry:
         v1 = self._vs[self._fs[:, 1]] - self._vs[self._fs[:, 0]]
         v2 = self._vs[self._fs[:, 2]] - self._vs[self._fs[:, 0]]
         raw_fns = np.cross(v1, v2).astype(np.float32)
-        _, unit_fns = oum.unit_vec(raw_fns)
+        fn_lens, unit_fns = oum.unit_vec(raw_fns)
+        fareas = 0.5 * fn_lens  # face areas
         # vert normals
         raw_vns = np.zeros_like(self._vs)
         np.add.at(raw_vns, self._fs[:, 0], unit_fns)
         np.add.at(raw_vns, self._fs[:, 1], unit_fns)
         np.add.at(raw_vns, self._fs[:, 2], unit_fns)
         _, unit_vns = oum.unit_vec(raw_vns)
-        return unit_fns, unit_vns
+        return unit_fns, unit_vns, fareas
 
     def _merge_vs_and_fs(self, vs, fs, tol=1e-6):
         q = np.round(vs / tol).astype(np.int64)

@@ -1,0 +1,151 @@
+#version 430 core
+
+layout(local_size_x = 256) in;
+layout(std430, binding = 0) readonly buffer Verts { vec4 verts[]; };
+layout(std430, binding = 1) readonly buffer Faces { uvec4 faces[]; };
+layout(std430, binding = 2) readonly buffer GeomDesc { uvec4 desc[]; };
+layout(std430, binding = 3) readonly buffer Pairs { uvec2 pairs[]; };
+layout(std430, binding = 4) readonly buffer Transforms { mat4 tfs[]; };
+layout(std430, binding = 5) readonly buffer Prefix { uint prefix[]; };
+layout(std430, binding = 6) writeonly buffer Points { vec4 points[]; };
+layout(std430, binding = 7) coherent buffer Counter { uint counter; };
+uniform uint u_maxPoints;
+uniform float u_eps;
+
+// tri AABB
+bool tri_aabb_overlap(vec3 a0, vec3 a1, vec3 a2,
+                      vec3 b0, vec3 b1, vec3 b2) {
+    vec3 minA = min(min(a0, a1), a2);
+    vec3 maxA = max(max(a0, a1), a2);
+    vec3 minB = min(min(b0, b1), b2);
+    vec3 maxB = max(max(b0, b1), b2);
+    return all(lessThanEqual(minA, maxB)) &&
+           all(greaterThanEqual(maxA, minB));
+}
+
+// Point-in-triangle (barycentric)
+bool point_in_tri(vec3 p, vec3 a, vec3 b, vec3 c, float eps) {
+    vec3 v0 = c - a;
+    vec3 v1 = b - a;
+    vec3 v2 = p - a;
+    float dot00 = dot(v0, v0);
+    float dot01 = dot(v0, v1);
+    float dot02 = dot(v0, v2);
+    float dot11 = dot(v1, v1);
+    float dot12 = dot(v1, v2);
+    float inv = 1.0 / (dot00 * dot11 - dot01 * dot01 + eps);
+    float u = (dot11 * dot02 - dot01 * dot12) * inv;
+    float v = (dot00 * dot12 - dot01 * dot02) * inv;
+    return (u >= -eps) && (v >= -eps) && (u + v <= 1.0 + eps);
+}
+
+// tri-tri intersection
+// returns true and hit point
+bool tri_tri_intersect(vec3 a0, vec3 a1, vec3 a2,
+                       vec3 b0, vec3 b1, vec3 b2,
+                       float eps, out vec3 hitPoint) {
+    vec3 nA = cross(a1 - a0, a2 - a0);
+    vec3 nB = cross(b1 - b0, b2 - b0);
+    float nALen = length(nA);
+    float nBLen = length(nB);
+    if (nALen < eps || nBLen < eps) return false;
+    nA /= nALen;
+    nB /= nBLen;
+    // plane distances
+    float dA = -dot(nA, a0);
+    float dB = -dot(nB, b0);
+    float distB0 = dot(nA, b0) + dA;
+    float distB1 = dot(nA, b1) + dA;
+    float distB2 = dot(nA, b2) + dA;
+    if ((distB0 > eps && distB1 > eps && distB2 > eps) ||
+        (distB0 < -eps && distB1 < -eps && distB2 < -eps)) {
+        return false;
+    }
+    float distA0 = dot(nB, a0) + dB;
+    float distA1 = dot(nB, a1) + dB;
+    float distA2 = dot(nB, a2) + dB;
+    if ((distA0 > eps && distA1 > eps && distA2 > eps) ||
+        (distA0 < -eps && distA1 < -eps && distA2 < -eps)) {
+        return false;
+    }
+    // line of intersection
+    vec3 dir = cross(nA, nB);
+    float dirLen = length(dir);
+    if (dirLen < eps) return false; // coplanar -> false (match CPU)
+    vec3 dirN = dir / dirLen;
+    float dirLenSq = dirLen * dirLen;
+    vec3 p0 = cross(dB * nA - dA * nB, dir) / (dirLenSq + eps);
+    // project triangle vertices onto line
+    float projA0 = dot(a0 - p0, dirN);
+    float projA1 = dot(a1 - p0, dirN);
+    float projA2 = dot(a2 - p0, dirN);
+    float minA = min(min(projA0, projA1), projA2);
+    float maxA = max(max(projA0, projA1), projA2);
+    float projB0 = dot(b0 - p0, dirN);
+    float projB1 = dot(b1 - p0, dirN);
+    float projB2 = dot(b2 - p0, dirN);
+    float minB = min(min(projB0, projB1), projB2);
+    float maxB = max(max(projB0, projB1), projB2);
+    float t0 = max(minA, minB);
+    float t1 = min(maxA, maxB);
+    if (t0 >= t1 - eps) return false;
+    float tMid = 0.5 * (t0 + t1);
+    hitPoint = p0 + dirN * tMid;
+    if (!point_in_tri(hitPoint, a0, a1, a2, eps)) return false;
+    if (!point_in_tri(hitPoint, b0, b1, b2, eps)) return false;
+    return true;
+}
+
+// find pair_id by binary search on prefix
+uint find_pair_id(uint gid, uint P) {
+    uint lo = 0;
+    uint hi = P;
+    while (lo < hi) {
+        uint mid = (lo + hi) >> 1;
+        if (prefix[mid + 1] <= gid) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return lo;
+}
+
+void main() {
+    uint gid = gl_GlobalInvocationID.x;
+    uint P = pairs.length();
+    uint total = prefix[P];
+    if (gid >= total) return; // finished
+    uint pair_id = find_pair_id(gid, P);
+    uvec2 p = pairs[pair_id];
+    uvec4 da = desc[p.x];
+    uvec4 db = desc[p.y];
+    uint f_off_a = da.z;
+    uint f_cnt_a = da.w;
+    uint f_off_b = db.z;
+    uint f_cnt_b = db.w;
+    if (f_cnt_a == 0u || f_cnt_b == 0u) return;
+    uint local = gid - prefix[pair_id];
+    uint tri_a = local / f_cnt_b;
+    uint tri_b = local % f_cnt_b;
+    uvec3 fa = faces[f_off_a + tri_a].xyz;
+    uvec3 fb = faces[f_off_b + tri_b].xyz;
+    mat4 Ta = transpose(tfs[p.x]);  // NumPy row-major
+    mat4 Tb = transpose(tfs[p.y]);
+    vec3 a0 = (Ta * verts[fa.x]).xyz;
+    vec3 a1 = (Ta * verts[fa.y]).xyz;
+    vec3 a2 = (Ta * verts[fa.z]).xyz;
+    vec3 b0 = (Tb * verts[fb.x]).xyz;
+    vec3 b1 = (Tb * verts[fb.y]).xyz;
+    vec3 b2 = (Tb * verts[fb.z]).xyz;
+    // tri AABB test
+    if (!tri_aabb_overlap(a0, a1, a2, b0, b1, b2)) return;
+    // tri-tri intersection test
+    vec3 hit;
+    if (tri_tri_intersect(a0, a1, a2, b0, b1, b2, u_eps, hit)) {
+        uint idx = atomicAdd(counter, 1u);
+        if (idx < u_maxPoints) {
+            points[idx] = vec4(hit, float(pair_id));
+        }
+    }
+}

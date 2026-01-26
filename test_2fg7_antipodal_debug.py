@@ -12,7 +12,7 @@ bunny = osso.SceneObject.from_file(
 bunny.attach_to(base.scene)
 # bunny.toggle_render_collision = True
 it = antipodal_iter(
-    scene_obj=bunny, gripper=gripper, obstacles=[bunny],
+    gripper=gripper, tgt_sobj=bunny,
     density=0.02, normal_tol_deg=20, roll_step_deg=30)
 ghost = gripper.clone()
 ghost.alpha = 0.3
@@ -29,16 +29,16 @@ def play(dt):
         ghost.rgb = (1.0, 0.0, 0.0)
     else:
         ghost.rgb = (0.0, 1.0, 0.0)
-    import numpy as np
-    pos = pose_tf[:3, 3]
-    rotmat = pose_tf[:3, :3]
-    np.set_printoptions(precision=8, suppress=True)
-    print("pos =", "np.array([" + ", ".join(f"{v:.8f}" for v in pos) + "], dtype=np.float32)")
-    print("rotmat =", "np.array([" +
-          ", ".join("[" + ", ".join(f"{v:.8f}" for v in row) + "]" for row in rotmat) +
-          "], dtype=np.float32)")
-    print("jaw_width =", f"{jaw_width:.8f}")
+    # import numpy as np
+    # pos = pose_tf[:3, 3]
+    # rotmat = pose_tf[:3, :3]
+    # np.set_printoptions(precision=8, suppress=True)
+    # print("pos =", "np.array([" + ", ".join(f"{v:.8f}" for v in pos) + "], dtype=np.float32)")
+    # print("rotmat =", "np.array([" +
+    #       ", ".join("[" + ", ".join(f"{v:.8f}" for v in row) + "]" for row in rotmat) +
+    #       "], dtype=np.float32)")
+    # print("jaw_width =", f"{jaw_width:.8f}")
 
 
-base.schedule_interval(play, interval=.5)
+base.schedule_interval(play, interval=.1)
 base.run()

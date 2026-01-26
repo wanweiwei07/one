@@ -97,7 +97,7 @@ class GPUCollider:
         if self._initialized:
             return
         shader_dir = os.path.join(os.path.dirname(__file__), 'shaders')
-        unified_src = self._load_shader_file(os.path.join(shader_dir, 'twophase.comp'))
+        unified_src = self._load_shader_file(os.path.join(shader_dir, 'twophase_vbo.comp'))
         try:
             self._program = self._compile_shader_manual(unified_src, 'unified')
         except Exception as e:

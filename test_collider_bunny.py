@@ -1,8 +1,7 @@
-import builtins
+import builtins, time
 import numpy as np
 from one import ovw, ouc, osso, ossop
-from one.collider import collider
-import time
+import one.collider.gpu_simd_batch as ocgsb
 
 base = ovw.World(cam_pos=(.5, .5, .5), cam_lookat_pos=(0, 0, .1),
                  toggle_auto_cam_orbit=True)
@@ -18,15 +17,20 @@ bunny2.attach_to(base.scene)
 
 print("Testing high-level collision detection (GPU with CPU fallback)...")
 print("\nFirst run (cold start):")
+gcd_detor = ocgsb.create_detector()
+items = [bunny1, bunny2]
+pairs = [(0,1)]
+batch = ocgsb.build_batch(items, pairs)
 tic = time.perf_counter()
-hit_points = collider.is_collided(bunny1, bunny2, max_points=200)
+results = gcd_detor.detect_collision_batch(batch)
 toc = time.perf_counter()
 print(f"  Time: {(toc - tic)*1000:.4f} ms")
-if hit_points is not None:
-    print(f"Found {len(hit_points)} collision points")
+if results is not None:
+    print(f"Found {len(results[0])} collision points")
 else:
     print("No collision detected")
-if hit_points is not None:
+if results is not None:
+    hit_points, pair_ids = results
     for hit_point in hit_points:
         s = ossop.gen_sphere(
             pos=hit_point, radius=0.002,
@@ -38,7 +42,7 @@ print("\nRepeated runs (warm):")
 times = []
 for i in range(10):
     tic = time.perf_counter()
-    collider.is_collided(bunny1, bunny2, max_points=200)
+    results = gcd_detor.detect_collision_batch(batch)
     toc = time.perf_counter()
     elapsed = (toc - tic) * 1000
     times.append(elapsed)

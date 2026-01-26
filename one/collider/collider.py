@@ -1,6 +1,6 @@
 import one.utils.constant as ouc
 import one.collider.cpu_simd as occs
-import one.collider.gpu_simd as ocgs
+import one.collider.gpu_simd_batch as ocgsb
 
 
 def is_collided(sobj_a, sobj_b, eps=1e-9, max_points=1000):
@@ -14,7 +14,8 @@ def is_collided(sobj_a, sobj_b, eps=1e-9, max_points=1000):
     :param max_points: max collision points for mesh detection (default 200)
     :return: (K,3) collision points or None
     """
-    if not sobj_a.collisions or not sobj_b.collisions:
+    batch = ocgsb.build_batch((sobj_a, sobj_b), pairs=[(0,1)])
+    if batch is None:
         return None
     is_single_mesh_a = (len(sobj_a.collisions) == 1 and
                         sobj_a._collision_type == ouc.CollisionType.MESH)

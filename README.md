@@ -214,6 +214,7 @@ The framework provides GPU-accelerated collision detection using OpenGL compute 
 **Automatic fallback**: If OpenGL compute shaders are unavailable (e.g., older hardware, missing drivers), the system automatically falls back to CPU SIMD without code changes.
 
 **Usage:**
+
 ```python
 from one.collider import collider
 
@@ -221,7 +222,8 @@ from one.collider import collider
 hit_points = collider.is_collided(obj1, obj2, max_points=200)
 
 # Or use specific backend explicitly
-from one.collider import gpu_simd, cpu_simd
+from one.collider import gpu_simd_batch, cpu_simd
+
 hit_points = gpu_simd.is_sobj_collided(obj1, obj2)  # GPU only
 hit_points = cpu_simd.is_sobj_collided(obj1, obj2)  # CPU only
 ```

@@ -19,7 +19,7 @@ print("  Density: 0.02")
 print("  Normal tolerance: 20 deg")
 print("  Roll step: 30 deg")
 tic = time.perf_counter()
-grasps = antipodal(scene_obj=bunny, gripper=gripper, obstacles=[bunny],
+grasps = antipodal(gripper=gripper, target_sobj=bunny,
                    density=0.01, normal_tol_deg=20, roll_step_deg=30,
                    max_grasps=50)
 toc = time.perf_counter()
@@ -28,12 +28,12 @@ planning_time = toc - tic
 print(f"\nPlanning completed in {planning_time:.3f} seconds")
 print(f"Found {len(grasps)} collision-free grasps")
 if len(grasps) > 0:
-    print(f"Planning rate: {len(grasps)/planning_time:.1f} grasps/sec")
+    print(f"Planning rate: {len(grasps) / planning_time:.1f} grasps/sec")
     print(f"Score range: [{min(g[2] for g in grasps):.4f}, {max(g[2] for g in grasps):.4f}]")
     print("\nTop 10 grasps:")
     for i, (pose_tf, jaw_width, score) in enumerate(grasps[:10]):
         pos = pose_tf[:3, 3]
-        print(f"  {i+1:2d}. score={score:.4f}, jaw={jaw_width:.4f}, "
+        print(f"  {i + 1:2d}. score={score:.4f}, jaw={jaw_width:.4f}, "
               f"pos=[{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}]")
     print(f"\nVisualizing all {len(grasps)} grasps...")
     for i, (pose_tf, jaw_width, score) in enumerate(grasps):

@@ -2,7 +2,7 @@ import numpy as np
 import one.utils.math as oum
 import one.scene.geometry_operation as osgop
 import one.collider.cpu_simd as occs
-import one.collider.collision_batch as occb
+import one.collider.gpu_simd_batch as ocgcb
 
 
 def _triangle_areas(verts, faces):
@@ -48,6 +48,7 @@ def _ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=1e-6):
     hit_t = np.where(no_hit, -1.0, hit_t)
     hit_id = np.where(no_hit, -1, hit_id)
     return hit_t, hit_id
+
 
 def build_grasp_rotmat_batch(ray_dirs):
     """
@@ -147,7 +148,7 @@ def antipodal_iter(gripper, tgt_sobj,
     :param score_weights: (normal_align_weight, jaw_close_weight)
     :return: yields (pose_tf, jaw_width, score, collided)
     """
-    tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vfns(
+    tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vffns(
         tgt_sobj.collisions)
     cand = _antipodal_candidates(
         tgt_vs, tgt_fs, tgt_fns, density,
@@ -193,11 +194,18 @@ def antipodal_iter(gripper, tgt_sobj,
     items = gripper.runtime_lnks + [tgt_sobj]
     tgt_idx = len(items) - 1
     pairs = [(i, tgt_idx) for i in range(len(gripper.runtime_lnks))]
-    batch = occb.CollisionBatch(items, pairs=pairs)
+    try:
+        detlib = ocgcb
+        detector = detlib.create_detector()
+        batch = detlib.build_batch(items, pairs)
+    except Exception:
+        detlib = occs
+        detector = detlib.create_detector()
+        batch = detlib.build_batch(items, pairs)
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
         collided = False
         gripper.grip_at(pose[:3, 3], pose[:3, :3], jw)
-        results = occs.detect_collision_batch(batch)
+        results = detector.detect_collision_batch(batch)
         if results is not None:
             collided = True
         yield pose, jw, float(sc), collided

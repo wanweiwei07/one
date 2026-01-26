@@ -1,7 +1,7 @@
 import numpy as np
 import one.collider.collider_base as ocb
 import one.collider.cpu_simd as occs
-import one.collider.gpu_simd as ocgs
+import one.collider.gpu_simd_batch as ocgs
 
 
 class SIMDCollider(ocb.ColliderBase):

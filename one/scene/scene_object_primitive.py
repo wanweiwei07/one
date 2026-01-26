@@ -236,3 +236,29 @@ def gen_custom(verts, faces, rgb=ouc.BasicColor.RED, alpha=1.0):
         geometry=geometry, rgb=rgb, alpha=alpha),
         auto_make_collision=False)
     return o
+
+
+def create_from_vfs(verts, faces,
+                     collision_type=None,
+                     is_free=False,
+                     rgb=ouc.BasicColor.DEFAULT,
+                     alpha=1.0,
+                     **kwargs):
+    """
+    Build a SceneObject from user-specified vertices/faces.
+    verts: (N,3)
+    faces: (M,3)
+    """
+    _psd = _parse_phys(kwargs)
+    inertia, com, mass, _, _ = _psd
+    verts = np.asarray(verts, np.float32)
+    faces = np.asarray(faces, np.uint32)
+    geometry = (verts, faces)
+    o = osso.SceneObject(collision_type=collision_type,
+                         is_free=is_free)
+    amc = False if collision_type is None else True
+    o.add_visual(osrm.RenderModel(
+        geometry=geometry, rgb=rgb, alpha=alpha),
+        auto_make_collision=amc)
+    o.set_inertia(inertia, com, mass)
+    return o
