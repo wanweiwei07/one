@@ -169,17 +169,27 @@ def segment_surface(geometry, normal_tol_deg=15.0):
         fids_c = np.where(labels == c)[0]
         if fids_c.size == 0:
             continue
-        fs_sub = fs[fids_c]
-        parts.append(fs_sub)
+        parts.append(fids_c)
     return tuple(parts)
 
 
-def convex_hull(vs):
+def convex_hull(geom):
     from scipy.spatial import ConvexHull
-    hull = ConvexHull(vs)
-    hull_vs = vs
-    hull_fs = hull.simplices.astype(np.uint32)
-    return hull_vs, hull_fs
+    import one.scene.geometry as osg
+    hull = ConvexHull(geom.vs)
+    vs = geom.vs
+    fs = hull.simplices.astype(np.uint32)
+    # ensure outward normals
+    # TODO: extract function?
+    center = vs.mean(axis=0)
+    v0 = vs[fs[:, 0]]
+    v1 = vs[fs[:, 1]]
+    v2 = vs[fs[:, 2]]
+    n = np.cross(v1 - v0, v2 - v0)
+    p = (v0 + v1 + v2) / 3.0
+    mask = np.einsum('ij,ij->i', p - center, n) < 0
+    fs[mask] = fs[mask][:, [0, 2, 1]]
+    return osg.Geometry(vs, fs)
 
 
 def ray_shoot_flat(orig, dir, verts, faces,

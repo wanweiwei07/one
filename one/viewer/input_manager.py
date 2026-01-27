@@ -6,11 +6,13 @@ class InputManager:
     def __init__(self, window):
         self._window = window
         self.pressed_keys = set()
+        self._pending_key_presses = set()
         self.pressed_buttons = set()
         window.push_handlers(self)
 
     def on_key_press(self, symbol, modifiers):
         self.pressed_keys.add(symbol)
+        self._pending_key_presses.add(symbol)
 
     def on_key_release(self, symbol, modifiers):
         self.pressed_keys.discard(symbol)
@@ -27,6 +29,12 @@ class InputManager:
 
     def is_key_pressed(self, symbol):
         return symbol in self.pressed_keys
+
+    def is_key_pressed_edge(self, symbol):
+        if symbol in self._pending_key_presses:
+            self._pending_key_presses.discard(symbol)
+            return True
+        return False
 
     def is_button_pressed(self, button):
         return button in self.pressed_buttons
