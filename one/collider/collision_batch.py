@@ -31,7 +31,7 @@ class CollisionBatch:
             fs_list = []
             local_v_offset = 0
             for col in itm.collisions:
-                geom = col.geometry
+                geom = col.geom
                 if (geom is None or
                         geom.fs is None):
                     continue

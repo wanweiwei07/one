@@ -573,6 +573,21 @@ def orth_vec(vec, toggle_unit=True):
         return np.array(
             [b - c, -a + c, a - b])
 
+def frame_from_normal(n):
+    """compute a coordinate frame from a normal vector n
+    :param n: 1x3 nparray
+    :return: 3x3 rotmat"""
+    n = n / (np.linalg.norm(n) + eps)
+    # pick a helper axis not parallel to n
+    ref = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    if abs(np.dot(n, ref)) > 0.9:
+        ref = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    u = np.cross(n, ref)
+    u = u / (np.linalg.norm(u) + 1e-12)
+    v = np.cross(n, u)
+    v = v / (np.linalg.norm(v) + 1e-12)
+    return np.column_stack((u, v, n)).astype(np.float32)
+
 
 def closest_point_between_lines(p1, d1, p2, d2):
     """line1=p1 + t*d1, line2=p2 + s*d2"""

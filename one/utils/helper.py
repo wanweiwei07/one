@@ -14,3 +14,5 @@ def print_arr(name, arr, precision=8):
     else:
         raise ValueError("print_arr only supports 1D or 2D arrays")
 
+def rand_rgb():
+    return np.random.rand(3)

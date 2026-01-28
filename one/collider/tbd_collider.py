@@ -25,7 +25,7 @@ def is_collided(sobj_a, sobj_b, eps=1e-9, max_points=1000):
         col_a = sobj_a.collisions[0]
         col_b = sobj_b.collisions[0]
         try:
-            return ocgs.detect_collision(
+            return ocgsb.detect_collision(
                 col_a, sobj_a.tf, col_b, sobj_b.tf,
                 eps=eps, max_points=max_points)
         except Exception as e:

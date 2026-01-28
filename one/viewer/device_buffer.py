@@ -139,20 +139,20 @@ class MeshBuffer(DeviceBufferBase):
 
 
 class PointCloudBuffer(DeviceBufferBase):
-    def __init__(self, verts, per_vert_rgbs):
+    def __init__(self, vs, vrgbs):
         super().__init__()
-        self._build(verts, per_vert_rgbs)
+        self._build(vs, vrgbs)
 
     def draw(self):
         gl.glBindVertexArray(self.vao)
         gl.glDrawArrays(gl.GL_POINTS, 0, self.count)
         gl.glBindVertexArray(0)
 
-    def _build(self, verts, per_vert_rgbs):
-        self.count = len(verts)
+    def _build(self, vs, vrgbs):
+        self.count = len(vs)
         # color
         array = np.hstack(
-            [verts, per_vert_rgbs]).astype(np.float32)
+            [vs, vrgbs]).astype(np.float32)
         # create VAO (vertex array object), VBO and EBO will be bound to it
         vao = (gl.GLuint * 1)()
         gl.glGenVertexArrays(1, vao)

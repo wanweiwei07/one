@@ -69,7 +69,7 @@ class MjContactForceViz:
                 shaft_radius=ouc.ForceArrowSize.SHAFT_RADIUS,
                 head_radius=ouc.ForceArrowSize.HEAD_RADIUS,
                 head_length=ouc.ForceArrowSize.HEAD_LENGTH,
-                segments=8, rgb=(1, 0, 0),
+                n_segs=8, rgb=(1, 0, 0),
                 alpha=ouc.ALPHA.SEMI,
                 collision_type=None,
                 is_fixed=True)

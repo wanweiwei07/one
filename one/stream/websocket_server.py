@@ -14,7 +14,7 @@ def _mat4_to_list(mat: np.ndarray) -> List[float]:
     return mat.astype(np.float32, copy=False).ravel().tolist()
 
 def _serialize_mesh(model, node, mesh_id: str) -> Dict[str, Any]:
-    geom = model.geometry
+    geom = model.geom
     verts = geom.vs.astype(np.float32, copy=False).ravel().tolist()
     faces = geom.fs.astype(np.int32, copy=False).ravel().tolist()
     rgba = [float(model.rgb[0]), float(model.rgb[1]), float(model.rgb[2]), float(model.alpha)]

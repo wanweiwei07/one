@@ -162,69 +162,73 @@ class CPUDetector():
         else:
             return None
 
+
 def create_detector(eps=1e-9, max_points=200):
     return CPUDetector(eps=eps, max_points=max_points)
+
 
 def build_batch(items, pairs):
     return occb.CollisionBatch(items, pairs)
 
+
 def cols_to_vfs(cols):
     if not cols:
         return None
-    verts_all = []
-    faces_all = []
+    vs_list = []
+    fs_list = []
     offset = 0
     for col in cols:
-        geom = col.geometry
+        geom = col.geom
         tf = col.tf
         rot = tf[:3, :3]
         pos = tf[:3, 3]
-        verts = (rot @ geom.vs.T).T + pos
-        faces = geom.fs + offset
-        verts_all.append(verts)
-        faces_all.append(faces)
-        offset += verts.shape[0]
-    verts_all = np.vstack(verts_all).astype(
+        vs = (rot @ geom.vs.T).T + pos
+        fs = geom.fs + offset
+        vs_list.append(vs)
+        fs_list.append(fs)
+        offset += vs.shape[0]
+    vss = np.vstack(vs_list).astype(
         np.float32, copy=False)
-    faces_all = np.vstack(faces_all).astype(
+    fss = np.vstack(fs_list).astype(
         np.int32, copy=False)
-    return verts_all, faces_all
+    return vss, fss
 
 
 def cols_to_vffns(cols):
     if not cols:
         return None
-    verts_all = []
-    faces_all = []
-    fn_all = []
+    vs_list = []
+    fs_list = []
+    fns_list = []
     offset = 0
     for col in cols:
-        geom = col.geometry
+        geom = col.geom
         tf = col.tf
         rot = tf[:3, :3]
         pos = tf[:3, 3]
-        verts = (rot @ geom.vs.T).T + pos
-        faces = geom.fs + offset
-        fn = (rot @ geom.fns.T).T
-        verts_all.append(verts)
-        faces_all.append(faces)
-        fn_all.append(fn)
-        offset += verts.shape[0]
-    verts_all = np.vstack(verts_all).astype(
+        vs = (rot @ geom.vs.T).T + pos
+        fs = geom.fs + offset
+        fns = (rot @ geom.fns.T).T
+        vs_list.append(vs)
+        fs_list.append(fs)
+        fns_list.append(fns)
+        offset += vs.shape[0]
+    vss = np.vstack(vs_list).astype(
         np.float32, copy=False)
-    faces_all = np.vstack(faces_all).astype(
+    fss = np.vstack(fs_list).astype(
         np.int32, copy=False)
-    fn_all = np.vstack(fn_all).astype(
+    fnss = np.vstack(fns_list).astype(
         np.float32, copy=False)
-    return verts_all, faces_all, fn_all
+    return vss, fss, fnss
 
 
 def cols_to_tris(cols):
     out = cols_to_vfs(cols)
     if out is None:
         return None
-    verts, faces = out
-    return verts[faces]
+    vs, fs = out
+    return vs[fs]
+
 
 def compute_aabb(tris):
     mins = tris.min(axis=(0, 1))

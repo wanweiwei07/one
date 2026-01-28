@@ -1,7 +1,7 @@
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
-import one.scene.geometry_primitive as osgp
+import one.geom.geometry as ogg
 import one.scene.render_model as osrm
 
 
@@ -9,7 +9,7 @@ class CollisionShape:
     def __init__(self, rotmat=None, pos=None):
         self._tf = oum.tf_from_rotmat_pos(
             rotmat, pos)
-        self._geometry = None  # lazy geometry cache
+        self._geom = None  # lazy geom cache
         self._aabb = None
 
     def to_render_model(self):
@@ -19,10 +19,10 @@ class CollisionShape:
         raise NotImplementedError
 
     @property
-    def geometry(self):
-        if self._geometry is None:
-            self._geometry = self._build_geometry()
-        return self._geometry
+    def geom(self):
+        if self._geom is None:
+            self._geom = self._build_geom()
+        return self._geom
 
     @property
     def tf(self):
@@ -45,22 +45,22 @@ class CollisionShape:
     def aabb(self):
         raise NotImplementedError
 
-    def _build_geometry(self):
+    def _build_geom(self):
         raise NotImplementedError
 
 
 class SphereCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_geometry(
-            cls, geometry, rotmat, pos):
-        verts = (rotmat @
-                 geometry.vs.T).T + pos
-        mins = verts.min(axis=0)
-        maxs = verts.max(axis=0)
+    def fit_from_geom(
+            cls, geom, rotmat, pos):
+        vs = (rotmat @
+              geom.vs.T).T + pos
+        mins = vs.min(axis=0)
+        maxs = vs.max(axis=0)
         center = (mins + maxs) * 0.5
         radius = np.linalg.norm(
-            verts - center, axis=1).max()
+            vs - center, axis=1).max()
         shape = cls(radius=radius, pos=center)
         return shape
 
@@ -75,7 +75,7 @@ class SphereCollisionShape(CollisionShape):
 
     def to_render_model(self):
         return osrm.RenderModel(
-            geometry=self.geometry,
+            geom=self.geom,
             pos=self.pos,
             rgb=ouc.BasicColor.ORANGE,
             alpha=ouc.ALPHA.TRANSPARENT)
@@ -92,24 +92,24 @@ class SphereCollisionShape(CollisionShape):
         max_corner = self.pos + self._radius
         return min_corner, max_corner
 
-    def _build_geometry(self):
-        return osgp.gen_icosphere_geom(
+    def _build_geom(self):
+        return ogg.gen_icosphere_geom(
             radius=self._radius)
 
 
 class CapsuleCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_geometry(cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry.vs.T).T + pos
-        faces = geometry.fs
-        mean, pcmat = oum.area_weighted_pca(verts, faces)
+    def fit_from_geom(cls, geom, rotmat, pos):
+        vs = (rotmat @ geom.vs.T).T + pos
+        fs = geom.fs
+        mean, pcmat = oum.area_weighted_pca(vs, fs)
         pc_ax = pcmat[:, -1]
-        proj = (verts - mean) @ pc_ax
+        proj = (vs - mean) @ pc_ax
         mn = proj.min()
         mx = proj.max()
         center = mean + pc_ax * (mn + mx) * 0.5
-        d = verts - center
+        d = vs - center
         axial = d @ pc_ax
         radial_sq = np.sum(d * d, axis=1) - axial * axial
         radial_sq = np.maximum(radial_sq, 0.0)
@@ -139,13 +139,13 @@ class CapsuleCollisionShape(CollisionShape):
 
     def to_render_model(self):
         return osrm.RenderModel(
-            geometry=self.geometry,
+            geom=self.geom,
             rotmat=self.rotmat, pos=self.pos,
             rgb=ouc.BasicColor.ORANGE,
             alpha=ouc.ALPHA.TRANSPARENT)
 
-    def _build_geometry(self):
-        return osgp.gen_capsule_geom(
+    def _build_geom(self):
+        return ogg.gen_capsule_geom(
             radius=self._radius,
             half_length=self._half_length)
 
@@ -174,11 +174,11 @@ class CapsuleCollisionShape(CollisionShape):
 class AABBCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_geometry(
-            cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry.vs.T).T + pos
-        vmin = verts.min(axis=0)
-        vmax = verts.max(axis=0)
+    def fit_from_geom(
+            cls, geom, rotmat, pos):
+        vs = (rotmat @ geom.vs.T).T + pos
+        vmin = vs.min(axis=0)
+        vmax = vs.max(axis=0)
         half_extents = (vmax - vmin) * 0.5
         center = (vmin + vmax) * 0.5
         shape = cls(
@@ -199,7 +199,7 @@ class AABBCollisionShape(CollisionShape):
 
     def to_render_model(self):
         return osrm.RenderModel(
-            geometry=self.geometry, pos=self.pos,
+            geom=self.geom, pos=self.pos,
             rgb=ouc.BasicColor.ORANGE,
             alpha=ouc.ALPHA.TRANSPARENT)
 
@@ -218,29 +218,28 @@ class AABBCollisionShape(CollisionShape):
         max_corner = self.pos + ext
         return min_corner, max_corner
 
-    def _build_geometry(self):
-        return osgp.gen_box_geom(
+    def _build_geom(self):
+        return ogg.gen_box_geom(
             half_extents=self._half_extents)
 
 
 class OBBCollisionShape(CollisionShape):
 
     @classmethod
-    def fit_from_geometry(
-            cls, geometry, rotmat, pos):
-        verts = (rotmat @ geometry.vs.T).T + pos
-        faces = geometry.fs
+    def fit_from_geom(
+            cls, geom, rotmat, pos):
+        vs = (rotmat @ geom.vs.T).T + pos
+        fs = geom.fs
         mean, pcmat = oum.area_weighted_pca(
-            verts, faces)
-        local = (verts - mean) @ pcmat
+            vs, fs)
+        local = (vs - mean) @ pcmat
         loc_vmin = local.min(axis=0)
         loc_vmax = local.max(axis=0)
         half_extents = (loc_vmax - loc_vmin) * 0.5
         loc_center = (loc_vmin + loc_vmax) * 0.5
         center = mean + pcmat @ loc_center
         shape = cls(half_extents=half_extents,
-                    rotmat=pcmat,
-                    pos=center)
+                    rotmat=pcmat, pos=center)
         return shape
 
     def __init__(self, half_extents,
@@ -256,7 +255,7 @@ class OBBCollisionShape(CollisionShape):
 
     def to_render_model(self):
         return osrm.RenderModel(
-            geometry=self.geometry,
+            geom=self.geom,
             rotmat=self.rotmat, pos=self.pos,
             rgb=ouc.BasicColor.ORANGE,
             alpha=ouc.ALPHA.TRANSPARENT)
@@ -276,20 +275,19 @@ class OBBCollisionShape(CollisionShape):
         max_corner = self.pos + ext
         return min_corner, max_corner
 
-    def _build_geometry(self):
-        return osgp.gen_box_geom(
+    def _build_geom(self):
+        return ogg.gen_box_geom(
             half_extents=self._half_extents)
 
 
 class PlaneCollisionShape(CollisionShape):
     @classmethod
-    def fit_from_geometry(
-            cls, geometry, rotmat, pos):
-        verts = (rotmat @
-                 geometry.vs.T).T + pos
-        faces = geometry.fs
+    def fit_from_geom(
+            cls, geom, rotmat, pos):
+        vs = (rotmat @ geom.vs.T).T + pos
+        fs = geom.fs
         mean, pcmat = oum.area_weighted_pca(
-            verts, faces)
+            vs, fs)
         center = mean
         normal = pcmat[:, 0]
         shape = cls(normal=normal, pos=center)
@@ -308,7 +306,7 @@ class PlaneCollisionShape(CollisionShape):
 
     def to_render_model(self):
         return osrm.RenderModel(
-            geometry=self.geometry,
+            geom=self.geom,
             rotmat=self.rotmat,
             pos=self.pos,
             rgb=ouc.BasicColor.ORANGE,
@@ -328,54 +326,52 @@ class PlaneCollisionShape(CollisionShape):
         max_corner = self.pos + ext
         return min_corner, max_corner
 
-    def _build_geometry(self):
+    def _build_geom(self):
         half_extents = np.array(
             [100.0, 100.0, 1e-3],
             dtype=np.float32)
-        return osgp.gen_box_geom(
+        return ogg.gen_box_geom(
             half_extents=half_extents)
 
 
 class MeshCollisionShape(CollisionShape):
 
     def __init__(self, file_path=None,
-                 geometry=None,
-                 rotmat=None, pos=None):
+                 geom=None, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
         self._file_path = file_path
-        self._geometry = geometry
+        self._geom = geom
 
     def clone(self):
         return self.__class__(
-            file_path=self._file_path,
-            geometry=self._geometry,
-            rotmat=self.rotmat,
-            pos=self.pos)
+            file_path=self._file_path, geom=self._geom,
+            rotmat=self.rotmat, pos=self.pos)
 
     def to_render_model(self):
-        verts = self._geometry.vs
-        ext = min(verts.max(axis=0) - verts.min(axis=0)) * .01
-        verts = verts + self._geometry._vns * ext
+        vs = self._geom.vs
+        ext = min(vs.max(axis=0) - vs.min(axis=0)) * .01
+        vs = vs + self._geom.vns * ext
         return osrm.RenderModel(
-            geometry=(verts, self._geometry.fs),
+            geom=(vs, self._geom.fs),
             rotmat=self.rotmat, pos=self.pos,
-            rgb=ouc.BasicColor.ORANGE, alpha=ouc.ALPHA.TRANSPARENT)
+            rgb=ouc.BasicColor.ORANGE,
+            alpha=ouc.ALPHA.TRANSPARENT)
 
     @property
     def file_path(self):
         return self._file_path
 
     @property
-    def geometry(self):
-        return self._geometry
+    def geom(self):
+        return self._geom
 
     @property
     def aabb(self):
         if self._aabb is not None:
             return self._aabb
-        geom = self.geometry
-        verts = geom.vs
-        transformed = verts @ self.rotmat.T + self.pos
+        geom = self.geom
+        vs = geom.vs
+        transformed = vs @ self.rotmat.T + self.pos
         min_corner = transformed.min(axis=0)
         max_corner = transformed.max(axis=0)
         return min_corner, max_corner

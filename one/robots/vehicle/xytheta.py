@@ -11,7 +11,7 @@ def prepare_mechstruct():
     dummy_xlnk = osrbms.Link()
     dummy_ylnk = osrbms.Link()
     body_lnk = osrbms.Link(collision_type=ouc.CollisionType.AABB)
-    body_lnk.add_visual(osrmp.gen_box((.1, .1, .1)))
+    body_lnk.add_visual(osrmp.gen_box_rmodel((.1, .1, .1)))
     body_lnk.set_inertia(mass=0.1)
     joint_x = osrbms.Joint(jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=wd_lnk,

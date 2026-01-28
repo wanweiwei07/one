@@ -2,7 +2,7 @@ import numpy as np
 import one.utils.math as oum
 
 
-def revolve(profile, segments=36):
+def revolve(profile, n_segs=36):
     """
     Revolve a 2D profile (r,z) around Z-axis to produce a mesh
     author: weiwei
@@ -19,17 +19,17 @@ def revolve(profile, segments=36):
     z_core = profile_core[:, 1]
     n_core = len(r_core)
     # angles
-    theta = np.linspace(0, 2 * np.pi, segments, endpoint=False)
+    theta = np.linspace(0, 2 * np.pi, n_segs, endpoint=False)
     cos_t = np.cos(theta)
     sin_t = np.sin(theta)
     # verts
-    r_mat = np.tile(r_core, (segments, 1))
-    z_mat = np.tile(z_core, (segments, 1))
+    r_mat = np.tile(r_core, (n_segs, 1))
+    z_mat = np.tile(z_core, (n_segs, 1))
     x = r_mat * cos_t[:, None]
     y = r_mat * sin_t[:, None]
     verts = np.stack([x, y, z_mat], axis=2).reshape(-1, 3)
     # side wall faces
-    idx = np.arange(segments * n_core, dtype=np.uint32).reshape(segments, n_core)
+    idx = np.arange(n_segs * n_core, dtype=np.uint32).reshape(n_segs, n_core)
     idx_next = np.roll(idx, -1, axis=0)
     # tri1 = (i,j), (i+1,j), (i,j+1)
     tri1 = np.stack([idx[:, :-1], idx_next[:, :-1], idx[:, 1:]], axis=2).reshape(-1, 3)
@@ -46,7 +46,7 @@ def revolve(profile, segments=36):
         center_bottom = verts_bottom.mean(axis=0)
     center_bottom_idx = len(verts)  # new idx for center vertex
     extra_verts.append(center_bottom)
-    tri_bottom = np.stack([np.full(segments, center_bottom_idx, dtype=np.uint32), np.roll(ring_bottom_idx, -1),
+    tri_bottom = np.stack([np.full(n_segs, center_bottom_idx, dtype=np.uint32), np.roll(ring_bottom_idx, -1),
                            ring_bottom_idx], axis=1)
     faces_list.append(tri_bottom)
     # top cap
@@ -58,7 +58,7 @@ def revolve(profile, segments=36):
         center_top = verts_top.mean(axis=0)
     center_top_idx = len(verts) + len(extra_verts)  # new idx for center vertex
     extra_verts.append(center_top)
-    tri_top = np.stack([np.full(segments, center_top_idx, dtype=np.uint32), ring_top_idx,
+    tri_top = np.stack([np.full(n_segs, center_top_idx, dtype=np.uint32), ring_top_idx,
                         np.roll(ring_top_idx, -1)], axis=1)
     faces_list.append(tri_top)
     verts = np.vstack([verts, np.vstack(extra_verts)])
@@ -189,7 +189,7 @@ def convex_hull(geom):
     p = (v0 + v1 + v2) / 3.0
     mask = np.einsum('ij,ij->i', p - center, n) < 0
     fs[mask] = fs[mask][:, [0, 2, 1]]
-    return osg.Geometry(vs, fs)
+    return osg.gen_geom_from_raw(vs, fs)
 
 
 def ray_shoot_flat(orig, dir, verts, faces,

@@ -26,8 +26,8 @@ class GPUCollider:
         """
         tf_a = tf_a @ col_a.tf
         tf_b = tf_b @ col_b.tf
-        geom_a = col_a.geometry
-        geom_b = col_b.geometry
+        geom_a = col_a.geom
+        geom_b = col_b.geom
         device_a = geom_a.get_device_buffer()
         device_b = geom_b.get_device_buffer()
         if device_a is None or device_b is None:

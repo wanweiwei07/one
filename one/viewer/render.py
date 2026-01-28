@@ -50,7 +50,7 @@ class Render:
         for sobj in scene:
             for model in sobj.visuals:
                 shader = self._pick_shader(model)
-                device_buffer = model.geometry.get_device_buffer()
+                device_buffer = model.get_device_buffer()
                 if shader is self.mesh_shader:
                     target = (groups["mesh_transparent"]
                               if model.alpha < 0.999
@@ -64,7 +64,7 @@ class Render:
                 for c in sobj.collisions:
                     model = c.to_render_model()
                     shader = self._pick_shader(model)
-                    device_buffer = model.geometry.get_device_buffer()
+                    device_buffer = model.get_device_buffer()
                     if shader is self.mesh_shader:
                         target = (groups["mesh_transparent"]
                                   if model.alpha < 0.999
@@ -96,7 +96,7 @@ class Render:
             for i, (model, node) in enumerate(instance_list):
                 tf_arr[i] = (node.wd_tf @ model.tf).T
                 rgba_arr[i] = (*model.rgb, model.alpha)
-            device = instance_list[0][0].geometry.get_device_buffer()
+            device = instance_list[0][0].get_device_buffer()
             device.update_instances(tf_arr, rgba_arr)
             device.draw_instanced()
         # outline pass
@@ -112,7 +112,7 @@ class Render:
             tf_arr = np.empty((len(instance_list), 4, 4), np.float32)
             for i, (model, node) in enumerate(instance_list):
                 tf_arr[i] = (node.wd_tf @ model.tf).T
-            device = instance_list[0][0].geometry.get_device_buffer()
+            device = instance_list[0][0].get_device_buffer()
             device.update_instances(tf_arr)
             device.draw_instanced()
         # restore state
@@ -138,10 +138,10 @@ class Render:
         instances = []
         for instance_list in transparent_groups.values():
             for model, node in instance_list:
-                world = node.wd_tf @ model.tf
-                pos = world[:3, 3]
+                wd_tf = node.wd_tf @ model.tf
+                pos = wd_tf[:3, 3]
                 d2 = float(np.dot(pos - cam_pos, pos - cam_pos))
-                device = model.geometry.get_device_buffer()
+                device = model.get_device_buffer()
                 instances.append((d2, model, node, device))
         instances.sort(key=lambda x: x[0], reverse=True)
         for _, model, node, device in instances:
@@ -179,7 +179,7 @@ class Render:
     def _pick_shader(self, model):
         if model.shader is not None:
             return model.shader
-        if model.geometry._fs is not None:
+        if model.geom.fs is not None:
             return self.mesh_shader
         else:
             return self.pcd_shader

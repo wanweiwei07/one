@@ -1,5 +1,4 @@
 import pyglet.window.mouse as mouse
-import pyglet.window.key as key
 
 
 class InputManager:

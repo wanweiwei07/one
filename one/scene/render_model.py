@@ -1,8 +1,10 @@
 import numpy as np
 import one.utils.math as oum
 import one.utils.decorator as oud
-import one.utils.constant as ouc
-import one.scene.geometry as osg
+import one.geom.geometry as ogg
+import one.viewer.device_buffer as ovdb
+
+_device_buffer_cache = {}
 
 
 class RenderModel:
@@ -13,23 +15,20 @@ class RenderModel:
     """
 
     def __init__(self,
-                 geometry=None,
+                 geom=None,
                  rotmat=None,
                  pos=None,
                  rgb=None,
                  alpha=1.0,
-                 shader=None):
-        if isinstance(geometry, tuple):
-            verts = geometry[0]
-            faces = geometry[1] if len(geometry) > 1 else None
-            per_vert_rgbs = geometry[2] if len(geometry) > 2 else None
-            self.geometry = osg.Geometry(verts=verts,
-                                         faces=faces,
-                                         per_vert_rgbs=per_vert_rgbs)
+                 shader=None,
+                 **kwargs):
+        if isinstance(geom, tuple):
+            self.geom = ogg.gen_geom_from_raw(*geom)
         else:
-            self.geometry = geometry
+            self.geom = geom
         self.shader = shader
         self._rgb = oum.ensure_rgb(rgb)
+        self._vrgbs = kwargs.get("vrgbs", None)
         self._alpha = alpha
         self._rotmat = oum.ensure_rotmat(rotmat)
         self._pos = oum.ensure_pos(pos)
@@ -38,13 +37,29 @@ class RenderModel:
         self._dirty = True
 
     def clone(self):
-        new = self.__class__(geometry=self.geometry,
+        new = self.__class__(geom=self.geom,
                              rotmat=self._rotmat.copy(),
                              pos=self._pos.copy(),
                              rgb=self.rgb.copy(),
                              alpha=self.alpha,
                              shader=self.shader)
         return new
+
+    def get_device_buffer(self):
+        if self.geom.fs is None:
+            # do not cache point cloud buffers
+            if self._vrgbs is None:
+                raise ValueError("PointCloudBuffer requires per-vertex rgb colors")
+            return ovdb.PointCloudBuffer(
+                self.geom.vs, self._vrgbs)
+        gid = id(self.geom)
+        if gid in _device_buffer_cache:
+            return _device_buffer_cache[gid]
+        else:
+            buf = ovdb.MeshBuffer(
+                self.geom.vs, self.geom.fs, self.geom.vns)
+            _device_buffer_cache[gid] = buf
+            return buf
 
     @property
     def rgb(self):

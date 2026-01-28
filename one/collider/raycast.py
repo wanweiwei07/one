@@ -1,5 +1,5 @@
 import numpy as np
-import one.scene.geometry_operation as osgop
+import one.scene.geometry_ops as osgop
 import one.scene.collision_shape as osc
 
 
@@ -29,10 +29,8 @@ def ray_shoot_scene_object(scene_obj, orig, direction):
         orig_l, dir_l = _ray_to_local(orig, direction, col_tf)
         if isinstance(c, osc.MeshCollisionShape):
             res = osgop.ray_shoot_flat(
-                orig_l, dir_l,
-                c.geometry._vs,
-                c.geometry._fs,
-                c.geometry._fns)
+                orig_l, dir_l, c.geom.vs,
+                c.geom.fs, c.geom.fns)
             if res is None:
                 continue
             hit_pos, hit_n, hit_t, hit_fid = res

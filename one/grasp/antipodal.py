@@ -1,6 +1,6 @@
 import numpy as np
 import one.utils.math as oum
-import one.scene.geometry_operation as osgop
+import one.scene.geometry_ops as osgop
 import one.collider.cpu_simd as occs
 import one.collider.gpu_simd_batch as ocgcb
 

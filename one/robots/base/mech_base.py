@@ -36,7 +36,7 @@ class MechBase:
                 self._compiled.n_jnts, dtype=np.float32)
         else:
             self.qs = np.asarray(home_qs, dtype=np.float32)
-        # runtime geometry
+        # runtime geom
         self.runtime_lnks = [
             lnk.clone() for lnk in self.structure.lnks]
         self.runtime_lidx_map = {

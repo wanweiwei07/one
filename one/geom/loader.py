@@ -2,7 +2,7 @@ import os
 import xml
 import struct
 import numpy as np
-import one.scene.geometry as osg
+import one.geom.geometry as osg
 
 
 def load_geometry(path):

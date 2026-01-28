@@ -52,7 +52,7 @@ verts = model.mesh_vert[vadr:vadr + vnum].reshape(-1, 3).copy()
 faces = model.mesh_face[fadr:fadr + fnum].reshape(-1, 3).copy()
 bunny_mj = osso.SceneObject()
 bunny_mj.add_visual(osrm.RenderModel(
-    geometry=(verts, faces),
+    geom=(verts, faces),
     rgb=ouc.BasicColor.GREEN,
     alpha=0.3), auto_make_collision=False)
 bunny_mj.attach_to(base.scene)

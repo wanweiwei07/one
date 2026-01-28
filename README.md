@@ -216,7 +216,7 @@ The framework provides GPU-accelerated collision detection using OpenGL compute 
 **Usage:**
 
 ```python
-from one.collider import collider
+from one.collider import tbd_collider
 
 # High-level API (GPU-first with automatic CPU fallback)
 hit_points = collider.is_collided(obj1, obj2, max_points=200)
