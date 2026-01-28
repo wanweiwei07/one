@@ -117,6 +117,42 @@ def gen_box(pos=(0, 0, 0),
     return o
 
 
+def gen_linsegs(segs, radius=0.001, srgbs=None, alpha=1.0):
+    """ segs: (N,2,3), srgb: None | scalar | (3,) | (N,3)
+    returns: SceneObject with N cylinder segments  """
+    segs = np.asarray(segs, dtype=np.float32)
+    if segs.ndim != 3 or segs.shape[1:] != (2, 3):
+        raise ValueError("segs must be (N,2,3)")
+    n = segs.shape[0]
+    if srgbs is None:
+        srgbs = np.tile(np.array(
+            ouc.BasicColor.BLACK,
+            dtype=np.float32), (n, 1))
+    elif srgbs.shape == (3,):
+        srgbs = np.tile(srgbs, (n, 1))
+    elif srgbs.shape == (n, 3):
+        srgbs = np.asarray(srgbs, dtype=np.float32)
+    else:
+        raise ValueError("srgb must be scalar, (3,), or (N,3)")
+    # build single SceneObject
+    o = osso.SceneObject(
+        collision_type=None, is_free=False)
+    for i in range(n):
+        a = segs[i, 0]
+        b = segs[i, 1]
+        if np.linalg.norm(b - a) < 1e-12:
+            continue
+        length, dir_vec = oum.unit_vec(
+            b - a, return_length=True)
+        rotmat = oum.rotmat_between_vecs(
+            ouc.StandardAxis.Z, dir_vec)
+        rmodel = osrmp.gen_cylinder_rmodel(
+            length=length, radius=radius, rotmat=rotmat,
+            pos=a, rgb=srgbs[i], alpha=alpha)
+        o.add_visual(rmodel, auto_make_collision=False)
+    return o
+
+
 def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
               shaft_radius=ouc.ArrowSize.SHAFT_RADIUS,
               head_radius=ouc.ArrowSize.HEAD_RADIUS,

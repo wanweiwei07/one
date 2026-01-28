@@ -32,17 +32,17 @@ cur_vis = None
 
 def show_pose(idx):
     global cur_vis
-    pos, rotmat, seg_id, ratio = stable_poses[idx]
+    pos, rotmat, seg_id, ratio, segs3d = stable_poses[idx]
     bunny.pos = pos
     bunny.rotmat = rotmat
     print(f"seg={seg_id}, ratio={ratio:.6f}")
-
     # optional: visualize current segment
     if cur_vis is not None:
         cur_vis.detach_from(base.scene)
         cur_vis = None
-    fs_sub = geom_hull.fs[facets[seg_id]]
-    cur_vis = ossop.gen_mesh(geom_hull.vs, fs_sub, rgb=(1, 0, 0), alpha=0.6)
+    cur_vis = ossop.gen_linsegs(segs3d, radius=.002)
+    # fs_sub = geom_hull.fs[facets[seg_id]]
+    # cur_vis = ossop.gen_mesh(geom_hull.vs, fs_sub, rgb=(1, 0, 0), alpha=0.6)
     cur_vis.attach_to(base.scene)
     cur_vis.pos=pos
     cur_vis.rotmat=rotmat

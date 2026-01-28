@@ -7,16 +7,19 @@ def gen_mesh_rmodel(vs, fs, rgb, alpha=1.0):
     geom = ogg.gen_geom_from_raw(vs, fs)
     return osrm.RenderModel(geom=geom, rgb=rgb, alpha=alpha)
 
+
 def gen_pcd_rmodel(vs, vrgbs, alpha=1.0):
     geom = ogg.gen_geom_from_raw(vs)
     return osrm.RenderModel(geom=geom, vrgbs=vrgbs, alpha=alpha)
 
+
 def gen_cylinder_rmodel(length=0.1, radius=0.05, n_segs=8,
+                        rotmat=None, pos=None,
                         rgb=ouc.BasicColor.DEFAULT, alpha=1.0):
     """Gen cylinder render model from (0,0,0) to (0,0,length)."""
     geom = ogg.gen_cylinder_geom(length, radius, n_segs)
     return osrm.RenderModel(
-        geom=geom, rgb=rgb, alpha=alpha)
+        geom=geom, rotmat=rotmat, pos=pos, rgb=rgb, alpha=alpha)
 
 
 def gen_cone_rmodel(length=0.1, radius=0.05, n_segs=8,

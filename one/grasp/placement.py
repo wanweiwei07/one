@@ -54,13 +54,10 @@ def compute_stable_poses(
         print(ratio)
         if ratio >= stable_thresh:
             continue
-        # ossop.gen_mesh(vs, fs_sub, rgb=ouh.rand_rgb()).attach_to(base.scene)
-        # ossop.gen_sphere(proj_pt3d, 0.002, rgb=[1, 0, 0]).attach_to(base.scene)
-        # ossop.gen_sphere(com, 0.002, rgba=[0, 0, 1]).attach_to(base.scene)
-        # base.run()
         # recover q3 in plane
-        min_pt3d = (proj_pt3d + frame[:, 0] * min_pt2d[0] +
-                    frame[:, 1] * min_pt2d[1])
+        min_pt3d = (frame[:, 0] * (min_pt2d[0]-proj_pt2d[0]) +
+                    frame[:, 1] * (min_pt2d[1]-proj_pt2d[1]) +
+                    proj_pt3d)
         # build pose
         z = com - proj_pt3d
         z = z / (np.linalg.norm(z) + oum.eps)
@@ -68,9 +65,14 @@ def compute_stable_poses(
         y = y / (np.linalg.norm(y) + oum.eps)
         x = np.cross(y, z)
         x = x / (np.linalg.norm(x) + oum.eps)
+        # y = np.cross(z, x)
+        # y = y / (np.linalg.norm(y) + oum.eps)
         rotmat = np.column_stack((x, y, z)).astype(np.float32)
+        segs3d = np.stack(  # (N, 2, 3)
+            [poly_pts3d, np.roll(
+                poly_pts3d, -1, axis=0)], axis=1)
         stable_poses.append((-(proj_pt3d @ rotmat).astype(np.float32),
-                             rotmat.T, seg_id, ratio))
+                             rotmat.T, seg_id, ratio, segs3d))
     #  sort by ratio (smaller = more stable)
     stable_poses.sort(key=lambda x: x[3])
     return stable_poses
