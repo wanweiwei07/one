@@ -128,6 +128,7 @@ current_target = goal_qs
 tol = 5e-3
 move_step = 0.02
 need_replan = True
+drawn_nodes = {}
 
 def move_bunny_once():
     global need_replan, tf_bunny
@@ -162,6 +163,11 @@ def move_bunny_once():
         tf_bunny[:] = oum.tf_from_rotmat_pos(bunny.rotmat, bunny.pos)
         need_replan = True
 
+
+def clear_drawn():
+    for obj in drawn_nodes.values():
+        obj.alpha = 0.0
+
 def tick(dt):
     global path, state, current_target, cursor, goal_qs, need_replan
 
@@ -169,7 +175,10 @@ def tick(dt):
 
     if need_replan:
         goal_qs = None
-        for pose, pre_pose, jaw_width, score in grasps:
+        clear_drawn()
+        MAX_DRAW = 5
+        count = 0
+        for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
             pre_pose_world = tf_bunny @ pre_pose
             pre_rot = pre_pose_world[:3, :3]
             pre_pos = pre_pose_world[:3, 3]
@@ -179,8 +188,20 @@ def tick(dt):
             qs = qs_list[0]
             if mjc.is_collided(qs):
                 continue
+            if i in drawn_nodes:
+                tmp = drawn_nodes[i]
+            else:
+                tmp = robot.clone()
+                tmp.attach_to(base.scene)
+                drawn_nodes[i] = tmp
+
+            tmp.rgba = (0.0, 1.0, 0.0, 0.1)
+            tmp.fk(qs=qs)
             goal_qs = qs
-            break
+
+            count += 1
+            if count >= MAX_DRAW:
+                break
 
         if goal_qs is None:
             path = None
