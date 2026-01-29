@@ -20,10 +20,9 @@ plane_ground.attach_to(base.scene)
 geom = bunny.collisions[0].geom
 geom_hull = ogf.convex_hull(geom)
 facets = ogs.segment_surface(geom_hull)
-print(facets)
 stable_poses = ogp.compute_stable_poses(
-    geom_hull.vs, geom_hull.fs, facets, com=None, stable_thresh=5.0)
-print(stable_poses)
+    geom_hull.vs, geom_hull.fs, facets,
+    com=None, stable_thresh=10.0)
 if not stable_poses:
     print("No stable poses found")
 

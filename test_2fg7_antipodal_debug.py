@@ -18,20 +18,27 @@ ghost = gripper.clone()
 ghost.alpha = 0.3
 ghost.attach_to(base.scene)
 # ghost.toggle_render_collision = True
+pre_ghost = gripper.clone()
+pre_ghost.rgb = (1.0, 1.0, 0.0)
+pre_ghost.alpha = 0.5
+
 
 def play(dt):
     try:
-        pose_tf, jaw_width, score, collided = next(it)
+        pose, pre_pose, jaw_width, score, collided = next(it)
     except StopIteration:
         return
-    ghost.grip_at(pose_tf[:3, 3], pose_tf[:3, :3], jaw_width)
+    ghost.grip_at(pose[:3, 3], pose[:3, :3], jaw_width)
     if collided:
         ghost.rgb = (1.0, 0.0, 0.0)
+        pre_ghost.detach_from(base.scene)
     else:
         ghost.rgb = (0.0, 1.0, 0.0)
+        pre_ghost.attach_to(base.scene)
+        pre_ghost.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], jaw_width)
     # import numpy as np
-    # pos = pose_tf[:3, 3]
-    # rotmat = pose_tf[:3, :3]
+    # pos = pose[:3, 3]
+    # rotmat = pose[:3, :3]
     # np.set_printoptions(precision=8, suppress=True)
     # print("pos =", "np.array([" + ", ".join(f"{v:.8f}" for v in pos) + "], dtype=np.float32)")
     # print("rotmat =", "np.array([" +

@@ -51,17 +51,21 @@ def extract_boundary(fs_sub):
     if len(boundary_edges) == 0:
         return []  # if no boundary edges
     # check if boundary edges form a single loop
-    v = boundary_edges
-    nodes = np.unique(v)
+    nodes = np.unique(boundary_edges)
     node_id = {n: i for i, n in enumerate(nodes)}
-    row = np.array([node_id[a] for a in v[:, 0]])
-    col = np.array([node_id[b] for b in v[:, 1]])
+    row = np.array(
+        [node_id[a]
+         for a in boundary_edges[:, 0]])
+    col = np.array(
+        [node_id[b]
+         for b in boundary_edges[:, 1]])
     data = np.ones(len(row) * 2, dtype=np.uint8)
     rows = np.concatenate([row, col])
     cols = np.concatenate([col, row])
     A = coo_matrix((data, (rows, cols)),
                    shape=(len(nodes), len(nodes)))
     n_comp, labels = connected_components(A, directed=False)
+    print(n_comp)
     if n_comp > 1:
         print(f"multiple boundary loops = {n_comp}")
         return []

@@ -31,16 +31,23 @@ if len(grasps) > 0:
     print(f"Planning rate: {len(grasps) / planning_time:.1f} grasps/sec")
     print(f"Score range: [{min(g[2] for g in grasps):.4f}, {max(g[2] for g in grasps):.4f}]")
     print("\nTop 10 grasps:")
-    for i, (pose_tf, jaw_width, score) in enumerate(grasps[:10]):
-        pos = pose_tf[:3, 3]
+    for i, (pose, _, jaw_width, score) in enumerate(grasps[:10]):
+        pos = pose[:3, 3]
         print(f"  {i + 1:2d}. score={score:.4f}, jaw={jaw_width:.4f}, "
               f"pos=[{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}]")
     print(f"\nVisualizing all {len(grasps)} grasps...")
-    for i, (pose_tf, jaw_width, score) in enumerate(grasps):
+    for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
+        # pose
         ghost = gripper.clone()
-        ghost.grip_at(pose_tf[:3, 3], pose_tf[:3, :3], jaw_width)
+        ghost.grip_at(pose[:3, 3], pose[:3, :3], jaw_width)
         ghost.rgb = (0.0, 1.0, 0.0)
         ghost.alpha = 0.3
+        ghost.attach_to(base.scene)
+        # pre_pose
+        ghost = gripper.clone()
+        ghost.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], jaw_width)
+        ghost.rgb = (1.0, 1.0, 0.0)
+        ghost.alpha = 0.5
         ghost.attach_to(base.scene)
     print("  Green = high score, Red = low score")
 else:

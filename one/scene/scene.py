@@ -26,11 +26,12 @@ class Scene:
                 self._sobjs.append(entity)
                 # entity.scene = self
         elif isinstance(entity, MechBase):
-            self._mecbas.append(entity)
-            for lnk in entity.runtime_lnks:
-                if lnk not in self._lnks:
-                    self._lnks.append(lnk)
-                    # lnk.scene = self
+            if entity not in self._mecbas:
+                self._mecbas.append(entity)
+                for lnk in entity.runtime_lnks:
+                    if lnk not in self._lnks:
+                        self._lnks.append(lnk)
+                        # lnk.scene = self
         else:
             raise TypeError(f"Unsupported type: {type(entity)}")
         self.dirty = True

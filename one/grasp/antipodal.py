@@ -148,6 +148,7 @@ def antipodal_iter(gripper, tgt_sobj,
     :param score_weights: (normal_align_weight, jaw_close_weight)
     :return: yields (pose_tf, jaw_width, score, collided)
     """
+    gripper = gripper.clone()
     tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vffns(
         tgt_sobj.collisions)
     cand = _antipodal_candidates(
@@ -202,13 +203,25 @@ def antipodal_iter(gripper, tgt_sobj,
         detlib = occs
         detector = detlib.create_detector()
         batch = detlib.build_batch(items, pairs)
+    # retreat distance
+    tcp_len = np.linalg.norm(gripper.tcp_tf[:3, 3])
+    retreat_dist = 0.5 * tcp_len
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
         collided = False
+        # check grasp pose
         gripper.grip_at(pose[:3, 3], pose[:3, :3], jw)
         results = detector.detect_collision_batch(batch)
         if results is not None:
             collided = True
-        yield pose, jw, float(sc), collided
+        # check pre-grasp pose
+        pre_pos = pose[:3,3] - retreat_dist * pose[:3, 2]
+        pre_pose = pose.copy()
+        pre_pose[:3, 3] = pre_pos
+        gripper.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], jw)
+        results = detector.detect_collision_batch(batch)
+        if results is not None:
+            collided = True
+        yield pose, pre_pose, jw, float(sc), collided
 
 
 def antipodal(gripper, target_sobj,
@@ -228,13 +241,13 @@ def antipodal(gripper, target_sobj,
     :return: list of (pose_tf, jaw_width, score)
     """
     results = []
-    for pose, jw, sc, collided in antipodal_iter(
+    for pose, pre_pose, jw, sc, collided in antipodal_iter(
             gripper, target_sobj,
             density, normal_tol_deg, roll_step_deg,
             clearance, score_weights):
         if not collided:
-            results.append((pose.copy(), jw, float(sc)))
-            if (max_grasps is not None and
-                    len(results) >= max_grasps):
-                break
+            results.append((pose, pre_pose, jw, float(sc)))
+        if (max_grasps is not None and
+                len(results) >= max_grasps):
+            break
     return results

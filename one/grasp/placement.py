@@ -51,7 +51,6 @@ def compute_stable_poses(
         # ratio
         h = np.linalg.norm(com - proj_pt3d)
         ratio = h / min_dist
-        print(ratio)
         if ratio >= stable_thresh:
             continue
         # recover q3 in plane
