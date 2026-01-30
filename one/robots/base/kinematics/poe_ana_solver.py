@@ -87,19 +87,18 @@ class Ana6RSWSolver:
 
     def _make_branch_seeds(self, seed):
         seed = np.asarray(seed, dtype=np.float32)
-        seeds = []
-        for s1 in [+1, -1]:  # shoulder
-            for s3 in [+1, -1]:  # elbow
-                for flip in [0, 1]:  # wrist flip
-                    q = seed.copy()
-                    q[0] += s1 * np.pi
-                    q[2] += s3 * np.pi
-                    if flip:
-                        q[3] += np.pi
-                        q[4] += np.pi
-                        q[5] += np.pi
-                    seeds.append(q)
-        seeds.append(seed.copy())
+        # 8 types: s1 in {+1,-1}, s3 in {+1,-1}, flip in {0,1}
+        s1 = np.array([+1, +1, +1, +1, -1, -1, -1, -1], dtype=np.float32)
+        s3 = np.array([+1, +1, -1, -1, +1, +1, -1, -1], dtype=np.float32)
+        flip = np.array([0, 1, 0, 1, 0, 1, 0, 1], dtype=np.float32)
+        seeds = np.tile(seed, (8, 1))
+        seeds[:, 0] += s1 * np.pi
+        seeds[:, 2] += s3 * np.pi
+        seeds[:, 3] += flip * np.pi
+        seeds[:, 4] += flip * np.pi
+        seeds[:, 5] += flip * np.pi
+        # original value
+        seeds = np.vstack([seeds, seed[None, :]])
         return seeds
 
     def _fk_all(self, qs, root_tfmat):
@@ -109,10 +108,10 @@ class Ana6RSWSolver:
         wd_jnt_tfarr = np.empty((6, 4, 4), dtype=np.float32)
         for k in range(6):
             j = self._jnts[k]
-            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ j.origin_tfmat
+            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ j.tf_0
             wd_lnk_tfarr[k + 1] = (
                     wd_jnt_tfarr[k] @
-                    j.motion_tfmat(float(qs[k])))
+                    j.motion_tf(float(qs[k])))
         return wd_jnt_tfarr, wd_lnk_tfarr
 
     def _fk_tip(self, q, root_tf):

@@ -87,9 +87,9 @@ class MechBase:
             pjidx = self._compiled.pjidx_of_lidx[lidx]
             jnt = self.structure.jnts[pjidx]
             plnk_tfmat = self.wd_lnk_tfarr[plidx]
-            loc_tfmat = (self._compiled.jotfmat_by_idx[pjidx] @
-                         jnt.motion_tfmat(q_resolved[pjidx]))
-            self.wd_lnk_tfarr[lidx] = plnk_tfmat @ loc_tfmat
+            jtfq = (self._compiled.jtf0_by_idx[pjidx] @
+                         jnt.motion_tf(q_resolved[pjidx]))
+            self.wd_lnk_tfarr[lidx] = plnk_tfmat @ jtfq
         self._update_runtime()
         return self.wd_lnk_tfarr
 

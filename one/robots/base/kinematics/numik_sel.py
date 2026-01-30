@@ -2,16 +2,16 @@ import os
 import time
 import numpy as np
 import one.utils.math as oum
-import one.robots.base.kinematics.ik_num as orbkin
+import one.robots.base.kinematics.numik as orbkin
 from scipy.spatial import cKDTree
 from scipy.cluster.vq import kmeans2
 
 
 class SELIKSolver(orbkin.NumIKSolver):
 
-    def __init__(self, structure, chain, data_dir,
+    def __init__(self, chain, data_dir,
                  n_cvt=2048, n_pool=200000, n_iter=20):
-        super().__init__(structure, chain)
+        super().__init__(chain)
         self.n_cvt = n_cvt
         self.n_pool = n_pool
         self.n_iter = n_iter

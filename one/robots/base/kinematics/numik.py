@@ -6,7 +6,7 @@ import one.utils.constant as ouc
 class NumIKSolver:
     """Solver for one chain"""
 
-    def __init__(self, structure, chain):
+    def __init__(self, chain):
         self._chain = chain
         self._jnts = chain.jnts
         # active subset mapping: chain-index -> active-index
@@ -88,9 +88,9 @@ class NumIKSolver:
         # world joint frames
         wd_jnt_tfarr = np.empty((n, 4, 4), dtype=np.float32)
         for k in range(n):
-            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ self._jnts[k].origin_tfmat
+            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ self._jnts[k].tf_0
             wd_lnk_tfarr[k + 1] = (
-                    wd_jnt_tfarr[k] @ self._jnts[k].motion_tfmat(q_chain[k]))
+                    wd_jnt_tfarr[k] @ self._jnts[k].motion_tf(q_chain[k]))
         # tip position
         if local_point is None:
             wd_p_tip = wd_lnk_tfarr[-1, :3, 3]

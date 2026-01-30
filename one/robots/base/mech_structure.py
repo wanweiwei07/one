@@ -6,8 +6,8 @@ import one.utils.constant as ouc
 import one.utils.decorator as oud
 import one.scene.scene_object as osso
 import one.robots.base.kinematics.kinematic_chain as orbkkc
-import one.robots.base.kinematics.ik_sel as orbkis
-import one.robots.base.kinematics.ik_num as orbkim
+import one.robots.base.kinematics.numik_sel as orbkis
+import one.robots.base.kinematics.numik as orbkim
 
 
 class Link(osso.SceneObject):
@@ -49,10 +49,10 @@ class Joint:
 
     @property
     @oud.readonly_view
-    def origin_tfmat(self):
+    def tf_0(self):
         return oum.tf_from_rotmat_pos(self.rotmat, self.pos)
 
-    def motion_tfmat(self, q):
+    def motion_tf(self, q):
         if self.jtype == ouc.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
         if self.jtype == ouc.JntType.REVOLUTE:
@@ -98,7 +98,7 @@ class MechStruct:
         chain = self.get_chain(root_lnk, tip_lnk)
         if chain not in self._solvers:
             self._solvers[chain] = orbkis.SELIKSolver(
-                self, chain, self.default_data_dir)
+                chain, self.default_data_dir)
         return self._solvers[chain]
 
     def add_lnk(self, lnk):
@@ -176,7 +176,7 @@ class FlatMechStructure:
         # joint info
         self.jtypes_by_idx = np.zeros(self.n_jnts, dtype=np.int32)
         self.jax_by_idx = np.zeros((self.n_jnts, 3), dtype=np.float32)
-        self.jotfmat_by_idx = np.zeros((self.n_jnts, 4, 4), dtype=np.float32)
+        self.jtf0_by_idx = np.zeros((self.n_jnts, 4, 4), dtype=np.float32)
         # mimic
         self.mmc_src_by_idx = np.full(self.n_jnts, -1, dtype=np.int32)
         self.mmc_mult_by_idx = np.ones(self.n_jnts, dtype=np.float32)
@@ -226,7 +226,7 @@ class FlatMechStructure:
             # jnt attributes
             self.jtypes_by_idx[jidx] = jnt.jtype
             self.jax_by_idx[jidx] = jnt.axis
-            self.jotfmat_by_idx[jidx] = jnt.origin_tfmat
+            self.jtf0_by_idx[jidx] = jnt.tf_0
             # mimic
             if jnt.mmc is not None:
                 src, mult, offset = jnt.mmc

@@ -65,6 +65,7 @@ def rotmat_from_normal(normal, up=(0, 0, 1)):
 
 def rotmat_from_normalandpoints(facet_normal, facet_first_pnt, facet_second_pnt):
     '''
+    TODO: deprecate this function
     Compute the rotation matrix of a 3D facet using
     facet_normal and the first two points on the facet
     The function uses the concepts defined by Trimesh

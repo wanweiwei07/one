@@ -26,10 +26,12 @@ robot2.set_rotmat_pos(pos=(-.5, 0, 0))
 gripper = or_2fg7.OR2FG7()
 robot2.engage(gripper)
 robot2.attach_to(base.scene)
-qs2_list = robot2.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+qs2_list = robot2.ik_tcp(
+    tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
 
-box = ossop.gen_cylinder(spos=(-.3, 0, .3), epos=(.3, 0, .1),
-                         radius=.03, is_free=True)
+box = ossop.gen_cylinder(
+    spos=(-.3, 0, .3), epos=(.3, 0, .1),
+    radius=.03, is_free=True)
 box.attach_to(base.scene)
 gripper.grasp(box)
 # gripper.release(box)

@@ -118,8 +118,8 @@ class MJOneConverter:
             if lnk.is_free:
                 raise ValueError(
                     "Free link cannot be child link of a joint")
-            jotfmat = compiled.jotfmat_by_idx[jidx]
-            body = self._cvt_sobj(lnk, ref_tf=jotfmat)
+            jtf0 = compiled.jtf0_by_idx[jidx]
+            body = self._cvt_sobj(lnk, ref_tf=jtf0)
             self._rutl2bdy[lnk] = body
             # attach joint to parent body
             body.hosting_jnts.append(jnode)

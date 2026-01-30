@@ -30,9 +30,9 @@ class AnaSphWstSolver:
         T0J = []
         T = np.eye(4, dtype=np.float32)
         for k in range(6):
-            Tj = T @ self._jnts[k].origin_tfmat
+            Tj = T @ self._jnts[k].tf_0
             T0J.append(Tj)
-            T = Tj @ self._jnts[k].motion_tfmat(0.0)
+            T = Tj @ self._jnts[k].motion_tf(0.0)
         return T0J
 
     def _fk_R03(self, q1, q2, q3):
