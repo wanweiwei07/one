@@ -36,20 +36,35 @@ class ManipulatorBase(orbmb.MechBase):
         self._tcp_tf[:] = np.eye(4, dtype=np.float32)
 
     def ik_tcp(self, tgt_rotmat, tgt_pos, max_solutions=8):
-        tgt_tcp_tfmat = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        tgt_flange_tfmat = tgt_tcp_tfmat @ np.linalg.inv(self._tcp_tf)
+        tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._tcp_tf)
         result_list = self._solver.ik(
             root_rotmat=self.rotmat,
             root_pos=self.pos,
-            tgt_rotmat=tgt_flange_tfmat[:3, :3],
-            tgt_pos=tgt_flange_tfmat[:3, 3],
+            tgt_rotmat=tgt_flange_tf[:3, :3],
+            tgt_pos=tgt_flange_tf[:3, 3],
             max_solutions=max_solutions)
         if len(result_list) == 0:
-            return result_list
+            return None
         return_list = []
         for result in result_list:
             return_list.append(self._chain.embed_active_qs(result[0], self.qs))
         return return_list
+
+    def ik_tcp_nearest(self, tgt_rotmat, tgt_pos, ref_qs=None):
+        tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._tcp_tf)
+        if ref_qs is None:
+            ref_qs = self.qs
+        result_list = self._solver.ik(
+            root_rotmat=self.rotmat,
+            root_pos=self.pos,
+            tgt_rotmat=tgt_flange_tf[:3, :3],
+            tgt_pos=tgt_flange_tf[:3, 3],
+            max_solutions=1, ref_qs=ref_qs)
+        if len(result_list) == 0:
+            return None
+        return self._chain.embed_active_qs(result_list[0][0], self.qs)
 
     def clone(self):
         new = super().clone()

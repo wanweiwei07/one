@@ -48,6 +48,14 @@ class NumIKSolver:
             pos_err = np.linalg.norm(delta_p)
             rot_err = np.linalg.norm(delta_theta)
             if pos_err <= tol_pos and rot_err <= tol_rot:
+                # if qs out of limits, treat as not converged
+                lmt_lo = self._chain.lmt_lo
+                lmt_up = self._chain.lmt_up
+                if (np.any(qs < lmt_lo - 1e-5)
+                        or np.any(qs > lmt_up + 1e-5)):
+                    return qs, {"converged": False,
+                                "iters": it, "err": delta_x,
+                                "reason": "joint_limits_exceeded"}
                 return qs, {"converged": True,
                             "iters": it, "err": delta_x}
             # check error increase

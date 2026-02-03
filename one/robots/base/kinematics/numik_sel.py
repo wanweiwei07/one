@@ -46,20 +46,35 @@ class SELIKSolver(orbkin.NumIKSolver):
         _, ids = self._tree.query(feat, k=k)
         return self._cvt_q[ids], ids
 
-    def ik(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
-           max_solutions=8, max_iter=12, **kwargs):
+    def ik(self, root_rotmat, root_pos,
+           tgt_rotmat, tgt_pos, max_solutions=8,
+           ref_qs=None, max_iter=12, **kwargs):
         if self._tree is None:
             raise RuntimeError("CVT database not loaded.")
         root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
         tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         seeds, ids = self.query_seeds(
             np.linalg.inv(root_tf) @ tgt_tf, k=self._k)
+        if ref_qs is not None:
+            prefer_qs = np.asarray(ref_qs, dtype=np.float32)
+            if prefer_qs.shape[0] != self._chain.n_active_jnts:
+                raise ValueError(
+                    f"prefer_qs must have {self._chain.n_active_jnts} elements "
+                    f"(active joints), got {prefer_qs.shape[0]}")
+            distances = np.linalg.norm(seeds - prefer_qs[np.newaxis, :], axis=1)
+            sorted_indices = np.argsort(distances)
+            seeds = seeds[sorted_indices]
+            ids = ids[sorted_indices]
         sols = []
         for sid, qs0 in zip(ids, seeds):
             qs, info = self._backward(
                 root_rotmat, root_pos, tgt_rotmat, tgt_pos,
                 qs_active_init=qs0, max_iter=max_iter)
             if not info.get("converged", False):
+                if info.get("reason", "") == "joint_limits_exceeded":
+                    tmp_lft_arm = robot.lft_arm.clone()
+                    tmp_lft_arm.fk(qs=qs)
+                    tmp_lft_arm.attach_to(base.scene)
                 continue
             info["seed_id"] = int(sid)
             sols.append((qs, info))

@@ -91,7 +91,7 @@ jnt_ax = {
     'rgt_jnt4': ouc.StandardAxis.Y,  # y
     'rgt_jnt5': ouc.StandardAxis.Z,  # z
     'rgt_jnt6': ouc.StandardAxis.X,  # x
-    'rgt_jnt7': ouc.StandardAxis.Y}  # -y
+    'rgt_jnt7': ouc.StandardAxis.Y}  # y
 
 
 def link(prefix, name, idx, mesh_dir,
