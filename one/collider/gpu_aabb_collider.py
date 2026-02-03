@@ -91,7 +91,7 @@ class GPUAABBCollider(ocb.ColliderBase):
         gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 3, self._pairs_ssbo)
 
     def is_collided(self, qs):
-        if not self._compiled:
+        if self._check_pairs is None:
             raise RuntimeError('GPUAABBCollider must be compiled!')
         t_start = time.perf_counter()
         # fk

@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import one.physics.mj_env as opme
-from one import ouc, oum, ovw, ocm, ossop, ompsp, ompr, khi_rs007l
+from one import ouc, oum, ovw, ocm, ossop, omppc, ompr, khi_rs007l
 
 base = ovw.World(cam_pos=(2.2, .7, .7), cam_lookat_pos=(0, 0, .6),
                  toggle_auto_cam_orbit=False)
@@ -34,17 +34,8 @@ collider.append(robot2)
 collider.actors = [robot1, robot2]
 collider.compile()
 
-r1_jlmt_low = robot1.structure.compiled.jlmt_low_by_idx
-r1_jlmt_high = robot1.structure.compiled.jlmt_high_by_idx
-r2_jlmt_low = robot1.structure.compiled.jlmt_low_by_idx
-r2_jlmt_high = robot1.structure.compiled.jlmt_high_by_idx
-jlmt_low = np.hstack([r1_jlmt_low, r2_jlmt_low])
-jlmt_high = np.hstack([r1_jlmt_high, r2_jlmt_high])
-sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
-                                           lmt_high=jlmt_high,
-                                           collider=collider,
-                                           cd_step_size=np.pi / 180)
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
+pln_ctx = omppc.PlanningContext(collider=collider, cd_step_size=np.pi / 180)
+planner = ompr.RRTConnectPlanner(pln_ctx=pln_ctx, extend_step_size=np.pi / 36)
 start = np.hstack([r1s, r2s])
 goal = np.hstack([r1g, r2g])
 

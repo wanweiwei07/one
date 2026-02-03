@@ -284,7 +284,7 @@ sspp = ompsp.SpaceProvider.from_box_bounds(
     cd_step_size=np.pi / 180)
 
 # Plan path with RRT-Connect
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
+planner = ompr.RRTConnectPlanner(pln_ctx=sspp, extend_step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2,
                  -oum.pi / 2, oum.pi / 4, oum.pi / 3])

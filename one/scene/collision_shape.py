@@ -290,6 +290,7 @@ class PlaneCollisionShape(CollisionShape):
             vs, fs)
         center = mean
         normal = pcmat[:, 0]
+        print(normal)
         shape = cls(normal=normal, pos=center)
         return shape
 

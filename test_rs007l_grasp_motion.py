@@ -1,4 +1,6 @@
 import numpy as np
+from OpenGL.wrapper import none_or_pass
+
 import one.geom.fitting as ogf
 import one.geom.surface as ogs
 import one.grasp.placement as ogp
@@ -6,7 +8,7 @@ import one.collider.mj_collider as ocm
 import pyglet.window.key as key
 from one.grasp.antipodal import antipodal
 from one import oum, ouc, ovw, ossop, osso, khi_rs007l, or_2fg7
-from one import ompsp, ompp
+from one import omppc, ompp
 
 base = ovw.World(cam_pos=(2, 2, 1.5), cam_lookat_pos=(0, 0, .75),
                  toggle_auto_cam_orbit=False)
@@ -19,34 +21,28 @@ gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
 robot.engage(gripper)
 
-# create ground plane
-ground = ossop.gen_plane()
-ground.attach_to(base.scene)
-
-# setup mj collider
-mjc = ocm.MJCollider()
-mjc.append(robot)
-mjc.append(ground)
-mjc.actors = [robot]
-mjc.compile(margin=0.0)
-
-# --- LazyPRM setup ---
-jlmt_low = robot.structure.compiled.jlmt_low_by_idx
-jlmt_high = robot.structure.compiled.jlmt_high_by_idx
-sspp = ompsp.SpaceProvider.from_box_bounds(
-    lmt_low=jlmt_low,
-    lmt_high=jlmt_high,
-    collider=mjc,
-    cd_step_size=np.pi / 36
-)
-planner = ompp.LazyPRMPlanner(ssp_provider=sspp)
-
 # load bunny
 bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH)
 bunny.rgb = (0.8, 0.7, 0.6)
 # bunny.alpha = 0.6
 bunny.attach_to(base.scene)
+
+# create ground plane
+ground = ossop.gen_plane(pos=(0, 0, .01))
+ground.attach_to(base.scene)
+
+# setup mj collider
+mjc = ocm.MJCollider()
+mjc.append(robot)
+mjc.append(gripper)
+mjc.append(bunny)
+mjc.append(ground)
+mjc.actors = [robot]
+mjc.compile(margin=0.0)
+
+pln_ctx = omppc.PlanningContext(collider=mjc)
+planner = ompp.LazyPRMPlanner(pln_ctx=pln_ctx)
 
 # --- compute antipodal grasps on bunny at origin ---
 print("Computing antipodal grasps on bunny...")
@@ -86,22 +82,26 @@ tf_bunny = oum.tf_from_rotmat_pos(rotmat, pos)
 # --- solve IK for each grasp and visualize ---
 n_solved = 0
 n_failed = 0
+goal_qs = None
+aux_qs = None
 
 for pose, pre_pose, jaw_width, score in grasps:
     pre_pose_world = tf_bunny @ pre_pose
     pre_tgt_rotmat = pre_pose_world[:3, :3]
     pre_tgt_pos = pre_pose_world[:3, 3]
-    gripper.set_jaw_width(jaw_width)
     qs_list = robot.ik_tcp(tgt_rotmat=pre_tgt_rotmat,
                            tgt_pos=pre_tgt_pos)
     if not qs_list:
         continue
 
     qs = qs_list[0]
-    if mjc.is_collided(qs):
+    mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
+    pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+    if not pln_ctx.is_state_valid(qs):
         continue
 
     goal_qs = qs
+    aux_qs= (jaw_width / 2, jaw_width / 2)
     goal_pre_pose = (pre_tgt_pos, pre_tgt_rotmat)
     break
 
@@ -122,13 +122,16 @@ if goal_qs is None:
 start_qs = robot.qs.copy()
 path = None
 state = start_qs.copy()
-robot.fk(qs=state)
 cursor = 0
 current_target = goal_qs
 tol = 5e-3
 move_step = 0.02
 need_replan = True
 drawn_nodes = {}
+
+# robot.fk(qs=goal_qs)
+# gripper.fk(qs=aux_qs)
+# base.run()
 
 def move_bunny_once():
     global need_replan, tf_bunny
@@ -168,13 +171,15 @@ def clear_drawn():
     for obj in drawn_nodes.values():
         obj.alpha = 0.0
 
+
 def tick(dt):
-    global path, state, current_target, cursor, goal_qs, need_replan
+    global path, state, current_target, cursor, goal_qs, aux_qs, need_replan
 
     move_bunny_once()
 
     if need_replan:
         goal_qs = None
+        aux_qs = None
         clear_drawn()
         MAX_DRAW = 5
         count = 0
@@ -186,7 +191,8 @@ def tick(dt):
             if not qs_list:
                 continue
             qs = qs_list[0]
-            if mjc.is_collided(qs):
+            pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+            if not pln_ctx.is_state_valid(qs):
                 continue
             if i in drawn_nodes:
                 tmp = drawn_nodes[i]
@@ -198,6 +204,7 @@ def tick(dt):
             tmp.rgba = (0.0, 1.0, 0.0, 0.1)
             tmp.fk(qs=qs)
             goal_qs = qs
+            aux_qs = (jaw_width / 2, jaw_width / 2)
 
             count += 1
             if count >= MAX_DRAW:
@@ -213,23 +220,24 @@ def tick(dt):
         need_replan = False
 
     if path is None:
+        pln_ctx.set_aux_mecbas(gripper, aux_qs)
         path = planner.solve(start=state, goal=current_target)
         if not path:
             return
+        gripper.fk(qs=aux_qs)
 
     next_idx = min(cursor + 1, len(path) - 1)
     state = path[next_idx]
     cursor = next_idx
     robot.fk(qs=state)
 
-    if sspp.states_equal(state, current_target, tol=5e-3):
+    if pln_ctx.states_equal(state, current_target, tol=5e-3):
         if np.allclose(current_target, goal_qs):
             current_target = start_qs
         else:
             current_target = goal_qs
         path = None
         cursor = 0
-
 
 
 base.schedule_interval(tick, interval=0.05)

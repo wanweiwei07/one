@@ -1,7 +1,7 @@
 import builtins
 import numpy as np
 
-from one import oum, ovw, ouc, ossop, ocm, ompsp, ompr, khi_rs007l, or_2fg7
+from one import oum, ovw, ouc, ossop, ocm, omppc, ompr, khi_rs007l, or_2fg7
 
 base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False)
 builtins.base = base
@@ -41,17 +41,12 @@ collider.append(box3)
 collider.append(box4)
 collider.append(box5)
 collider.append(plane_ground)
-collider.actors.append(robot)
+collider.actors = [robot]
 collider.compile()
 
-jlmt_low = robot.structure.compiled.jlmt_low_by_idx
-jlmt_high = robot.structure.compiled.jlmt_high_by_idx
-sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
-                                           lmt_high=jlmt_high,
-                                           collider=collider,
-                                           cd_step_size=np.pi / 180)
+pln_ctx = omppc.PlanningContext(collider=collider)
 planner = ompr.RRTConnectPlanner(
-    ssp_provider=sspp, extend_step_size=np.pi / 36)
+    pln_ctx=pln_ctx, extend_step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, -oum.pi / 2, oum.pi / 4, oum.pi / 3])
 robot1 = robot.clone()
@@ -92,14 +87,12 @@ counter = [0]
 state_list = planner.solve(
     start=start, goal=goal, verbose=False, max_iters=100000)
 
-
 def update_pose(dt, counter):
     if counter[0] < len(state_list):
         robot.fk(qs=state_list[counter[0]])
         counter[0] += 1
     else:
         counter[0] = 0
-
 
 base.schedule_interval(update_pose, interval=0.1, counter=counter)
 base.run()

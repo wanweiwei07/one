@@ -5,7 +5,7 @@ import one.robots.base.mech_base as orbmb
 
 class ManipulatorBase(orbmb.MechBase):
 
-    def __init__(self, rotmat=None, pos=None, is_free=False):
+    def __init__(self, rotmat=None, pos=None, is_free=False, data_dir="data"):
         compiled = self.structure._compiled
         if len(compiled.tip_lnks) != 1:
             raise ValueError("ManipulatorBase must have a single tip.")
@@ -14,7 +14,8 @@ class ManipulatorBase(orbmb.MechBase):
         self._chain = self.structure.get_chain(compiled.root_lnk,
                                                compiled.tip_lnks[0])
         self._solver = self.structure.get_solver(compiled.root_lnk,
-                                                 compiled.tip_lnks[0])
+                                                 compiled.tip_lnks[0],
+                                                 data_dir)
 
     def engage(self, ee, engage_tfmat=None,
                update=True, auto_tcp=True):
@@ -59,9 +60,15 @@ class ManipulatorBase(orbmb.MechBase):
             self.structure.compiled.tip_lnks[0])
         new._solver = new.structure.get_solver(
             self.structure.compiled.root_lnk,
-            self.structure.compiled.tip_lnks[0])
+            self.structure.compiled.tip_lnks[0],
+            self._solver._data_dir)
         return new
 
     @property
     def wd_tcp_tf(self):
         return self.runtime_lnks[-1].tf @ self._tcp_tf
+
+    def mount(self, *args, **kwargs):
+        """turn off mount() to avoid confusion"""
+        raise RuntimeError("Manipulator.mount() is disabled. "
+                           "Use engage(child, engage_tfmat) instead.")

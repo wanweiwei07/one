@@ -1,6 +1,6 @@
 import builtins, time
 import numpy as np
-from one import oum, ovw, ouc, ossop, ocm, ompsp, ompr, khi_rs007l
+from one import oum, ovw, ouc, ossop, ocm, omppc, ompr, khi_rs007l
 
 base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False)
 builtins.base = base
@@ -29,13 +29,8 @@ collider.append(box3)
 collider.actors = [robot]
 collider.compile()
 
-jlmt_low = robot.structure.compiled.jlmt_low_by_idx
-jlmt_high = robot.structure.compiled.jlmt_high_by_idx
-sspp = ompsp.SpaceProvider.from_box_bounds(lmt_low=jlmt_low,
-                                           lmt_high=jlmt_high,
-                                           collider=collider,
-                                           cd_step_size=np.pi / 180)
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
+pln_ctx = omppc.PlanningContext(collider=collider, cd_step_size=np.pi / 180)
+planner = ompr.RRTConnectPlanner(pln_ctx=pln_ctx, extend_step_size=np.pi / 36)
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2, -oum.pi / 2, oum.pi / 4, oum.pi / 3])
 

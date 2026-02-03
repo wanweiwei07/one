@@ -17,7 +17,7 @@ class KinematicChain:
         self.active_mask = compiled.active_jnt_ids_mask[self.jnt_ids_in_structure]
         self.active_jnt_ids = self.jnt_ids_in_structure[self.active_mask]
         # active joint limits
-        self.lmt_low = compiled.jlmt_low_by_idx[self.active_jnt_ids]
+        self.lmt_lo = compiled.jlmt_low_by_idx[self.active_jnt_ids]
         self.lmt_up = compiled.jlmt_high_by_idx[self.active_jnt_ids]
         # pointer cache
         self.jnts = [structure.jnts[j] for j in self.jnt_ids_in_structure]

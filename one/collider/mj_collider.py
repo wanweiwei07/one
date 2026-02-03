@@ -38,6 +38,14 @@ class MJCollider:
     def get_slice(self, actor):
         return self._actor_qs_slice.get(actor, None)
 
+    def set_mecba_qpos(self, mecba, qs):
+        self._mjenv.sync.push_one_mecba_qpos(mecba, qs)
+
+    def save(self, filepath, encoding="utf-8"):
+        if self._mjenv is None:
+            raise RuntimeError("MjCollider must be compiled!")
+        self._mjenv.save(filepath, encoding=encoding)
+
     @property
     def actors(self):
         return self._actors

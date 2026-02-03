@@ -70,10 +70,10 @@ class PRMRoadmap:
 
 
 class PRMPlanner:
-    def __init__(self, ssp_provider, k=15,
+    def __init__(self, pln_ctx, k=15,
                  n_samples=300, max_sample_tries=5000):
-        self._sspp = ssp_provider
-        self._ppp = omppp.PathPostProcessor(self._sspp)
+        self._pln_ctx = pln_ctx
+        self._path_pp = omppp.PathPostProcessor(self._pln_ctx)
         self.k = int(k)
         self.n_samples = int(n_samples)
         self.max_sample_tries = int(max_sample_tries)
@@ -82,14 +82,14 @@ class PRMPlanner:
         self._kdtree = None
 
     def solve(self, start, goal, rm=None, verbose=False):
-        sspp = self._sspp
-        sspp.clear_cache()
+        pln_ctx = self._pln_ctx
+        pln_ctx.clear_cache()
         start = np.asarray(start, dtype=np.float32)
         goal = np.asarray(goal, dtype=np.float32)
-        if not sspp.is_state_valid(start):
+        if not pln_ctx.is_state_valid(start):
             print("[PRM] start is invalid.")
             return None
-        if not sspp.is_state_valid(goal):
+        if not pln_ctx.is_state_valid(goal):
             print("[PRM] goal is invalid.")
             return None
         if rm is None:
@@ -109,8 +109,8 @@ class PRMPlanner:
             print("[PRM] no graph path found.")
             return None
         raw_path = [rm.states[i] for i in idx_path]
-        smooth_path = self._ppp.shortcut(raw_path)
-        return self._ppp.densify(smooth_path)
+        smooth_path = self._path_pp.shortcut(raw_path)
+        return self._path_pp.densify(smooth_path)
 
     def _build_roadmap(self, verbose=False):
         rm = PRMRoadmap()
@@ -147,7 +147,7 @@ class PRMPlanner:
         return idxs, dists
 
     def _connect_knn(self, rm):
-        sspp = self._sspp
+        pln_ctx = self._pln_ctx
         Q = self._Q
         n = len(Q)
         if n <= 1:
@@ -160,32 +160,30 @@ class PRMPlanner:
                 j = int(j)
                 if j <= i:
                     continue
-                if sspp.is_motion_valid(qi, Q[j]):
+                if pln_ctx.is_motion_valid(qi, Q[j]):
                     rm.add_edge_undirected(
                         i, j, float(dist))
 
     def _connect_node_to_roadmap(self, rm, node_idx):
-        sspp = self._sspp
+        pln_ctx = self._pln_ctx
         Q = self._Q
         qi = Q[node_idx]
         idxs, dists = self._query_knn(
             qi, min(8, self.k + 1), exclude_idx=node_idx)
         for j, dist in zip(idxs, dists):
-            if sspp.is_motion_valid(qi, Q[j]):
+            if pln_ctx.is_motion_valid(qi, Q[j]):
                 rm.add_edge_undirected(
                     node_idx, int(j), float(dist))
 
     def _sample_valid_states(self, n, verbose=False):
-        sspp = self._sspp
-        ssp = sspp.ssp
+        pln_ctx = self._pln_ctx
         out = []
         tries = 0
         while (len(out) < n and
                tries < self.max_sample_tries):
             tries += 1
-            q = ssp.sample_uniform()
-            q = sspp.enforce_bounds(q) if hasattr(sspp, "enforce_bounds") else q
-            if sspp.is_state_valid(q): # TODO: batch?
+            q = pln_ctx.sample_uniform()
+            if pln_ctx.is_state_valid(q): # TODO: batch?
                 out.append(np.asarray(q, dtype=np.float32))
             if verbose:
                 print(f"[PRM] sampling: got {len(out)}/{n} "
@@ -210,14 +208,14 @@ class LazyPRMPlanner(PRMPlanner):
                 rm.add_edge_undirected(i, j, float(dist))
 
     def solve(self, start, goal, rm=None, verbose=False):
-        sspp = self._sspp
-        sspp.clear_cache()
+        pln_ctx = self._pln_ctx
+        pln_ctx.clear_cache()
         start = np.asarray(start, dtype=np.float32)
         goal = np.asarray(goal, dtype=np.float32)
-        if not sspp.is_state_valid(start):
+        if not pln_ctx.is_state_valid(start):
             print("[LazyPRM] start is invalid.")
             return None
-        if not sspp.is_state_valid(goal):
+        if not pln_ctx.is_state_valid(goal):
             print("[LazyPRM] goal is invalid.")
             return None
         if rm is None:
@@ -240,11 +238,11 @@ class LazyPRMPlanner(PRMPlanner):
                 return None
             bad_edge = None
             for a, b in zip(idx_path[:-1], idx_path[1:]):
-                if not sspp.is_motion_valid(Q[a], Q[b]):
+                if not pln_ctx.is_motion_valid(Q[a], Q[b]):
                     bad_edge = (a, b)
                     break
             if bad_edge is None:
                 raw_path = [rm.states[i] for i in idx_path]
-                smooth_path = self._ppp.shortcut(raw_path)
-                return self._ppp.densify(smooth_path)
+                smooth_path = self._path_pp.shortcut(raw_path)
+                return self._path_pp.densify(smooth_path)
             rm.remove_edge_undirected(*bad_edge)

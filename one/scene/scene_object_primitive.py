@@ -232,7 +232,7 @@ def gen_plane(pos=(0, 0, 0),
     size = np.asarray(size, np.float32)
     half_extents = np.array([size[0] / 2,
                              size[1] / 2,
-                             thickness],
+                             thickness / 2],
                             np.float32)
     rmodel = osrmp.gen_box_rmodel(half_extents=half_extents,
                                   rgb=rgb, alpha=alpha)

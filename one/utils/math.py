@@ -1326,6 +1326,7 @@ def rotmat_from_look_at(pos, look_at, up):
 
 def area_weighted_pca(verts, faces, eps=eps):
     """area weighted pca for a mesh defined by verts and faces"""
+    """the returned eig_vecs are right-handed and in ascending order"""
     v0 = verts[faces[:, 0]]
     v1 = verts[faces[:, 1]]
     v2 = verts[faces[:, 2]]
@@ -1339,7 +1340,7 @@ def area_weighted_pca(verts, faces, eps=eps):
     diff = centroids - mean  # (M,3)
     cov = (areas[:, None, None] * (diff[:, :, None] * diff[:, None, :])).sum(axis=0)
     cov = cov / total_area
-    eig_vals, eig_vecs = np.linalg.eigh(cov)
+    eig_vals, eig_vecs = np.linalg.eigh(cov) # ascending order
     eig_vecs = ensure_right_handed(eig_vecs)
     return mean, eig_vecs.astype(np.float32)
 

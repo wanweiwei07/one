@@ -17,17 +17,17 @@ def prepare_mechstruct():
                            parent_lnk=wd_lnk,
                            child_lnk=dummy_xlnk,
                            axis=ouc.StandardAxis.X,
-                           lmt_low=-5.0, lmt_up=5.0)
+                           lmt_lo=-5.0, lmt_up=5.0)
     joint_y = osrbms.Joint(jnt_type=ouc.JntType.PRISMATIC,
                            parent_lnk=dummy_xlnk,
                            child_lnk=dummy_ylnk,
                            axis=ouc.StandardAxis.Y,
-                           lmt_low=-5.0, lmt_up=5.0)
+                           lmt_lo=-5.0, lmt_up=5.0)
     joint_t = osrbms.Joint(jnt_type=ouc.JntType.REVOLUTE,
                            parent_lnk=dummy_ylnk,
                            child_lnk=body_lnk,
                            axis=ouc.StandardAxis.Z,
-                           lmt_low=-np.pi, lmt_up=np.pi)
+                           lmt_lo=-np.pi, lmt_up=np.pi)
     structure.add_lnk(wd_lnk)
     structure.add_lnk(dummy_xlnk)
     structure.add_lnk(dummy_ylnk)

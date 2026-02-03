@@ -5,17 +5,29 @@ import numpy as np
 import one.geom.geometry as osg
 
 
-def load_geometry(path):
-    if path in osg._geom_cache:
-        return osg._geom_cache[path]
+def load_geometry(path, scale=None):
+    if scale is None:
+        scale = (1.0, 1.0, 1.0)
+    elif np.isscalar(scale):
+        scale = (float(scale), float(scale), float(scale))
+    else:
+        scale = tuple(scale)
+    key = (path, scale[0], scale[1], scale[2])
+    if key in osg._geom_cache:
+        return osg._geom_cache[key]
     ext = os.path.splitext(path)[1].lower()
     if ext == ".stl":
-        geometry = _load_stl(path)
+        vs, fs = _load_stl(path)
     elif ext == ".dae":
-        geometry = _load_dae(path)
+        vs, fs = _load_dae(path)
     else:
         raise ValueError(f"Unsupported geom format: {ext}")
-    osg._geom_cache[path] = geometry
+    vs = vs * np.array(scale, dtype=np.float32)
+    if scale[0] * scale[1] * scale[2] < 0:
+        fs = fs.copy()
+        fs[:, [1, 2]] = fs[:, [2, 1]]
+    geometry = osg.gen_geom_from_raw(vs, fs)
+    osg._geom_cache[key] = geometry
     return geometry
 
 
@@ -84,7 +96,8 @@ def _load_stl_binary(path, tri_count):
             vs[base + 2] = v2
             fs[i] = (base + 0, base + 1, base + 2)
             f.read(2)  # skip attribute bytes
-    return osg.gen_geom_from_raw(vs, fs)
+    return (np.array(vs, dtype=np.float32),
+            np.array(fs, dtype=np.int32))
 
 
 def _load_stl_ascii(path):
@@ -104,8 +117,8 @@ def _load_stl_ascii(path):
                 vs.extend(current_face)
                 fs.append([i0, i1, i2])
                 current_face = []
-    return osg.gen_geom_from_raw(np.array(vs, dtype=np.float32),
-                                 np.array(fs, dtype=np.int32))
+    return (np.array(vs, dtype=np.float32),
+            np.array(fs, dtype=np.int32))
 
 
 # ==============================
@@ -151,4 +164,5 @@ def _load_dae(filename):
     vs = floats.reshape((-1, 3)).astype(np.float32)
     idx = find_indices()
     fs = idx.reshape((-1, 3))
-    return osg.gen_geom_from_raw(vs, fs)
+    return (np.array(vs, dtype=np.float32),
+            np.array(fs, dtype=np.int32))

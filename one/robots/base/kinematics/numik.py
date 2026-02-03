@@ -33,7 +33,7 @@ class NumIKSolver:
         root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
         tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         if qs_active_init is None:
-            qs = (self._chain.lmt_low + self._chain.lmt_up) * 0.5
+            qs = (self._chain.lmt_lo + self._chain.lmt_up) * 0.5
         else:
             qs = np.array(qs_active_init, dtype=np.float32)
             assert qs.shape[0] == self._chain.n_active_jnts

@@ -88,7 +88,7 @@ class MechBase:
             jnt = self.structure.jnts[pjidx]
             plnk_tfmat = self.wd_lnk_tfarr[plidx]
             jtfq = (self._compiled.jtf0_by_idx[pjidx] @
-                         jnt.motion_tf(q_resolved[pjidx]))
+                    jnt.motion_tf(q_resolved[pjidx]))
             self.wd_lnk_tfarr[lidx] = plnk_tfmat @ jtfq
         self._update_runtime()
         return self.wd_lnk_tfarr
@@ -106,7 +106,6 @@ class MechBase:
         else:
             engage_tf = np.asarray(engage_tf, dtype=np.float32)
         self._mountings[child] = Mounting(child, plnk, engage_tf)
-        child.is_free = False
 
     def unmount(self, child):
         try:

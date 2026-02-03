@@ -86,7 +86,7 @@ class SELIKSolver(orbkin.NumIKSolver):
             return False
 
     def _build_cvt_database(self):
-        l = self._chain.lmt_low.astype(np.float32)
+        l = self._chain.lmt_lo.astype(np.float32)
         u = self._chain.lmt_up.astype(np.float32)
         dim = self._chain.n_active_jnts
         pool = l + np.random.rand(self.n_pool, dim).astype(np.float32) * (u - l)

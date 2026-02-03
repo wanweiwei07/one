@@ -29,7 +29,7 @@ class AABBCollider(ocb.ColliderBase):
         self._transforms = np.zeros((n_items, 4, 4), dtype=np.float32)
 
     def is_collided(self, qs):
-        if not self._check_pairs:
+        if self._check_pairs is None:
             raise RuntimeError('AABBCollider must be compiled!')
         # 1) FK update
         for actor, sl in self._actor_qs_slice.items():

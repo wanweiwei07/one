@@ -6,48 +6,51 @@ import one.robots.base.mech_structure as orbms
 import one.robots.end_effectors.ee_base as oreb
 
 
-def get_structure():
+def prepare_ms():
     structure = orbms.MechStruct()
     mesh_dir=structure.default_mesh_dir
     # 3 links
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base_link.stl"),
-        local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        loc_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SILVER)
-    lft_fgr_lnk = orbms.Link.from_file(
+    lf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "inward_left_finger_link.stl"),
-        local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        loc_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.STEEL_BLUE)
-    rgt_fgr_lnk = orbms.Link.from_file(
+    rf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "inward_right_finger_link.stl"),
-        local_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        loc_rotmat=oum.rotmat_from_euler(0, 0, np.pi / 2),
+        loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SALMON_PINK)
     # 1 joint
-    jnt_bl_lf = orbms.Joint(
+    jnt_lf = orbms.Joint(
         jnt_type=ouc.JntType.PRISMATIC,
-        parent_lnk=base_lnk, child_lnk=lft_fgr_lnk,
+        parent_lnk=base_lnk, child_lnk=lf_lnk,
         axis=ouc.StandardAxis.Y,
         pos=np.array([0, -0.019, 0], dtype=np.float32),
-        lmt_low=0.0, lmt_up=0.019)
-    jnt_bl_rf = orbms.Joint(
+        lmt_lo=0.0, lmt_up=0.019)
+    jnt_rf = orbms.Joint(
         jnt_type=ouc.JntType.PRISMATIC,
-        parent_lnk=base_lnk, child_lnk=rgt_fgr_lnk,
+        parent_lnk=base_lnk, child_lnk=rf_lnk,
         axis=-ouc.StandardAxis.Y,
         pos=np.array([0, 0.019, 0], dtype=np.float32),
-        mmc=(jnt_bl_lf, 1.0, 0.0),
-        lmt_low=0.0, lmt_up=0.019)
-    # add links
+        mmc=(jnt_lf, 1.0, 0.0),
+        lmt_lo=0.0, lmt_up=0.019)
+    # add lnks
     structure.add_lnk(base_lnk)
-    structure.add_lnk(lft_fgr_lnk)
-    structure.add_lnk(rgt_fgr_lnk)
-    # add joints
-    structure.add_jnt(jnt_bl_lf)
-    structure.add_jnt(jnt_bl_rf)
-    # ignore colllision between fingers
-    structure.ignore_collision(lft_fgr_lnk, rgt_fgr_lnk)
+    structure.add_lnk(lf_lnk)
+    structure.add_lnk(rf_lnk)
+    # add jnts
+    structure.add_jnt(jnt_lf)
+    structure.add_jnt(jnt_rf)
+    # ignore collision between fingers
+    structure.ignore_collision(lf_lnk, rf_lnk)
     # order joints for quick access
     structure.compile()
     return structure
@@ -57,7 +60,7 @@ class OR2FG7(oreb.EndEffectorBase, oreb.GripperMixin):
 
     @classmethod
     def _build_structure(cls):
-        return get_structure()
+        return prepare_ms()
 
     def __init__(self):
         super().__init__(

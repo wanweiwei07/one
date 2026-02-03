@@ -1,7 +1,7 @@
 import builtins
 import time
 import numpy as np
-from one import oum, ovw, ouc, ossop, ompsp, ompr, khi_rs007l
+from one import oum, ovw, ouc, ossop, omppc, ompr, khi_rs007l
 from one.collider import GPUAABBCollider
 
 # Setup viewer
@@ -33,7 +33,7 @@ box3 = ossop.gen_box(half_extents=(.05, 1, .15), pos=(.3, 0.0, 1.0),
                      collision_type=ouc.CollisionType.MESH)
 box3.rgba = (0.8, 0.8, 0.8, 0.3)  # Gray, semi-transparent
 box3.attach_to(base.scene)
-# base.run()
+base.run()
 # Create AABB collider
 print("Creating AABBCollider...")
 collider = GPUAABBCollider()
@@ -44,16 +44,9 @@ collider.append(box3)
 collider.actors = [robot]
 collider.compile()
 
-# Setup motion planner
-jlmt_low = robot.structure.compiled.jlmt_low_by_idx
-jlmt_high = robot.structure.compiled.jlmt_high_by_idx
-sspp = ompsp.SpaceProvider.from_box_bounds(
-    lmt_low=jlmt_low,
-    lmt_high=jlmt_high,
-    collider=collider,
-    cd_step_size=np.pi / 180)
-
-planner = ompr.RRTConnectPlanner(ssp_provider=sspp, extend_step_size=np.pi / 36)
+pln_ctx = omppc.PlanningContext(collider=collider)
+planner = ompr.RRTConnectPlanner(
+    pln_ctx=pln_ctx, extend_step_size=np.pi / 36)
 
 # Define start and goal (same as original test)
 start = np.array([0, 0, 0, 0, 0, 0])

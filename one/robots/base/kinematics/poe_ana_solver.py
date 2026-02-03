@@ -12,7 +12,7 @@ class Ana6RSWSolver:
         self._jnts = chain.jnts
         if len(self._jnts) != 6:
             raise ValueError("Expects a 6R chain!")
-        self._lmt_low = np.asarray(chain.lmt_low)
+        self._lmt_low = np.asarray(chain.lmt_lo)
         self._lmt_up = np.asarray(chain.lmt_up)
         self._wrist_offset = self._infer_wrist_offset()
 

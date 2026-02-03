@@ -25,7 +25,7 @@ class Joint:
 
     def __init__(self, jnt_type, parent_lnk, child_lnk,
                  axis, rotmat=None, pos=None,
-                 mmc=None, lmt_low=None, lmt_up=None):
+                 mmc=None, lmt_lo=None, lmt_up=None):
         self.jtype = jnt_type
         self.axis = oum.unit_vec(axis, return_length=False)
         self.rotmat = oum.ensure_rotmat(rotmat)
@@ -36,13 +36,13 @@ class Joint:
         self.mmc = mmc
         # joint limits
         if jnt_type == ouc.JntType.REVOLUTE:
-            self.lmt_low = -2.0 * oum.pi if lmt_low is None else lmt_low
+            self.lmt_lo = -2.0 * oum.pi if lmt_lo is None else lmt_lo
             self.lmt_up = 2.0 * oum.pi if lmt_up is None else lmt_up
         elif jnt_type == ouc.JntType.PRISMATIC:
-            self.lmt_low = -1.0 if lmt_low is None else lmt_low
+            self.lmt_lo = -1.0 if lmt_lo is None else lmt_lo
             self.lmt_up = 1.0 if lmt_up is None else lmt_up
         elif jnt_type == ouc.JntType.FIXED:
-            self.lmt_low = 0.0
+            self.lmt_lo = 0.0
             self.lmt_up = 0.0
         else:
             raise ValueError(f"Unknown joint type: {jnt_type}")
@@ -69,7 +69,7 @@ class MechStruct:
         # raw data
         self.lnks = []
         self.jnts = []
-        self._collision_ignores_objs = set()  # {(Link, Link)}
+        self._collision_ignores = set()  # {(Link, Link)}
         # compiled data
         self._compiled = None  # MechStructHelper
         # kinematic chain and solver cache
@@ -80,10 +80,7 @@ class MechStruct:
         caller_file = frame.filename
         caller_dir = os.path.dirname(os.path.abspath(caller_file))
         self.res_dir = caller_dir
-        self.default_data_dir = os.path.join(caller_dir, "data")
         self.default_mesh_dir = os.path.join(caller_dir, "meshes")
-        os.makedirs(self.default_data_dir, exist_ok=True)
-        os.makedirs(self.default_mesh_dir, exist_ok=True)
 
     def __repr__(self):
         return f"<MechDefinition: {len(self.lnks)} links, {len(self.jnts)} joints>"
@@ -94,11 +91,12 @@ class MechStruct:
             self._chains[key] = orbkkc.KinematicChain(self, root_lnk, tip_lnk)
         return self._chains[key]
 
-    def get_solver(self, root_lnk, tip_lnk):
+    def get_solver(self, root_lnk, tip_lnk, data_dir):
         chain = self.get_chain(root_lnk, tip_lnk)
         if chain not in self._solvers:
+            _data_dir = os.path.join(self.res_dir, data_dir)
             self._solvers[chain] = orbkis.SELIKSolver(
-                chain, self.default_data_dir)
+                chain, _data_dir)
         return self._solvers[chain]
 
     def add_lnk(self, lnk):
@@ -119,7 +117,7 @@ class MechStruct:
         if a is b:
             raise ValueError("Parameters a and b are the same")
         pair = (a, b) if id(a) < id(b) else (b, a)
-        self._collision_ignores_objs.add(pair)
+        self._collision_ignores.add(pair)
 
     def ignore_env_collision(self, lnk):
         lnk.collision_affinity &= ~ouc.CollisionGroup.ENV
@@ -130,7 +128,7 @@ class MechStruct:
         for j in self.jnts:
             self.ignore_collision(j.plnk, j.clnk)
         self._compiled.collision_ignores_idx = set()
-        for lnk_a, lnk_b in self._collision_ignores_objs:
+        for lnk_a, lnk_b in self._collision_ignores:
             lidx_a = self._compiled.lidx_map[lnk_a]
             lidx_b = self._compiled.lidx_map[lnk_b]
             pair = (min(lidx_a, lidx_b), max(lidx_a, lidx_b))
@@ -138,7 +136,7 @@ class MechStruct:
 
     @property
     def collision_ignores_objs(self):
-        return self._collision_ignores_objs
+        return self._collision_ignores
 
     @property
     def n_jnts(self):
@@ -234,7 +232,7 @@ class FlatMechStructure:
                 self.mmc_mult_by_idx[jidx] = float(mult)
                 self.mmc_offset_by_idx[jidx] = float(offset)
             # limits
-            self.jlmt_low_by_idx[jidx] = float(jnt.lmt_low)
+            self.jlmt_low_by_idx[jidx] = float(jnt.lmt_lo)
             self.jlmt_high_by_idx[jidx] = float(jnt.lmt_up)
 
     def _find_root_idx(self):

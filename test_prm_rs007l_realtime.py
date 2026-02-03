@@ -1,7 +1,7 @@
 import builtins, time
 import numpy as np
 import pyglet.window.key as key
-from one import oum, ovw, ouc, ossop, ocm, ompsp, ompp, khi_rs007l
+from one import oum, ovw, ouc, ossop, ocm, omppc, ompp, khi_rs007l
 
 base = ovw.World(cam_pos=(-3, 1, 1.5), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False)
 builtins.base = base
@@ -26,17 +26,11 @@ collider.append(box)
 collider.actors = [robot]
 collider.compile()
 
-collider._mjenv.save("scene_free.xml")
+collider.save("scene_free.xml")
 
-jlmt_low = robot.structure.compiled.jlmt_low_by_idx
-jlmt_high = robot.structure.compiled.jlmt_high_by_idx
-sspp = ompsp.SpaceProvider.from_box_bounds(
-    lmt_low=jlmt_low,
-    lmt_high=jlmt_high,
-    collider=collider,
-    cd_step_size=np.pi / 36
-)
-planner = ompp.LazyPRMPlanner(ssp_provider=sspp)
+pln_ctx = omppc.PlanningContext(
+    collider=collider, cd_step_size=np.pi / 36)
+planner = ompp.LazyPRMPlanner(pln_ctx=pln_ctx)
 
 start = np.array([0, 0, 0, 0, 0, 0])
 goal = np.array([-oum.pi / 2, -oum.pi / 4, oum.pi / 2,
@@ -103,7 +97,7 @@ def is_path_valid(path, cursor, window=K):
         debug_nodes.append(tmp)
         if hit:
             return_value = False
-        if not sspp.is_motion_valid(path[i], path[i + 1]):
+        if not pln_ctx.is_motion_valid(path[i], path[i + 1]):
             return_value = False
     return return_value
 
@@ -111,7 +105,7 @@ def is_path_valid(path, cursor, window=K):
 def tick(dt):
     global path, state, current_target, cursor, tol
     update_obstacles_by_keys(dt)
-    if sspp.states_equal(
+    if pln_ctx.states_equal(
             state, current_target, tol=tol):
         if np.allclose(state, current_target):
             if np.allclose(current_target, goal):

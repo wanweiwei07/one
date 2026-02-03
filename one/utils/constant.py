@@ -53,6 +53,7 @@ class ExtendedColor:
     SILVER_GRAY = np.array([0.686, 0.686, 0.690], dtype=np.float32)
     MOON_GRAY = np.array([0.831, 0.851, 0.863], dtype=np.float32)
     CHINA_CLAY = np.array([0.831, 0.863, 0.827], dtype=np.float32)
+    DEEP_GRAY = np.array([0.251, 0.251, 0.251], dtype=np.float32)
     # Metallic
     SILVER = np.array([0.753, 0.753, 0.753], dtype=np.float32)
     GOLD = np.array([1.0, 0.843, 0.0], dtype=np.float32)
