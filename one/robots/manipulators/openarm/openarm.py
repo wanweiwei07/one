@@ -269,3 +269,14 @@ class OpenArm:
         self.body.set_rotmat_pos(rotmat=rotmat, pos=pos)
         self.body._update_mounting(self.body._mountings[self.lft_arm])
         self.body._update_mounting(self.body._mountings[self.rgt_arm])
+
+
+if __name__ == '__main__':
+    import one.viewer.world as ovw
+
+    base = ovw.World(cam_pos=[1.2, .5, 1.3], cam_lookat_pos=[0, 0, .5])
+    openarm = OpenArm()
+    openarm.lft_arm.fk(qs=(0, -np.pi/6, 0, 0, 0, 0, 0))
+    openarm.rgt_arm.fk(qs=(0, np.pi/6, 0, 0, 0, 0, 0))
+    openarm.attach_to(base.scene)
+    base.run()

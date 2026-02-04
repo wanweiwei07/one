@@ -19,12 +19,13 @@ class NumIKSolver:
 
     def ik(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
            qs_active_init=None, max_iter=50, **kwargs):
-        qs, info = self._backward(root_rotmat, root_pos, tgt_rotmat,
-                                  tgt_pos, qs_active_init, max_iter)
+        qs, info = self._backward(
+            root_rotmat, root_pos, tgt_rotmat,
+            tgt_pos, qs_active_init, max_iter)
         if not info["converged"]:
             return []
         else:
-            return [(qs, info)] # single solution wrapped in tuple
+            return [(qs, info)]  # single solution wrapped in tuple
 
     def _backward(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
                   qs_active_init=None, max_iter=50,
@@ -72,6 +73,16 @@ class NumIKSolver:
             delta_x = np.concatenate(
                 [delta_p, delta_theta]).astype(np.float32)
             delta_q = np.linalg.lstsq(jacmat, delta_x, rcond=1e-4)[0]
+            # null space optimization
+            if self._chain.n_active_jnts > 6:
+                J_pinv = np.linalg.pinv(jacmat)
+                N = np.eye(self._chain.n_active_jnts) - J_pinv @ jacmat
+                # subjective: stay in the middle of joint limits
+                q_mid = (self._chain.lmt_lo + self._chain.lmt_up) * 0.5
+                k_null = 0.2  # null space gain
+                delta_q_secondary = k_null * (q_mid - qs)
+                delta_q_null = N @ delta_q_secondary
+                delta_q = delta_q + delta_q_null
             qs = qs + step_scale * delta_q
             # # debug purposes
             # new_robot=robot.clone()

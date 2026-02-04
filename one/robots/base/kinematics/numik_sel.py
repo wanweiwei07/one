@@ -61,7 +61,8 @@ class SELIKSolver(orbkin.NumIKSolver):
                 raise ValueError(
                     f"prefer_qs must have {self._chain.n_active_jnts} elements "
                     f"(active joints), got {prefer_qs.shape[0]}")
-            distances = np.linalg.norm(seeds - prefer_qs[np.newaxis, :], axis=1)
+            distances = np.linalg.norm(
+                seeds - prefer_qs[np.newaxis, :], axis=1)
             sorted_indices = np.argsort(distances)
             seeds = seeds[sorted_indices]
             ids = ids[sorted_indices]
@@ -71,10 +72,12 @@ class SELIKSolver(orbkin.NumIKSolver):
                 root_rotmat, root_pos, tgt_rotmat, tgt_pos,
                 qs_active_init=qs0, max_iter=max_iter)
             if not info.get("converged", False):
-                if info.get("reason", "") == "joint_limits_exceeded":
-                    tmp_lft_arm = robot.lft_arm.clone()
-                    tmp_lft_arm.fk(qs=qs)
-                    tmp_lft_arm.attach_to(base.scene)
+                # if info.get("reason", "") == "joint_limits_exceeded":
+                #     tmp_lft_arm = robot.lft_arm.clone()
+                #     tmp_lft_arm.fk(qs=qs)
+                #     tmp_lft_arm.attach_to(base.scene)
+                #     print(qs)
+                #     base.run()
                 continue
             info["seed_id"] = int(sid)
             sols.append((qs, info))

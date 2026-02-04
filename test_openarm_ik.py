@@ -30,15 +30,18 @@ rgt_tcp_frame.attach_to(base.scene)
 # base.run()
 
 tgt_pos = (0.4, 0.1, 0.4)
-tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.X, oum.pi / 2) @
-              oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi / 2))
+# tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.X, oum.pi / 2) @
+#               oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi / 2))
+tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.Z, 0) @
+              oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi))
 ossop.gen_frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
 
 prev_qs = robot.lft_arm.qs.copy()
-for y in range(2, 5):
-    for z in range(2, 7):
+for y in range(1, 5):
+    for z in range(1, 5):
         tgt_pos = (0.2, y * 0.1, z * 0.1)
-        qs = robot.lft_arm.ik_tcp_nearest(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat, ref_qs=prev_qs)
+        qs = robot.lft_arm.ik_tcp_nearest(
+            tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat, ref_qs=prev_qs)
         if qs is not None:
             prev_qs = qs
             tmp_lft_arm = robot.lft_arm.clone()
