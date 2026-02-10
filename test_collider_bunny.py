@@ -32,7 +32,7 @@ else:
 if results is not None:
     hit_points, pair_ids = results
     for hit_point in hit_points:
-        s = ossop.gen_sphere(
+        s = ossop.sphere(
             pos=hit_point, radius=0.002,
             rgb=ouc.BasicColor.RED, alpha=ouc.ALPHA.SOLID,
             collision_type=None, is_free=False)

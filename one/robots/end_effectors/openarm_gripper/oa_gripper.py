@@ -70,7 +70,7 @@ class OAGripper(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def __init__(self):
         super().__init__(
-            tcp_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.1801)))
+            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.1801)))
         self.jaw_range = np.array(
             [0.0, 0.088], dtype=np.float32)
         self.set_jaw_width(0.0)
@@ -92,12 +92,12 @@ if __name__ == '__main__':
     import one.scene.scene_object_primitive as ossop
 
     base = wd.World(cam_pos=[.5, .5, .3], cam_lookat_pos=[0, 0, 0])
-    oframe = ossop.gen_frame()
+    oframe = ossop.frame()
     oframe.attach_to(base.scene)
     gripper = OAGripper()
     gripper.attach_to(base.scene)
-    tcp_frame = ossop.gen_frame(rotmat=gripper.tcp_tf[:3, :3],
-                                pos=gripper.tcp_tf[:3, 3],
-                                color_mat=ouc.CoordColor.MYC)
+    tcp_frame = ossop.frame(rotmat=gripper.gl_tcp_tf[:3, :3],
+                            pos=gripper.gl_tcp_tf[:3, 3],
+                            color_mat=ouc.CoordColor.MYC)
     tcp_frame.attach_to(base.scene)
     base.run()

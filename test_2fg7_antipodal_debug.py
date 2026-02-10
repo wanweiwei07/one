@@ -5,7 +5,7 @@ from one.grasp.antipodal import antipodal_iter
 base = ovw.World(cam_pos=(.5, .5, .5), cam_lookat_pos=(0, 0, .2),
                  toggle_auto_cam_orbit=True)
 builtins.base = base
-ossop.gen_frame().attach_to(base.scene)
+ossop.frame().attach_to(base.scene)
 gripper = or_2fg7.OR2FG7()
 bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH)

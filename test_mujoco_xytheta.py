@@ -8,13 +8,13 @@ base = ovw.World(cam_pos=(3, 1, 2), cam_lookat_pos=(0, 0, .2),
                  toggle_auto_cam_orbit=False)
 # oframe = ossop.gen_frame()
 # oframe.attach_to(base.scene)
-plane_bottom = ossop.gen_plane()
+plane_bottom = ossop.plane()
 plane_bottom.attach_to(base.scene)
-base_box = ossop.gen_box(name="platform",
-                         half_extents=(.5, .5, .5),
-                         pos=(0, 0, .5),
-                         collision_type=ouc.CollisionType.AABB,
-                         is_free=False)
+base_box = ossop.box(name="platform",
+                     half_extents=(.5, .5, .5),
+                     pos=(0, 0, .5),
+                     collision_type=ouc.CollisionType.AABB,
+                     is_free=False)
 base_box.rgb = ouc.ExtendedColor.IVORY
 base_box.toggle_render_collision = True
 base_box.attach_to(base.scene)
@@ -25,10 +25,10 @@ xyt_bot.attach_to(base.scene)
 xyt_bot.set_rotmat_pos(pos=(0, 0, 1.11))
 xyt_bot.toggle_render_collision = True
 
-obstacle = ossop.gen_box(half_extents=(.1, .1, .1),
-                         collision_type=ouc.CollisionType.AABB,
-                         mass=0.1,
-                         is_free=True)
+obstacle = ossop.box(half_extents=(.1, .1, .1),
+                     collision_type=ouc.CollisionType.AABB,
+                     mass=0.1,
+                     is_free=True)
 obstacle.rgb = ouc.ExtendedColor.CHOCOLATE
 obstacle.toggle_render_collision = True
 for i in range(5):

@@ -5,7 +5,7 @@ from one import oum, ovw, ossop, khi_rs007l
 
 base = ovw.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
                  toggle_auto_cam_orbit=True)
-oframe = ossop.gen_frame().attach_to(base.scene)
+oframe = ossop.frame().attach_to(base.scene)
 robot = khi_rs007l.RS007L(rotmat=oum.rotmat_from_euler(0, 0, -oum.pi / 2))
 robot.attach_to(base.scene)
 builtins.robot = robot  # for debug access
@@ -20,7 +20,7 @@ for x in xs:
     for y in ys:
         for z in zs:
             tgt_pos = (x, y, z)
-            ossop.gen_frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
+            ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
             tic = time.perf_counter_ns()
             qs_list = robot.ik_tcp(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat)
             toc = time.perf_counter_ns()

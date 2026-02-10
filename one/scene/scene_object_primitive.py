@@ -14,11 +14,11 @@ def _parse_phys(kwargs):
             kwargs.get("is_free", False))
 
 
-def gen_cylinder(spos=(0, 0, 0),
-                 epos=(0.01, 0.01, 0.01),
-                 radius=0.05, segments=8,
-                 rgb=ouc.BasicColor.DEFAULT,
-                 alpha=1.0, **kwargs):
+def cylinder(spos=(0, 0, 0),
+             epos=(0.01, 0.01, 0.01),
+             radius=0.05, segments=8,
+             rgb=ouc.BasicColor.DEFAULT,
+             alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     spos = np.asarray(spos, np.float32)
@@ -38,11 +38,11 @@ def gen_cylinder(spos=(0, 0, 0),
     return o
 
 
-def gen_cone(spos=(0, 0, 0),
-             epos=(0.01, 0.01, 0.01),
-             radius=0.05, segments=8,
-             rgb=ouc.BasicColor.DEFAULT,
-             alpha=1.0, **kwargs):
+def cone(spos=(0, 0, 0),
+         epos=(0.01, 0.01, 0.01),
+         radius=0.05, segments=8,
+         rgb=ouc.BasicColor.DEFAULT,
+         alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     spos = np.asarray(spos, np.float32)
@@ -63,10 +63,10 @@ def gen_cone(spos=(0, 0, 0),
     return o
 
 
-def gen_sphere(pos=(0, 0, 0),
-               radius=0.05, segments=8,
-               rgb=ouc.BasicColor.DEFAULT,
-               alpha=1.0, **kwargs):
+def sphere(pos=(0, 0, 0),
+           radius=0.05, segments=8,
+           rgb=ouc.BasicColor.DEFAULT,
+           alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     rmodel = osrmp.gen_sphere_rmodel(
@@ -81,10 +81,10 @@ def gen_sphere(pos=(0, 0, 0),
     return o
 
 
-def gen_icosphere(pos=(0, 0, 0),
-                  radius=0.05, subdivisions=2,
-                  rgb=ouc.BasicColor.DEFAULT,
-                  alpha=1.0, **kwargs):
+def icosphere(pos=(0, 0, 0),
+              radius=0.05, subdivisions=2,
+              rgb=ouc.BasicColor.DEFAULT,
+              alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     rmodel = osrmp.gen_icosphere_rmodel(
@@ -99,10 +99,10 @@ def gen_icosphere(pos=(0, 0, 0),
     return o
 
 
-def gen_box(pos=(0, 0, 0),
-            half_extents=(0.05, 0.05, 0.05),
-            rotmat=None, rgb=ouc.BasicColor.DEFAULT,
-            alpha=1.0, **kwargs):
+def box(pos=(0, 0, 0),
+        half_extents=(0.05, 0.05, 0.05),
+        rotmat=None, rgb=ouc.BasicColor.DEFAULT,
+        alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     half_extents = np.asarray(half_extents, np.float32)
@@ -117,7 +117,7 @@ def gen_box(pos=(0, 0, 0),
     return o
 
 
-def gen_linsegs(segs, radius=0.001, srgbs=None, alpha=1.0):
+def linsegs(segs, radius=0.001, srgbs=None, alpha=1.0):
     """ segs: (N,2,3), srgb: None | scalar | (3,) | (N,3)
     returns: SceneObject with N cylinder segments  """
     segs = np.asarray(segs, dtype=np.float32)
@@ -153,12 +153,12 @@ def gen_linsegs(segs, radius=0.001, srgbs=None, alpha=1.0):
     return o
 
 
-def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
-              shaft_radius=ouc.ArrowSize.SHAFT_RADIUS,
-              head_radius=ouc.ArrowSize.HEAD_RADIUS,
-              head_length=ouc.ArrowSize.HEAD_LENGTH,
-              n_segs=8, rgb=ouc.BasicColor.DEFAULT,
-              alpha=1.0, **kwargs):
+def arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
+          shaft_radius=ouc.ArrowSize.SHAFT_RADIUS,
+          head_radius=ouc.ArrowSize.HEAD_RADIUS,
+          head_length=ouc.ArrowSize.HEAD_LENGTH,
+          n_segs=8, rgb=ouc.BasicColor.DEFAULT,
+          alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     # if is_free:
@@ -183,10 +183,10 @@ def gen_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01,
     return o
 
 
-def gen_frame(pos=np.zeros(3), rotmat=np.eye(3),
-              length_scale=1.0, radius_scale=1.0,
-              n_segs=8, color_mat=ouc.CoordColor.RGB,
-              alpha=1.0, **kwargs):
+def frame(pos=np.zeros(3), rotmat=np.eye(3),
+          length_scale=1.0, radius_scale=1.0,
+          n_segs=8, color_mat=ouc.CoordColor.RGB,
+          alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     # if is_free:
@@ -223,11 +223,11 @@ def gen_frame(pos=np.zeros(3), rotmat=np.eye(3),
     return o
 
 
-def gen_plane(pos=(0, 0, 0),
-              normal=ouc.StandardAxis.Z,
-              size=(100.0, 100.0),
-              thickness=1e-3,
-              rgb=ouc.BasicColor.GRAY, alpha=1.0):
+def plane(pos=(0, 0, 0),
+          normal=ouc.StandardAxis.Z,
+          size=(100.0, 100.0),
+          thickness=1e-3,
+          rgb=ouc.BasicColor.GRAY, alpha=1.0):
     pos = np.asarray(pos, np.float32)
     size = np.asarray(size, np.float32)
     half_extents = np.array([size[0] / 2,
@@ -246,7 +246,7 @@ def gen_plane(pos=(0, 0, 0),
     return o
 
 
-def gen_pcd(vs, vrgbs, alpha=1.0):
+def point_cloud(vs, vrgbs, alpha=1.0):
     """
     Build a SceneObject from user-specified vertices/faces.
     verts: (N,3)
@@ -259,9 +259,9 @@ def gen_pcd(vs, vrgbs, alpha=1.0):
     return o
 
 
-def gen_mesh(vs, fs, collision_type=None,
-             is_free=False, rgb=ouc.BasicColor.DEFAULT,
-             alpha=1.0, **kwargs):
+def mesh(vs, fs, collision_type=None,
+         is_free=False, rgb=ouc.BasicColor.DEFAULT,
+         alpha=1.0, **kwargs):
     """
     Build a SceneObject from user-specified vertices/faces.
     vs: (N,3), fs: (M,3)

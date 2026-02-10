@@ -6,7 +6,7 @@ from one import oum, ovw, ouc, ossop, ocm, omppc, ompp, khi_rs007l
 base = ovw.World(cam_pos=(-3, 1, 1.5), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False)
 builtins.base = base
 
-oframe = ossop.gen_frame()
+oframe = ossop.frame()
 oframe.attach_to(base.scene)
 
 robot = khi_rs007l.RS007L()
@@ -15,9 +15,9 @@ robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
 # obstacles
-box = ossop.gen_box(half_extents=(.5, .03, .03), pos=(.0, -0.2, 1),
-                    collision_type=ouc.CollisionType.AABB,
-                    is_free=True)
+box = ossop.box(half_extents=(.5, .03, .03), pos=(.0, -0.2, 1),
+                collision_type=ouc.CollisionType.AABB,
+                is_free=True)
 box.attach_to(base.scene)
 
 collider = ocm.MJCollider()

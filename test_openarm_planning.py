@@ -5,7 +5,7 @@ import one.robots.manipulators.openarm.openarm as ormoo
 
 base = ovw.World(cam_pos=(1.2, .575, 1.2), cam_lookat_pos=(0, 0, .4),
                  toggle_auto_cam_orbit=True)
-oframe = ossop.gen_frame().attach_to(base.scene)
+oframe = ossop.frame().attach_to(base.scene)
 
 robot = ormoo.OpenArm()
 robot.attach_to(base.scene)
@@ -36,12 +36,12 @@ for i in range(num_points):
     y = tgt_pos[1] + radius * oum.cos(angle)
     z = tgt_pos[2] + radius * oum.sin(angle)
     tgt_pos_list.append((x, y, z))
-    ossop.gen_frame(pos=(x, y, z), rotmat=tgt_rotmat).attach_to(base.scene)
+    ossop.frame(pos=(x, y, z), rotmat=tgt_rotmat).attach_to(base.scene)
 
 qs_list = robot.lft_arm.ik_tcp(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat)
-tcp_tf = robot.lft_arm.wd_tcp_tf
-tcp_frame = ossop.gen_frame(rotmat=tcp_tf[:3, :3], pos=tcp_tf[:3, 3],
-                            color_mat=ouc.CoordColor.MYC)
+tcp_tf = robot.lft_arm.gl_tcp_tf
+tcp_frame = ossop.frame(rotmat=tcp_tf[:3, :3], pos=tcp_tf[:3, 3],
+                        color_mat=ouc.CoordColor.MYC)
 tcp_frame.attach_to(base.scene)
 for qs in qs_list:
     tmp_lft_arm = robot.lft_arm.clone()

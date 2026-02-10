@@ -4,20 +4,20 @@ from one import oum, ovw, ouc, ossop, ocm, omppc, ompp, khi_rs007l
 
 base = ovw.World(cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5))
 builtins.base = base
-oframe = ossop.gen_frame()
+oframe = ossop.frame()
 oframe.attach_to(base.scene)
 robot = khi_rs007l.RS007L()
 robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
-box = ossop.gen_box(half_extents=(1, .01, .15), pos=(.0, -0.3, 1),
-                    collision_type=ouc.CollisionType.AABB)
+box = ossop.box(half_extents=(1, .01, .15), pos=(.0, -0.3, 1),
+                collision_type=ouc.CollisionType.AABB)
 box.attach_to(base.scene)
-box2 = ossop.gen_box(half_extents=(.15, .01, 1), pos=(-.5, -0.3, 0.5),
-                     collision_type=ouc.CollisionType.AABB)
+box2 = ossop.box(half_extents=(.15, .01, 1), pos=(-.5, -0.3, 0.5),
+                 collision_type=ouc.CollisionType.AABB)
 box2.attach_to(base.scene)
-box3 = ossop.gen_box(half_extents=(.01, 1, .15), pos=(.3, 0.0, 1),
-                     collision_type=ouc.CollisionType.AABB)
+box3 = ossop.box(half_extents=(.01, 1, .15), pos=(.3, 0.0, 1),
+                 collision_type=ouc.CollisionType.AABB)
 box3.attach_to(base.scene)
 
 collider = ocm.MJCollider()

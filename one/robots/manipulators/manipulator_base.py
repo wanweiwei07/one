@@ -10,7 +10,7 @@ class ManipulatorBase(orbmb.MechBase):
         if len(compiled.tip_lnks) != 1:
             raise ValueError("ManipulatorBase must have a single tip.")
         super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
-        self._tcp_tf = np.eye(4, dtype=np.float32)
+        self._loc_tcp_tf = np.eye(4, dtype=np.float32)
         self._chain = self.structure.get_chain(compiled.root_lnk,
                                                compiled.tip_lnks[0])
         self._solver = self.structure.get_solver(compiled.root_lnk,
@@ -26,18 +26,18 @@ class ManipulatorBase(orbmb.MechBase):
             self._update_mounting(self._mountings[ee])
         if auto_tcp:
             flange_tfmat = self._mountings[ee].engage_tf
-            self._tcp_tf[:] = flange_tfmat @ ee.tcp_tf
+            self._loc_tcp_tf[:] = flange_tfmat @ ee.loc_tcp_tf
 
-    def set_tcp_rotmat_pos(self, rotmat=None, pos=None):
-        self._tcp_tf[:3, :3] = oum.ensure_tf(rotmat)
-        self._tcp_tf[:3, 3] = oum.ensure_pos(pos)
+    def set_loc_tcp_rotmat_pos(self, rotmat=None, pos=None):
+        self._loc_tcp_tf[:3, :3] = oum.ensure_tf(rotmat)
+        self._loc_tcp_tf[:3, 3] = oum.ensure_pos(pos)
 
     def reset_tcp(self):
-        self._tcp_tf[:] = np.eye(4, dtype=np.float32)
+        self._loc_tcp_tf[:] = np.eye(4, dtype=np.float32)
 
     def ik_tcp(self, tgt_rotmat, tgt_pos, max_solutions=8):
         tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._tcp_tf)
+        tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._loc_tcp_tf)
         result_list = self._solver.ik(
             root_rotmat=self.rotmat,
             root_pos=self.pos,
@@ -53,7 +53,7 @@ class ManipulatorBase(orbmb.MechBase):
 
     def ik_tcp_nearest(self, tgt_rotmat, tgt_pos, ref_qs=None):
         tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._tcp_tf)
+        tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._loc_tcp_tf)
         if ref_qs is None:
             ref_qs = self.qs
         result_list = self._solver.ik(
@@ -69,7 +69,7 @@ class ManipulatorBase(orbmb.MechBase):
     def clone(self):
         new = super().clone()
         # rebuild manipulator-specific stuff
-        new._tcp_tf = self._tcp_tf.copy()
+        new._loc_tcp_tf = self._loc_tcp_tf.copy()
         new._chain = new.structure.get_chain(
             self.structure.compiled.root_lnk,
             self.structure.compiled.tip_lnks[0])
@@ -80,8 +80,8 @@ class ManipulatorBase(orbmb.MechBase):
         return new
 
     @property
-    def wd_tcp_tf(self):
-        return self.runtime_lnks[-1].tf @ self._tcp_tf
+    def gl_tcp_tf(self):
+        return self.runtime_lnks[-1].tf @ self._loc_tcp_tf
 
     def mount(self, *args, **kwargs):
         """turn off mount() to avoid confusion"""

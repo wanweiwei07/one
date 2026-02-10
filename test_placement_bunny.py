@@ -11,10 +11,10 @@ bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH)
 bunny.alpha = 0.3
 bunny.attach_to(base.scene)
-oframe = ossop.gen_frame(length=0.05)
+oframe = ossop.frame(length=0.05)
 oframe.attach_to(base.scene)
 
-plane_ground = ossop.gen_plane()
+plane_ground = ossop.plane()
 plane_ground.attach_to(base.scene)
 
 geom = bunny.collisions[0].geom
@@ -39,7 +39,7 @@ def show_pose(idx):
     if cur_vis is not None:
         cur_vis.detach_from(base.scene)
         cur_vis = None
-    cur_vis = ossop.gen_linsegs(segs3d, radius=.002)
+    cur_vis = ossop.linsegs(segs3d, radius=.002)
     # fs_sub = geom_hull.fs[facets[seg_id]]
     # cur_vis = ossop.gen_mesh(geom_hull.vs, fs_sub, rgb=(1, 0, 0), alpha=0.6)
     cur_vis.attach_to(base.scene)

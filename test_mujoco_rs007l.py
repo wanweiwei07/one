@@ -17,7 +17,7 @@ for i in range(1, 15):
     tmp_robot.set_rotmat_pos(pos=(0, 0, 1 + i * 1.5))
     tmp_robot.attach_to(base.scene)
 
-plane_bottom = ossop.gen_plane()
+plane_bottom = ossop.plane()
 plane_bottom.toggle_render_collision = False
 plane_bottom.attach_to(base.scene)
 

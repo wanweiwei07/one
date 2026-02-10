@@ -16,7 +16,7 @@ class MechBase:
     _structure: orbms.MechStruct = None
 
     @classmethod
-    def _build_structure(cls):
+    def _build_structure(cls, *args, **kwargs):
         raise NotImplementedError
 
     @property
@@ -42,7 +42,7 @@ class MechBase:
         self.runtime_lidx_map = {
             lnk: i for i, lnk in enumerate(self.runtime_lnks)}
         # FK cache
-        self.wd_lnk_tfarr = np.tile(
+        self.gl_lnk_tfarr = np.tile(
             np.eye(4, dtype=np.float32),
             (self._compiled.n_lnks, 1, 1))
         # mountings
@@ -77,8 +77,8 @@ class MechBase:
                 raise ValueError(f"Expected {len(self.qs)} qs, got {qs}")
         q_resolved = self._compiled.resolve_all_qs(self.qs)  # TODO: should this be active only?
         rlidx = self._compiled.root_lnk_idx
-        self.wd_lnk_tfarr[rlidx][:3, :3] = self._rotmat
-        self.wd_lnk_tfarr[rlidx][:3, 3] = self._pos
+        self.gl_lnk_tfarr[rlidx][:3, :3] = self._rotmat
+        self.gl_lnk_tfarr[rlidx][:3, 3] = self._pos
         # traversal
         for lidx in self._compiled.lnk_ids_traversal_order:
             if lidx == rlidx:
@@ -86,12 +86,12 @@ class MechBase:
             plidx = self._compiled.plidx_of_lidx[lidx]
             pjidx = self._compiled.pjidx_of_lidx[lidx]
             jnt = self.structure.jnts[pjidx]
-            plnk_tfmat = self.wd_lnk_tfarr[plidx]
+            plnk_tfmat = self.gl_lnk_tfarr[plidx]
             jtfq = (self._compiled.jtf0_by_idx[pjidx] @
                     jnt.motion_tf(q_resolved[pjidx]))
-            self.wd_lnk_tfarr[lidx] = plnk_tfmat @ jtfq
+            self.gl_lnk_tfarr[lidx] = plnk_tfmat @ jtfq
         self._update_runtime()
-        return self.wd_lnk_tfarr
+        return self.gl_lnk_tfarr
 
     def mount(self, child, plnk, engage_tf=None):
         # TODO updated attach_to?
@@ -125,7 +125,7 @@ class MechBase:
         new.runtime_lnks = [lnk.clone() for lnk in self.runtime_lnks]
         new.runtime_lidx_map = {
             lnk: i for i, lnk in enumerate(new.runtime_lnks)}
-        new.wd_lnk_tfarr = self.wd_lnk_tfarr.copy()
+        new.gl_lnk_tfarr = self.gl_lnk_tfarr.copy()
         new._mountings = {}
         for k, m in self._mountings.items():
             child = m.child.clone()
@@ -233,7 +233,7 @@ class MechBase:
     def _update_runtime(self):
         # push FK result to runtime links
         for i, lnk in enumerate(self.runtime_lnks):
-            lnk.tf = self.wd_lnk_tfarr[i]
+            lnk.tf = self.gl_lnk_tfarr[i]
         # update mountings
         for m in self._mountings.values():
             self._update_mounting(m)

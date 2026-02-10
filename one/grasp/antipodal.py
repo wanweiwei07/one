@@ -204,7 +204,7 @@ def antipodal_iter(gripper, tgt_sobj,
         detector = detlib.create_detector()
         batch = detlib.build_batch(items, pairs)
     # retreat distance
-    tcp_len = np.linalg.norm(gripper.tcp_tf[:3, 3])
+    tcp_len = np.linalg.norm(gripper.loc_tcp_tf[:3, 3])
     retreat_dist = 0.5 * tcp_len
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
         collided = False

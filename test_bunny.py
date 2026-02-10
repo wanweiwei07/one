@@ -4,7 +4,7 @@ from one.stream.websocket_server import run_stream
 base = ovw.World(cam_pos=(.3, .3, .3), toggle_auto_cam_orbit=True)
 run_stream(base.scene, host="127.0.0.1", port=8000, hz=30)
 
-oframe = ossop.gen_frame()
+oframe = ossop.frame()
 bunny = osso.SceneObject.from_file("bunny.stl", collision_type=ouc.CollisionType.CAPSULE)
 bunny.toggle_render_collision = True
 oframe.attach_to(base.scene)

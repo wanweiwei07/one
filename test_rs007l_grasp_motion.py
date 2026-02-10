@@ -12,7 +12,7 @@ from one import omppc, ompp
 
 base = ovw.World(cam_pos=(2, 2, 1.5), cam_lookat_pos=(0, 0, .75),
                  toggle_auto_cam_orbit=False)
-ossop.gen_frame().attach_to(base.scene)
+ossop.frame().attach_to(base.scene)
 
 robot = khi_rs007l.RS007L(pos=(.5, 0, 0))
 robot.attach_to(base.scene)
@@ -29,7 +29,7 @@ bunny.rgb = (0.8, 0.7, 0.6)
 bunny.attach_to(base.scene)
 
 # create ground plane
-ground = ossop.gen_plane(pos=(0, 0, .01))
+ground = ossop.plane(pos=(0, 0, .01))
 ground.attach_to(base.scene)
 
 # setup mj collider

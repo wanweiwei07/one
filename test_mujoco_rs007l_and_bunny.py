@@ -3,7 +3,7 @@ import numpy as np
 import one.physics.mj_env as opme
 from one import oum, ovw, ossop, ouc, osso, khi_rs007l
 
-oframe = ossop.gen_frame()
+oframe = ossop.frame()
 bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH,
     is_free=True)
@@ -21,32 +21,32 @@ for i in np.linspace(5.5, 15.5, 1):
     tmp_bunny.pos = (.5, 0, i)
     tmp_bunny.attach_to(base.scene)
 # container
-plane_bottom = ossop.gen_plane()
+plane_bottom = ossop.plane()
 plane_bottom.toggle_render_collision = True
 plane_bottom.attach_to(base.scene)
-wall_left = ossop.gen_box(pos=(.5, .35, .2),
-                          half_extents=(.355, .005, .2),
-                          collision_type=ouc.CollisionType.AABB,
-                          alpha=ouc.ALPHA.TRANSPARENT,
-                          is_free=False)
+wall_left = ossop.box(pos=(.5, .35, .2),
+                      half_extents=(.355, .005, .2),
+                      collision_type=ouc.CollisionType.AABB,
+                      alpha=ouc.ALPHA.TRANSPARENT,
+                      is_free=False)
 wall_left.attach_to(base.scene)
-wall_right = ossop.gen_box(pos=(.5, -.35, .2),
-                           half_extents=(.355, .005, .2),
-                           collision_type=ouc.CollisionType.AABB,
-                           alpha=ouc.ALPHA.TRANSPARENT,
-                           is_free=False)
+wall_right = ossop.box(pos=(.5, -.35, .2),
+                       half_extents=(.355, .005, .2),
+                       collision_type=ouc.CollisionType.AABB,
+                       alpha=ouc.ALPHA.TRANSPARENT,
+                       is_free=False)
 wall_right.attach_to(base.scene)
-wall_front = ossop.gen_box(pos=(.85, 0, .2),
-                           half_extents=(.005, .355, .2),
-                           collision_type=ouc.CollisionType.AABB,
-                           alpha=ouc.ALPHA.TRANSPARENT,
-                           is_free=False)
+wall_front = ossop.box(pos=(.85, 0, .2),
+                       half_extents=(.005, .355, .2),
+                       collision_type=ouc.CollisionType.AABB,
+                       alpha=ouc.ALPHA.TRANSPARENT,
+                       is_free=False)
 wall_front.attach_to(base.scene)
-wall_back = ossop.gen_box(pos=(.15, 0, .2),
-                          half_extents=(.005, .355, .2),
-                          collision_type=ouc.CollisionType.AABB,
-                          alpha=ouc.ALPHA.TRANSPARENT,
-                          is_free=False)
+wall_back = ossop.box(pos=(.15, 0, .2),
+                      half_extents=(.005, .355, .2),
+                      collision_type=ouc.CollisionType.AABB,
+                      alpha=ouc.ALPHA.TRANSPARENT,
+                      is_free=False)
 wall_back.attach_to(base.scene)
 
 # robot

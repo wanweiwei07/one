@@ -64,7 +64,7 @@ class OR2FG7(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def __init__(self):
         super().__init__(
-            tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.15)))
+            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.15)))
         self.jaw_range = np.array([0.005, 0.038], dtype=np.float32)  # min, max
         self.set_jaw_width(0.005)
 

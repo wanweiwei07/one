@@ -4,7 +4,7 @@ from one import oum, ovw, ossop, khi_rs007l
 base = ovw.World(cam_pos=(1.6, .3, .7), cam_lookat_pos=(0, 0, .45),
                 toggle_auto_cam_orbit=False)
 # world origin
-oframe = ossop.gen_frame().attach_to(base.scene)
+oframe = ossop.frame().attach_to(base.scene)
 base_pos1 = np.array([0, 0.5, 0])
 base_rotmat = oum.rotmat_from_euler(0, 0, -np.pi / 2)
 # robot 1 (left robot)
@@ -21,7 +21,7 @@ robot2.toggle_render_collision = False
 # goal1
 tgt1_rotmat = oum.rotmat_from_euler(-oum.pi / 2, 0, 0)
 tgt1_pos = np.array([0.3, 0, 0.5])
-g1frame = ossop.gen_frame(rotmat=tgt1_rotmat, pos=tgt1_pos)
+g1frame = ossop.frame(rotmat=tgt1_rotmat, pos=tgt1_pos)
 g1frame.attach_to(base.scene)
 qs1_list = robot1.ik_tcp(tgt_rotmat=tgt1_rotmat, tgt_pos=tgt1_pos)
 for qs in qs1_list:
@@ -31,7 +31,7 @@ for qs in qs1_list:
 # goal2
 tgt2_rotmat = oum.rotmat_from_euler(oum.pi / 2, 0, 0)
 tgt2_pos = np.array([0.3, 0, 0.5])
-g2frame = ossop.gen_frame(rotmat=tgt2_rotmat, pos=tgt2_pos)
+g2frame = ossop.frame(rotmat=tgt2_rotmat, pos=tgt2_pos)
 g2frame.attach_to(base.scene)
 qs2_list = robot2.ik_tcp(tgt_rotmat=tgt2_rotmat, tgt_pos=tgt2_pos)
 for qs in qs2_list:

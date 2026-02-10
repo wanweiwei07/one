@@ -5,7 +5,7 @@ import one.robots.manipulators.openarm.openarm as ormoo
 
 base = ovw.World(cam_pos=(1.2, .575, 1.2), cam_lookat_pos=(0, 0, .4),
                  toggle_auto_cam_orbit=True)
-oframe = ossop.gen_frame().attach_to(base.scene)
+oframe = ossop.frame().attach_to(base.scene)
 robot = ormoo.OpenArm()
 robot.attach_to(base.scene)
 builtins.robot = robot  # for debug access
@@ -18,13 +18,13 @@ lft_gripper.attach_to(base.scene)
 rgt_gripper.attach_to(base.scene)
 robot.rgt_arm.engage(rgt_gripper)
 robot.lft_arm.engage(lft_gripper)
-lft_tcp_tf = robot.lft_arm.wd_tcp_tf
-lft_tcp_frame = ossop.gen_frame(rotmat=lft_tcp_tf[:3,:3], pos=lft_tcp_tf[:3, 3],
-                                color_mat=ouc.CoordColor.MYC)
+lft_tcp_tf = robot.lft_arm.gl_tcp_tf
+lft_tcp_frame = ossop.frame(rotmat=lft_tcp_tf[:3, :3], pos=lft_tcp_tf[:3, 3],
+                            color_mat=ouc.CoordColor.MYC)
 lft_tcp_frame.attach_to(base.scene)
-rgt_tcp_tf = robot.rgt_arm.wd_tcp_tf
-rgt_tcp_frame = ossop.gen_frame(rotmat=rgt_tcp_tf[:3,:3], pos=rgt_tcp_tf[:3, 3],
-                                color_mat=ouc.CoordColor.MYC)
+rgt_tcp_tf = robot.rgt_arm.gl_tcp_tf
+rgt_tcp_frame = ossop.frame(rotmat=rgt_tcp_tf[:3, :3], pos=rgt_tcp_tf[:3, 3],
+                            color_mat=ouc.CoordColor.MYC)
 rgt_tcp_frame.attach_to(base.scene)
 # robot.body.alpha=0.3
 # base.run()
@@ -34,7 +34,7 @@ tgt_pos = (0.4, 0.1, 0.4)
 #               oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi / 2))
 tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.Z, 0) @
               oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi))
-ossop.gen_frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
+ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
 
 prev_qs = robot.lft_arm.qs.copy()
 for y in range(1, 5):

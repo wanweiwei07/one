@@ -9,7 +9,7 @@ base = ovw.World(
     toggle_auto_cam_orbit=False)
 builtins.base = base
 # Add coordinate frame
-oframe = ossop.gen_frame()
+oframe = ossop.frame()
 oframe.attach_to(base.scene)
 # Create robot
 robot = khi_rs007l.RS007L()
@@ -17,16 +17,16 @@ robot.is_free = True
 robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
-box = ossop.gen_box(half_extents=(1, .05, .15), pos=(.0, -0.3, 1.0),
-                    collision_type=ouc.CollisionType.MESH)
+box = ossop.box(half_extents=(1, .05, .15), pos=(.0, -0.3, 1.0),
+                collision_type=ouc.CollisionType.MESH)
 box.rgba = (0.8, 0.8, 0.8, 0.3)  # Gray, semi-transparent
 box.attach_to(base.scene)
-box2 = ossop.gen_box(half_extents=(.15, .05, 1), pos=(-.5, -0.3, 0.5),
-                     collision_type=ouc.CollisionType.MESH)
+box2 = ossop.box(half_extents=(.15, .05, 1), pos=(-.5, -0.3, 0.5),
+                 collision_type=ouc.CollisionType.MESH)
 box2.rgba = (1, 0, 0, 0.3)  # Red, semi-transparent
 box2.attach_to(base.scene)
-box3 = ossop.gen_box(half_extents=(.05, 1, .15), pos=(.3, 0.0, 1.0),
-                     collision_type=ouc.CollisionType.MESH)
+box3 = ossop.box(half_extents=(.05, 1, .15), pos=(.3, 0.0, 1.0),
+                 collision_type=ouc.CollisionType.MESH)
 box3.rgba = (0.8, 0.8, 0.8, 0.3)  # Gray, semi-transparent
 box3.attach_to(base.scene)
 
