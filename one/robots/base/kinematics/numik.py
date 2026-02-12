@@ -107,7 +107,7 @@ class NumIKSolver:
         # world joint frames
         wd_jnt_tfarr = np.empty((n, 4, 4), dtype=np.float32)
         for k in range(n):
-            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ self._jnts[k].tf_0
+            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ self._jnts[k].zero_tf
             wd_lnk_tfarr[k + 1] = (
                     wd_jnt_tfarr[k] @ self._jnts[k].motion_tf(q_chain[k]))
         # tip position
@@ -119,7 +119,7 @@ class NumIKSolver:
         # Jacobian (6 x n_active)
         jacmat = np.zeros((6, self._chain.n_active_jnts), dtype=np.float32)
         for col, k in enumerate(self._active_pos_in_chain):
-            wd_ax_k = wd_jnt_tfarr[k, :3, :3] @ self._jnts[k].axis
+            wd_ax_k = wd_jnt_tfarr[k, :3, :3] @ self._jnts[k].ax
             wd_p_k = wd_jnt_tfarr[k, :3, 3]
             if self._jnts[k].jtype == ouc.JntType.REVOLUTE:
                 jacmat[3:6, col] = wd_ax_k

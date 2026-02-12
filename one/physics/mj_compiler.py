@@ -107,7 +107,7 @@ class MJCFCompiler:
         je.set("type", j.jtype_str)
         # self.set_vec3(je, "pos", j.pos)
         # self.set_quat(je, "quat", j.quat)
-        self.set_vec3(je, "axis", j.axis)
+        self.set_vec3(je, "axis", j.ax)
         if j.range is not None:
             lo, hi = j.range
             je.set("range", f"{lo} {hi}")

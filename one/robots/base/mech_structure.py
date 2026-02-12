@@ -6,8 +6,6 @@ import one.utils.constant as ouc
 import one.utils.decorator as oud
 import one.scene.scene_object as osso
 import one.robots.base.kinematics.kinematic_chain as orbkkc
-import one.robots.base.kinematics.numik_sel as orbkis
-import one.robots.base.kinematics.numik as orbkim
 
 
 class Link(osso.SceneObject):
@@ -27,7 +25,7 @@ class Joint:
                  axis, rotmat=None, pos=None,
                  mmc=None, lmt_lo=None, lmt_up=None):
         self.jtype = jnt_type
-        self.axis = oum.unit_vec(axis, return_length=False)
+        self.ax = oum.unit_vec(axis, return_length=False)
         self.rotmat = oum.ensure_rotmat(rotmat)
         self.pos = oum.ensure_pos(pos)
         self.plnk = parent_lnk
@@ -49,7 +47,7 @@ class Joint:
 
     @property
     @oud.readonly_view
-    def tf_0(self):
+    def zero_tf(self):
         return oum.tf_from_rotmat_pos(self.rotmat, self.pos)
 
     def motion_tf(self, q):
@@ -57,9 +55,9 @@ class Joint:
             return np.eye(4, dtype=np.float32)
         if self.jtype == ouc.JntType.REVOLUTE:
             return oum.tf_from_rotmat_pos(
-                rotmat=oum.rotmat_from_axangle(self.axis, q))
+                rotmat=oum.rotmat_from_axangle(self.ax, q))
         if self.jtype == ouc.JntType.PRISMATIC:
-            return oum.tf_from_rotmat_pos(pos=self.axis * q)
+            return oum.tf_from_rotmat_pos(pos=self.ax * q)
         raise TypeError(f"Unknown joint type: {self.jtype}")
 
 
@@ -72,9 +70,8 @@ class MechStruct:
         self._collision_ignores = set()  # {(Link, Link)}
         # compiled data
         self._compiled = None  # MechStructHelper
-        # kinematic chain and solver cache
+        # kinematic chain
         self._chains = {}
-        self._solvers = {}
         # infer resource directories
         frame = inspect.stack()[1]
         caller_file = frame.filename
@@ -90,14 +87,6 @@ class MechStruct:
         if key not in self._chains:
             self._chains[key] = orbkkc.KinematicChain(self, root_lnk, tip_lnk)
         return self._chains[key]
-
-    def get_solver(self, root_lnk, tip_lnk, data_dir):
-        chain = self.get_chain(root_lnk, tip_lnk)
-        if chain not in self._solvers:
-            _data_dir = os.path.join(self.res_dir, data_dir)
-            self._solvers[chain] = orbkis.SELIKSolver(
-                chain, _data_dir)
-        return self._solvers[chain]
 
     def add_lnk(self, lnk):
         if lnk in self.lnks:
@@ -223,8 +212,8 @@ class FlatMechStructure:
             self.clnk_ids_of_lidx[plidx].append(clidx)
             # jnt attributes
             self.jtypes_by_idx[jidx] = jnt.jtype
-            self.jax_by_idx[jidx] = jnt.axis
-            self.jtf0_by_idx[jidx] = jnt.tf_0
+            self.jax_by_idx[jidx] = jnt.ax
+            self.jtf0_by_idx[jidx] = jnt.zero_tf
             # mimic
             if jnt.mmc is not None:
                 src, mult, offset = jnt.mmc

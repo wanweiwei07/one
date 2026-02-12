@@ -14,7 +14,7 @@ The project is a lightweight MuJoCo-based robotics research toolkit.
 
 ### Install
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### Run a Single Test

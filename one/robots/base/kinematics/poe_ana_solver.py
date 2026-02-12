@@ -57,7 +57,7 @@ class Ana6RSWSolver:
             jac = np.zeros((3, 3))
             for i in range(3):
                 _tf = wd_jnt_tf[i]
-                w = _tf[:3, :3] @ self._jnts[i].axis
+                w = _tf[:3, :3] @ self._jnts[i].ax
                 p0 = _tf[:3, 3]
                 jac[:, i] = np.cross(w, p_wc_cur - p0)
             A = jac @ jac.T + self.damp ** 2 * np.eye(3)
@@ -78,7 +78,7 @@ class Ana6RSWSolver:
             jac = np.zeros((3, 3))
             for col, i in enumerate([3, 4, 5]):
                 _tf = wd_jnt_tf[i]
-                w = _tf[:3, :3] @ self._jnts[i].axis
+                w = _tf[:3, :3] @ self._jnts[i].ax
                 jac[:, col] = w
             A = jac @ jac.T + self.damp ** 2 * np.eye(3)
             dq = jac.T @ np.linalg.solve(A, err)
@@ -108,7 +108,7 @@ class Ana6RSWSolver:
         wd_jnt_tfarr = np.empty((6, 4, 4), dtype=np.float32)
         for k in range(6):
             j = self._jnts[k]
-            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ j.tf_0
+            wd_jnt_tfarr[k] = wd_lnk_tfarr[k] @ j.zero_tf
             wd_lnk_tfarr[k + 1] = (
                     wd_jnt_tfarr[k] @
                     j.motion_tf(float(qs[k])))

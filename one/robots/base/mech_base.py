@@ -1,8 +1,8 @@
+import os
 import numpy as np
 import one.utils.math as oum
-import one.utils.constant as ouc
-import one.utils.decorator as oud
 import one.robots.base.mech_structure as orbms
+import one.robots.base.kinematics.numik_sel as orbkis
 
 
 class Mounting:
@@ -47,6 +47,8 @@ class MechBase:
             (self._compiled.n_lnks, 1, 1))
         # mountings
         self._mountings = {}
+        # solvers
+        self._solvers = {}
         # home
         self._home_qs = self.qs.copy()
         # free root lnk
@@ -115,6 +117,13 @@ class MechBase:
         child.is_free = True
         return m
 
+    def get_solver(self, chain):
+        if chain not in self._solvers:
+            _data_dir = os.path.join(self.structure.res_dir, "data")
+            self._solvers[chain] = orbkis.SELIKSolver(
+                chain, _data_dir)
+        return self._solvers[chain]
+
     def clone(self):
         """DOES NOT clone the affiliated scene"""
         new = self.__class__.__new__(self.__class__)
@@ -127,6 +136,7 @@ class MechBase:
             lnk: i for i, lnk in enumerate(new.runtime_lnks)}
         new.gl_lnk_tfarr = self.gl_lnk_tfarr.copy()
         new._mountings = {}
+        new._solvers={}
         for k, m in self._mountings.items():
             child = m.child.clone()
             plidx = self.runtime_lidx_map[m.plnk]

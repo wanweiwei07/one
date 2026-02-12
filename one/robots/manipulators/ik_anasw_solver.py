@@ -15,12 +15,12 @@ class AnaSphWstSolver:
         self.o3 = self.T0J0[2][:3, 3]
         self.ow = self.T0J0[3][:3, 3]  # wrist center (assume J4 origin is wrist center)
         # extract axes in root frame at zero pose
-        self.a1 = self.T0J0[0][:3, :3] @ self._jnts[0].axis
-        self.a2 = self.T0J0[1][:3, :3] @ self._jnts[1].axis
-        self.a3 = self.T0J0[2][:3, :3] @ self._jnts[2].axis
-        self.a4 = self.T0J0[3][:3, :3] @ self._jnts[3].axis
-        self.a5 = self.T0J0[4][:3, :3] @ self._jnts[4].axis
-        self.a6 = self.T0J0[5][:3, :3] @ self._jnts[5].axis
+        self.a1 = self.T0J0[0][:3, :3] @ self._jnts[0].ax
+        self.a2 = self.T0J0[1][:3, :3] @ self._jnts[1].ax
+        self.a3 = self.T0J0[2][:3, :3] @ self._jnts[2].ax
+        self.a4 = self.T0J0[3][:3, :3] @ self._jnts[3].ax
+        self.a5 = self.T0J0[4][:3, :3] @ self._jnts[4].ax
+        self.a6 = self.T0J0[5][:3, :3] @ self._jnts[5].ax
         # link lengths for planar 2R (in the elbow plane)
         # use distances between joint origins as a practical geometric length
         self.L2 = float(np.linalg.norm(self.o3 - self.o2))
@@ -30,7 +30,7 @@ class AnaSphWstSolver:
         T0J = []
         T = np.eye(4, dtype=np.float32)
         for k in range(6):
-            Tj = T @ self._jnts[k].tf_0
+            Tj = T @ self._jnts[k].zero_tf
             T0J.append(Tj)
             T = Tj @ self._jnts[k].motion_tf(0.0)
         return T0J

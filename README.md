@@ -103,8 +103,9 @@ It is recommended to use a virtual environment (e.g., `venv`, `conda`, or simila
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
+   This installs the current repository as an editable site package in your environment, so changes in this folder are immediately reflected without reinstalling.
 
 ### Dependencies Explained
 

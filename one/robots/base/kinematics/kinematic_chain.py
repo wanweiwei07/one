@@ -22,12 +22,7 @@ class KinematicChain:
         # pointer cache
         self.jnts = [structure.jnts[j] for j in self.jnt_ids_in_structure]
         # # link idx cache
-        # pos = 0
-        # self.lnk_pos_in_chain = {self.base_lidx: pos}
-        # for jidx in self.jnt_ids_in_compiled:
-        #     pos += 1
-        #     lnk_idx = compiled.clidx_of_jidx[jidx]
-        #     self.lnk_pos_in_chain[lnk_idx] = pos
+        self.axes, self.origins = self._compute_axes_and_origins_in_base()
 
     def __len__(self):
         return int(self.jnt_ids_in_structure.shape[0])
@@ -47,6 +42,26 @@ class KinematicChain:
     @property
     def n_jnts(self):
         return len(self.jnt_ids_in_structure)
+
+    def _compute_axes_and_origins_in_base(self):
+        """returns:
+        hs: list of unit vectors h_i in base frame
+        os: list of points o_i in base frame
+        """
+        R = np.eye(3)
+        p = np.zeros(3)
+        axes = []
+        origins = []
+        for jnt in self.jnts:
+            # move to this joint frame (zero configuration)
+            R = R @ jnt.rotmat
+            p = p + R @ jnt.pos
+            # joint axis in base frame
+            ax_in_base = R @ jnt.ax
+            ax_in_base = ax_in_base / np.linalg.norm(ax_in_base)
+            axes.append(ax_in_base.copy())
+            origins.append(p.copy())
+        return axes, origins
 
     def _get_jnt_ids(self, structure):
         compiled = structure._compiled

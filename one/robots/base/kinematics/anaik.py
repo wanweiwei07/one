@@ -1,60 +1,42 @@
 import numpy as np
+
 import one.utils.math as oum
 
 
 class AnaIKBase:
     """
     Analytic IK base class (returns all solutions).
-    ik(...) returns the closest solution to qs_active_init (if provided).
+    ik(...) returns the closest solution to ref_qs (if provided).
     """
 
     def __init__(self, chain, joint_limits=None):
         self.chain = chain
-        self.jnts = chain.joints
-        self.joint_limits = joint_limits  # optional (low, high)
-        # cache zero-pose joint frames in root
-        self.T0J0 = self._wd_jtf_0s()
+        if joint_limits is None:
+            self.joint_limits = (chain.lmt_lo, chain.lmt_up)
+        else:
+            self.joint_limits = joint_limits
 
-    def _wd_jtf_0s(self):
-        wd_tf_0s = []
-        tmp_tf = np.eye(4, dtype=np.float32)
-        for k in range(len(self.jnts)):
-            tmp_tf = tmp_tf @ self.jnts[k].origin_tfmat
-            wd_tf_0s.append(tmp_tf.copy())
-        return wd_tf_0s
-
-    def ik(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
-           qs_active_init=None, max_iter=50, **kwargs):
-        """
-        Return a single closest solution (list with 0 or 1 element).
-        """
+    def ik(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos, ref_qs=None, **kwargs):
         root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
         tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        T0TCP = np.linalg.inv(root_tf) @ tgt_tf
-        sols = self.ik_all(T0TCP, qs_active_init=qs_active_init, **kwargs)
+        tgt_tf_in_root = np.linalg.inv(root_tf) @ tgt_tf
+        sols = self.ik_all(tgt_tf_in_root, **kwargs)
         if not sols:
             return []
-        if qs_active_init is None:
+        if ref_qs is None:
             return [sols[0]]
-        d2 = [np.linalg.norm(q - qs_active_init) for q in sols]
+        d2 = [np.linalg.norm(q - ref_qs) for q in sols]
         best = sols[int(np.argmin(d2))]
         return [best]
 
-    def ik_all(self, T0TCP, qs_active_init=None, **kwargs):
-        """
-        Return all analytic solutions.
-        Override in subclasses.
-        """
+    def ik_all(self, tgt_tf_in_root, **kwargs):
         raise NotImplementedError
 
-    def get_R0k_from_fk(self, qs, k):
-        """
-        Minimal FK for serial chain. Returns rotation R0k.
-        """
-        T = np.eye(4, dtype=np.float32)
+    def get_rotmat_from_fk(self, qs, k):
+        tf = np.eye(4, dtype=np.float32)
         for i in range(k):
-            T = T @ self.jnts[i].tf_0 @ self.jnts[i].motion_tf(qs[i])
-        return T[:3, :3]
+            tf = tf @ self.chain.jnts[i].zero_tf @ self.chain.jnts[i].motion_tf(qs[i])
+        return tf[:3, :3]
 
     def _filter_limits(self, qs_list):
         if self.joint_limits is None:
@@ -74,118 +56,132 @@ class AnaIKBase:
         return uniq
 
 
-class AnaSphericalWrist6DOF(AnaIKBase):
-    """
-    Example: 6-DOF arm with spherical wrist.
-    You must implement:
-      - _solve_first3(pw)
-      - _solve_wrist_ZYZ(R36) or your wrist convention
-      - get_R0k_from_fk(qs, k)
-    """
-
+class S456X12(AnaIKBase):
     def __init__(self, chain, joint_limits=None):
         super().__init__(chain, joint_limits=joint_limits)
-        # cache zero-pose joint origins/axes
-        # first 3 joints + wrist center
-        self.o1 = self.T0J0[0][:3, 3]
-        self.o2 = self.T0J0[1][:3, 3]
-        self.o3 = self.T0J0[2][:3, 3]
-        self.ow = self.T0J0[3][:3, 3]  # wrist center
-        # last 3 joint axes
-        self.a1 = self.T0J0[0][:3, :3] @ self.jnts[0].axis
-        self.a2 = self.T0J0[1][:3, :3] @ self.jnts[1].axis
-        self.a3 = self.T0J0[2][:3, :3] @ self.jnts[2].axis
-        self.a4 = self.T0J0[3][:3, :3] @ self.jnts[3].axis
-        self.a5 = self.T0J0[4][:3, :3] @ self.jnts[4].axis
-        self.a6 = self.T0J0[5][:3, :3] @ self.jnts[5].axis
-        # link lengths
-        self.L2 = float(np.linalg.norm(self.o3 - self.o2))
-        self.L3 = float(np.linalg.norm(self.ow - self.o3))
+        self.o1 = np.asarray(self.chain.origins[0], dtype=np.float32)
+        self.o2 = np.asarray(self.chain.origins[1], dtype=np.float32)
+        self.o3 = np.asarray(self.chain.origins[2], dtype=np.float32)
+        o4 = np.asarray(self.chain.origins[3], dtype=np.float32)
+        o5 = np.asarray(self.chain.origins[4], dtype=np.float32)
+        o6 = np.asarray(self.chain.origins[5], dtype=np.float32)
+        self.a1 = oum.unit_vec(self.chain.axes[0], return_length=False)
+        self.a2 = oum.unit_vec(self.chain.axes[1], return_length=False)
+        self.a3 = oum.unit_vec(self.chain.axes[2], return_length=False)
+        self.a4 = oum.unit_vec(self.chain.axes[3], return_length=False)
+        self.a5 = oum.unit_vec(self.chain.axes[4], return_length=False)
+        self.a6 = oum.unit_vec(self.chain.axes[5], return_length=False)
 
-    def ik_all(self, T0TCP, qs_active_init=None, **kwargs):
-        T0TCP = np.asarray(T0TCP, dtype=np.float32)
-        T0_6 = T0TCP @ np.linalg.inv(self.TnTCP0)
-        R06 = T0_6[:3, :3]
-        p06 = T0_6[:3, 3]
+        A = np.zeros((3, 3), dtype=np.float32)
+        b = np.zeros(3, dtype=np.float32)
+        for a, o in [(self.a4, o4), (self.a5, o5), (self.a6, o6)]:
+            a = oum.unit_vec(a, return_length=False)
+            i_minus_aat = np.eye(3, dtype=np.float32) - np.outer(a, a)
+            A += i_minus_aat
+            b += i_minus_aat @ o
+        self.ow = np.linalg.solve(A, b)
+        self.ow_6 = o6 - self.ow
+        self.l2 = float(np.linalg.norm(self.o3 - self.o2))
+        self.l3 = float(np.linalg.norm(self.ow - self.o3))
+        rotmat0_3_zero = self.get_rotmat_from_fk([0, 0, 0], k=3)
+        rotmat0_6_zero = self.get_rotmat_from_fk([0, 0, 0, 0, 0, 0], k=6)
+        self.wrist_offset = rotmat0_3_zero.T @ rotmat0_6_zero
 
-        pw = p06  # wrist center assumption
+    def ik_all(self, tgt_tf_in_root, **kwargs):
+        tf0_6 = np.asarray(tgt_tf_in_root, dtype=np.float32)
+        rotmat0_6 = tf0_6[:3, :3]
+        pos0_6 = tf0_6[:3, 3]
+        pw = pos0_6 - rotmat0_6 @ self.ow_6
         q123_list = self._solve_first3(pw)
         sols = []
-
         for (q1, q2, q3) in q123_list:
-            R03 = self.get_R0k_from_fk([q1, q2, q3], k=3)
-            R36 = R03.T @ R06
-            for (q4, q5, q6) in self._solve_wrist_ZYZ(R36):
+            rotmat0_3 = self.get_rotmat_from_fk([q1, q2, q3], k=3)
+            rotmat3_6 = rotmat0_3.T @ rotmat0_6
+            for (q4, q5, q6) in self._solve_wrist_ZXZ(rotmat3_6):
                 sols.append(np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32))
-
         sols = self._filter_limits(sols)
         sols = self._unique(sols)
         return sols
 
     def _solve_first3(self, pw):
-        """
-        Solve q1,q2,q3 from wrist center position pw (root frame).
-        Uses:
-          - q1 about axis1 to align wrist to shoulder plane
-          - q2,q3 from planar 2R in plane perpendicular to axis2
-        """
         a1 = oum.unit_vec(self.a1, return_length=False)
-        v12 = self.o2 - self.o1
-        x1 = v12 - np.dot(v12, a1) * a1
-        x1 = oum.unit_vec(x1, return_length=False)
-        y1 = np.cross(a1, x1)
-
-        v1w = pw - self.o1
-        px = np.dot(v1w, x1)
-        py = np.dot(v1w, y1)
-        q1 = float(oum.wrap_to_pi(np.arctan2(py, px)))
-
-        # rotate by -q1 around a1
-        R1 = oum.rotmat_from_axangle(a1, -q1)
-        pw1 = self.o1 + R1 @ (pw - self.o1)
-        o21 = self.o1 + R1 @ (self.o2 - self.o1)
-
-        a2_0 = oum.unit_vec(self.a2, return_length=False)
-        a2_1 = R1 @ a2_0
-
-        v_sw = pw1 - o21
-        u = v_sw - np.dot(v_sw, a2_1) * a2_1
-        if np.linalg.norm(u) < 1e-9:
+        l2, l3 = self.l2, self.l3
+        v = pw - self.o2
+        d_total = np.linalg.norm(v)
+        if d_total > l2 + l3 + 1e-6 or d_total < abs(l2 - l3) - 1e-6:
             return []
-        u = oum.unit_vec(u, return_length=False)
-        v = np.cross(a2_1, u)
-
-        x = float(np.dot(v_sw, u))
-        y = float(np.dot(v_sw, v))
-
-        d = np.hypot(x, y)
-        L2, L3 = self.L2, self.L3
-        c3 = oum.clamp((d * d - L2 * L2 - L3 * L3) / (2 * L2 * L3), lo=-1.0, hi=1.0)
-        s3_abs = np.sqrt(max(0.0, 1.0 - c3 * c3))
+        v_projected = v - np.dot(v, a1) * a1
+        r_xy = np.linalg.norm(v_projected)
+        q1_solutions = []
+        if r_xy < 1e-9:
+            q1_solutions = [0.0]
+        else:
+            z_axis = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+            if abs(a1[2]) > 0.9:
+                x_ref = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+            else:
+                x_ref = oum.unit_vec(np.cross(a1, z_axis), return_length=False)
+            y_ref = np.cross(a1, x_ref)
+            azimuth = np.arctan2(np.dot(v_projected, y_ref), np.dot(v_projected, x_ref))
+            q1_solutions = [float(oum.wrap_to_pi(azimuth - np.pi / 2)),
+                            float(oum.wrap_to_pi(azimuth + np.pi / 2))]
 
         sols = []
-        for s3 in (+s3_abs, -s3_abs):
-            q3 = float(np.arctan2(s3, c3))
-            q2 = float(np.arctan2(y, x) - np.arctan2(L3 * s3, L2 + L3 * c3))
-            sols.append((oum.wrap_to_pi(q1), oum.wrap_to_pi(q2), oum.wrap_to_pi(q3)))
+        for q1 in q1_solutions:
+            R_j1 = oum.rotmat_from_axangle(a1, q1)
+            v_j1 = R_j1 @ v
+            a2_j1 = R_j1 @ self.a2
+            a2_unit = oum.unit_vec(a2_j1, return_length=False)
+            v_parallel = np.dot(v_j1, a2_unit)
+            v_perp_vec = v_j1 - v_parallel * a2_unit
+            v_perp = np.linalg.norm(v_perp_vec)
+            d_2d = v_perp
+            c3 = oum.clamp((d_2d ** 2 - l2 ** 2 - l3 ** 2) / (2 * l2 * l3), lo=-1.0, hi=1.0)
+            s3_abs = np.sqrt(max(0.0, 1.0 - c3 ** 2))
+            q3_sols_for_this_q1 = []
+            for s3_sign in (+1, -1):
+                s3 = s3_sign * s3_abs
+                if abs(s3) < 1e-9 and q3_sols_for_this_q1:
+                    continue
+                q3 = float(np.arctan2(s3, c3))
+                alpha = np.arctan2(l3 * s3, l2 + l3 * c3)
+                z_world = np.array([0, 0, 1], dtype=np.float32)
+                arm_zero_in_j1 = R_j1 @ z_world
+                arm_zero_perp = arm_zero_in_j1 - np.dot(arm_zero_in_j1, a2_unit) * a2_unit
+                arm_zero_perp_unit = oum.unit_vec(arm_zero_perp, return_length=False)
+                if v_perp > 1e-9:
+                    v_perp_unit = oum.unit_vec(v_perp_vec, return_length=False)
+                else:
+                    v_perp_unit = arm_zero_perp_unit
+                cos_beta = np.clip(np.dot(arm_zero_perp_unit, v_perp_unit), -1, 1)
+                sin_beta_cross = np.cross(arm_zero_perp_unit, v_perp_unit)
+                cross_dot_a2 = np.dot(sin_beta_cross, a2_unit)
+                if abs(cross_dot_a2) > 1e-9:
+                    sin_beta = np.linalg.norm(sin_beta_cross) * np.sign(cross_dot_a2)
+                else:
+                    sin_beta = 0.0
+                beta = np.arctan2(sin_beta, cos_beta)
+                q2 = float(beta - alpha)
+                q3_sols_for_this_q1.append(q3)
+                sols.append((q1, oum.wrap_to_pi(q2), oum.wrap_to_pi(q3)))
         return sols
 
-    def _solve_wrist_ZYZ(self, R36):
-        """
-        Solve q4,q5,q6 from R36 using ZYZ Euler (or your convention).
-        """
-        c5 = oum.clamp(R36[2, 2], lo=-1.0, hi=1.0)
+    def _solve_wrist_ZXZ(self, rotmat3_6):
+        R_pure = self.wrist_offset.T @ rotmat3_6
+        c5 = oum.clamp(R_pure[2, 2], lo=-1.0, hi=1.0)
         q5a = float(np.arccos(c5))
         q5b = float(-q5a)
-
         sols = []
         for q5 in (q5a, q5b):
             s5 = np.sin(q5)
             if abs(s5) < 1e-8:
                 q4 = 0.0
-                q6 = float(np.arctan2(R36[1, 0], R36[0, 0]))
+                if c5 > 0:
+                    q6 = float(np.arctan2(-R_pure[0, 1], R_pure[0, 0]))
+                else:
+                    q6 = float(np.arctan2(R_pure[0, 1], -R_pure[0, 0]))
             else:
-                q4 = float(np.arctan2(R36[1, 2] / s5, R36[0, 2] / s5))
-                q6 = float(np.arctan2(R36[2, 1] / s5, -R36[2, 0] / s5))
+                q4 = float(np.arctan2(R_pure[0, 2], -R_pure[1, 2]))
+                q6 = float(np.arctan2(R_pure[2, 0], R_pure[2, 1]))
             sols.append((oum.wrap_to_pi(q4), oum.wrap_to_pi(q5), oum.wrap_to_pi(q6)))
         return sols

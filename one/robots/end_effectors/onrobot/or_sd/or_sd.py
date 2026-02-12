@@ -31,15 +31,19 @@ class ORSD(oreb.EndEffectorBase, oreb.PointMixin):
 
 
 if __name__ == '__main__':
+    import builtins
     import one.viewer.world as wd
     import one.scene.scene_object_primitive as ossop
     import one.robots.manipulators.kawasaki.rs007l.rs007l as rs007l
 
     base = wd.World(cam_pos=(2,0.5,2), cam_lookat_pos=(0, 0, .75))
+    builtins.base=base
     # world frame
     ossop.frame().attach_to(base.scene)
     manipulator = rs007l.RS007L()
     manipulator.attach_to(base.scene)
+    manipulator.alpha=.3
+    builtins.robot = manipulator
     screwdriver = ORSD()
     screwdriver.attach_to(base.scene)
     manipulator.engage(screwdriver, engage_tfmat=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.05)))

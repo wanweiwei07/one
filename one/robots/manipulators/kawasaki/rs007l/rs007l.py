@@ -4,7 +4,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.manipulators.manipulator_base as ormmb
-
+import one.robots.base.kinematics.anaik as orbka
 
 def prepare_mechstruct():
     structure = orbms.MechStruct()
@@ -123,3 +123,22 @@ class RS007L(ormmb.ManipulatorBase):
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
+
+    def get_solver(self, chain):
+        if chain not in self._solvers:
+            joint_limits = (chain.lmt_lo, chain.lmt_up)
+            self._solvers[chain] = orbka.S456X12(chain, joint_limits)
+        return self._solvers[chain]
+
+if __name__ == "__main__":
+    import one.viewer.world as ovw
+    import one.utils.scene_object.primitive as ossop
+
+    # set upviewer
+    base = ovw.World(
+        cam_pos=(-2, 2, 2), cam_lookat_pos=(0, 0, 0.5), toggle_auto_cam_orbit=False
+    )
+    scene = base.scene
+    robot = RS007L()
+    robot.attach_to(scene)
+    base.run()
