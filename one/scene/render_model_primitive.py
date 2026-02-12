@@ -54,12 +54,12 @@ def gen_box_rmodel(half_extents=(0.05, 0.05, 0.05),
         geom=geometry, rgb=rgb, alpha=alpha)
 
 
-def gen_trapezoid_rmodel(height=0.05,
-                         bottom_length=0.05,
-                         top_length=0.03,
-                         rotmat=None, pos=None,
-                         rgb=ouc.BasicColor.DEFAULT, alpha=1.0):
-    geometry = ogg.gen_trapezoid_geom(
+def gen_frustrum_rmodel(height=0.05,
+                        bottom_length=0.05,
+                        top_length=0.03,
+                        rotmat=None, pos=None,
+                        rgb=ouc.BasicColor.DEFAULT, alpha=1.0):
+    geometry = ogg.gen_frustrum_geom(
         height=height,
         bottom_length=bottom_length,
         top_length=top_length)

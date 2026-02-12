@@ -115,13 +115,13 @@ def gen_box_geom(half_extents=(0.05, 0.05, 0.05)):
     return g
 
 
-def gen_trapezoid_geom(height=0.05,
-                       bottom_length=0.05,
-                       top_length=0.03):
+def gen_frustrum_geom(height=0.05,
+                      bottom_length=0.05,
+                      top_length=0.03):
     height = float(height)
     bottom_half = float(bottom_length) * 0.5
     top_half = float(top_length) * 0.5
-    key = ("trapezoid", height, bottom_half, top_half)
+    key = ("frustrum", height, bottom_half, top_half)
     if key in _geom_cache:
         return _geom_cache[key]
 

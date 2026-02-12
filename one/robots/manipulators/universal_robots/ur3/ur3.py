@@ -3,7 +3,7 @@ import numpy as np
 
 import one.utils.math as oum
 import one.utils.constant as ouc
-import one.robots.base.kine.numik as orbkn
+import one.robots.base.kine.anaik as orbka
 import one.robots.base.mech_structure as orbms
 import one.robots.manipulators.manipulator_base as ormmb
 
@@ -26,33 +26,63 @@ def prepare_mechstruct():
     wrist3_xyz = np.array([0.0, 0.0819, -1.679797079540562e-11], dtype=np.float32)
     wrist3_rpy = (1.570796326589793, np.pi, np.pi)
 
+    # UR ROS2 visual/collision mesh offsets (config/ur3/visual_parameters.yaml).
+    base_mesh_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+    base_mesh_rpy = (0.0, 0.0, np.pi)
+    shoulder_mesh_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+    shoulder_mesh_rpy = (0.0, 0.0, np.pi)
+    upper_arm_mesh_pos = np.array([0.0, 0.0, 0.1198], dtype=np.float32)
+    upper_arm_mesh_rpy = (np.pi / 2.0, 0.0, -np.pi / 2.0)
+    forearm_mesh_pos = np.array([0.0, 0.0, 0.0275], dtype=np.float32)
+    forearm_mesh_rpy = (np.pi / 2.0, 0.0, -np.pi / 2.0)
+    wrist1_mesh_pos = np.array([0.0, 0.0, -0.085], dtype=np.float32)
+    wrist1_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
+    wrist2_mesh_pos = np.array([0.0, 0.0, -0.083], dtype=np.float32)
+    wrist2_mesh_rpy = (0.0, 0.0, 0.0)
+    wrist3_mesh_pos = np.array([0.0, -0.00255, -0.082], dtype=np.float32)
+    wrist3_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
+
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=base_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*base_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
     lnk1 = orbms.Link.from_file(
         os.path.join(mesh_dir, "shoulder.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=shoulder_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*shoulder_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
     lnk2 = orbms.Link.from_file(
         os.path.join(mesh_dir, "upperarm.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=upper_arm_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*upper_arm_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
     lnk3 = orbms.Link.from_file(
         os.path.join(mesh_dir, "forearm.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=forearm_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*forearm_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
     lnk4 = orbms.Link.from_file(
         os.path.join(mesh_dir, "wrist1.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=wrist1_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*wrist1_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
     lnk5 = orbms.Link.from_file(
         os.path.join(mesh_dir, "wrist2.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=wrist2_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*wrist2_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
     lnk6 = orbms.Link.from_file(
         os.path.join(mesh_dir, "wrist3.stl"),
         collision_type=ouc.CollisionType.MESH,
+        loc_pos=wrist3_mesh_pos,
+        loc_rotmat=oum.rotmat_from_euler(*wrist3_mesh_rpy),
         rgb=ouc.ExtendedColor.BEIGE)
 
     # 6 revolute joints, following UR kinematic convention in this framework
@@ -124,7 +154,8 @@ class UR3(ormmb.ManipulatorBase):
 
     def get_solver(self, chain):
         if chain not in self._solvers:
-            self._solvers[chain] = orbkn.NumIKSolver(chain)
+            joint_limits = (chain.lmt_lo, chain.lmt_up)
+            self._solvers[chain] = orbka.P234X56(chain, joint_limits)
         return self._solvers[chain]
 
 if __name__ == '__main__':
@@ -142,4 +173,15 @@ if __name__ == '__main__':
     robot = UR3()
     robot.attach_to(scene)
     builtins.robot = robot
+
+    tgt_pos = (0.3, 0.2, 0.2)
+    tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.Z, np.pi / 6.0) @
+                  oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi))
+    ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(scene)
+
+    all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos, max_solutions=8)
+    for qs in all_qs:
+        tmp_robot = robot.clone()
+        tmp_robot.fk(qs=qs)
+        tmp_robot.attach_to(base.scene)
     base.run()

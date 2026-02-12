@@ -308,12 +308,12 @@ def point_cloud(vs, vrgbs, alpha=1.0):
     return o
 
 
-def trapezoid(base_center=(0, 0, 0),
-              top_center=(0, 0, 0.05),
-              bottom_length=0.05,
-              top_length=0.03,
-              rgb=ouc.BasicColor.DEFAULT,
-              alpha=1.0, **kwargs):
+def frustrum(base_center=(0, 0, 0),
+             top_center=(0, 0, 0.05),
+             bottom_length=0.05,
+             top_length=0.03,
+             rgb=ouc.BasicColor.DEFAULT,
+             alpha=1.0, **kwargs):
     _psd = _parse_phys(kwargs)
     inertia, com, mass, collision_type, is_free = _psd
     base_center = np.asarray(base_center, dtype=np.float32)
@@ -324,7 +324,7 @@ def trapezoid(base_center=(0, 0, 0),
         height = 0.05
         axis_u = np.array([0.0, 0.0, 1.0], dtype=np.float32)
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, axis_u)
-    rmodel = osrmp.gen_trapezoid_rmodel(
+    rmodel = osrmp.gen_frustrum_rmodel(
         height=float(height),
         bottom_length=bottom_length,
         top_length=top_length,
@@ -364,8 +364,8 @@ if __name__ == "__main__":
 
     base = ovw.World(cam_pos=(1,1,1),
                      cam_lookat_pos=(0.0, 0.0, 0.0))
-    # test trapezoid
-    o = trapezoid(
+    # test frustrum
+    o = frustrum(
         base_center=(0, 0, 0),
         top_center=(0., 0., 0.2),
         bottom_length=0.1,
@@ -374,4 +374,12 @@ if __name__ == "__main__":
         alpha=0.8,
         collision_type=ouc.CollisionType.MESH)
     o.attach_to(base.scene)
+
+    o2 = dashed_cylinder(
+        spos=(0.2, 0.0, 0.0),
+        epos=(0.2, 0.0, 0.5),
+        radius=0.02,
+        collision_type=ouc.CollisionType.MESH,)
+    o2.attach_to(base.scene)
+    o2.toggle_render_collision=True
     base.run()
