@@ -71,7 +71,8 @@ class S456X12(AnaIKBase):
         self.a4 = oum.unit_vec(self.chain.axes[3], return_length=False)
         self.a5 = oum.unit_vec(self.chain.axes[4], return_length=False)
         self.a6 = oum.unit_vec(self.chain.axes[5], return_length=False)
-
+        # ow = origin of wrist center (intersection of 456),
+        # compute it by least squares
         A = np.zeros((3, 3), dtype=np.float32)
         b = np.zeros(3, dtype=np.float32)
         for a, o in [(self.a4, o4), (self.a5, o5), (self.a6, o6)]:
@@ -80,7 +81,19 @@ class S456X12(AnaIKBase):
             A += i_minus_aat
             b += i_minus_aat @ o
         self.ow = np.linalg.solve(A, b)
+        # paper-style p vectors (from o/a cache)
+        # p_ij denotes displacement from origin i to origin j in zero config.
+        self.p12 = (self.o2 - self.o1).astype(np.float32)
+        self.p23 = (self.o3 - self.o2).astype(np.float32)
+        self.p34 = (o4 - self.o3).astype(np.float32)
+        self.p45 = (o5 - o4).astype(np.float32)
+        self.p56 = (o6 - o5).astype(np.float32)
+        # offsets related to spherical wrist center
+        self.p3w = (self.ow - self.o3).astype(np.float32)
+        self.pw6 = (o6 - self.ow).astype(np.float32)
+        # subtract wrist offset
         self.ow_6 = o6 - self.ow
+        # p01, p12, p23 lengths
         self.l2 = float(np.linalg.norm(self.o3 - self.o2))
         self.l3 = float(np.linalg.norm(self.ow - self.o3))
         rotmat0_3_zero = self.get_rotmat_from_fk([0, 0, 0], k=3)
@@ -94,10 +107,10 @@ class S456X12(AnaIKBase):
         pw = pos0_6 - rotmat0_6 @ self.ow_6
         q123_list = self._solve_first3(pw)
         sols = []
-        for (q1, q2, q3) in q123_list:
+        for q1, q2, q3 in q123_list:
             rotmat0_3 = self.get_rotmat_from_fk([q1, q2, q3], k=3)
             rotmat3_6 = rotmat0_3.T @ rotmat0_6
-            for (q4, q5, q6) in self._solve_wrist_ZXZ(rotmat3_6):
+            for q4, q5, q6 in self._solve_wrist_ZXZ(rotmat3_6):
                 sols.append(np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32))
         sols = self._filter_limits(sols)
         sols = self._unique(sols)
@@ -123,8 +136,10 @@ class S456X12(AnaIKBase):
                 x_ref = oum.unit_vec(np.cross(a1, z_axis), return_length=False)
             y_ref = np.cross(a1, x_ref)
             azimuth = np.arctan2(np.dot(v_projected, y_ref), np.dot(v_projected, x_ref))
-            q1_solutions = [float(oum.wrap_to_pi(azimuth - np.pi / 2)),
-                            float(oum.wrap_to_pi(azimuth + np.pi / 2))]
+            q1_solutions = [
+                float(oum.wrap_to_pi(azimuth - np.pi / 2)),
+                float(oum.wrap_to_pi(azimuth + np.pi / 2)),
+            ]
 
         sols = []
         for q1 in q1_solutions:
@@ -136,8 +151,8 @@ class S456X12(AnaIKBase):
             v_perp_vec = v_j1 - v_parallel * a2_unit
             v_perp = np.linalg.norm(v_perp_vec)
             d_2d = v_perp
-            c3 = oum.clamp((d_2d ** 2 - l2 ** 2 - l3 ** 2) / (2 * l2 * l3), lo=-1.0, hi=1.0)
-            s3_abs = np.sqrt(max(0.0, 1.0 - c3 ** 2))
+            c3 = oum.clamp((d_2d**2 - l2**2 - l3**2) / (2 * l2 * l3), lo=-1.0, hi=1.0)
+            s3_abs = np.sqrt(max(0.0, 1.0 - c3**2))
             q3_sols_for_this_q1 = []
             for s3_sign in (+1, -1):
                 s3 = s3_sign * s3_abs
@@ -147,7 +162,9 @@ class S456X12(AnaIKBase):
                 alpha = np.arctan2(l3 * s3, l2 + l3 * c3)
                 z_world = np.array([0, 0, 1], dtype=np.float32)
                 arm_zero_in_j1 = R_j1 @ z_world
-                arm_zero_perp = arm_zero_in_j1 - np.dot(arm_zero_in_j1, a2_unit) * a2_unit
+                arm_zero_perp = (
+                    arm_zero_in_j1 - np.dot(arm_zero_in_j1, a2_unit) * a2_unit
+                )
                 arm_zero_perp_unit = oum.unit_vec(arm_zero_perp, return_length=False)
                 if v_perp > 1e-9:
                     v_perp_unit = oum.unit_vec(v_perp_vec, return_length=False)
