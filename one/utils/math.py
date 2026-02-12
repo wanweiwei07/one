@@ -561,18 +561,21 @@ def skew(vec):
 
 
 def orth_vec(vec, toggle_unit=True):
-    """compute an orthogonal vector of the given vector
-    using [a,b,c] -> [b-c, -a+c, a-b]    """
-    a = vec[0]
-    b = vec[1]
-    c = vec[2]
+    """compute a vector orthogonal to the given 3D vector"""
+    vec = np.asarray(vec, dtype=np.float32).reshape(-1)
+    if vec.size != 3:
+        raise ValueError(f"Expected 3D vector, got shape {vec.shape}")
+    if np.linalg.norm(vec) <= eps:
+        out = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        return out
+    # choose the basis axis least aligned with vec for numeric stability
+    ref = np.zeros(3, dtype=np.float32)
+    ref[int(np.argmin(np.abs(vec)))] = 1.0
+    out = np.cross(vec, ref).astype(np.float32)
     if toggle_unit:
-        return unit_vec(
-            np.array([b - c, -a + c, a - b]),
-            return_length=False)
+        return unit_vec(out, return_length=False)
     else:
-        return np.array(
-            [b - c, -a + c, a - b])
+        return out
 
 def frame_from_normal(n):
     """compute a coordinate frame from a normal vector n

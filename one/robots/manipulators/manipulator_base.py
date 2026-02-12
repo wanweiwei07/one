@@ -36,17 +36,17 @@ class ManipulatorBase(orbmb.MechBase):
     def ik_tcp(self, tgt_rotmat, tgt_pos, max_solutions=8):
         tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._loc_tcp_tf)
-        # Convert to root frame and call ik_all for multiple solutions
-        root_tf = oum.tf_from_rotmat_pos(self.rotmat, self.pos)
-        tgt_tf_in_root = np.linalg.inv(root_tf) @ tgt_flange_tf
-        result_list = self._solver.ik_all(tgt_tf_in_root)
-        if len(result_list) == 0:
+        ik_results = self._solver.ik(
+            root_rotmat=self.rotmat,
+            root_pos=self.pos,
+            tgt_rotmat=tgt_flange_tf[:3, :3],
+            tgt_pos=tgt_flange_tf[:3, 3],
+            max_solutions=max_solutions)
+        if len(ik_results) == 0:
             return None
-        # Limit to max_solutions
-        result_list = result_list[:max_solutions]
         return_list = []
-        for result in result_list:
-            return_list.append(self._chain.embed_active_qs(result, self.qs))
+        for qs_active in ik_results:
+            return_list.append(self._chain.embed_active_qs(qs_active, self.qs))
         return return_list
 
     def ik_tcp_nearest(self, tgt_rotmat, tgt_pos, ref_qs=None):
@@ -54,15 +54,15 @@ class ManipulatorBase(orbmb.MechBase):
         tgt_flange_tf = tgt_tcp_tf @ np.linalg.inv(self._loc_tcp_tf)
         if ref_qs is None:
             ref_qs = self.qs
-        result_list = self._solver.ik(
+        ik_results = self._solver.ik(
             root_rotmat=self.rotmat,
             root_pos=self.pos,
             tgt_rotmat=tgt_flange_tf[:3, :3],
             tgt_pos=tgt_flange_tf[:3, 3],
             max_solutions=1, ref_qs=ref_qs)
-        if len(result_list) == 0:
+        if len(ik_results) == 0:
             return None
-        return self._chain.embed_active_qs(result_list[0], self.qs)
+        return self._chain.embed_active_qs(ik_results[0], self.qs)
 
     def clone(self):
         new = super().clone()

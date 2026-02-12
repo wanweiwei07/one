@@ -25,7 +25,7 @@ class NumIKSolver:
         if not info["converged"]:
             return []
         else:
-            return [(qs, info)]  # single solution wrapped in tuple
+            return [qs]
 
     def _backward(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
                   qs_active_init=None, max_iter=50,

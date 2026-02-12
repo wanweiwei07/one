@@ -57,6 +57,9 @@ def sp2_run(p1, p2, k1, k2):
     A2 = np.block([[KxP2], [-np.cross(k2, KxP2)]])
     radius_1_sq = np.dot(KxP1, KxP1)
     radius_2_sq = np.dot(KxP2, KxP2)
+    # avoid division by zero
+    if radius_1_sq < 1e-12 or radius_2_sq < 1e-12:
+        return np.array([]), np.array([]), True
     k1_d_p1 = np.dot(k1, p1n)
     k2_d_p2 = np.dot(k2, p2n)
     k1_d_k2 = np.dot(k1, k2)

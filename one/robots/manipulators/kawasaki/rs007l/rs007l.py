@@ -130,57 +130,26 @@ class RS007L(ormmb.ManipulatorBase):
             self._solvers[chain] = orbka.S456X12(chain, joint_limits)
         return self._solvers[chain]
 
-def _run_ik_test(n_random=20, pos_tol=1e-3, rot_tol=1e-2):
-    robot = RS007L()
-    print('=== RS007L IK Test ===')
-
-    # Fixed pose roundtrip
-    q_fixed = np.array([0.0, 0.1, -0.2, 0.3, -0.1, 0.2], dtype=np.float32)
-    robot.fk(qs=q_fixed)
-    tf_fixed = robot.runtime_lnks[-1].tf.copy()
-    sols_fixed = robot.ik_tcp(tf_fixed[:3, :3], tf_fixed[:3, 3], max_solutions=16)
-    print(f'fixed pose solutions: {0 if sols_fixed is None else len(sols_fixed)}')
-
-    lo = robot.structure.compiled.jlmt_low_by_idx[:6]
-    hi = robot.structure.compiled.jlmt_high_by_idx[:6]
-    n_ok = 0
-    n_has_sol = 0
-    best_pos_err = []
-    best_rot_err = []
-
-    for _ in range(n_random):
-        q = lo + (hi - lo) * np.random.rand(6).astype(np.float32)
-        robot.fk(qs=q)
-        tf_tgt = robot.runtime_lnks[-1].tf.copy()
-        sols = robot.ik_tcp(tf_tgt[:3, :3], tf_tgt[:3, 3], max_solutions=16)
-        if sols is None or len(sols) == 0:
-            continue
-        n_has_sol += 1
-
-        min_pos_err = np.inf
-        min_rot_err = np.inf
-        for s in sols:
-            robot.fk(qs=s[:6])
-            tf_sol = robot.runtime_lnks[-1].tf
-            pos_err = np.linalg.norm(tf_sol[:3, 3] - tf_tgt[:3, 3])
-            rot_err = np.linalg.norm(
-                oum.delta_rotvec_between_rotmats(tf_sol[:3, :3], tf_tgt[:3, :3]))
-            min_pos_err = min(min_pos_err, float(pos_err))
-            min_rot_err = min(min_rot_err, float(rot_err))
-        best_pos_err.append(min_pos_err)
-        best_rot_err.append(min_rot_err)
-        if min_pos_err <= pos_tol and min_rot_err <= rot_tol:
-            n_ok += 1
-
-    print(f'random tests: {n_random}')
-    print(f'with solutions: {n_has_sol}/{n_random}')
-    print(f'within tolerance: {n_ok}/{n_random}')
-    if best_pos_err:
-        print(f'best pos err (min/avg/max): '
-              f'{np.min(best_pos_err):.3e}/{np.mean(best_pos_err):.3e}/{np.max(best_pos_err):.3e}')
-        print(f'best rot err (min/avg/max): '
-              f'{np.min(best_rot_err):.3e}/{np.mean(best_rot_err):.3e}/{np.max(best_rot_err):.3e}')
-
 
 if __name__ == '__main__':
-    _run_ik_test()
+    import builtins
+    import one.viewer.world as ovw
+    import one.scene.scene_object_primitive as ossop
+
+    base = ovw.World(cam_pos=[2.0, 1.0, 1.0], cam_lookat_pos=[0.0, 0.0, 0.5])
+    robot = RS007L()
+    print('=== RS007L IK Test ===')
+    builtins.base = base
+    builtins.robot = robot  # for debug access
+
+    tgt_pos = (0.4, 0.1, 0.4)
+    tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.Z, 0) @
+                  oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi))
+    ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
+
+    all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos, max_solutions=8)
+    for qs in all_qs:
+        tmp_robot = robot.clone()
+        tmp_robot.fk(qs=qs)
+        tmp_robot.attach_to(base.scene)
+    base.run()

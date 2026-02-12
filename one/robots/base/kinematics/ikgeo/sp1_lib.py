@@ -4,6 +4,7 @@ import numpy as np
 # Handle rand_py import
 from . import rand_py as rand
 
+
 # Inputs: 3x1 numpy arrays p1, p2, k
 # Python does not pass by reference like C++, must manipulate without assignment
 # Theta is calculated outside this function as opposed to MATLAB version
@@ -23,8 +24,12 @@ def sp1_run(p1, p2, k):
     KxP = np.cross(k, p1)
     A = np.vstack((KxP, -np.cross(k, KxP)))
     x = np.dot(A, p2)
-    return atan2(x[0], x[1]), abs(np.linalg.norm(p1, 2) - np.linalg.norm(p2, 2)) > 1e-8 or abs(
-        np.dot(k, p1) - np.dot(k, p2)) > 1e-8
+    return (
+        atan2(x[0], x[1]),
+        abs(np.linalg.norm(p1, 2) - np.linalg.norm(p2, 2)) > 1e-6
+        or abs(np.dot(k, p1) - np.dot(k, p2)) > 1e-6,
+    )
+
 
 # Inputs: 3x1 numpy arrays p1, p2, k
 # Python does not pass by reference like C++, must manipulate without assignment
@@ -47,9 +52,9 @@ def sp1_error(p1, p2, k, theta):
 # Testing
 if __name__ == "__main__":
     print("Starting arrays \r\n")
-    p1 = np.array([1., 2., 3.])
-    p2 = np.array([1., 2., 3.])
-    k = np.array([1., 2., 3.])
+    p1 = np.array([1.0, 2.0, 3.0])
+    p2 = np.array([1.0, 2.0, 3.0])
+    k = np.array([1.0, 2.0, 3.0])
     print("Passed arrays \r\n")
     theta = rand.rand_angle()
     sp1_setup(p1, p2, k, theta)

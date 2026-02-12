@@ -24,7 +24,7 @@ for x in xs:
             tic = time.perf_counter_ns()
             qs_list = robot.ik_tcp(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat)
             toc = time.perf_counter_ns()
-            success = (len(qs_list) > 0)
+            success = (qs_list is not None)
             time_ns = toc - tic
             results.append(
                 {"pos": tgt_pos, "success": success, "time_ns": time_ns,

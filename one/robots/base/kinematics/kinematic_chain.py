@@ -54,11 +54,10 @@ class KinematicChain:
         origins = []
         for jnt in self.jnts:
             # move to this joint frame (zero configuration)
-            R = R @ jnt.rotmat
             p = p + R @ jnt.pos
+            R = R @ jnt.rotmat
             # joint axis in base frame
             ax_in_base = R @ jnt.ax
-            ax_in_base = ax_in_base / np.linalg.norm(ax_in_base)
             axes.append(ax_in_base.copy())
             origins.append(p.copy())
         return axes, origins

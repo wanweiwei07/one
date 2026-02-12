@@ -136,7 +136,7 @@ class MechBase:
             lnk: i for i, lnk in enumerate(new.runtime_lnks)}
         new.gl_lnk_tfarr = self.gl_lnk_tfarr.copy()
         new._mountings = {}
-        new._solvers={}
+        new._solvers=self._solvers # solvers can be shared
         for k, m in self._mountings.items():
             child = m.child.clone()
             plidx = self.runtime_lidx_map[m.plnk]

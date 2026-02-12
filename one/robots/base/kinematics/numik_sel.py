@@ -44,7 +44,7 @@ class SELIKSolver(orbkin.NumIKSolver):
         r = oum.rotvec_from_rotmat(tgt_tf[:3, :3])
         feat = np.concatenate([p, r]).astype(np.float32)
         _, ids = self._tree.query(feat, k=k)
-        return self._cvt_q[ids], ids
+        return self._cvt_q[ids]
 
     def ik(self, root_rotmat, root_pos,
            tgt_rotmat, tgt_pos, max_solutions=8,
@@ -53,7 +53,7 @@ class SELIKSolver(orbkin.NumIKSolver):
             raise RuntimeError("CVT database not loaded.")
         root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
         tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        seeds, ids = self.query_seeds(
+        seeds = self.query_seeds(
             np.linalg.inv(root_tf) @ tgt_tf, k=self._k)
         if ref_qs is not None:
             prefer_qs = np.asarray(ref_qs, dtype=np.float32)
@@ -65,9 +65,8 @@ class SELIKSolver(orbkin.NumIKSolver):
                 seeds - prefer_qs[np.newaxis, :], axis=1)
             sorted_indices = np.argsort(distances)
             seeds = seeds[sorted_indices]
-            ids = ids[sorted_indices]
         sols = []
-        for sid, qs0 in zip(ids, seeds):
+        for qs0 in seeds:
             qs, info = self._backward(
                 root_rotmat, root_pos, tgt_rotmat, tgt_pos,
                 qs_active_init=qs0, max_iter=max_iter)
@@ -79,8 +78,7 @@ class SELIKSolver(orbkin.NumIKSolver):
                 #     print(qs)
                 #     base.run()
                 continue
-            info["seed_id"] = int(sid)
-            sols.append((qs, info))
+            sols.append(qs)
             if len(sols) >= max_solutions:
                 break
         return sols

@@ -94,7 +94,7 @@ class CPUDetector():
         return (np.asarray(points_out, np.float32),
                 np.asarray(pair_ids_out, np.uint32))
 
-    def _tripair_planeprojection_filter(self, tris_a, tris_b):
+    def _tripair_planeprojection_filter(self, tris_a, tris_b, eps=1e-8):
         """
         Find first intersecting triangle pair.
         :param tris_a, tris_b: (N,3,3)

@@ -1,0 +1,19 @@
+[build-system]
+requires = ['setuptools>=68', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'one'
+version = '0.1.0'
+description = 'A lightweight robot motion planning and learning framework.'
+readme = 'README.md'
+requires-python = '>=3.12'
+dependencies = [
+    'numpy',
+    'scipy',
+    'pyglet',
+    'mujoco',
+]
+
+[tool.setuptools.packages.find]
+include = ['one*']
