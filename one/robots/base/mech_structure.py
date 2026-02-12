@@ -5,7 +5,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.utils.decorator as oud
 import one.scene.scene_object as osso
-import one.robots.base.kinematics.kinematic_chain as orbkkc
+import one.robots.base.kine.kinematic_chain as orbkkc
 
 
 class Link(osso.SceneObject):

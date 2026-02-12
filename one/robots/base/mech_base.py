@@ -2,7 +2,7 @@ import os
 import numpy as np
 import one.utils.math as oum
 import one.robots.base.mech_structure as orbms
-import one.robots.base.kinematics.numik_sel as orbkis
+import one.robots.base.kine.numik_sel as orbkis
 
 
 class Mounting:

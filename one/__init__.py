@@ -27,6 +27,6 @@ import one.robots.end_effectors.onrobot.or_2fg7.or_2fg7 as or_2fg7
 import one.robots.vehicle.xytheta as xyt
 
 __all__ = ['np', 'key', 'oum', 'ouh', 'ouc',
-           'oss', 'osso', 'ogg', 'osrm', 'ogl', 'ovw',
+           'oss', 'osso', 'ossop', 'ogg', 'osrm', 'ogl', 'ovw',
            'ocm', 'omppc', 'ompr', 'ompp',
            'khi_rs007l', 'or_2fg7', 'xyt']
