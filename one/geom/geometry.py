@@ -115,6 +115,47 @@ def gen_box_geom(half_extents=(0.05, 0.05, 0.05)):
     return g
 
 
+def gen_trapezoid_geom(height=0.05,
+                       bottom_length=0.05,
+                       top_length=0.03):
+    height = float(height)
+    bottom_half = float(bottom_length) * 0.5
+    top_half = float(top_length) * 0.5
+    key = ("trapezoid", height, bottom_half, top_half)
+    if key in _geom_cache:
+        return _geom_cache[key]
+
+    b0 = np.array([-bottom_half, -bottom_half, 0.0], dtype=np.float32)
+    b1 = np.array([bottom_half, -bottom_half, 0.0], dtype=np.float32)
+    b2 = np.array([bottom_half, bottom_half, 0.0], dtype=np.float32)
+    b3 = np.array([-bottom_half, bottom_half, 0.0], dtype=np.float32)
+    t0 = np.array([-top_half, -top_half, height], dtype=np.float32)
+    t1 = np.array([top_half, -top_half, height], dtype=np.float32)
+    t2 = np.array([top_half, top_half, height], dtype=np.float32)
+    t3 = np.array([-top_half, top_half, height], dtype=np.float32)
+
+    verts = np.asarray([b0, b1, b2, b3, t0, t1, t2, t3], dtype=np.float32)
+    faces = np.asarray([
+        [0, 1, 2], [0, 2, 3],  # bottom
+        [4, 6, 5], [4, 7, 6],  # top
+        [0, 5, 1], [0, 4, 5],  # side 0-1
+        [1, 6, 2], [1, 5, 6],  # side 1-2
+        [2, 7, 3], [2, 6, 7],  # side 2-3
+        [3, 4, 0], [3, 7, 4],  # side 3-0
+    ], dtype=np.uint32)
+    # Ensure outward triangle winding (important for consistent normals/shading).
+    center = np.mean(verts, axis=0)
+    tri_vs = verts[faces]
+    tri_normals = np.cross(tri_vs[:, 1] - tri_vs[:, 0], tri_vs[:, 2] - tri_vs[:, 0])
+    tri_centers = np.mean(tri_vs, axis=1)
+    inward_mask = np.einsum('ij,ij->i', tri_normals, tri_centers - center) < 0.0
+    if np.any(inward_mask):
+        faces[inward_mask] = faces[inward_mask][:, [0, 2, 1]]
+    g = _Geom(vs=verts, fs=faces)
+    _geom_cache[key] = g
+    return g
+
+
 def gen_capsule_geom(radius=0.05, half_length=0.1, n_segs=32):
     key = ("capsule", radius, half_length, n_segs)
     if key in _geom_cache:

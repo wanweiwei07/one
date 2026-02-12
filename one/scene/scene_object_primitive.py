@@ -38,6 +38,55 @@ def cylinder(spos=(0, 0, 0),
     return o
 
 
+def dashed_cylinder(spos=(0, 0, 0),
+                    epos=(0.01, 0.01, 0.01),
+                    radius=0.05,
+                    len_solid=None,
+                    len_interval=None,
+                    segments=8,
+                    rgb=ouc.BasicColor.DEFAULT,
+                    alpha=1.0, **kwargs):
+    _psd = _parse_phys(kwargs)
+    inertia, com, mass, collision_type, is_free = _psd
+    spos = np.asarray(spos, np.float32)
+    epos = np.asarray(epos, np.float32)
+    length, dir_vec = oum.unit_vec(epos - spos, return_length=True)
+    radius = float(radius)
+    if len_solid is None:
+        len_solid = radius * 3.2
+    if len_interval is None:
+        len_interval = radius * 2.14
+    len_solid = float(len_solid)
+    len_interval = float(len_interval)
+
+    o = osso.SceneObject(collision_type=collision_type,
+                         is_free=is_free)
+    amc = False if collision_type is None else True
+    if float(length) <= 1e-8:
+        rmodel = osrmp.gen_cylinder_rmodel(length=1e-6, radius=radius,
+                                           n_segs=segments,
+                                           rgb=rgb, alpha=alpha)
+        o.add_visual(rmodel, auto_make_collision=amc)
+        o.set_rotmat_pos(pos=spos)
+        o.set_inertia(inertia, com, mass)
+        return o
+
+    rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
+    d = 0.0
+    while d < float(length):
+        dash_len = min(len_solid, float(length) - d)
+        if dash_len > 1e-8:
+            rmodel = osrmp.gen_cylinder_rmodel(length=dash_len, radius=radius,
+                                               n_segs=segments,
+                                               rotmat=rotmat,
+                                               pos=spos + dir_vec * d,
+                                               rgb=rgb, alpha=alpha)
+            o.add_visual(rmodel, auto_make_collision=amc)
+        d += (len_solid + len_interval)
+    o.set_inertia(inertia, com, mass)
+    return o
+
+
 def cone(spos=(0, 0, 0),
          epos=(0.01, 0.01, 0.01),
          radius=0.05, segments=8,
@@ -259,6 +308,37 @@ def point_cloud(vs, vrgbs, alpha=1.0):
     return o
 
 
+def trapezoid(base_center=(0, 0, 0),
+              top_center=(0, 0, 0.05),
+              bottom_length=0.05,
+              top_length=0.03,
+              rgb=ouc.BasicColor.DEFAULT,
+              alpha=1.0, **kwargs):
+    _psd = _parse_phys(kwargs)
+    inertia, com, mass, collision_type, is_free = _psd
+    base_center = np.asarray(base_center, dtype=np.float32)
+    top_center = np.asarray(top_center, dtype=np.float32)
+    axis = top_center - base_center
+    height, axis_u = oum.unit_vec(axis, return_length=True)
+    if float(height) < 1e-8:
+        height = 0.05
+        axis_u = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, axis_u)
+    rmodel = osrmp.gen_trapezoid_rmodel(
+        height=float(height),
+        bottom_length=bottom_length,
+        top_length=top_length,
+        rotmat=rotmat,
+        pos=base_center,
+        rgb=rgb, alpha=alpha)
+    o = osso.SceneObject(collision_type=collision_type,
+                         is_free=is_free)
+    amc = False if collision_type is None else True
+    o.add_visual(rmodel, auto_make_collision=amc)
+    o.set_inertia(inertia, com, mass)
+    return o
+
+
 def mesh(vs, fs, collision_type=None,
          is_free=False, rgb=ouc.BasicColor.DEFAULT,
          alpha=1.0, **kwargs):
@@ -278,3 +358,20 @@ def mesh(vs, fs, collision_type=None,
     o.add_visual(rmodel, auto_make_collision=amc)
     o.set_inertia(inertia, com, mass)
     return o
+
+if __name__ == "__main__":
+    import one.viewer.world as ovw
+
+    base = ovw.World(cam_pos=(1,1,1),
+                     cam_lookat_pos=(0.0, 0.0, 0.0))
+    # test trapezoid
+    o = trapezoid(
+        base_center=(0, 0, 0),
+        top_center=(0., 0., 0.2),
+        bottom_length=0.1,
+        top_length=0.05,
+        rgb=ouc.BasicColor.RED,
+        alpha=0.8,
+        collision_type=ouc.CollisionType.MESH)
+    o.attach_to(base.scene)
+    base.run()
