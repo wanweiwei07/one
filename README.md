@@ -35,7 +35,7 @@ Overall, `one` is intended as a lightweight yet expressive research framework fo
 - [Acknowledgments](#acknowledgments)
 
 </td>
-<td style="width:40%; border:none; padding:0; text-align:center; vertical-align:middle;">
+<td style="width:30%; border:none; padding:0; text-align:center; vertical-align:middle;">
 <img src="grasp.gif">
 </td>
 </tr>
