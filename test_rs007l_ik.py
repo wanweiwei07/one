@@ -6,12 +6,12 @@ from one import oum, ovw, ossop, khi_rs007l
 base = ovw.World(cam_pos=(1.5, 1, 1.5), cam_lookat_pos=(0, 0, .5),
                  toggle_auto_cam_orbit=True)
 oframe = ossop.frame().attach_to(base.scene)
-robot = khi_rs007l.RS007L(rotmat=oum.rotmat_from_euler(0, 0, -oum.pi / 2))
+robot = khi_rs007l.RS007L()
 robot.attach_to(base.scene)
 builtins.robot = robot  # for debug access
 builtins.base = base
 
-tgt_rotmat = oum.rotmat_from_euler(oum.pi, 0, 0)
+tgt_rotmat = oum.rotmat_from_euler(oum.pi, oum.pi/6, oum.pi/12)
 results = []
 xs = np.linspace(-1, 1, 15)
 ys = np.linspace(-1, 1, 15)

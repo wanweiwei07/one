@@ -10,11 +10,12 @@ from one.grasp.antipodal import antipodal
 from one import oum, ouc, ovw, ossop, osso, khi_rs007l, or_2fg7
 from one import omppc, ompp
 
-base = ovw.World(cam_pos=(2, 2, 1.5), cam_lookat_pos=(0, 0, .75),
-                 toggle_auto_cam_orbit=False)
+base = ovw.World(
+    cam_pos=(2, 2, 1.5), cam_lookat_pos=(0, 0, 0.75), toggle_auto_cam_orbit=False
+)
 ossop.frame().attach_to(base.scene)
 
-robot = khi_rs007l.RS007L(pos=(.5, 0, 0))
+robot = khi_rs007l.RS007L()
 robot.attach_to(base.scene)
 
 gripper = or_2fg7.OR2FG7()
@@ -22,14 +23,13 @@ gripper.attach_to(base.scene)
 robot.engage(gripper)
 
 # load bunny
-bunny = osso.SceneObject.from_file(
-    "bunny.stl", collision_type=ouc.CollisionType.MESH)
+bunny = osso.SceneObject.from_file("bunny.stl", collision_type=ouc.CollisionType.MESH)
 bunny.rgb = (0.8, 0.7, 0.6)
 # bunny.alpha = 0.6
 bunny.attach_to(base.scene)
 
 # create ground plane
-ground = ossop.plane(pos=(0, 0, .01))
+ground = ossop.plane(pos=(0, 0, 0.01))
 ground.attach_to(base.scene)
 
 # setup mj collider
@@ -52,32 +52,53 @@ grasps = antipodal(
     density=0.01,
     normal_tol_deg=20,
     roll_step_deg=30,
-    max_grasps=80
+    max_grasps=80,
 )
 print(f"Found {len(grasps)} collision-free grasps")
 
 # --- compute a random stable pose (convex hull) ---
 geom = bunny.collisions[0].geom
 geom_hull = ogf.convex_hull(geom)
-facets = ogs.segment_surface(geom_hull, normal_tol_deg=15)
+facets = ogs.segment_surface(geom_hull)
 
 stable_poses = ogp.compute_stable_poses(
-    geom_hull.vs, geom_hull.fs, facets, com=None, stable_thresh=5.0)
+    geom_hull.vs, geom_hull.fs, facets, com=None, stable_thresh=10.0
+)
 
+print(f"Found {len(stable_poses)} stable poses")
 if not stable_poses:
     print("No stable poses found, abort.")
     base.run()
 
 # pick one stable pose at random
-pos, rotmat, seg_id, ratio, _ = stable_poses[np.random.randint(len(stable_poses))]
+pos, rotmat, seg_id, ratio, _ = stable_poses[0]
 print(f"Selected stable pose: seg={seg_id}, ratio={ratio:.6f}")
 
+pos += np.array([-0.5, 0.0, 0.0], dtype=np.float32)  # offset on table
 # place bunny
 bunny.pos = pos
 bunny.rotmat = rotmat
 
 # transform grasp poses into world (stable pose)
 tf_bunny = oum.tf_from_rotmat_pos(rotmat, pos)
+
+# dump all pre-grasp candidates for standalone IK diagnosis
+pre_pose_pos_list = []
+pre_pose_rot_list = []
+jaw_width_list = []
+for pose, pre_pose, jaw_width, score in grasps:
+    gl_pre_pose = tf_bunny @ pre_pose
+    pre_pose_pos_list.append(gl_pre_pose[:3, 3].astype(np.float32))
+    pre_pose_rot_list.append(gl_pre_pose[:3, :3].astype(np.float32))
+    jaw_width_list.append(np.float32(jaw_width))
+if len(pre_pose_pos_list) > 0:
+    np.savez(
+        "rs007l_grasp_candidates.npz",
+        pre_pos=np.asarray(pre_pose_pos_list, dtype=np.float32),
+        pre_rot=np.asarray(pre_pose_rot_list, dtype=np.float32),
+        jaw_width=np.asarray(jaw_width_list, dtype=np.float32),
+    )
+    print(f"Saved {len(pre_pose_pos_list)} candidates to rs007l_grasp_candidates.npz")
 
 # --- solve IK for each grasp and visualize ---
 n_solved = 0
@@ -86,32 +107,30 @@ goal_qs = None
 aux_qs = None
 
 for pose, pre_pose, jaw_width, score in grasps:
-    pre_pose_world = tf_bunny @ pre_pose
-    pre_tgt_rotmat = pre_pose_world[:3, :3]
-    pre_tgt_pos = pre_pose_world[:3, 3]
-    qs_list = robot.ik_tcp(tgt_rotmat=pre_tgt_rotmat,
-                           tgt_pos=pre_tgt_pos)
-    if not qs_list:
+    gl_pre_pose = tf_bunny @ pre_pose
+    pre_tgt_rotmat = gl_pre_pose[:3, :3]
+    pre_tgt_pos = gl_pre_pose[:3, 3]
+    qs = robot.ik_tcp_nearest(tgt_rotmat=pre_tgt_rotmat, tgt_pos=pre_tgt_pos)
+    if qs is None:
         continue
-
-    qs = qs_list[0]
     mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
     pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
     if not pln_ctx.is_state_valid(qs):
         continue
 
     goal_qs = qs
-    aux_qs= (jaw_width / 2, jaw_width / 2)
+    aux_qs = (jaw_width / 2, jaw_width / 2)
     goal_pre_pose = (pre_tgt_pos, pre_tgt_rotmat)
     break
+
 
 if goal_qs is None:
     # show failed pre-pose
     if grasps:
         pose, pre_pose, jaw_width, score = grasps[0]
-        pre_pose_world = tf_bunny @ pre_pose
+        gl_pre_pose = tf_bunny @ pre_pose
         ghost = gripper.clone()
-        ghost.grip_at(pre_pose_world[:3, 3], pre_pose_world[:3, :3], jaw_width)
+        ghost.grip_at(gl_pre_pose[:3, 3], gl_pre_pose[:3, :3], jaw_width)
         ghost.rgb = (1.0, 0.0, 0.0)
         ghost.alpha = 0.3
         ghost.attach_to(base.scene)
@@ -133,30 +152,31 @@ drawn_nodes = {}
 # gripper.fk(qs=aux_qs)
 # base.run()
 
+
 def move_bunny_once():
     global need_replan, tf_bunny
 
     moved = False
     pos = np.array(bunny.pos, dtype=np.float32)
 
-    if base.input_manager.is_key_pressed_edge(key.W):
+    if base.input_manager.is_key_pressed(key.W):
         pos[1] += move_step
         moved = True
-    if base.input_manager.is_key_pressed_edge(key.S):
+    if base.input_manager.is_key_pressed(key.S):
         pos[1] -= move_step
         moved = True
-    if base.input_manager.is_key_pressed_edge(key.A):
+    if base.input_manager.is_key_pressed(key.A):
         pos[0] -= move_step
         moved = True
-    if base.input_manager.is_key_pressed_edge(key.D):
+    if base.input_manager.is_key_pressed(key.D):
         pos[0] += move_step
         moved = True
     rot_step = np.deg2rad(10.0)
-    if base.input_manager.is_key_pressed_edge(key.Q):
+    if base.input_manager.is_key_pressed(key.Q):
         rz = oum.rotmat_from_euler(0, 0, rot_step)
         bunny.rotmat = rz @ bunny.rotmat  # world Z
         moved = True
-    if base.input_manager.is_key_pressed_edge(key.E):
+    if base.input_manager.is_key_pressed(key.E):
         rz = oum.rotmat_from_euler(0, 0, -rot_step)
         bunny.rotmat = rz @ bunny.rotmat  # world Z
         moved = True
@@ -181,7 +201,7 @@ def tick(dt):
         goal_qs = None
         aux_qs = None
         clear_drawn()
-        MAX_DRAW = 5
+        MAX_DRAW = 10
         count = 0
         for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
             pre_pose_world = tf_bunny @ pre_pose

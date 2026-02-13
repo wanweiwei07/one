@@ -110,7 +110,7 @@ class MJOneConverter:
                 self._actuators.append(act)
             else:
                 jnode.jtype_str = "fixed"
-            jnode.axis = tuple(compiled.jax_by_idx[jidx])
+            jnode.ax = tuple(compiled.jax_by_idx[jidx])
             jnode.range = (float(compiled.jlmt_low_by_idx[jidx]),
                            float(compiled.jlmt_high_by_idx[jidx]))
             # lnk

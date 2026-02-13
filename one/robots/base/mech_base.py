@@ -108,6 +108,7 @@ class MechBase:
         else:
             engage_tf = np.asarray(engage_tf, dtype=np.float32)
         self._mountings[child] = Mounting(child, plnk, engage_tf)
+        child.is_free = False
 
     def unmount(self, child):
         try:

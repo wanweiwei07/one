@@ -14,32 +14,32 @@ def prepare_mechstruct():
     # UR3 kinematics from Universal_Robots_ROS2_Description:
     # config/ur3/default_kinematics.yaml
     shoulder_xyz = np.array([0.0, 0.0, 0.1519], dtype=np.float32)
-    shoulder_rpy = (0.0, 0.0, 0.0)
     upper_arm_xyz = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-    upper_arm_rpy = (1.570796327, 0.0, 0.0)
     forearm_xyz = np.array([-0.24365, 0.0, 0.0], dtype=np.float32)
-    forearm_rpy = (0.0, 0.0, 0.0)
     wrist1_xyz = np.array([-0.21325, 0.0, 0.11235], dtype=np.float32)
-    wrist1_rpy = (0.0, 0.0, 0.0)
     wrist2_xyz = np.array([0.0, -0.08535, -1.750557762378351e-11], dtype=np.float32)
-    wrist2_rpy = (1.570796327, 0.0, 0.0)
     wrist3_xyz = np.array([0.0, 0.0819, -1.679797079540562e-11], dtype=np.float32)
+    shoulder_rpy = (0.0, 0.0, 0.0)
+    upper_arm_rpy = (1.570796327, 0.0, 0.0)
+    forearm_rpy = (0.0, 0.0, 0.0)
+    wrist1_rpy = (0.0, 0.0, 0.0)
+    wrist2_rpy = (1.570796327, 0.0, 0.0)
     wrist3_rpy = (1.570796326589793, np.pi, np.pi)
 
     # UR ROS2 visual/collision mesh offsets (config/ur3/visual_parameters.yaml).
     base_mesh_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-    base_mesh_rpy = (0.0, 0.0, np.pi)
     shoulder_mesh_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-    shoulder_mesh_rpy = (0.0, 0.0, np.pi)
     upper_arm_mesh_pos = np.array([0.0, 0.0, 0.1198], dtype=np.float32)
-    upper_arm_mesh_rpy = (np.pi / 2.0, 0.0, -np.pi / 2.0)
     forearm_mesh_pos = np.array([0.0, 0.0, 0.0275], dtype=np.float32)
-    forearm_mesh_rpy = (np.pi / 2.0, 0.0, -np.pi / 2.0)
     wrist1_mesh_pos = np.array([0.0, 0.0, -0.085], dtype=np.float32)
-    wrist1_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
     wrist2_mesh_pos = np.array([0.0, 0.0, -0.083], dtype=np.float32)
-    wrist2_mesh_rpy = (0.0, 0.0, 0.0)
     wrist3_mesh_pos = np.array([0.0, -0.00255, -0.082], dtype=np.float32)
+    base_mesh_rpy = (0.0, 0.0, np.pi)
+    shoulder_mesh_rpy = (0.0, 0.0, np.pi)
+    upper_arm_mesh_rpy = (np.pi / 2.0, 0.0, -np.pi / 2.0)
+    forearm_mesh_rpy = (np.pi / 2.0, 0.0, -np.pi / 2.0)
+    wrist1_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
+    wrist2_mesh_rpy = (0.0, 0.0, 0.0)
     wrist3_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
 
     base_lnk = orbms.Link.from_file(
@@ -151,8 +151,11 @@ class UR3(ormmb.ManipulatorBase):
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
+        # self._loc_flange_tf = np.eye(4, dtype=np.float32)
+        # self._loc_flange_tf[:3, :3] = oum.rotmat_from_euler(0, -np.pi/2, -np.pi/2)
 
     def get_solver(self, chain):
+        # overwrite to use analytical IK solver
         if chain not in self._solvers:
             joint_limits = (chain.lmt_lo, chain.lmt_up)
             self._solvers[chain] = orbka.P234X56(chain, joint_limits)
@@ -172,9 +175,12 @@ if __name__ == '__main__':
     oframe.attach_to(scene)
     robot = UR3()
     robot.attach_to(scene)
+    robot.alpha=0.3
     builtins.robot = robot
+    ossop.frame(pos=robot.gl_tcp_tf[:3, 3], rotmat=robot.gl_tcp_tf[:3, :3],
+                color_mat=ouc.CoordColor.MYC).attach_to(scene)
 
-    tgt_pos = (0.3, 0.2, 0.2)
+    tgt_pos = (0.4, 0.2, 0.2)
     tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.Z, np.pi / 6.0) @
                   oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi))
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(scene)
@@ -184,4 +190,14 @@ if __name__ == '__main__':
         tmp_robot = robot.clone()
         tmp_robot.fk(qs=qs)
         tmp_robot.attach_to(base.scene)
+    # prev_qs = np.zeros(6)
+    # qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos, ref_qs=prev_qs)
+    # if qs is not None:
+    #     print("Found IK solution:", qs)
+    #     tmp_robot = robot.clone()
+    #     tmp_robot.fk(qs=qs)
+    #     tmp_robot.attach_to(base.scene) 
+    # ossop.frame(pos=tmp_robot.gl_tcp_tf[:3, 3], rotmat=tmp_robot.gl_tcp_tf[:3, :3],
+    #             color_mat=ouc.CoordColor.MYC).attach_to(scene)
+    # base.run()
     base.run()

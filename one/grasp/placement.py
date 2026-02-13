@@ -7,7 +7,7 @@ import one.scene.scene_object_primitive as ossop
 
 
 def compute_stable_poses(
-        vs, fs, facets, com=None, stable_thresh=5.0):
+        vs, fs, facets, com=None, stable_thresh=7.0):
     """segs = list of list of face ids"""
     if com is None:
         com = vs.mean(axis=0)

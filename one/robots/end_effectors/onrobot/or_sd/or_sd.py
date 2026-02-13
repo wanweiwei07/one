@@ -46,7 +46,7 @@ if __name__ == '__main__':
     builtins.robot = manipulator
     screwdriver = ORSD()
     screwdriver.attach_to(base.scene)
-    manipulator.engage(screwdriver, engage_tfmat=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.05)))
+    manipulator.engage(screwdriver, engage_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.05)))
     tgt_pos = (0.3, 0.5, 0.5)
     tgt_rotmat = oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi)
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat, color_mat=ouc.CoordColor.DYO).attach_to(base.scene)

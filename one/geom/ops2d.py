@@ -65,7 +65,6 @@ def extract_boundary(fs_sub):
     A = coo_matrix((data, (rows, cols)),
                    shape=(len(nodes), len(nodes)))
     n_comp, labels = connected_components(A, directed=False)
-    print(n_comp)
     if n_comp > 1:
         print(f"multiple boundary loops = {n_comp}")
         return []

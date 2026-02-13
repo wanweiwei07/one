@@ -16,7 +16,7 @@ Overall, `one` is intended as a lightweight yet expressive research framework fo
 
 <table style="width:100%; border:none; border-collapse:collapse;">
 <tr style="border:none;">
-<td style="width:60%; border:none; padding:0; vertical-align:top;">
+<td style="width:50%; border:none; padding:0; vertical-align:top;">
 
 ## Table of Contents
 
@@ -35,8 +35,11 @@ Overall, `one` is intended as a lightweight yet expressive research framework fo
 - [Acknowledgments](#acknowledgments)
 
 </td>
-<td style="width:40%; border:none; padding:0; text-align:center; vertical-align:middle;">
-<img src="collision.gif" width="320">
+<td style="border:none; padding:0 8px; text-align:center; vertical-align:middle; white-space:nowrap;">
+<img src="collision.gif" style="display:inline-block;">
+</td>
+<td style="border:none; padding:0 8px; text-align:center; vertical-align:middle; white-space:nowrap;">
+<img src="grasp.gif" width="1139" height="" style="display:inline-block;">
 </td>
 </tr>
 </table>

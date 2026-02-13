@@ -25,6 +25,10 @@ if __name__ == '__main__':
     jviz = orbkv.KineVisualizer(
         robot, mode='chain')
     jviz.attach_to(scene)
+    
+    ossop.frame(pos=robot.gl_tcp_tf[:3, 3], rotmat=robot.gl_tcp_tf[:3, :3],
+                color_mat=ouc.CoordColor.MYC).attach_to(scene)
+    base.run()
 
     tgt_pos = (0.35, -0.2, 0.35)
     tgt_rotmat = (oum.rotmat_from_axangle(ouc.StandardAxis.Z, np.pi / 6.0) @

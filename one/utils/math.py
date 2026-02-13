@@ -4,6 +4,8 @@ import numpy.typing as npt
 from scipy.linalg import null_space
 from scipy.spatial.transform import Slerp
 from scipy.spatial.transform import Rotation
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import connected_components
 
 # numpy settings
 np.set_printoptions(suppress=True)  # avoid scientific notation
@@ -751,29 +753,6 @@ def delta_rotvec_between_rotmats(src_rotmat, tgt_rotmat):
     # else:
     #     return np.arctan2(tmp_vec_norm, tmp_trace_minus_one) / tmp_vec_norm * tmp_vec
 
-
-# def delta_w_between_rotmat(src_rotmat, tgt_rotmat):
-#     """
-#     compute angle*ax from src_rotmat to tgt_rotmat
-#     the following relation holds for the returned delta_w
-#     rotmat_from_axangle(np.linalg.norm(deltaw), unit_vec(deltaw)).dot(src_rotmat) = tgt_rotmat
-#     :param src_rotmat: 3x3
-#     :param tgt_rotmat: 3x3
-#     :return:
-#     author: weiwei
-#     date: 20200326
-#     """
-#     delta_rotmat = tgt_rotmat @ src_rotmat.T
-#     clipped_trace = np.clip((np.trace(delta_rotmat) - 1) / 2.0, -1.0, 1.0)
-#     angle = np.arccos(clipped_trace)
-#     if np.isclose(angle, 0.0):
-#         return np.zeros(3)
-#     else:
-#         axis = np.array([delta_rotmat[2, 1] - delta_rotmat[1, 2],
-#                          delta_rotmat[0, 2] - delta_rotmat[2, 0],
-#                          delta_rotmat[1, 0] - delta_rotmat[0, 1]]) / (2 * np.sin(angle))
-#         return angle * axis
-
 def diff_between_poses(src_pos,
                        src_rotmat,
                        tgt_pos,
@@ -791,7 +770,7 @@ def diff_between_poses(src_pos,
     """
     delta = np.zeros(6)
     delta[0:3] = (tgt_pos - src_pos)
-    delta[3:6] = delta_w_between_rotmat(src_rotmat, tgt_rotmat)
+    delta[3:6] = delta_rotvec_between_rotmats(src_rotmat, tgt_rotmat)
     pos_err = np.linalg.norm(delta[:3])
     rot_err = np.linalg.norm(delta[3:6])
     return pos_err, rot_err, delta
@@ -806,7 +785,7 @@ def cosine_between_vecs(v1, v2):
 
 
 def axangle_between_rotmat(rotmati, rotmatj):
-    deltaw = delta_w_between_rotmat(rotmati, rotmatj)
+    deltaw = delta_rotvec_between_rotmats(rotmati, rotmatj)
     angle = np.linalg.norm(deltaw)
     ax = deltaw / angle if isinstance(deltaw, np.ndarray) else None
     return ax, angle
@@ -839,16 +818,26 @@ def pos_average(pos_list, bandwidth=10):
     :param denoise: meanshift denoising is applied if True
     :return:
     author: weiwei
-    date: 20190422
+    date: 20190422, ai20260213
     """
     if len(pos_list) == 0:
         return False
-    if bandwidth is not None:
-        mt = cluster.MeanShift(bandwidth=bandwidth)
-        pos_avg = mt.fit(pos_list).cluster_centers_[0]
-        return pos_avg
-    else:
-        return np.array(pos_list).mean(axis=0)
+    pos_arr = np.asarray(pos_list, dtype=np.float32)
+    if bandwidth is None:
+        return pos_arr.mean(axis=0)
+    # Numpy-only denoised averaging:
+    # build epsilon-neighborhood graph and average the largest connected component.
+    bw = float(bandwidth)
+    if bw <= 0:
+        return pos_arr.mean(axis=0)
+    diffs = pos_arr[:, None, :] - pos_arr[None, :, :]
+    dists = np.linalg.norm(diffs, axis=2)
+    neigh = dists <= bw
+    graph = csr_matrix(neigh)
+    _, labels = connected_components(csgraph=graph, directed=False, return_labels=True)
+    sizes = np.bincount(labels)
+    best_label = int(np.argmax(sizes))
+    return pos_arr[labels == best_label].mean(axis=0)
 
 
 def pos_quat_from_tf(tf, quat_order='xyzw'):

@@ -71,7 +71,7 @@ class JointNode:
     def __init__(self, name: str):
         self.name = name
         self.jtype_str = "hinge"  # hinge / slide / fixed
-        self.axis = (1, 0, 0)
+        self.ax = (1, 0, 0)
         # self.pos = (0, 0, 0)
         # self.quat = (0, 0, 0, 1)
         self.range = None

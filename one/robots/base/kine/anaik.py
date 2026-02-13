@@ -111,7 +111,10 @@ class S456X12(AnaIKBase):
     def ik_all(self, tgt_tf_in_root, **kwargs):
         # compute q3 by sp3
         # R23p34 + p23 = p16
-        p16 = tgt_tf_in_root[:3, 3] - self.p01
+        # p16 = p0t - R06 p6t - p01
+        p06 = tgt_tf_in_root[:3, 3]
+        R06 = tgt_tf_in_root[:3, :3] @ self.chain.tfs[-1][:3, :3].T
+        p16 = p06 - R06 @ self.p6t - self.p01
         p1 = self.p34
         p2 = -self.p23
         k = self.h3
@@ -142,7 +145,7 @@ class S456X12(AnaIKBase):
                 R01 = oum.rotmat_from_axangle(self.h1, q1)
                 R12 = oum.rotmat_from_axangle(self.h2, q2)
                 R03 = R01 @ R12 @ R23
-                R36 = R03.T @ tgt_tf_in_root[:3, :3]
+                R36 = R03.T @ R06
                 # compute q4, q5 by sp2
                 # R43R36h6 = R45h6
                 p1 = R36 @ self.h6
@@ -201,20 +204,23 @@ class P234X56(AnaIKBase):
         self.p6t = (o6 - o56).astype(np.float32)
         self.h1 = self.chain.axes[0]
         self.h2 = self.chain.axes[1]
-        self.h3 = self.h2
-        self.h4 = self.h2
+        self.h3 = self.chain.axes[2]
+        self.h4 = self.chain.axes[3]
         self.h5 = self.chain.axes[4]
         self.h6 = self.chain.axes[5]
 
     def ik_all(self, tgt_tf_in_root, **kwargs):
         # compute q1 by sp4
         # h2.T R10 p16 = h2.T(p12+p23+p34+p45)
-        p16 = tgt_tf_in_root[:3, 3] - self.p01
+        # p16 = p0t - R06 p6t - p01
+        p06 = tgt_tf_in_root[:3, 3]
+        R06 = tgt_tf_in_root[:3, :3] @ self.chain.tfs[-1][:3, :3].T
+        p16 = p06 - R06 @ self.p6t - self.p01
         h = self.h2
         k = -self.h1
         p = p16
         d = self.h2.T @ (self.p12 + self.p23 + self.p34 + self.p45)
-        q1s, is_ls = orbkisp4.sp4_run(p,k,h,d)
+        q1s, is_ls = orbkisp4.sp4_run(p, k, h, d)
         if is_ls:
             return []
         if len(q1s) == 0:
@@ -223,13 +229,12 @@ class P234X56(AnaIKBase):
         for q1 in q1s:
             # compute q5 by sp4
             # h2.T R10 R06 h6 - h2.T R45 h6 = 0
-            R06 = tgt_tf_in_root[:3, :3]
             R10 = oum.rotmat_from_axangle(-self.h1, q1)
             h = self.h2
             k = self.h5
             p = self.h6
             d = self.h2.T @ (R10 @ R06 @ self.h6)
-            q5s, is_ls = orbkisp4.sp4_run(p,k,h,d)
+            q5s, is_ls = orbkisp4.sp4_run(p, k, h, d)
             if is_ls:
                 continue
             if len(q5s) == 0:
@@ -238,7 +243,7 @@ class P234X56(AnaIKBase):
                 # compute q2+q3+q4 by sp1
                 # R14 R45 h6 = R10 R06 h6
                 R45 = oum.rotmat_from_axangle(self.h5, q5)
-                k = self.h2
+                k = self.h2  # assume all parallel axes have same direction as h2
                 p1 = R45 @ self.h6
                 p2 = R10 @ R06 @ self.h6
                 q234, is_ls = orbkisp1.sp1_run(p1, p2, k)
@@ -256,7 +261,6 @@ class P234X56(AnaIKBase):
                     continue
                 # compute q3 by sp3
                 # R23 p34 + p23 = R10 p16 - p12 - R14 p45 - R15 p56
-                p16 = tgt_tf_in_root[:3, 3] - self.p01
                 rhs = R10 @ p16 - self.p12 - R14 @ self.p45
                 d = np.linalg.norm(rhs)
                 p1 = self.p34
@@ -278,7 +282,10 @@ class P234X56(AnaIKBase):
                     if is_ls:
                         continue
                     # compute q4 by subtraction
-                    q4 = q234 - q2 - q3
+                    if self.h4.T @ self.h2 > 0:
+                        q4 = q234 - q2 - q3
+                    else:
+                        q4 = q234 - q2 + q3
                     qs = np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32)
                     all_qs.append(qs)
         return all_qs
