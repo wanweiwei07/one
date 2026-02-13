@@ -36,7 +36,7 @@ Overall, `one` is intended as a lightweight yet expressive research framework fo
 
 </td>
 <td style="width:40%; border:none; padding:0; text-align:center; vertical-align:middle;">
-<img src="grasp.gif" width="720">
+<img src="grasp.gif" width="640">
 </td>
 </tr>
 </table>
