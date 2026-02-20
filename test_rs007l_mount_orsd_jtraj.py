@@ -6,6 +6,7 @@ import one.utils.constant as ouc
 import one.viewer.world as ovw
 import one.scene.scene_object_primitive as ossop
 import one.motion.trajectory.cartesian as omtr
+import one.motion.trajectory.time_param as omttp
 import one.robots.manipulators.kawasaki.rs007l.rs007l as ormkr7
 import one.robots.end_effectors.onrobot.or_sd.or_sd as oreorsd
 
@@ -65,6 +66,37 @@ if __name__ == '__main__':
         base.run()
     else:
         print(f'cartesian_to_jtraj success: {len(q_seq)} waypoints')
+        # time-parameterize joint waypoints
+        n_jnts = q_seq.shape[1]
+        v_max = np.full(n_jnts, 1.2, dtype=np.float32)
+        a_max = np.full(n_jnts, 2.5, dtype=np.float32)
+        t_seq, q_tp, qd_tp, qdd_tp = omttp.retime_trapezoidal(
+            q_seq=q_seq,
+            v_max=v_max,
+            a_max=a_max,
+            dt=0.01,
+        )
+        print(f'time-parameterized samples: {len(t_seq)}, duration: {float(t_seq[-1]):.3f}s')
+
+        # optional plot
+        try:
+            import matplotlib.pyplot as plt
+
+            fig, axes = plt.subplots(3, 1, sharex=True, figsize=(8, 6))
+            for j in range(n_jnts):
+                axes[0].plot(t_seq, q_tp[:, j], label=f'q{j + 1}')
+                axes[1].plot(t_seq, qd_tp[:, j])
+                axes[2].plot(t_seq, qdd_tp[:, j])
+            axes[0].set_ylabel('q (rad)')
+            axes[1].set_ylabel('qd (rad/s)')
+            axes[2].set_ylabel('qdd (rad/s^2)')
+            axes[2].set_xlabel('t (s)')
+            axes[0].legend(loc='upper right', ncol=3, fontsize=8)
+            fig.tight_layout()
+            plt.show()
+        except Exception as e:
+            print(f'matplotlib plot skipped: {e}')
+
         pos_seq, rotmat_seq = pose_seq
         for pos, rotmat in zip(pos_seq, rotmat_seq):
             ossop.frame(
@@ -74,13 +106,16 @@ if __name__ == '__main__':
                 alpha=0.12,
             ).attach_to(scene)
 
-        idx = [0]
+        duration = float(t_seq[-1]) if len(t_seq) > 0 else 0.0
+        t_acc = [0.0]
 
         def tick(dt):
-            robot.fk(qs=q_seq[idx[0]])
-            idx[0] += 1
-            if idx[0] >= len(q_seq):
-                idx[0] = 0
+            if duration <= 0.0:
+                return
+            t_acc[0] = (t_acc[0] + dt) % duration
+            k = int(np.searchsorted(t_seq, t_acc[0], side='right') - 1)
+            k = max(0, min(k, len(q_tp) - 1))
+            robot.fk(qs=q_tp[k])
 
-        base.schedule_interval(tick, interval=0.03)
+        base.schedule_interval(tick, interval=0.005)
         base.run()

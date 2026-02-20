@@ -1,0 +1,220 @@
+import builtins
+import sys
+
+import numpy as np
+
+from one import ouc, oum, ovw, ossop, osso, ocm, omppc, ompp
+from one.grasp.antipodal import antipodal
+import one.robots.manipulators.universal_robots.ur3.ur3 as ormuu3
+import one.robots.end_effectors.robotiq.rtq2f85.rtq2f85 as oerr
+
+
+def gripper_qs_from_width(gripper, jaw_width):
+    tmp = gripper.clone()
+    tmp.set_jaw_width(jaw_width)
+    return tmp.qs.copy()
+
+
+base = ovw.World(cam_pos=(1.1, -1.0, 0.9), cam_lookat_pos=(0.3, 0.0, 0.25), toggle_auto_cam_orbit=False)
+builtins.base = base
+ossop.frame().attach_to(base.scene)
+
+robot = ormuu3.UR3(rotmat=oum.rotmat_from_euler(0, 0, -oum.pi / 2))
+robot.attach_to(base.scene)
+builtins.robot = robot
+
+gripper = oerr.Rtq2F85()
+gripper.attach_to(base.scene)
+robot.engage(gripper, engage_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.03)))
+gripper.set_jaw_width(gripper.jaw_range[1])
+
+bunny = osso.SceneObject.from_file('bunny.stl', collision_type=ouc.CollisionType.MESH)
+bunny.rgb = (0.8, 0.7, 0.6)
+bunny.pos = (0.3, 0.1, 0.0)
+bunny.attach_to(base.scene)
+
+ground = ossop.plane(pos=(0, 0, 0.0))
+# ground.attach_to(base.scene)
+
+collider = ocm.MJCollider()
+collider.append(robot)
+collider.append(gripper)
+collider.append(bunny)
+collider.append(ground)
+collider.actors = [robot]
+collider.compile(margin=0.0)
+
+pln_ctx = omppc.PlanningContext(collider=collider, cd_step_size=np.pi / 180)
+planner = ompp.LazyPRMPlanner(pln_ctx=pln_ctx, k=18, n_samples=450, max_sample_tries=6000)
+
+print('Computing antipodal grasps...')
+grasps = antipodal(
+    gripper=gripper,
+    target_sobj=bunny,
+    density=0.015,
+    normal_tol_deg=20,
+    roll_step_deg=30,
+    max_grasps=6,
+)
+
+start_qs = robot.qs.copy()
+open_width = float(gripper.jaw_range[1])
+open_qs = gripper_qs_from_width(gripper, open_width)
+
+pre_qs = None
+approach_qs = None
+grasp_width = None
+for pose, pre_pose, jaw_width, score in grasps:
+    pre_pose_world = bunny.tf @ pre_pose
+    pre_rot = pre_pose_world[:3, :3]
+    pre_pos = pre_pose_world[:3, 3]
+    pre_qs_list = robot.ik_tcp(tgt_rotmat=pre_rot, tgt_pos=pre_pos, max_solutions=8)
+    if not pre_qs_list:
+        continue
+    pln_ctx.set_aux_mecbas(gripper, qs=open_qs)
+    for trial_pre_qs in pre_qs_list:
+        if not pln_ctx.is_state_valid(trial_pre_qs):
+            continue
+        pre_qs = trial_pre_qs
+        grasp_width = float(np.clip(jaw_width, gripper.jaw_range[0], gripper.jaw_range[1]))
+        # Optional short approach from pre-grasp toward grasp direction
+        approach_pos = pre_pos + 0.03 * pre_rot[:, 2]
+        approach_qs = robot.ik_tcp_nearest(tgt_rotmat=pre_rot, tgt_pos=approach_pos, ref_qs=trial_pre_qs)
+        break
+    if pre_qs is not None:
+        break
+
+if pre_qs is None:
+    print('Antipodal candidate failed, fallback to a top-down grasp.')
+    pre_rot = oum.rotmat_from_euler(np.pi, 0.0, 0.0)
+    pre_pos = np.array(bunny.pos, dtype=np.float32) + np.array([0.0, 0.0, 0.16], dtype=np.float32)
+    pre_qs = robot.ik_tcp_nearest(tgt_rotmat=pre_rot, tgt_pos=pre_pos, ref_qs=start_qs)
+    if pre_qs is None:
+        print('Fallback IK failed.')
+        base.run()
+        sys.exit(0)
+    approach_pos = np.array(bunny.pos, dtype=np.float32) + np.array([0.0, 0.0, 0.11], dtype=np.float32)
+    approach_qs = robot.ik_tcp_nearest(tgt_rotmat=pre_rot, tgt_pos=approach_pos, ref_qs=pre_qs)
+    grasp_width = 0.03
+
+
+print('Planning start -> pre-grasp...')
+pln_ctx.set_aux_mecbas(gripper, qs=open_qs)
+
+# print(pre_qs)
+# robot.fk(qs = pre_qs)
+base.run()
+
+path_to_pre = planner.solve(start=start_qs, goal=pre_qs, verbose=False)
+if not path_to_pre:
+    print('Failed to plan to pre-grasp. Use direct interpolation fallback.')
+    n_interp = 80
+    path_to_pre = []
+    for i in range(1, n_interp + 1):
+        t = i / n_interp
+        path_to_pre.append(pln_ctx.interpolate(start_qs, pre_qs, t))
+
+print(f'Pre-grasp path waypoints: {len(path_to_pre)}')
+print(f'Selected grasp width: {grasp_width:.4f} m')
+
+# Visualize planning path nodes
+path_stride = max(1, len(path_to_pre) // 30)
+for i in range(0, len(path_to_pre), path_stride):
+    ghost = robot.clone()
+    ghost.fk(qs=path_to_pre[i])
+    tcp_pos = ghost.gl_tcp_tf[:3, 3]
+    ossop.sphere(pos=tcp_pos, radius=0.006, rgb=ouc.ExtendedColor.DEEP_SKY_BLUE).attach_to(base.scene)
+
+# Build scripted sequence: path_to_pre -> approach(optional) -> close -> lift
+approach_steps = 18
+approach_path = []
+if approach_qs is not None:
+    for i in range(1, approach_steps + 1):
+        t = i / approach_steps
+        approach_path.append(pln_ctx.interpolate(pre_qs, approach_qs, t))
+
+close_width = max(gripper.jaw_range[0], min(grasp_width * 0.9, gripper.jaw_range[1]))
+close_steps = 20
+close_widths = np.linspace(open_width, close_width, close_steps)
+
+lift_qs = None
+lift_path = None
+grasp_pose = robot.clone()
+grasp_pose.fk(qs=approach_qs if approach_qs is not None else pre_qs)
+lift_pos = grasp_pose.gl_tcp_tf[:3, 3] + np.array([0.0, 0.0, 0.12], dtype=np.float32)
+lift_rot = grasp_pose.gl_tcp_tf[:3, :3]
+trial_lift_qs = robot.ik_tcp_nearest(
+    tgt_rotmat=lift_rot,
+    tgt_pos=lift_pos,
+    ref_qs=approach_qs if approach_qs is not None else pre_qs,
+)
+if trial_lift_qs is not None:
+    close_qs = gripper_qs_from_width(gripper, close_width)
+    pln_ctx.set_aux_mecbas(gripper, qs=close_qs)
+    lift_start = approach_qs if approach_qs is not None else pre_qs
+    lift_path = planner.solve(start=lift_start, goal=trial_lift_qs, verbose=False)
+    if lift_path:
+        lift_qs = trial_lift_qs
+        print(f'Lift path waypoints: {len(lift_path)}')
+    else:
+        print('Lift planning failed, will stop after grasp.')
+else:
+    print('Lift IK failed, will stop after grasp.')
+
+phase = {'name': 'to_pre', 'idx': 0, 'attached': False}
+
+
+def tick(dt, phase):
+    if phase['name'] == 'to_pre':
+        if phase['idx'] < len(path_to_pre):
+            robot.fk(qs=path_to_pre[phase['idx']])
+            gripper.set_jaw_width(open_width)
+            phase['idx'] += 1
+            return
+        phase['name'] = 'approach'
+        phase['idx'] = 0
+        return
+
+    if phase['name'] == 'approach':
+        if phase['idx'] < len(approach_path):
+            robot.fk(qs=approach_path[phase['idx']])
+            gripper.set_jaw_width(open_width)
+            phase['idx'] += 1
+            return
+        phase['name'] = 'close'
+        phase['idx'] = 0
+        return
+
+    if phase['name'] == 'close':
+        if phase['idx'] < len(close_widths):
+            robot.fk(qs=approach_qs if approach_qs is not None else pre_qs)
+            gripper.set_jaw_width(float(close_widths[phase['idx']]))
+            phase['idx'] += 1
+            return
+        if not phase['attached']:
+            bunny.is_free = True
+            gripper.grasp(bunny, jaw_width=close_width)
+            phase['attached'] = True
+        if lift_path:
+            phase['name'] = 'lift'
+            phase['idx'] = 0
+        else:
+            phase['name'] = 'done'
+        return
+
+    if phase['name'] == 'lift':
+        if phase['idx'] < len(lift_path):
+            robot.fk(qs=lift_path[phase['idx']])
+            gripper.set_jaw_width(close_width)
+            phase['idx'] += 1
+            return
+        phase['name'] = 'done'
+        return
+
+    # done
+    robot.fk(qs=lift_qs if lift_qs is not None else (approach_qs if approach_qs is not None else pre_qs))
+    gripper.set_jaw_width(close_width)
+
+
+base.schedule_interval(tick, interval=0.05, phase=phase)
+base.run()

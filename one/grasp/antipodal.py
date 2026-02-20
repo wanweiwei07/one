@@ -1,5 +1,6 @@
 import numpy as np
 import one.utils.math as oum
+import one.utils.constant as ouc
 import one.scene.geometry_ops as osgop
 import one.collider.cpu_simd as occs
 import one.collider.gpu_simd_batch as ocgcb
@@ -50,9 +51,10 @@ def _ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=1e-6):
     return hit_t, hit_id
 
 
-def build_grasp_rotmat_batch(ray_dirs):
+def build_grasp_rotmat_batch(ray_dirs, open_dir):
     """
-    ray_dirs: (N,3) unit vectors (Y axis for each grasp)
+    ray_dirs: (N,3) unit vectors
+    open_dir: gripper opening direction vector in TCP local frame, shape (3,)
     returns: rotmats (N,3,3)
     """
     y = ray_dirs / (np.linalg.norm(ray_dirs, axis=1, keepdims=True) + oum.eps)
@@ -66,7 +68,11 @@ def build_grasp_rotmat_batch(ray_dirs):
     z = z / (np.linalg.norm(z, axis=1, keepdims=True) + oum.eps)
     x = np.cross(y, z)
     x = x / (np.linalg.norm(x, axis=1, keepdims=True) + oum.eps)
-    return np.stack([x, y, z], axis=2).astype(np.float32)
+    rot_base = np.stack([x, y, z], axis=2).astype(np.float32)
+    if np.linalg.norm(open_dir) < oum.eps:
+        raise ValueError('open_dir must be non-zero')
+    offset = oum.rotmat_between_vecs(open_dir, ouc.StandardAxis.Y).astype(np.float32)
+    return rot_base @ offset
 
 
 def _rotmat_about_axis_batch_vec(axes, angles):
@@ -171,9 +177,11 @@ def antipodal_iter(gripper, tgt_sobj,
     n_sel = n_all[mask]
     nq_sel = nq_all[mask]
     ray_dirs = -n_sel
-    rot_base = build_grasp_rotmat_batch(ray_dirs)
+    open_dir = gripper.open_dir/(np.linalg.norm(gripper.open_dir))
+    rot_base = build_grasp_rotmat_batch(ray_dirs, open_dir)
     angles = np.arange(0.0, 2 * np.pi, roll_step)
-    roll_rots = _rotmat_about_axis_batch_vec(rot_base[:, :, 1], angles)
+    roll_axes = np.einsum('nij,j->ni', rot_base, open_dir)
+    roll_rots = _rotmat_about_axis_batch_vec(roll_axes, angles)
     rot_all = roll_rots @ rot_base[:, None, :, :]
     pose_tf = np.tile(np.eye(4, dtype=np.float32),
                       (rot_all.shape[0], rot_all.shape[1], 1, 1))

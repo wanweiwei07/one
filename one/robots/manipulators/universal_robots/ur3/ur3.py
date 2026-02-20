@@ -41,49 +41,51 @@ def prepare_mechstruct():
     wrist1_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
     wrist2_mesh_rpy = (0.0, 0.0, 0.0)
     wrist3_mesh_rpy = (np.pi / 2.0, 0.0, 0.0)
+    ur_blue = ouc.ExtendedColor.ORIENTAL_BLUE
+    ur_gray = ouc.ExtendedColor.MOON_GRAY
 
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "base.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=base_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*base_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_gray)
     lnk1 = orbms.Link.from_file(
         os.path.join(mesh_dir, "shoulder.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=shoulder_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*shoulder_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_blue)
     lnk2 = orbms.Link.from_file(
         os.path.join(mesh_dir, "upperarm.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=upper_arm_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*upper_arm_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_gray)
     lnk3 = orbms.Link.from_file(
         os.path.join(mesh_dir, "forearm.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=forearm_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*forearm_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_gray)
     lnk4 = orbms.Link.from_file(
         os.path.join(mesh_dir, "wrist1.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=wrist1_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*wrist1_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_blue)
     lnk5 = orbms.Link.from_file(
         os.path.join(mesh_dir, "wrist2.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=wrist2_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*wrist2_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_blue)
     lnk6 = orbms.Link.from_file(
         os.path.join(mesh_dir, "wrist3.stl"),
         collision_type=ouc.CollisionType.MESH,
         loc_pos=wrist3_mesh_pos,
         loc_rotmat=oum.rotmat_from_euler(*wrist3_mesh_rpy),
-        rgb=ouc.ExtendedColor.BEIGE)
+        rgb=ur_gray)
 
     # 6 revolute joints, following UR kinematic convention in this framework
     jnt_b_l1 = orbms.Joint(
@@ -150,9 +152,7 @@ class UR3(ormmb.ManipulatorBase):
         return prepare_mechstruct()
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos)
-        # self._loc_flange_tf = np.eye(4, dtype=np.float32)
-        # self._loc_flange_tf[:3, :3] = oum.rotmat_from_euler(0, -np.pi/2, -np.pi/2)
+        super().__init__(rotmat=rotmat, pos=pos, home_qs=[0, -np.pi/2, np.pi/2, 0, 0, 0])
 
     def get_solver(self, chain):
         # overwrite to use analytical IK solver
@@ -175,7 +175,8 @@ if __name__ == '__main__':
     oframe.attach_to(scene)
     robot = UR3()
     robot.attach_to(scene)
-    robot.alpha=0.3
+    base.run()
+    # robot.alpha=0.3
     builtins.robot = robot
     ossop.frame(pos=robot.gl_tcp_tf[:3, 3], rotmat=robot.gl_tcp_tf[:3, :3],
                 color_mat=ouc.CoordColor.MYC).attach_to(scene)

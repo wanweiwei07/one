@@ -110,7 +110,7 @@ class S456X12(AnaIKBase):
 
     def ik_all(self, tgt_tf_in_root, **kwargs):
         # compute q3 by sp3
-        # R23p34 + p23 = p16
+        # || R23p34 + p23 || = || p16 ||
         # p16 = p0t - R06 p6t - p01
         p06 = tgt_tf_in_root[:3, 3]
         R06 = tgt_tf_in_root[:3, :3] @ self.chain.tfs[-1][:3, :3].T
@@ -289,3 +289,37 @@ class P234X56(AnaIKBase):
                     qs = np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32)
                     all_qs.append(qs)
         return all_qs
+
+# class P23X12X34X56(AnaIKBase):
+#     def __init__(self, chain, joint_limits=None):
+#         super().__init__(chain, joint_limits=joint_limits)
+#         o1 = np.asarray(self.chain.origins[0], dtype=np.float32)
+#         o2 = np.asarray(self.chain.origins[1], dtype=np.float32)
+#         o3 = np.asarray(self.chain.origins[2], dtype=np.float32)
+#         o4 = np.asarray(self.chain.origins[3], dtype=np.float32)
+#         o5 = np.asarray(self.chain.origins[4], dtype=np.float32)
+#         o6 = np.asarray(self.chain.origins[5], dtype=np.float32)
+#         a2 = oum.unit_vec(self.chain.axes[1], return_length=False)
+#         a4 = oum.unit_vec(self.chain.axes[3], return_length=False)
+#         a6 = oum.unit_vec(self.chain.axes[5], return_length=False)
+#         # ow2 = origin of second wrist center (intersection of 34),
+#         # ow1 = origin of first wrist center (intersection of 12),
+#         # compute them by least squares
+#         A2 = np.zeros((3, 3), dtype=np.float32)
+#         b2 = np.zeros(3, dtype=np.float32)
+#         for a, o in [(a2, o2), (a4, o4), (a6, o6)]:
+#             a = oum.unit_vec(a, return_length=False)
+#             i_minus_aat = np.eye(3, dtype=np.float32) - np.outer(a, a)
+#             A2 += i_minus_aat
+#             b2 += i_minus_aat @ o
+#         ow2 = np.linalg.solve(A2, b2)
+#         A1 = np.zeros((3, 3), dtype=np.float32)
+#         b1 = np.zeros(3, dtype=np.float32)
+#         for a, o in [(a2, o2), (a4, ow2), (a6, o6)]:
+#             a = oum.unit_vec(a, return_length=False)
+#             i_minus_aat = np.eye(3, dtype=np.float32) - np.outer(a, a)
+#             A1 += i_minus_aat
+#             b1 += i_minus_aat @ o
+#         ow1 = np.linalg.solve(A1, b1)
+#         # paper-style vectors
+#         self.p01 =

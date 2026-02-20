@@ -5,11 +5,11 @@ import one.robots.base.mech_base as orbmb
 
 class ManipulatorBase(orbmb.MechBase):
 
-    def __init__(self, rotmat=None, pos=None, is_free=False):
+    def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=False):
         compiled = self.structure._compiled
         if len(compiled.tip_lnks) != 1:
             raise ValueError("ManipulatorBase must have a single tip.")
-        super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
+        super().__init__(rotmat=rotmat, pos=pos, home_qs=home_qs, is_free=is_free)
         self._loc_flange_tf = np.eye(4, dtype=np.float32)
         self._loc_tcp_tf = np.eye(4, dtype=np.float32)
         self._chain = self.structure.get_chain(compiled.root_lnk, compiled.tip_lnks[0])
@@ -82,7 +82,7 @@ class ManipulatorBase(orbmb.MechBase):
         )
         new._solver = new.get_solver(new._chain)
         return new
-    
+
     @property
     def gl_flange_tf(self):
         return self.runtime_lnks[-1].tf @ self._loc_flange_tf
@@ -94,6 +94,5 @@ class ManipulatorBase(orbmb.MechBase):
     def mount(self, *args, **kwargs):
         """turn off mount() to avoid confusion"""
         raise RuntimeError(
-            "Manipulator.mount() is disabled. "
-            "Use engage(child, engage_tf) instead."
+            "Manipulator.mount() is disabled. " "Use engage(child, engage_tf) instead."
         )

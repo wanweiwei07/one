@@ -66,6 +66,7 @@ class OR2FG7(oreb.EndEffectorBase, oreb.GripperMixin):
         super().__init__(
             loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.15)))
         self.jaw_range = np.array([0.005, 0.038], dtype=np.float32)  # min, max
+        self.open_dir = ouc.StandardAxis.Y
         self.set_jaw_width(0.005)
 
     def set_jaw_width(self, jaw_width):
@@ -76,5 +77,6 @@ class OR2FG7(oreb.EndEffectorBase, oreb.GripperMixin):
     def clone(self):
         new = super().clone()
         new.jaw_range = self.jaw_range.copy()
+        new.open_dir = self.open_dir
         new.set_jaw_width(self.qs[0]*2)
         return new

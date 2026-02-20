@@ -63,6 +63,8 @@ def retime_trapezoidal(q_seq, v_max, a_max, dt=0.01):
         mask = np.abs(dq) > eps
         if not np.any(mask):
             continue
+        # q = q0+s*dq, where s goes from 0 to 1. 
+        # find time-optimal s(t) under v_max and a_max constraints.
         sdot_max = float(np.min(v_max[mask] / np.abs(dq[mask])))
         sddot_max = float(np.min(a_max[mask] / np.abs(dq[mask])))
         t_acc, t_cruise, t_total = _unit_profile_timing(sdot_max, sddot_max)
@@ -100,6 +102,11 @@ def retime_trapezoidal(q_seq, v_max, a_max, dt=0.01):
 
 def _unit_profile_timing(sdot_max, sddot_max):
     # rest-to-rest profile on unit distance in scalar s
+    # check if we can reach sdot_max before hitting s=1.0 under max accel
+    # v^2/(2*a) is the distance needed to accelerate from 0 to v
+    # considering both accel and decel
+    # we need 2*v^2/(2*a) = v^2/a distance to reach v and then decelerate back to 0.
+    # if v^2/a >= 1.0, then we cannot reach v before hitting s=1.0, so it's triangular.
     if sdot_max * sdot_max / sddot_max >= 1.0:
         # triangular
         t_acc = np.sqrt(1.0 / sddot_max)
