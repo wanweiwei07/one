@@ -242,7 +242,7 @@ def tick(dt):
         goal_qs = None
         aux_qs = None
         clear_drawn()
-        MAX_DRAW = 10
+        MAX_DRAW = 30
         
         feasible_bunny1 = {}
         feasible_bunny2 = {}
@@ -271,7 +271,7 @@ def tick(dt):
         shared_indices = set(feasible_bunny1.keys()) & set(feasible_bunny2.keys())
         
         count1 = 0
-        for i in feasible_bunny1:
+        for i in sorted(feasible_bunny1.keys()):
             qs, jaw_width = feasible_bunny1[i]
             if i in drawn_nodes_bunny1:
                 tmp = drawn_nodes_bunny1[i]
@@ -286,7 +286,7 @@ def tick(dt):
                 break
         
         count2 = 0
-        for i in feasible_bunny2:
+        for i in sorted(feasible_bunny2.keys()):
             qs, jaw_width = feasible_bunny2[i]
             if i in drawn_nodes_bunny2:
                 tmp = drawn_nodes_bunny2[i]
@@ -301,7 +301,7 @@ def tick(dt):
                 break
         
         count_shared = 0
-        for i in shared_indices:
+        for i in sorted(shared_indices):
             pose, pre_pose, jaw_width, score = grasps[i]
             
             pre_pose_world1 = tf_bunny @ pre_pose
@@ -311,6 +311,27 @@ def tick(dt):
             pre_pose_world2 = tf_bunny2 @ pre_pose
             pre_rot2 = pre_pose_world2[:3, :3]
             pre_pos2 = pre_pose_world2[:3, 3]
+
+            # Ensure: every shared (blue) grasp has corresponding feasible (green) robot poses.
+            qs1, _ = feasible_bunny1[i]
+            qs2, _ = feasible_bunny2[i]
+            if i in drawn_nodes_bunny1:
+                tmp1 = drawn_nodes_bunny1[i]
+            else:
+                tmp1 = robot.clone()
+                tmp1.attach_to(base.scene)
+                drawn_nodes_bunny1[i] = tmp1
+            tmp1.rgba = (0.0, 1.0, 0.0, 0.1)
+            tmp1.fk(qs=qs1)
+
+            if i in drawn_nodes_bunny2:
+                tmp2 = drawn_nodes_bunny2[i]
+            else:
+                tmp2 = robot.clone()
+                tmp2.attach_to(base.scene)
+                drawn_nodes_bunny2[i] = tmp2
+            tmp2.rgba = (0.0, 1.0, 0.0, 0.1)
+            tmp2.fk(qs=qs2)
             
             if i in drawn_nodes_shared:
                 gripper1, gripper2 = drawn_nodes_shared[i]
@@ -328,8 +349,7 @@ def tick(dt):
             gripper2.grip_at(pre_pos2, pre_rot2, jaw_width)
             
             if goal_qs is None:
-                qs, _ = feasible_bunny1[i]
-                goal_qs = qs
+                goal_qs = qs1
                 aux_qs = (jaw_width / 2, jaw_width / 2)
             count_shared += 1
             if count_shared >= MAX_DRAW:
