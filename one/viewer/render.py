@@ -162,7 +162,7 @@ class Render:
         for instance_list in pcd_groups.values():
             for model, node in instance_list:
                 self.pcd_shader.program["u_model"] = (
-                        node.wd_tf @ model.local_tfmat).T.ravel()
+                        node.wd_tf @ model.tf).T.ravel()
                 model.get_device_buffer().draw()
 
     def _gl_setup(self):

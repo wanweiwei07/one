@@ -71,13 +71,15 @@ class CubeMarsNativeCAN:
 
     def set_pos(self, pos_deg):
         payload = bytearray()
-        self._append_s32(payload, pos_deg * 10000.0)  # manual: int32(pos*10000)
+        # manual: int32(pos*10000)
+        self._append_s32(payload, pos_deg * 10000.0)
         return can.Message(arbitration_id=self._build_arbitration_id('Position_mode'),
                            data=payload,
                            is_extended_id=True)
 
     def set_origin(self, set_origin_mode):
-        payload = bytearray([int(set_origin_mode) & 0xFF])  # manual: 1-byte mode
+        payload = bytearray([int(set_origin_mode) & 0xFF]
+                            )  # manual: 1-byte mode
         return can.Message(arbitration_id=self._build_arbitration_id('Set_origin_mode'),
                            data=payload,
                            is_extended_id=True)
@@ -97,12 +99,14 @@ class CubeMarsNativeCAN:
         [pos_hi,pos_lo,spd_hi,spd_lo,cur_hi,cur_lo,temp,error]
         """
         if len(rx_message.data) < 8:
-            raise ValueError(f'feedback length must be >=8, got {len(rx_message.data)}')
+            raise ValueError(
+                f'feedback length must be >=8, got {len(rx_message.data)}')
         data = rx_message.data
         pos_int = struct.unpack('>h', bytes(data[0:2]))[0]
         spd_int = struct.unpack('>h', bytes(data[2:4]))[0]
         cur_int = struct.unpack('>h', bytes(data[4:6]))[0]
-        control_mode = (rx_message.arbitration_id >> self.CAN_ID_BITS['Control_mode'].start) & 0xFF
+        control_mode = (rx_message.arbitration_id >>
+                        self.CAN_ID_BITS['Control_mode'].start) & 0xFF
         return {
             'control_mode': int(control_mode),
             'motor_pos_deg': float(pos_int * 0.1),
@@ -147,7 +151,8 @@ class CubeMarsRLinkSerial:
     def _crc16_byte(c):
         c <<= 8
         for _ in range(8):
-            c = ((c << 1) ^ 0x1021) & 0xFFFF if (c & 0x8000) else ((c << 1) & 0xFFFF)
+            c = ((c << 1) ^ 0x1021) & 0xFFFF if (
+                c & 0x8000) else ((c << 1) & 0xFFFF)
         return c
 
     @classmethod
@@ -218,8 +223,10 @@ class CubeMarsRLinkSerial:
 
     def open(self):
         if serial is None:
-            raise ImportError('pyserial is required for CubeMarsRLinkSerial session methods')
-        self._ser = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
+            raise ImportError(
+                'pyserial is required for CubeMarsRLinkSerial session methods')
+        self._ser = serial.Serial(
+            self.port, baudrate=self.baudrate, timeout=self.timeout)
         self._ser.reset_input_buffer()
         self._ser.reset_output_buffer()
         return self
@@ -272,11 +279,11 @@ class CubeMarsRLinkSerial:
         return self.transact(frame, probe_time_s=probe_time_s)
 
     def set_pos_spd(self, pos_deg, spd_erpm, acc_erpm_s2, probe_time_s=0.2):
-        frame = CubeMarsRLinkSerial.comm_set_pos_spd(pos_deg, spd_erpm=spd_erpm, acc_erpm_s2=acc_erpm_s2)
+        frame = CubeMarsRLinkSerial.comm_set_pos_spd(
+            pos_deg, spd_erpm=spd_erpm, acc_erpm_s2=acc_erpm_s2)
         return self.transact(frame, probe_time_s=probe_time_s)
 
 
 # Backward compatible aliases
 Motor = CubeMarsNativeCAN
 RLink = CubeMarsRLinkSerial
-    

@@ -25,10 +25,11 @@ import one.motion.trajectory.cartesian as omtr
 import one.motion.trajectory.time_param as omttp
 
 import one.robots.manipulators.kawasaki.rs007l.rs007l as khi_rs007l
+import one.robots.manipulators.xarm.lite6.lite6 as xarm_lite6
 import one.robots.end_effectors.onrobot.or_2fg7.or_2fg7 as or_2fg7
 import one.robots.vehicle.xytheta as xyt
 
 __all__ = ['np', 'key', 'oum', 'ouh', 'ouc',
            'oss', 'osso', 'ossop', 'ogg', 'osrm', 'ogl', 'ovw',
            'ocm', 'omppc', 'ompr', 'ompp', 'omtr', 'omttp',
-           'khi_rs007l', 'or_2fg7', 'xyt']
+           'khi_rs007l', 'xarm_lite6', 'or_2fg7', 'xyt']
