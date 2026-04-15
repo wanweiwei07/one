@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<mujoco>
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+  <default>
+    <geom margin="0.0" solref="0.02 1.0" solimp="0.9 0.95 0.002"/>
+  </default>
+  <asset>
+    <mesh name="mesh_0" file="E:\src_code\one\one\robots\end_effectors\onrobot\or_2fg7\meshes\base_link.stl"/>
+    <mesh name="mesh_1" file="E:\src_code\one\one\robots\end_effectors\onrobot\or_2fg7\meshes\inward_left_finger_link.stl"/>
+    <mesh name="mesh_2" file="E:\src_code\one\one\robots\end_effectors\onrobot\or_2fg7\meshes\inward_right_finger_link.stl"/>
+    <mesh name="mesh_3" file="bunny.stl"/>
+  </asset>
+  <worldbody>
+    <body name="sobj_0" pos="0.002577752573415637 -0.09228867292404175 0.2791728377342224" quat="-0.25559744238853455 0.9470603466033936 0.18757382035255432 0.05062338709831238">
+      <freejoint/>
+      <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.0 0.7071067690849304" mesh="mesh_0" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+      <body name="sobj_1" pos="0.0 -0.01899999938905239 0.0" quat="1.0 0.0 0.0 0.0">
+        <joint name="jnt_0" type="slide" axis="0.0 1.0 0.0" range="0.0 0.01899999938905239" damping="1" frictionloss="0.01" armature="0.02"/>
+        <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.0 0.7071067690849304" mesh="mesh_1" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+      </body>
+      <body name="sobj_2" pos="0.0 0.01899999938905239 0.0" quat="1.0 0.0 0.0 0.0">
+        <joint name="jnt_1" type="slide" axis="-0.0 -1.0 -0.0" range="0.0 0.01899999938905239" damping="1" frictionloss="0.01" armature="0.02"/>
+        <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.0 0.7071067690849304" mesh="mesh_2" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+      </body>
+    </body>
+    <body name="sobj_3" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+      <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0" mesh="mesh_3" friction="2 0.1 0.01" contype="2" conaffinity="5"/>
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="sobj_0" body2="sobj_1"/>
+    <exclude body1="sobj_0" body2="sobj_2"/>
+    <exclude body1="sobj_1" body2="sobj_2"/>
+  </contact>
+  <compiler angle="radian"/>
+</mujoco>

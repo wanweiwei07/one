@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+<mujoco>
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+  <default>
+    <geom margin="0.0" solref="0.02 1.0" solimp="0.9 0.95 0.002"/>
+  </default>
+  <asset>
+    <mesh name="mesh_0" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\base_link.stl"/>
+    <mesh name="mesh_1" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\link1.stl"/>
+    <mesh name="mesh_2" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\link2.stl"/>
+    <mesh name="mesh_3" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\link3.stl"/>
+    <mesh name="mesh_4" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\link4.stl"/>
+    <mesh name="mesh_5" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\link5.stl"/>
+    <mesh name="mesh_6" file="E:\src_code\one\one\robots\manipulators\kawasaki\rs007l\meshes\link6.stl"/>
+    <mesh name="mesh_7" file="E:\src_code\one\one\robots\end_effectors\onrobot\or_2fg7\meshes\base_link.stl"/>
+    <mesh name="mesh_8" file="E:\src_code\one\one\robots\end_effectors\onrobot\or_2fg7\meshes\inward_left_finger_link.stl"/>
+    <mesh name="mesh_9" file="E:\src_code\one\one\robots\end_effectors\onrobot\or_2fg7\meshes\inward_right_finger_link.stl"/>
+    <mesh name="mesh_10" file="bunny.stl"/>
+  </asset>
+  <worldbody>
+    <body name="sobj_0" pos="0.5 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+      <inertial mass="11.0" pos="0.0 0.0 0.0" diaginertia="0.16692614555358887 0.06688368320465088 0.16622582077980042"/>
+      <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0" mesh="mesh_0" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+      <body name="sobj_1" pos="0.0 0.0 0.36000001430511475" quat="1.0 0.0 0.0 0.0">
+        <joint name="jnt_0" type="hinge" axis="-0.0 -0.0 -1.0" range="-3.1415927410125732 3.1415927410125732" damping="1" frictionloss="0.01" armature="0.02"/>
+        <inertial mass="8.118" pos="0.0 0.0 0.0" diaginertia="0.07024072110652924 0.07898657768964767 0.06833428889513016"/>
+        <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0" mesh="mesh_1" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+        <body name="sobj_2" pos="0.0 0.0 0.0" quat="-0.7071067690849304 0.0 0.7071067690849304 0.0">
+          <joint name="jnt_1" type="hinge" axis="0.0 0.0 1.0" range="-2.356194496154785 2.356194496154785" damping="1" frictionloss="0.01" armature="0.02"/>
+          <inertial mass="6.826" pos="0.0 0.0 0.0" diaginertia="0.018114838749170303 0.2010231614112854 0.2030276507139206"/>
+          <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.7071067690849304 0.0" mesh="mesh_2" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+          <body name="sobj_3" pos="0.45500001311302185 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+            <joint name="jnt_2" type="hinge" axis="-0.0 -0.0 -1.0" range="-2.7488934993743896 2.7488934993743896" damping="1" frictionloss="0.01" armature="0.02"/>
+            <inertial mass="5.236" pos="0.0 0.0 0.0" diaginertia="0.02610178478062153 0.0345609188079834 0.033013131469488144"/>
+            <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.7071067690849304 0.0" mesh="mesh_3" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+            <body name="sobj_4" pos="0.0925000011920929 0.0 0.0" quat="0.7071067690849304 0.0 0.7071067690849304 0.0">
+              <joint name="jnt_3" type="hinge" axis="0.0 0.0 1.0" range="-3.4906585216522217 3.4906585216522217" damping="1" frictionloss="0.01" armature="0.02"/>
+              <inertial mass="5.066" pos="0.0 0.0 0.3851999937193788" diaginertia="0.07666396349668503 0.07740805298089981 0.01266054343432188"/>
+              <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.38519999384880066" quat="1.0 0.0 0.0 0.0" mesh="mesh_4" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+              <body name="sobj_5" pos="0.0 0.0 0.3824999928474426" quat="-0.7071067690849304 0.0 0.7071067690849304 0.0">
+                <joint name="jnt_4" type="hinge" axis="-0.0 -0.0 -1.0" range="-2.181661605834961 2.181661605834961" damping="1" frictionloss="0.01" armature="0.02"/>
+                <inertial mass="1.625" pos="0.0 0.0 0.0" diaginertia="0.0017678021686151624 0.0025984635576605797 0.0030239715706557035"/>
+                <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.7071067690849304 0.0" mesh="mesh_5" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+                <body name="sobj_6" pos="0.07800000160932541 0.0 0.0" quat="0.7071067690849304 0.0 0.7071067690849304 0.0">
+                  <joint name="jnt_5" type="hinge" axis="0.0 0.0 1.0" range="-6.2831854820251465 6.2831854820251465" damping="1" frictionloss="0.01" armature="0.02"/>
+                  <inertial mass="0.625" pos="0.0 0.0 0.0" diaginertia="8.458902448182926e-05 8.458902448182926e-05 0.0001665738964220509"/>
+                  <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0" mesh="mesh_6" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+                  <body name="sobj_7" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+                    <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.0 0.7071067690849304" mesh="mesh_7" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+                    <body name="sobj_8" pos="0.0 -0.01899999938905239 0.0" quat="1.0 0.0 0.0 0.0">
+                      <joint name="jnt_6" type="slide" axis="0.0 1.0 0.0" range="0.0 0.01899999938905239" damping="1" frictionloss="0.01" armature="0.02"/>
+                      <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.0 0.7071067690849304" mesh="mesh_8" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+                    </body>
+                    <body name="sobj_9" pos="0.0 0.01899999938905239 0.0" quat="1.0 0.0 0.0 0.0">
+                      <joint name="jnt_7" type="slide" axis="-0.0 -1.0 -0.0" range="0.0 0.01899999938905239" damping="1" frictionloss="0.01" armature="0.02"/>
+                      <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="0.7071067690849304 0.0 0.0 0.7071067690849304" mesh="mesh_9" friction="2 0.1 0.01" contype="1" conaffinity="7"/>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="sobj_10" pos="0.0 0.0 0.11500000208616257" quat="1.0 0.0 0.0 0.0">
+      <geom type="plane" size="1.0 1.0 0.1" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0" friction="2 0.1 0.01" contype="2" conaffinity="5"/>
+    </body>
+    <body name="sobj_11" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0">
+      <geom type="mesh" size="1 1 1" pos="0.0 0.0 0.0" quat="1.0 0.0 0.0 0.0" mesh="mesh_10" friction="2 0.1 0.01" contype="2" conaffinity="5"/>
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="sobj_0" body2="sobj_1"/>
+    <exclude body1="sobj_2" body2="sobj_4"/>
+    <exclude body1="sobj_1" body2="sobj_2"/>
+    <exclude body1="sobj_3" body2="sobj_4"/>
+    <exclude body1="sobj_4" body2="sobj_6"/>
+    <exclude body1="sobj_2" body2="sobj_3"/>
+    <exclude body1="sobj_0" body2="sobj_2"/>
+    <exclude body1="sobj_4" body2="sobj_5"/>
+    <exclude body1="sobj_5" body2="sobj_6"/>
+    <exclude body1="sobj_1" body2="sobj_3"/>
+    <exclude body1="sobj_3" body2="sobj_5"/>
+    <exclude body1="sobj_7" body2="sobj_8"/>
+    <exclude body1="sobj_7" body2="sobj_9"/>
+    <exclude body1="sobj_8" body2="sobj_9"/>
+  </contact>
+  <compiler angle="radian"/>
+</mujoco>
