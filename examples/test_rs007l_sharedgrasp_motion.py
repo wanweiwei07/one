@@ -23,12 +23,14 @@ gripper.attach_to(base.scene)
 robot.engage(gripper)
 
 # load bunny1
-bunny = osso.SceneObject.from_file("bunny.stl", collision_type=ouc.CollisionType.MESH)
+bunny = osso.SceneObject.from_file(
+    "bunny.stl", collision_type=ouc.CollisionType.MESH)
 bunny.rgb = (0.8, 0.7, 0.6)
 bunny.attach_to(base.scene)
 
 # load bunny2
-bunny2 = osso.SceneObject.from_file("bunny.stl", collision_type=ouc.CollisionType.MESH)
+bunny2 = osso.SceneObject.from_file(
+    "bunny.stl", collision_type=ouc.CollisionType.MESH)
 bunny2.rgb = (0.7, 0.8, 0.6)
 bunny2.attach_to(base.scene)
 
@@ -108,7 +110,8 @@ if len(pre_pose_pos_list) > 0:
         pre_rot=np.asarray(pre_pose_rot_list, dtype=np.float32),
         jaw_width=np.asarray(jaw_width_list, dtype=np.float32),
     )
-    print(f"Saved {len(pre_pose_pos_list)} candidates to rs007l_grasp_candidates.npz")
+    print(
+        f"Saved {len(pre_pose_pos_list)} candidates to rs007l_grasp_candidates.npz")
 
 # --- solve IK for each grasp and visualize ---
 n_solved = 0
@@ -243,10 +246,10 @@ def tick(dt):
         aux_qs = None
         clear_drawn()
         MAX_DRAW = 30
-        
+
         feasible_bunny1 = {}
         feasible_bunny2 = {}
-        
+
         for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
             pre_pose_world1 = tf_bunny @ pre_pose
             pre_rot1 = pre_pose_world1[:3, :3]
@@ -254,22 +257,25 @@ def tick(dt):
             qs_list1 = robot.ik_tcp(tgt_rotmat=pre_rot1, tgt_pos=pre_pos1)
             if qs_list1:
                 qs1 = qs_list1[0]
-                pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+                pln_ctx.set_aux_mecbas(gripper, qs=(
+                    jaw_width / 2, jaw_width / 2))
                 if pln_ctx.is_state_valid(qs1):
                     feasible_bunny1[i] = (qs1, jaw_width)
-            
+
             pre_pose_world2 = tf_bunny2 @ pre_pose
             pre_rot2 = pre_pose_world2[:3, :3]
             pre_pos2 = pre_pose_world2[:3, 3]
             qs_list2 = robot.ik_tcp(tgt_rotmat=pre_rot2, tgt_pos=pre_pos2)
             if qs_list2:
                 qs2 = qs_list2[0]
-                pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+                pln_ctx.set_aux_mecbas(gripper, qs=(
+                    jaw_width / 2, jaw_width / 2))
                 if pln_ctx.is_state_valid(qs2):
                     feasible_bunny2[i] = (qs2, jaw_width)
-        
-        shared_indices = set(feasible_bunny1.keys()) & set(feasible_bunny2.keys())
-        
+
+        shared_indices = set(feasible_bunny1.keys()) & set(
+            feasible_bunny2.keys())
+
         count1 = 0
         for i in sorted(feasible_bunny1.keys()):
             qs, jaw_width = feasible_bunny1[i]
@@ -284,7 +290,7 @@ def tick(dt):
             count1 += 1
             if count1 >= MAX_DRAW:
                 break
-        
+
         count2 = 0
         for i in sorted(feasible_bunny2.keys()):
             qs, jaw_width = feasible_bunny2[i]
@@ -299,15 +305,15 @@ def tick(dt):
             count2 += 1
             if count2 >= MAX_DRAW:
                 break
-        
+
         count_shared = 0
         for i in sorted(shared_indices):
             pose, pre_pose, jaw_width, score = grasps[i]
-            
+
             pre_pose_world1 = tf_bunny @ pre_pose
             pre_rot1 = pre_pose_world1[:3, :3]
             pre_pos1 = pre_pose_world1[:3, 3]
-            
+
             pre_pose_world2 = tf_bunny2 @ pre_pose
             pre_rot2 = pre_pose_world2[:3, :3]
             pre_pos2 = pre_pose_world2[:3, 3]
@@ -332,7 +338,7 @@ def tick(dt):
                 drawn_nodes_bunny2[i] = tmp2
             tmp2.rgba = (0.0, 1.0, 0.0, 0.1)
             tmp2.fk(qs=qs2)
-            
+
             if i in drawn_nodes_shared:
                 gripper1, gripper2 = drawn_nodes_shared[i]
             else:
@@ -341,13 +347,13 @@ def tick(dt):
                 gripper2 = gripper.clone()
                 gripper2.attach_to(base.scene)
                 drawn_nodes_shared[i] = (gripper1, gripper2)
-            
+
             gripper1.rgba = (0.0, 0.0, 1.0, 0.3)
             gripper1.grip_at(pre_pos1, pre_rot1, jaw_width)
-            
+
             gripper2.rgba = (0.0, 0.0, 1.0, 0.3)
             gripper2.grip_at(pre_pos2, pre_rot2, jaw_width)
-            
+
             if goal_qs is None:
                 goal_qs = qs1
                 aux_qs = (jaw_width / 2, jaw_width / 2)
