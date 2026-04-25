@@ -71,7 +71,8 @@ def build_grasp_rotmat_batch(ray_dirs, open_dir):
     rot_base = np.stack([x, y, z], axis=2).astype(np.float32)
     if np.linalg.norm(open_dir) < oum.eps:
         raise ValueError('open_dir must be non-zero')
-    offset = oum.rotmat_between_vecs(open_dir, ouc.StandardAxis.Y).astype(np.float32)
+    offset = oum.rotmat_between_vecs(
+        open_dir, ouc.StandardAxis.Y).astype(np.float32)
     return rot_base @ offset
 
 

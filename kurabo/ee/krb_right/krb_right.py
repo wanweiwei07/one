@@ -12,7 +12,6 @@ def prepare_ms():
     # 3 links
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "rh_base.stl"),
-        scale=0.001,
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
@@ -25,7 +24,6 @@ def prepare_ms():
         rgb=ouc.ExtendedColor.STEEL_BLUE)
     rf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "rh_right.stl"),
-        scale=0.001,
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
@@ -66,7 +64,7 @@ class KRBRight(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def __init__(self):
         super().__init__(
-            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.15)))
+            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0.004, 0, 0.228)))
         self.jaw_range = np.array([0.0, 0.0238], dtype=np.float32)  # min, max
         self.open_dir = ouc.StandardAxis.Y
         self.set_jaw_width(0.0)

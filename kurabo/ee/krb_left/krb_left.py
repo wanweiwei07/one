@@ -12,21 +12,18 @@ def prepare_ms():
     # 3 links
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "lf_base.stl"),
-        scale=0.001,
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SILVER)
     lf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "lf_left.stl"),
-        scale=0.001,
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.STEEL_BLUE)
     rf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "lh_right.stl"),
-        scale=0.001,
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
@@ -67,14 +64,15 @@ class KRBLeft(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def __init__(self):
         super().__init__(
-            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.15)))
+            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.242)))
         self.jaw_range = np.array([0.0, 0.0238], dtype=np.float32)  # min, max
         self.open_dir = ouc.StandardAxis.Y
         self.set_jaw_width(0.0)
 
     def set_jaw_width(self, jaw_width):
         if jaw_width < self.jaw_range[0] or jaw_width > self.jaw_range[1]:
-            raise ValueError(f"jaw_width {jaw_width} out of range {self.jaw_range}")
+            raise ValueError(
+                f"jaw_width {jaw_width} out of range {self.jaw_range}")
         self.fk(qs=[jaw_width * 0.5, jaw_width * 0.5])
 
     def clone(self):
@@ -92,7 +90,8 @@ if __name__ == '__main__':
     import one.viewer.world as ovw
     import one.scene.scene_object_primitive as ossop
 
-    base = ovw.World(cam_pos=(0.3, -0.3, 0.25), cam_lookat_pos=(0.05, 0.0, 0.05))
+    base = ovw.World(cam_pos=(0.3, -0.3, 0.25), 
+                     cam_lookat_pos=(0.05, 0.0, 0.05))
     builtins.base = base
     ossop.frame().attach_to(base.scene)
 

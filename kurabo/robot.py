@@ -7,6 +7,7 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+import one.utils.math as oum
 import one.utils.constant as ouc
 # UR3E module is not yet implemented in `one`; using UR3 (same kinematic family)
 import one.robots.manipulators.universal_robots.ur3.ur3 as orur3
@@ -15,13 +16,17 @@ from kurabo.ee.krb_left.krb_left import KRBLeft
 from kurabo.ee.krb_right.krb_right import KRBRight
 
 
+# Gripper base sits 3mm behind the UR flange face along the flange Z axis.
+_KRB_ENGAGE_TF = oum.tf_from_rotmat_pos(pos=(0.0, 0.0, -0.003))
+
+
 class LeftRobot(orur3.UR3):
     """UR3 with the Kurabo left hand mounted on the flange."""
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
         self.gripper = KRBLeft()
-        self.engage(self.gripper)
+        self.engage(self.gripper, engage_tf=_KRB_ENGAGE_TF)
 
 
 class RightRobot(orur3.UR3):
@@ -30,7 +35,7 @@ class RightRobot(orur3.UR3):
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
         self.gripper = KRBRight()
-        self.engage(self.gripper)
+        self.engage(self.gripper, engage_tf=_KRB_ENGAGE_TF)
 
 
 if __name__ == '__main__':
@@ -54,6 +59,8 @@ if __name__ == '__main__':
         tcp_tf = arm.gl_tcp_tf
         ossop.frame(pos=tcp_tf[:3, 3], rotmat=tcp_tf[:3, :3],
                     color_mat=ouc.CoordColor.MYC).attach_to(base.scene)
+        ee_tf = arm.gripper.runtime_root_lnk.tf
+        ossop.frame(pos=ee_tf[:3, 3], rotmat=ee_tf[:3, :3]).attach_to(base.scene)
 
     builtins.lft_robot = lft_robot
     builtins.rgt_robot = rgt_robot

@@ -1,5 +1,4 @@
 import numpy as np
-from OpenGL.wrapper import none_or_pass
 
 import one.geom.fitting as ogf
 import one.geom.surface as ogs
@@ -11,7 +10,9 @@ from one import oum, ouc, ovw, ossop, osso, khi_rs007l, or_2fg7
 from one import omppc, ompp
 
 base = ovw.World(
-    cam_pos=(2, 2, 1.5), cam_lookat_pos=(0, 0, 0.75), toggle_auto_cam_orbit=False
+    cam_pos=(2, 2, 1.5),
+    cam_lookat_pos=(0, 0, 0.75),
+    toggle_auto_cam_orbit=False
 )
 ossop.frame().attach_to(base.scene)
 
@@ -110,8 +111,8 @@ if len(pre_pose_pos_list) > 0:
         pre_rot=np.asarray(pre_pose_rot_list, dtype=np.float32),
         jaw_width=np.asarray(jaw_width_list, dtype=np.float32),
     )
-    print(
-        f"Saved {len(pre_pose_pos_list)} candidates to rs007l_grasp_candidates.npz")
+    print(f"Saved {len(pre_pose_pos_list)} candidates to"
+          f"rs007l_grasp_candidates.npz")
 
 # --- solve IK for each grasp and visualize ---
 n_solved = 0
@@ -318,7 +319,8 @@ def tick(dt):
             pre_rot2 = pre_pose_world2[:3, :3]
             pre_pos2 = pre_pose_world2[:3, 3]
 
-            # Ensure: every shared (blue) grasp has corresponding feasible (green) robot poses.
+            # Ensure: every shared (blue) grasp has corresponding
+            # feasible (green) robot poses.
             qs1, _ = feasible_bunny1[i]
             qs2, _ = feasible_bunny2[i]
             if i in drawn_nodes_bunny1:
