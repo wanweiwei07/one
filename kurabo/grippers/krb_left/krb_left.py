@@ -11,19 +11,19 @@ def prepare_ms():
     mesh_dir = structure.default_mesh_dir
     # 3 links
     base_lnk = orbms.Link.from_file(
-        os.path.join(mesh_dir, "rh_base.stl"),
+        os.path.join(mesh_dir, "lf_base.stl"),
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SILVER)
     lf_lnk = orbms.Link.from_file(
-        os.path.join(mesh_dir, "rh_left.stl"),
+        os.path.join(mesh_dir, "lf_left.stl"),
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.STEEL_BLUE)
     rf_lnk = orbms.Link.from_file(
-        os.path.join(mesh_dir, "rh_right.stl"),
+        os.path.join(mesh_dir, "lh_right.stl"),
         loc_rotmat=None,
         loc_pos=None,
         collision_type=ouc.CollisionType.MESH,
@@ -56,7 +56,7 @@ def prepare_ms():
     return structure
 
 
-class KRBRight(oreb.EndEffectorBase, oreb.GripperMixin):
+class KRBLeft(oreb.EndEffectorBase, oreb.GripperMixin):
 
     @classmethod
     def _build_structure(cls):
@@ -64,14 +64,16 @@ class KRBRight(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def __init__(self):
         super().__init__(
-            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0.004, 0, 0.228)))
+            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0, 0, 0.248)))
         self.jaw_range = np.array([0.0, 0.0238], dtype=np.float32)  # min, max
         self.open_dir = ouc.StandardAxis.Y
+        self.contact_pattern = np.array([[0.0, 0.002, 0.0]], dtype=np.float32)
         self.set_jaw_width(0.0)
 
     def set_jaw_width(self, jaw_width):
         if jaw_width < self.jaw_range[0] or jaw_width > self.jaw_range[1]:
-            raise ValueError(f"jaw_width {jaw_width} out of range {self.jaw_range}")
+            raise ValueError(
+                f"jaw_width {jaw_width} out of range {self.jaw_range}")
         self.fk(qs=[jaw_width * 0.5, jaw_width * 0.5])
 
     def clone(self):
@@ -89,36 +91,42 @@ if __name__ == '__main__':
     import one.viewer.world as ovw
     import one.scene.scene_object_primitive as ossop
 
-    base = ovw.World(cam_pos=(0.3, -0.3, 0.25), cam_lookat_pos=(0.05, 0.0, 0.05))
+    base = ovw.World(cam_pos=(0.3, -0.3, 0.25), 
+                     cam_lookat_pos=(0.05, 0.0, 0.05))
     builtins.base = base
     ossop.frame().attach_to(base.scene)
 
-    jaw_widths = [0.0, 0.006, 0.012, 0.018, 0.0238]
-    template = KRBRight()
-    grippers = []
-    phases = []
-    for i, jaw_width in enumerate(jaw_widths):
-        gripper = template.clone()
-        gripper.set_jaw_width(jaw_width)
-        gripper.set_rotmat_pos(pos=(0.06 * i, 0.0, 0.0))
-        gripper.attach_to(base.scene)
-        grippers.append(gripper)
-        phases.append(i * 0.5)
-        ossop.frame(pos=gripper.gl_tcp_tf[:3, 3],
-                    rotmat=gripper.gl_tcp_tf[:3, :3],
-                    color_mat=ouc.CoordColor.MYC).attach_to(base.scene)
-        print(f'gripper[{i}] jaw_width={jaw_width:.4f} m')
-
-    t = [0.0]
-    min_w, max_w = 0.0, 0.0238
-    amp = 0.5 * (max_w - min_w)
-    mid = 0.5 * (max_w + min_w)
-
-    def update(dt, t, grippers, phases):
-        t[0] += dt
-        for i, gripper in enumerate(grippers):
-            width = mid + amp * math.sin(2.0 * math.pi * 0.5 * t[0] + phases[i])
-            gripper.set_jaw_width(width)
-
-    base.schedule_interval(update, interval=1.0 / 60.0, t=t, grippers=grippers, phases=phases)
+    gripper = KRBLeft()
+    gripper.set_jaw_width(0.0238)
+    gripper.attach_to(base.scene)
     base.run()
+
+    # jaw_widths = [0.0, 0.006, 0.012, 0.018, 0.0238]
+    # template = KRBLeft()
+    # grippers = []
+    # phases = []
+    # for i, jaw_width in enumerate(jaw_widths):
+    #     gripper = template.clone()
+    #     gripper.set_jaw_width(jaw_width)
+    #     gripper.set_rotmat_pos(pos=(0.06 * i, 0.0, 0.0))
+    #     gripper.attach_to(base.scene)
+    #     grippers.append(gripper)
+    #     phases.append(i * 0.5)
+    #     ossop.frame(pos=gripper.gl_tcp_tf[:3, 3],
+    #                 rotmat=gripper.gl_tcp_tf[:3, :3],
+    #                 color_mat=ouc.CoordColor.MYC).attach_to(base.scene)
+    #     print(f'gripper[{i}] jaw_width={jaw_width:.4f} m')
+
+    # t = [0.0]
+    # min_w, max_w = 0.0, 0.0238
+    # amp = 0.5 * (max_w - min_w)
+    # mid = 0.5 * (max_w + min_w)
+
+    # def update(dt, t, grippers, phases):
+    #     t[0] += dt
+    #     for i, gripper in enumerate(grippers):
+    #         width = mid + amp * math.sin(2.0 * math.pi * 0.5 * t[0] + phases[i])
+    #         gripper.set_jaw_width(width)
+
+    # base.schedule_interval(update, interval=1.0 / 60.0, t=t, grippers=grippers, phases=phases)
+    # base.run()

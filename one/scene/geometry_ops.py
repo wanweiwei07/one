@@ -244,3 +244,101 @@ def ray_shoot(orig, dir, geometry):
     return ray_shoot_flat(
         orig, dir, geometry.vs,
         geometry.fs, geometry.fns)
+
+
+# ---------------------------------------------------------------------
+# Mesh clipping against convex exclude regions.
+# Each "region" is a list of (point, normal) half-space constraints.
+# A point is "inside" the region iff (p - point) @ normal <= 0 for
+# every constraint (intersection of half-spaces -> convex polyhedron).
+# Multiple regions are unioned: a triangle is clipped out wherever it
+# lies inside any one of them.
+# ---------------------------------------------------------------------
+
+
+def _clip_tri_by_plane(tri, plane_pt, plane_n):
+    """Split one triangle by an oriented plane.
+
+    Returns (above_pieces, below_pieces). `above` collects the parts
+    where (p - plane_pt) @ plane_n > 0; `below` collects the rest.
+    Each list contains zero or more (3, 3) float32 sub-triangles whose
+    winding matches the original triangle's winding (so face normals
+    are preserved).
+    """
+    eps = 1e-12
+    signs = (tri - plane_pt) @ plane_n
+    n_above = int(np.sum(signs > eps))
+    n_below = int(np.sum(signs < -eps))
+    if n_above == 0:
+        return [], [tri]
+    if n_below == 0:
+        return [tri], []
+    if n_above == 1:
+        # `lone` is above, the other two are below. Walk the input
+        # winding so the new edge cuts retain orientation.
+        lone = int(np.argmax(signs > eps))
+    else:  # n_below == 1
+        lone = int(np.argmax(signs < -eps))
+    nxt = (lone + 1) % 3
+    prv = (lone + 2) % 3
+    s_lone = signs[lone]
+    e_next = tri[lone] + (s_lone / (s_lone - signs[nxt])) * (
+        tri[nxt] - tri[lone])
+    e_prev = tri[lone] + (s_lone / (s_lone - signs[prv])) * (
+        tri[prv] - tri[lone])
+    lone_piece = np.stack(
+        [tri[lone], e_next, e_prev]).astype(np.float32)
+    quad_pieces = [
+        np.stack([tri[nxt], tri[prv], e_prev]).astype(np.float32),
+        np.stack([tri[nxt], e_prev, e_next]).astype(np.float32),
+    ]
+    if n_above == 1:
+        return [lone_piece], quad_pieces
+    return quad_pieces, [lone_piece]
+
+
+def _clip_tri_against_region(tri, region):
+    """Return the sub-triangles of `tri` that lie OUTSIDE the convex
+    region. A piece is "outside" iff it violates at least one of the
+    region's half-space constraints."""
+    inside = [tri]   # still inside every plane processed so far
+    outside = []     # confirmed outside at least one plane
+    for plane_pt, plane_n in region:
+        plane_pt = np.asarray(plane_pt, dtype=np.float32)
+        plane_n = np.asarray(plane_n, dtype=np.float32)
+        new_inside = []
+        for piece in inside:
+            above, below = _clip_tri_by_plane(piece, plane_pt, plane_n)
+            outside.extend(above)
+            new_inside.extend(below)
+        inside = new_inside
+    # `inside` are inside every plane = inside the convex region. Drop.
+    return outside
+
+
+def clip_mesh(tgt_vs, tgt_fs, exclude_regions):
+    """Cut convex `exclude_regions` out of the mesh.
+
+    exclude_regions: iterable of regions; each region is an iterable
+        of (point, normal) tuples (half-spaces whose intersection is
+        the convex region to remove). None or [] returns the input
+        unchanged. Multiple regions are unioned (any region's interior
+        is removed from the surviving mesh).
+    Returns (vs, fs) where new vertices are introduced at edge cuts.
+    """
+    vs = np.asarray(tgt_vs, dtype=np.float32)
+    fs = np.asarray(tgt_fs, dtype=np.int32)
+    if not exclude_regions:
+        return vs, fs
+    tris = [vs[fs[i]] for i in range(len(fs))]
+    for region in exclude_regions:
+        new_tris = []
+        for tri in tris:
+            new_tris.extend(_clip_tri_against_region(tri, region))
+        tris = new_tris
+    if not tris:
+        return (np.empty((0, 3), dtype=np.float32),
+                np.empty((0, 3), dtype=np.int32))
+    new_vs = np.concatenate(tris, axis=0).astype(np.float32)
+    new_fs = np.arange(len(new_vs)).reshape(-1, 3).astype(np.int32)
+    return new_vs, new_fs

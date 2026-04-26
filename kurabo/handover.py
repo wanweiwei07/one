@@ -31,9 +31,10 @@ import one.scene.scene_object as osso
 import one.scene.scene_object_primitive as ossop
 import one.motion.probabilistic.planning_context as omppc
 import one.motion.probabilistic.prm as ompp
-from one.grasp.antipodal import antipodal
+from one.grasp.serialize import load_grasps
 
 from kurabo.robot import LeftRobot, RightRobot
+from kurabo import grasp as kgrasp
 
 
 LEFT_BASE = np.array([0.0, -0.3, 0.0], dtype=np.float32)
@@ -65,34 +66,30 @@ def main():
     ground = ossop.plane(pos=(0, 0, -0.001))
     ground.attach_to(base.scene)
 
-    obj_path = os.path.join(_PROJECT_ROOT, "kurabo", "objs", "con_ma.stl")
+    obj_path = os.path.join(
+        _PROJECT_ROOT, "kurabo", "objects", "con_ma.stl")
     con = osso.SceneObject.from_file(
         obj_path, collision_type=ouc.CollisionType.MESH, is_free=True)
     con.rgb = (0.85, 0.6, 0.3)
-    # Run antipodal at world origin so returned poses are in object-local
-    # frame (later we post-multiply by tf_obj to get world poses).
-    con.pos = np.zeros(3, dtype=np.float32)
+    con.pos = PICK_POS
     con.rotmat = IDENTITY
     con.attach_to(base.scene)
 
     ossop.frame(pos=HANDOVER_POS).attach_to(base.scene)
     ossop.frame(pos=PLACE_POS).attach_to(base.scene)
 
-    print("Computing antipodal grasps on con_ma...")
-    grasps = antipodal(
-        gripper=lft.gripper, target_sobj=con,
-        density=0.003, normal_tol_deg=25,
-        roll_step_deg=20, clearance=0.0001,
-        max_grasps=300)
-    print(f"  found {len(grasps)} grasps")
+    # Grasps are pre-computed in object-local frame by kurabo/grasp.py.
+    if not os.path.isfile(kgrasp.OUT_PATH):
+        print(f"Grasp dump {kgrasp.OUT_PATH} missing.")
+        print("Run `python kurabo/grasp.py` first.")
+        return
+    print(f"Loading grasps from {kgrasp.OUT_PATH}...")
+    grasps = load_grasps(kgrasp.OUT_PATH)
+    print(f"  loaded {len(grasps)} grasps")
     if not grasps:
         print("No grasps. Aborting.")
         base.run()
         return
-
-    # now move con to the actual pick pose
-    con.pos = PICK_POS
-    con.rotmat = IDENTITY
 
     # con is intentionally not appended to mjc: mujoco approximates meshes
     # with their convex hull and would falsely report finger-vs-con
@@ -104,29 +101,14 @@ def main():
     mjc.actors = [lft, rgt]  # set both as actors for IK validation
     mjc.compile(margin=0.0)
 
-    sl_lft = mjc.get_slice(lft)
-    sl_rgt = mjc.get_slice(rgt)
-
-    # Single combined context (both arms as actors) used during IK +
-    # grasp-feasibility checks where we need to evaluate full 12-DOF
-    # states.
-    pln_ctx = omppc.PlanningContext(collider=mjc, cd_step_size=np.pi / 90)
-
-    # Per-arm contexts for motion planning: only the active arm is an
-    # actor (6-DOF state space); the other arm + both grippers are
-    # frozen via set_aux_mecbas. This keeps the planner search space
-    # tight (6 DOF instead of 12).
-    def _build_arm_ctx(active_arm):
-        c = ocm.MJCollider()
-        for body in (lft, lft.gripper, rgt, rgt.gripper, ground):
-            c.append(body)
-        c.actors = [active_arm]
-        c.compile(margin=0.0)
-        ctx = omppc.PlanningContext(collider=c, cd_step_size=np.pi / 90)
-        return ctx
-
-    pln_ctx_lft = _build_arm_ctx(lft)
-    pln_ctx_rgt = _build_arm_ctx(rgt)
+    # Per-arm planning contexts share the same MJCollider (compile/MJCF
+    # parsing is the expensive part; PlanningContext init is cheap).
+    # We flip `mjc.actors` to the active arm right before each plan call
+    # so the corresponding context's slice mapping is correct.
+    pln_ctx_lft = omppc.PlanningContext(
+        collider=mjc, planning_mecbas=[lft], cd_step_size=np.pi / 90)
+    pln_ctx_rgt = omppc.PlanningContext(
+        collider=mjc, planning_mecbas=[rgt], cd_step_size=np.pi / 90)
     planner_lft = ompp.LazyPRMPlanner(
         pln_ctx=pln_ctx_lft, k=15, n_samples=500)
     planner_rgt = ompp.LazyPRMPlanner(
@@ -137,21 +119,16 @@ def main():
     home_rgt = rgt.qs.copy()
     open_jaw = float(lft.gripper.jaw_range[1])
 
-    def state(lq, rq):
-        out = np.zeros(lft.ndof + rgt.ndof, dtype=np.float32)
-        out[sl_lft] = lq
-        out[sl_rgt] = rq
-        return out
-
-    def set_jaws(jaw_l, jaw_r):
-        pln_ctx.set_aux_mecbas(
-            lft.gripper, qs=(jaw_l / 2, jaw_l / 2))
-        pln_ctx.set_aux_mecbas(
-            rgt.gripper, qs=(jaw_r / 2, jaw_r / 2))
-
     def set_obj(pos, rot=IDENTITY):
         con.pos = np.asarray(pos, dtype=np.float32)
         con.rotmat = np.asarray(rot, dtype=np.float32)
+
+    def _activate_ctx(arm):
+        """Make sure mjc.actors matches the per-arm ctx before using it."""
+        ctx = pln_ctx_lft if arm is lft else pln_ctx_rgt
+        if mjc.actors != ctx.planning_mecbas:
+            mjc.actors = list(ctx.planning_mecbas)
+        return ctx
 
     def find_arm_grasp(arm, target_pos, target_rot,
                        other_arm_qs, other_jaw,
@@ -170,6 +147,11 @@ def main():
         tf_obj = oum.tf_from_rotmat_pos(target_rot, target_pos)
         approach_dir = (None if approach_dir is None
                         else np.asarray(approach_dir, dtype=np.float32))
+        ctx = _activate_ctx(arm)
+        other = rgt if arm is lft else lft
+        ctx.set_aux_mecbas(other, qs=other_arm_qs)
+        ctx.set_aux_mecbas(lft.gripper, qs=(open_jaw / 2, open_jaw / 2))
+        ctx.set_aux_mecbas(rgt.gripper, qs=(open_jaw / 2, open_jaw / 2))
         for gi, (pose, _pre, jaw_w, _) in enumerate(grasps):
             if this_jaw is not None and abs(jaw_w - this_jaw) > 1e-6:
                 continue
@@ -181,13 +163,8 @@ def main():
                 tgt_rotmat=gl_pose[:3, :3], tgt_pos=gl_pose[:3, 3])
             if not qs_list:
                 continue
-            set_jaws(open_jaw, open_jaw)
             for qs in qs_list:
-                if arm is lft:
-                    full = state(qs, other_arm_qs)
-                else:
-                    full = state(other_arm_qs, qs)
-                if pln_ctx.is_state_valid(full):
+                if ctx.is_state_valid(qs):
                     return gi, qs, jaw_w
         return None, None, None
 
@@ -203,7 +180,10 @@ def main():
     tf_pick = oum.tf_from_rotmat_pos(IDENTITY, PICK_POS)
     tf_ho = oum.tf_from_rotmat_pos(IDENTITY, HANDOVER_POS)
     set_obj(PARK_POS)
-    set_jaws(open_jaw, open_jaw)
+    ctx_l = _activate_ctx(lft)
+    ctx_l.set_aux_mecbas(rgt, qs=home_rgt)
+    ctx_l.set_aux_mecbas(lft.gripper, qs=(open_jaw / 2, open_jaw / 2))
+    ctx_l.set_aux_mecbas(rgt.gripper, qs=(open_jaw / 2, open_jaw / 2))
     for pose_g, _pre, jw, _ in grasps:
         gl_pick = tf_pick @ pose_g
         gl_ho = tf_ho @ pose_g
@@ -216,13 +196,11 @@ def main():
         if not ql_ho:
             continue
         q_pick = next(
-            (q for q in ql_pick
-             if pln_ctx.is_state_valid(state(q, home_rgt))), None)
+            (q for q in ql_pick if ctx_l.is_state_valid(q)), None)
         if q_pick is None:
             continue
         q_ho = next(
-            (q for q in ql_ho
-             if pln_ctx.is_state_valid(state(q, home_rgt))), None)
+            (q for q in ql_ho if ctx_l.is_state_valid(q)), None)
         if q_ho is None:
             continue
         qs_lft_pick = q_pick
@@ -254,10 +232,9 @@ def main():
     # frozen via set_aux_mecbas; both grippers are also aux.
     def plan_arm(active, start_q, goal_q, jaw_l, jaw_r,
                  frozen_other_qs):
-        if active is lft:
-            ctx, plnr, other = pln_ctx_lft, planner_lft, rgt
-        else:
-            ctx, plnr, other = pln_ctx_rgt, planner_rgt, lft
+        ctx = _activate_ctx(active)
+        plnr = planner_lft if active is lft else planner_rgt
+        other = rgt if active is lft else lft
         ctx.set_aux_mecbas(other, qs=frozen_other_qs)
         ctx.set_aux_mecbas(lft.gripper, qs=(jaw_l / 2, jaw_l / 2))
         ctx.set_aux_mecbas(rgt.gripper, qs=(jaw_r / 2, jaw_r / 2))
@@ -292,25 +269,6 @@ def main():
     pathF_q = plan_arm(rgt, qs_rgt_place, home_rgt,
                        open_jaw, open_jaw, frozen_other_qs=home_lft)
 
-    # Convert each per-arm path to a list of 12-DOF full states for the
-    # animation tick (uses sl_lft / sl_rgt to read from full state).
-    def expand(active, qs_path, frozen_other_qs):
-        out = []
-        for q in qs_path:
-            if active is lft:
-                full = state(q, frozen_other_qs)
-            else:
-                full = state(frozen_other_qs, q)
-            out.append(full)
-        return out
-
-    pathA = expand(lft, pathA_q, home_rgt)
-    pathB = expand(lft, pathB_q, home_rgt)
-    pathC = expand(lft, pathC_q, home_rgt)
-    pathD = expand(rgt, pathD_q, home_lft)
-    pathE = expand(rgt, pathE_q, home_lft)
-    pathF = expand(rgt, pathF_q, home_lft)
-
     print("All plans OK. Animating.")
 
     # Reset to start for animation
@@ -320,7 +278,6 @@ def main():
     rgt.gripper.set_jaw_width(open_jaw)
     set_obj(PICK_POS)
 
-    # Phases for animation: each is (path, on_enter)
     def attach_left():
         lft.gripper.set_jaw_width(jaw_pick)
         lft.gripper.grasp(con, jaw_width=jaw_pick)
@@ -344,13 +301,14 @@ def main():
         con.rotmat = IDENTITY
         print("[anim] right released con at place")
 
-    phase_paths = [
-        (pathA, None),                           # left -> pick
-        (pathB, attach_left),                    # close, carry to handover
-        (pathC, release_left_at_handover),       # release, retreat to home
-        (pathD, None),                           # right -> handover
-        (pathE, attach_right),                   # close, carry to place
-        (pathF, release_right_at_place),         # release, retreat to home
+    # Each phase: (active_arm, 6-DOF path, frozen_other_qs, on_enter)
+    phases = [
+        (lft, pathA_q, home_rgt, None),
+        (lft, pathB_q, home_rgt, attach_left),
+        (lft, pathC_q, home_rgt, release_left_at_handover),
+        (rgt, pathD_q, home_lft, None),
+        (rgt, pathE_q, home_lft, attach_right),
+        (rgt, pathF_q, home_lft, release_right_at_place),
     ]
 
     phase_idx = [0]
@@ -358,17 +316,21 @@ def main():
     entered = [False]
 
     def tick(dt):
-        if phase_idx[0] >= len(phase_paths):
+        if phase_idx[0] >= len(phases):
             return
-        path, on_enter = phase_paths[phase_idx[0]]
+        active, path, other_qs, on_enter = phases[phase_idx[0]]
         if not entered[0]:
             if on_enter is not None:
                 on_enter()
             entered[0] = True
         if cursor[0] < len(path):
-            s = path[cursor[0]]
-            lft.fk(qs=s[sl_lft])
-            rgt.fk(qs=s[sl_rgt])
+            q = path[cursor[0]]
+            if active is lft:
+                lft.fk(qs=q)
+                rgt.fk(qs=other_qs)
+            else:
+                rgt.fk(qs=q)
+                lft.fk(qs=other_qs)
             cursor[0] += 1
         else:
             phase_idx[0] += 1

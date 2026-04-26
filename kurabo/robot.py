@@ -12,8 +12,8 @@ import one.utils.constant as ouc
 # UR3E module is not yet implemented in `one`; using UR3 (same kinematic family)
 import one.robots.manipulators.universal_robots.ur3.ur3 as orur3
 
-from kurabo.ee.krb_left.krb_left import KRBLeft
-from kurabo.ee.krb_right.krb_right import KRBRight
+from kurabo.grippers.krb_left.krb_left import KRBLeft
+from kurabo.grippers.krb_right.krb_right import KRBRight
 
 
 # Gripper base sits 3mm behind the UR flange face along the flange Z axis.

@@ -79,10 +79,9 @@ class MJCFCompiler:
             i = ET.SubElement(body_el, "inertial")
             i.set("mass", str(node.inertial.mass))
             self.set_vec3(i, "pos", node.inertial.com)
-            I = node.inertial.inertia
-            Ixx, Ixy, Ixz = I[0]
-            Iyx, Iyy, Iyz = I[1]
-            Izx, Izy, Izz = I[2]
+            Ixx, Ixy, Ixz = node.inertial.inertia[0]
+            Iyx, Iyy, Iyz = node.inertial.inertia[1]
+            Izx, Izy, Izz = node.inertial.inertia[2]
             is_diag = (abs(Ixy) < 1e-10 and abs(Ixz) < 1e-10 and
                        abs(Iyx) < 1e-10 and abs(Iyz) < 1e-10 and
                        abs(Izx) < 1e-10 and abs(Izy) < 1e-10)
