@@ -8,7 +8,7 @@ import one.robots.manipulators.manipulator_base as ormmb
 
 def prepare_mechstruct():
     structure = orbms.MechStruct()
-    mesh_dir = structure.default_mesh_dir
+    mesh_dir = os.path.join(structure.default_mesh_dir, "visual")
     fr_white = ouc.BasicColor.WHITE
     # 8 links: base (link0) + link1..link7
     base_lnk = orbms.Link.from_file(
