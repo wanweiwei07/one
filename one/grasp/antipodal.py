@@ -107,7 +107,7 @@ def _antipodal_candidates(
         tgt_vs, tgt_fs, tgt_fns,
         density, normal_tol_deg,
         roll_step_deg, clearance):
-    normal_cos_th = np.cos(np.deg2rad(180.0 - normal_tol_deg))
+    normal_cos_th = np.cos(np.deg2rad(normal_tol_deg))
     roll_step = np.deg2rad(roll_step_deg)
     n_samples = _sample_count_from_area(tgt_vs, tgt_fs, density)
     pts, nrms, _ = osgop.sample_surface(tgt_vs, tgt_fs, n_samples)
