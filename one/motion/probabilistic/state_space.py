@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class RealVectorStateSpace:
     """Simple R^n box-bounded state space, OMPL-style."""
 
@@ -26,3 +27,8 @@ class RealVectorStateSpace:
 
     def enforce_bounds(self, s):
         return np.clip(s, self._lmt_low, self._lmt_high)
+
+    def satisfies_bounds(self, s, tol=1e-6):
+        s = np.asarray(s, dtype=np.float32)
+        return bool(np.all(s >= self._lmt_low - tol)
+                    and np.all(s <= self._lmt_high + tol))
