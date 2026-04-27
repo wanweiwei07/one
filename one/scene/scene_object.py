@@ -181,12 +181,16 @@ class SceneObject(ossn.SceneNode):
             print("Auto collision generation skipped for collision_type None.")
             return
         # if self.collisions: TODO: this check seems unnecessary?
-        #     print("Auto collision generation skipped because collisions already exist.")
+        #     print("Auto collision generation skipped because collisions "
+        #           "already exist.")
         #     return
         if self._collision_type == ouc.CollisionType.MESH:
             shape = osc.MeshCollisionShape(file_path=self.file_path,
                                            geom=m.geom,
                                            rotmat=m.rotmat, pos=m.pos)
+        elif self._collision_type == ouc.CollisionType.CVXHULL:
+            shape = osc.CvxHullCollisionShape.fit_from_geom(
+                m.geom, m.rotmat, m.pos, file_path=self.file_path)
         elif self._collision_type == ouc.CollisionType.SPHERE:
             shape = osc.SphereCollisionShape.fit_from_geom(
                 m.geom, m.rotmat, m.pos)

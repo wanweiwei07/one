@@ -189,7 +189,9 @@ def antipodal_iter(gripper, tgt_sobj,
      cos_vals, normal_cos_th, roll_step) = cand
     contact_pattern = np.asarray(gripper.contact_pattern, dtype=np.float32)
     if contact_pattern.ndim != 2 or contact_pattern.shape != (1, 3):
-        raise ValueError('antipodal requires gripper.contact_pattern to be (1, 3)')
+        raise ValueError(
+            'antipodal requires gripper.contact_pattern to be (1, 3)'
+        )
     open_dir = gripper.open_dir / (np.linalg.norm(gripper.open_dir) + oum.eps)
     contact_depth = abs(float(contact_pattern[0] @ open_dir))
     jaw_width = jaw_width - 2.0 * contact_depth
@@ -250,7 +252,7 @@ def antipodal_iter(gripper, tgt_sobj,
         if results is not None:
             collided = True
         # check pre-grasp pose
-        pre_pos = pose[:3,3] - retreat_dist * pose[:3, 2]
+        pre_pos = pose[:3, 3] - retreat_dist * pose[:3, 2]
         pre_pose = pose.copy()
         pre_pose[:3, 3] = pre_pos
         gripper.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], jw)

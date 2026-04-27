@@ -88,7 +88,10 @@ class MechStruct:
         self.default_mesh_dir = os.path.join(caller_dir, "meshes")
 
     def __repr__(self):
-        return f"<MechDefinition: {len(self.lnks)} links, {len(self.jnts)} joints>"
+        return (
+            f"<MechDefinition: {len(self.lnks)} links, "
+            f"{len(self.jnts)} joints>"
+        )
 
     def get_chain(self, root_lnk, tip_lnk):
         key = (root_lnk, tip_lnk)
@@ -268,7 +271,6 @@ class FlatMechStructure:
         return ancestor
 
     def _build_traversal_order(self):
-        children = [[] for _ in range(self.n_lnks)]
         order = []
 
         def dfs(lidx):

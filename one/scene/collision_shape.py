@@ -2,6 +2,7 @@ import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.geom.geometry as ogg
+import one.geom.fitting as ogf
 import one.scene.render_model as osrm
 
 
@@ -375,3 +376,17 @@ class MeshCollisionShape(CollisionShape):
         min_corner = transformed.min(axis=0)
         max_corner = transformed.max(axis=0)
         return min_corner, max_corner
+
+
+class CvxHullCollisionShape(MeshCollisionShape):
+
+    @classmethod
+    def fit_from_geom(cls, geom, rotmat, pos, file_path=None):
+        return cls(file_path=file_path,
+                   geom=ogf.convex_hull(geom),
+                   rotmat=rotmat, pos=pos)
+
+    def clone(self):
+        return self.__class__(
+            file_path=self._file_path, geom=self._geom,
+            rotmat=self.rotmat, pos=self.pos)

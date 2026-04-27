@@ -75,7 +75,10 @@ def _hand_poses_from_pair(pattern, front_pts, back_pts,
         target_normal = target_normal / (
             np.linalg.norm(target_normal) + 1e-9)
         aug_pat = np.vstack([pattern, [p_c + pattern_normal]])
-        aug_wld = np.vstack([contact_pts, [contact_pts.mean(axis=0) + target_normal]])
+        aug_wld = np.vstack([
+            contact_pts,
+            [contact_pts.mean(axis=0) + target_normal]
+        ])
         P = aug_pat - aug_pat.mean(axis=0)
         W = aug_wld - aug_wld.mean(axis=0)
         H = P.T @ W
@@ -314,7 +317,8 @@ def polypodal(gripper, target_sobj, n_samples,
         raise ValueError('gripper must define contact_pattern')
     pattern = np.asarray(pattern, dtype=np.float32)
     if pattern.ndim != 2 or pattern.shape[1] != 3 or pattern.shape[0] < 2:
-        raise ValueError('polypodal requires gripper.contact_pattern to be (N, 3), N >= 2')
+        raise ValueError(
+            'polypodal requires gripper.contact_pattern to be (N, 3), N >= 2')
     tgt_vs, tgt_fs, _ = occs.cols_to_vffns(target_sobj.collisions)
     target_tf = target_sobj.wd_tf
     open_dir = getattr(gripper, 'open_dir', None)
