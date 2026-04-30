@@ -362,9 +362,10 @@ def plane(
 
 def point_cloud(vs, vrgbs, alpha=1.0):
     """
-    Build a SceneObject from user-specified vertices/faces.
-    verts: (N,3)
-    faces: (M,3)
+    Build a point-cloud SceneObject from per-vertex positions and colors.
+    vs:    (N, 3) float, vertex positions
+    vrgbs: (N, 3) float in [0, 1], per-vertex RGB
+    alpha: scalar in [0, 1], opacity
     """
     vs = np.asarray(vs, np.float32)
     rmodel = osrmp.gen_pcd_rmodel(vs, vrgbs, alpha)
