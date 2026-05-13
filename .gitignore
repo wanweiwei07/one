@@ -70,3 +70,17 @@ Thumbs.db
 *.npz
 scene.xml
 scene_free.xml
+*.jsonl
+*.json
+*.npy
+*.jpg
+*.png
+*.pkl
+*.pt
+*.md
+*.svg
+*.pt
+*.out
+*.log
+*.pdf
+*.hdf5
