@@ -24,11 +24,13 @@ class SELIKSolver(orbkin.NumIKSolver):
         self._tf_path = os.path.join(self._data_dir, "cvt_tf.npy")
         self._feat_path = os.path.join(self._data_dir, "cvt_feat.npy")
         self._tree_path = os.path.join(self._data_dir, "cvt_tree.pkl")
+        self._jinv_path = os.path.join(self._data_dir, "cvt_jinv.npy")
         # CVT data
         self._cvt_q = None
         self._cvt_tf = None
         self._feat = None
         self._tree = None
+        self._cvt_jinv = None
         # try load or build
         if not self._try_load_database():
             print("[CVT] database not found, building ...")
@@ -43,8 +45,19 @@ class SELIKSolver(orbkin.NumIKSolver):
         p = tgt_tf[:3, 3]
         r = oum.rotvec_from_rotmat(tgt_tf[:3, :3])
         feat = np.concatenate([p, r]).astype(np.float32)
-        _, ids = self._tree.query(feat, k=k)
-        return self._cvt_q[ids]
+        # Widen the KDTree candidate pool, then rerank by linearized
+        # joint-space distance ||J^-1 @ (target - seed_tcp)|| so the first
+        # seeds passed to the backbone solver actually land in its basin
+        # of attraction. Same number (k) of seeds returned to ik().
+        k_max = min(self.n_cvt, max(k * 10, 200))
+        _, ids = self._tree.query(feat, k=k_max)
+        seed_tcp = self._feat[ids]                          # (k_max, 6)
+        seed_jinv = self._cvt_jinv[ids]                     # (k_max, n_dof, 6)
+        diff = (feat - seed_tcp).astype(np.float32)         # (k_max, 6)
+        dq = np.einsum('ijk,ik->ij', seed_jinv, diff)       # (k_max, n_dof)
+        score = np.sum(dq * dq, axis=1)
+        order = np.argsort(score)
+        return self._cvt_q[ids[order[:k]]]
 
     def ik(self, root_rotmat, root_pos,
            tgt_rotmat, tgt_pos, max_solutions=8,
@@ -95,11 +108,28 @@ class SELIKSolver(orbkin.NumIKSolver):
             self._feat = np.load(self._feat_path)
             import pickle
             self._tree = pickle.load(open(self._tree_path, "rb"))
+            if os.path.exists(self._jinv_path):
+                self._cvt_jinv = np.load(self._jinv_path)
+            else:
+                # backfill J^-1 cache for legacy DBs without rebuilding CVT
+                print("[CVT] cvt_jinv not found, computing from existing centroids ...")
+                self._cvt_jinv = self._compute_cvt_jinv(self._cvt_q)
+                np.save(self._jinv_path, self._cvt_jinv)
             print(f"[CVT] database loaded from {self._data_dir}")
             return True
         except Exception as e:
             print(f"[CVT] load failed: {e}")
             return False
+
+    def _compute_cvt_jinv(self, centroids):
+        n = centroids.shape[0]
+        n_act = self._chain.n_active_jnts
+        jinv = np.empty((n, n_act, 6), dtype=np.float32)
+        eye4 = np.eye(4, dtype=np.float32)
+        for i in range(n):
+            _, jacmat, _ = self._forward(centroids[i], root_tf=eye4)
+            jinv[i] = np.linalg.pinv(jacmat, rcond=1e-4)
+        return jinv
 
     def _build_cvt_database(self):
         l = self._chain.lmt_lo.astype(np.float32)
@@ -111,20 +141,14 @@ class SELIKSolver(orbkin.NumIKSolver):
         self._cvt_q = centroids.astype(np.float32)
         self._cvt_tf = np.empty((self.n_cvt, 4, 4), dtype=np.float32)
         self._feat = np.empty((self.n_cvt, 6), dtype=np.float32)
-        # tic = time.time()
+        self._cvt_jinv = np.empty((self.n_cvt, dim, 6), dtype=np.float32)
+        eye4 = np.eye(4, dtype=np.float32)
         for i in range(self.n_cvt):
-            tf = self.fk(self._cvt_q[i], root_tf=np.eye(4, dtype=np.float32))
+            _, jacmat, tf = self._forward(self._cvt_q[i], root_tf=eye4)
             self._cvt_tf[i] = tf
             self._feat[i, :3] = tf[:3, 3]
             self._feat[i, 3:] = oum.rotvec_from_rotmat(tf[:3, :3])
-            # # progress report
-            # if (i + 1) % 50 == 0 or (i + 1) == self.n_cvt:
-            #     elapsed = time.time() - tic
-            #     percent = 100.0 * (i + 1) / self.n_cvt
-            #     eta = elapsed / (i + 1) * (self.n_cvt - (i + 1))
-            #     print(f"[CVT] FK {i + 1:5d}/{self.n_cvt} "
-            #           f"({percent:4.2f}%)  "
-            #           f"elapsed: {elapsed:2.1f}s  ETA: {eta:6.1f}s")
+            self._cvt_jinv[i] = np.linalg.pinv(jacmat, rcond=1e-4)
         self._tree = cKDTree(self._feat)
         print(f"[CVT] database built: {self.n_cvt} samples")
 
@@ -132,6 +156,7 @@ class SELIKSolver(orbkin.NumIKSolver):
         np.save(self._q_path, self._cvt_q)
         np.save(self._tf_path, self._cvt_tf)
         np.save(self._feat_path, self._feat)
+        np.save(self._jinv_path, self._cvt_jinv)
         import pickle
         pickle.dump(self._tree, open(self._tree_path, "wb"))
         print(f"[CVT] database saved to {self._data_dir}")
