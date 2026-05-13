@@ -17,10 +17,11 @@ def is_collided(sobj_a, sobj_b, eps=1e-9, max_points=1000):
     batch = ocgsb.build_batch((sobj_a, sobj_b), pairs=[(0,1)])
     if batch is None:
         return None
+    mesh_types = (ouc.CollisionType.MESH, ouc.CollisionType.CVXHULL)
     is_single_mesh_a = (len(sobj_a.collisions) == 1 and
-                        sobj_a._collision_type == ouc.CollisionType.MESH)
+                        sobj_a._collision_type in mesh_types)
     is_single_mesh_b = (len(sobj_b.collisions) == 1 and
-                        sobj_b._collision_type == ouc.CollisionType.MESH)
+                        sobj_b._collision_type in mesh_types)
     if is_single_mesh_a and is_single_mesh_b:
         col_a = sobj_a.collisions[0]
         col_b = sobj_b.collisions[0]

@@ -8,10 +8,12 @@ class EndEffectorBase(orbmb.MechBase):
     def __init__(self, loc_tcp_tf=None, is_free=True):
         super().__init__(is_free=is_free)
         self._loc_tcp_tf = oum.ensure_tf(loc_tcp_tf)
+        self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
 
     def clone(self):
         new = super().clone()
         new._loc_tcp_tf = self._loc_tcp_tf.copy()
+        new.contact_pattern = self.contact_pattern.copy()
         return new
 
     def set_loc_tcp_rotmat_pos(self, rotmat=None, pos=None):
@@ -29,6 +31,7 @@ class EndEffectorBase(orbmb.MechBase):
     @property
     def gl_tcp_tf(self):
         return self.runtime_root_lnk.tf @ self._loc_tcp_tf
+
 
 class GripperMixin:
 

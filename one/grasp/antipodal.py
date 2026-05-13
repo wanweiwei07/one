@@ -71,7 +71,8 @@ def build_grasp_rotmat_batch(ray_dirs, open_dir):
     rot_base = np.stack([x, y, z], axis=2).astype(np.float32)
     if np.linalg.norm(open_dir) < oum.eps:
         raise ValueError('open_dir must be non-zero')
-    offset = oum.rotmat_between_vecs(open_dir, ouc.StandardAxis.Y).astype(np.float32)
+    offset = oum.rotmat_between_vecs(
+        open_dir, ouc.StandardAxis.Y).astype(np.float32)
     return rot_base @ offset
 
 
@@ -106,7 +107,7 @@ def _antipodal_candidates(
         tgt_vs, tgt_fs, tgt_fns,
         density, normal_tol_deg,
         roll_step_deg, clearance):
-    normal_cos_th = np.cos(np.deg2rad(180.0 - normal_tol_deg))
+    normal_cos_th = np.cos(np.deg2rad(normal_tol_deg))
     roll_step = np.deg2rad(roll_step_deg)
     n_samples = _sample_count_from_area(tgt_vs, tgt_fs, density)
     pts, nrms, _ = osgop.sample_surface(tgt_vs, tgt_fs, n_samples)
@@ -134,7 +135,7 @@ def _antipodal_candidates(
     n_norm = np.linalg.norm(n_all, axis=1) + oum.eps
     nq_norm = np.linalg.norm(nq_all, axis=1) + oum.eps
     cos_vals = dot_nn / (n_norm * nq_norm)
-    jaw_width = np.linalg.norm(q_all - p_all, axis=1) + 15 * clearance
+    jaw_width = np.linalg.norm(q_all - p_all, axis=1) + 2 * clearance
     center = (p_all + q_all) * 0.5
     return center, jaw_width, n_all, nq_all, cos_vals, normal_cos_th, roll_step
 
@@ -142,7 +143,8 @@ def _antipodal_candidates(
 def antipodal_iter(gripper, tgt_sobj,
                    density=0.02, normal_tol_deg=20,
                    roll_step_deg=30, clearance=0.002,
-                   score_weights=(0.7, 0.3)):
+                   score_weights=(0.7, 0.3),
+                   exclude_regions=None):
     """
     Generator: yields (pose_tf, jaw_width, score, collided)
     :param gripper: gripper instance
@@ -152,11 +154,32 @@ def antipodal_iter(gripper, tgt_sobj,
     :param roll_step_deg: roll angle step in degrees
     :param clearance: additional clearance for jaw width
     :param score_weights: (normal_align_weight, jaw_close_weight)
+    :param exclude_regions: optional list of convex regions (each a
+        list of (point, normal) half-space constraints) carved out of
+        the surface before contact-pair sampling. The original target
+        mesh is still used for gripper-vs-target collision checks, so
+        grasps near a clipped feature will still be rejected if the
+        gripper would collide with that feature.
+    Uses gripper.contact_pattern to confirm this is a single-contact
+        model and to compensate jaw width for contact depth along the
+        gripper opening axis. TCP is aligned to the two-contact midpoint.
     :return: yields (pose_tf, jaw_width, score, collided)
     """
     gripper = gripper.clone()
     tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vffns(
         tgt_sobj.collisions)
+    if exclude_regions:
+        tgt_vs, tgt_fs = osgop.clip_mesh(
+            tgt_vs, tgt_fs, exclude_regions)
+        if len(tgt_fs) == 0:
+            return []
+        v0 = tgt_vs[tgt_fs[:, 0]]
+        v1 = tgt_vs[tgt_fs[:, 1]]
+        v2 = tgt_vs[tgt_fs[:, 2]]
+        tgt_fns = np.cross(v1 - v0, v2 - v0)
+        tgt_fns = tgt_fns / (
+            np.linalg.norm(tgt_fns, axis=1, keepdims=True) + oum.eps)
+        tgt_fns = tgt_fns.astype(np.float32)
     cand = _antipodal_candidates(
         tgt_vs, tgt_fs, tgt_fns, density,
         normal_tol_deg, roll_step_deg, clearance)
@@ -164,6 +187,14 @@ def antipodal_iter(gripper, tgt_sobj,
         return []
     (center, jaw_width, n_all, nq_all,
      cos_vals, normal_cos_th, roll_step) = cand
+    contact_pattern = np.asarray(gripper.contact_pattern, dtype=np.float32)
+    if contact_pattern.ndim != 2 or contact_pattern.shape != (1, 3):
+        raise ValueError(
+            'antipodal requires gripper.contact_pattern to be (1, 3)'
+        )
+    open_dir = gripper.open_dir / (np.linalg.norm(gripper.open_dir) + oum.eps)
+    contact_depth = abs(float(contact_pattern[0] @ open_dir))
+    jaw_width = jaw_width - 2.0 * contact_depth
     jaw_min, jaw_max = gripper.jaw_range
     jaw_mid = 0.5 * (jaw_min + jaw_max)
     jaw_span = jaw_max - jaw_min + oum.eps
@@ -177,7 +208,6 @@ def antipodal_iter(gripper, tgt_sobj,
     n_sel = n_all[mask]
     nq_sel = nq_all[mask]
     ray_dirs = -n_sel
-    open_dir = gripper.open_dir/(np.linalg.norm(gripper.open_dir))
     rot_base = build_grasp_rotmat_batch(ray_dirs, open_dir)
     angles = np.arange(0.0, 2 * np.pi, roll_step)
     roll_axes = np.einsum('nij,j->ni', rot_base, open_dir)
@@ -222,7 +252,7 @@ def antipodal_iter(gripper, tgt_sobj,
         if results is not None:
             collided = True
         # check pre-grasp pose
-        pre_pos = pose[:3,3] - retreat_dist * pose[:3, 2]
+        pre_pos = pose[:3, 3] - retreat_dist * pose[:3, 2]
         pre_pose = pose.copy()
         pre_pose[:3, 3] = pre_pos
         gripper.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], jw)
@@ -235,7 +265,8 @@ def antipodal_iter(gripper, tgt_sobj,
 def antipodal(gripper, target_sobj,
               density=0.02, normal_tol_deg=20,
               roll_step_deg=30, clearance=0.002,
-              max_grasps=50, score_weights=(0.7, 0.3)):
+              max_grasps=50, score_weights=(0.7, 0.3),
+              exclude_regions=None):
     """
     Collects non-colliding grasps only.
     :param gripper: gripper instance
@@ -246,13 +277,18 @@ def antipodal(gripper, target_sobj,
     :param clearance: additional clearance for jaw width
     :param max_grasps: maximum number of grasps to return
     :param score_weights: (normal_align_weight, jaw_close_weight)
+    :param exclude_regions: optional list of convex regions to carve
+        out of the contact-sampling surface (forwarded to
+        antipodal_iter). The full mesh is still used for collision
+        checks.
     :return: list of (pose_tf, jaw_width, score)
     """
     results = []
     for pose, pre_pose, jw, sc, collided in antipodal_iter(
             gripper, target_sobj,
             density, normal_tol_deg, roll_step_deg,
-            clearance, score_weights):
+            clearance, score_weights,
+            exclude_regions=exclude_regions):
         if not collided:
             results.append((pose, pre_pose, jw, float(sc)))
         if (max_grasps is not None and

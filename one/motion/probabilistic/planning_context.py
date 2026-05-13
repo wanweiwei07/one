@@ -1,6 +1,7 @@
 import numpy as np
 import one.motion.probabilistic.state_space as ssp
 
+
 class PlanningContext:
 
     def __init__(self,
@@ -48,9 +49,14 @@ class PlanningContext:
         self._collision_cache.clear()
 
     def is_state_valid(self, state):
+        if not self.state_space.satisfies_bounds(state):
+            return False
         return not self._is_collided(state)
 
     def is_motion_valid(self, state1, state2):
+        if (not self.state_space.satisfies_bounds(state1)
+                or not self.state_space.satisfies_bounds(state2)):
+            return False
         dist = self.state_space.distance(state1, state2)
         if dist == 0.0:
             return not self._is_collided(state1)
@@ -87,7 +93,6 @@ class PlanningContext:
         key = self._state_to_key(state)
         if key in self._collision_cache:
             return self._collision_cache[key]
-        # TODO joint range check?
         collided = self.collider.is_collided(state)
         if len(self._collision_cache) >= self._cache_size:
             self._collision_cache.clear()

@@ -120,7 +120,11 @@ class AxisColor:
 
 class CoordColor:
     RGB = np.column_stack((BasicColor.RED, BasicColor.GREEN, BasicColor.BLUE))
-    MYC = np.column_stack((BasicColor.MAGENTA, BasicColor.YELLOW, BasicColor.CYAN))
+    MYC = np.column_stack((
+        BasicColor.MAGENTA,
+        BasicColor.YELLOW,
+        BasicColor.CYAN
+    ))
     TLD = np.column_stack((ExtendedColor.TOMATO,
                            ExtendedColor.LAWN_GREEN,
                            ExtendedColor.DEEP_SKY_BLUE))
@@ -171,8 +175,9 @@ class CollisionType:
     CAPSULE = 1
     AABB = 2
     OBB = 3
-    MESH = 4
-    PLANE = 5
+    CVXHULL = 4
+    MESH = 5
+    PLANE = 6
 
 
 class CollisionGroup:
@@ -185,10 +190,14 @@ class CollisionGroup:
 class CollisionMatrix:
     """Default collision permission table"""
     DEFAULT = {
-        CollisionGroup.ROBOT:  CollisionGroup.ENV | CollisionGroup.OBJECT | CollisionGroup.ROBOT,
-        CollisionGroup.ENV:    CollisionGroup.ROBOT | CollisionGroup.OBJECT,
-        CollisionGroup.OBJECT: CollisionGroup.ROBOT | CollisionGroup.ENV | CollisionGroup.OBJECT,
+        CollisionGroup.ROBOT:
+            CollisionGroup.ENV | CollisionGroup.OBJECT | CollisionGroup.ROBOT,
+        CollisionGroup.ENV:
+            CollisionGroup.ROBOT | CollisionGroup.OBJECT,
+        CollisionGroup.OBJECT:
+            CollisionGroup.ROBOT | CollisionGroup.ENV | CollisionGroup.OBJECT,
     }
+
 
 class DefaultPhy:
     INERTIA = np.eye(3, dtype=np.float32)

@@ -2,6 +2,7 @@ import time
 import numpy as np
 import one.motion.probabilistic.post_processor as omppp
 
+
 def shortcut_path(path, pln_ctx, n_iter=200):
     path = list(path)
     for _ in range(n_iter):
@@ -13,6 +14,7 @@ def shortcut_path(path, pln_ctx, n_iter=200):
             path = path[:i + 1] + path[j:]
     return path
 
+
 def densify_path(path, pln_ctx, max_step=np.pi / 12):
     dense = [path[0]]
     for q0, q1 in zip(path[:-1], path[1:]):
@@ -23,6 +25,7 @@ def densify_path(path, pln_ctx, max_step=np.pi / 12):
             q = pln_ctx.interpolate(q0, q1, t)
             dense.append(q)
     return dense
+
 
 class RRTTree:
     def __init__(self, r_state):
@@ -93,11 +96,11 @@ class RRTConnectPlanner:
     #         # Extend start-tree towards random sample
     #         status1, new_idx_start = self._extend_tree(t_start, rand_state)
     #         if status1 != "trapped":
-    #             # Now try to connect goal-tree toward the new node in start-tree
+    #             # Now try to connect goal-tree toward the new node in start
     #             new_state = t_start.states[new_idx_start]
     #             status2, new_idx_goal = self._extend_tree(t_goal, new_state)
     #             if verbose:
-    #                 print(f"[Iter {it}] status1={status1}, status2={status2}")
+    #                 print(f"[Iter {it}] stat1={status1}, stat2={status2}")
     #             # If trees connected (goal tree reached new_state)
     #             if status2 == "reached":
     #                 # Build full path
@@ -176,6 +179,8 @@ class RRTConnectPlanner:
             tgt_state, self._pln_ctx.state_space)
         nearest_state = tree.states[nearest_idx]
         new_state = self._steer(nearest_state, tgt_state)
+        if self._pln_ctx.states_equal(nearest_state, new_state):
+            return "trapped", nearest_idx
         if not self._pln_ctx.is_motion_valid(nearest_state, new_state):
             return "trapped", nearest_idx  # valid nodes in check motion wasted
         last_idx = tree.add_node(new_state, nearest_idx)
@@ -190,6 +195,8 @@ class RRTConnectPlanner:
             else:
                 next_state = self._steer(cur_state, tgt_state)
                 pre_reached = False
+            if self._pln_ctx.states_equal(cur_state, next_state):
+                break
             if not self._pln_ctx.is_motion_valid(cur_state, next_state):
                 break
             last_idx = tree.add_node(next_state, last_idx)

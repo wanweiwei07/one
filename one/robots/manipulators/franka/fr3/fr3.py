@@ -8,7 +8,7 @@ import one.robots.manipulators.manipulator_base as ormmb
 
 def prepare_mechstruct():
     structure = orbms.MechStruct()
-    mesh_dir = os.path.join(structure.default_mesh_dir, "visual")
+    mesh_dir = structure.default_mesh_dir
     fr_white = ouc.BasicColor.WHITE
     # 8 links: base (link0) + link1..link7
     base_lnk = orbms.Link.from_file(
@@ -66,8 +66,8 @@ def prepare_mechstruct():
         child_lnk=lnk1,
         axis=ouc.StandardAxis.Z,
         pos=np.array([0.0, 0.0, 0.333], dtype=np.float32),
-        lmt_lo=-2.7437,
-        lmt_up=2.7437,
+        lmt_lo=-2.8973,
+        lmt_up=2.8973,
     )
     jnt_l1_l2 = orbms.Joint(
         jnt_type=ouc.JntType.REVOLUTE,
@@ -75,8 +75,8 @@ def prepare_mechstruct():
         child_lnk=lnk2,
         axis=ouc.StandardAxis.Z,
         rotmat=oum.rotmat_from_euler(-np.pi / 2, 0, 0),
-        lmt_lo=-1.7837,
-        lmt_up=1.7837,
+        lmt_lo=-1.8326,
+        lmt_up=1.8326,
     )
     jnt_l2_l3 = orbms.Joint(
         jnt_type=ouc.JntType.REVOLUTE,
@@ -85,8 +85,8 @@ def prepare_mechstruct():
         axis=ouc.StandardAxis.Z,
         pos=np.array([0.0, -0.316, 0.0], dtype=np.float32),
         rotmat=oum.rotmat_from_euler(np.pi / 2, 0, 0),
-        lmt_lo=-2.9007,
-        lmt_up=2.9007,
+        lmt_lo=-2.8972,
+        lmt_up=2.8972,
     )
     jnt_l3_l4 = orbms.Joint(
         jnt_type=ouc.JntType.REVOLUTE,
@@ -95,8 +95,8 @@ def prepare_mechstruct():
         axis=ouc.StandardAxis.Z,
         pos=np.array([0.0825, 0.0, 0.0], dtype=np.float32),
         rotmat=oum.rotmat_from_euler(np.pi / 2, 0, 0),
-        lmt_lo=-3.0421,
-        lmt_up=-0.1518,
+        lmt_lo=-3.0718,
+        lmt_up=-0.1222,
     )
     jnt_l4_l5 = orbms.Joint(
         jnt_type=ouc.JntType.REVOLUTE,
@@ -105,8 +105,8 @@ def prepare_mechstruct():
         axis=ouc.StandardAxis.Z,
         pos=np.array([-0.0825, 0.384, 0.0], dtype=np.float32),
         rotmat=oum.rotmat_from_euler(-np.pi / 2, 0, 0),
-        lmt_lo=-2.8065,
-        lmt_up=2.8065,
+        lmt_lo=-2.8798,
+        lmt_up=2.8798,
     )
     jnt_l5_l6 = orbms.Joint(
         jnt_type=ouc.JntType.REVOLUTE,
@@ -114,8 +114,8 @@ def prepare_mechstruct():
         child_lnk=lnk6,
         axis=ouc.StandardAxis.Z,
         rotmat=oum.rotmat_from_euler(np.pi / 2, 0, 0),
-        lmt_lo=0.5445,
-        lmt_up=4.5169,
+        lmt_lo=0.4364,
+        lmt_up=4.6251,
     )
     jnt_l6_l7 = orbms.Joint(
         jnt_type=ouc.JntType.REVOLUTE,
@@ -124,8 +124,8 @@ def prepare_mechstruct():
         axis=ouc.StandardAxis.Z,
         pos=np.array([0.088, 0.0, 0.0], dtype=np.float32),
         rotmat=oum.rotmat_from_euler(np.pi / 2, 0, 0),
-        lmt_lo=-3.0159,
-        lmt_up=3.0159,
+        lmt_lo=-3.0543,
+        lmt_up=3.0543,
     )
     # add links
     structure.add_lnk(base_lnk)
