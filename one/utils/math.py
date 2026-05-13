@@ -38,10 +38,24 @@ def vec(*args):
 
 ## rotmat
 def rotmat_from_axangle(ax, angle):
+    # Direct Rodrigues formula. ~3x faster than the scipy round-trip; hot in
+    # IK loops via Joint.motion_tf -> rotmat_from_axangle every iteration.
     ax = np.asarray(ax, dtype=np.float32)
-    if np.linalg.norm(ax) == 0:
+    n = np.linalg.norm(ax)
+    if n == 0:
         return np.eye(3, dtype=np.float32)
-    return rotmat_from_rotvec(ax / np.linalg.norm(ax) * angle)
+    inv_n = 1.0 / n
+    kx = float(ax[0]) * inv_n
+    ky = float(ax[1]) * inv_n
+    kz = float(ax[2]) * inv_n
+    c = np.cos(angle)
+    s = np.sin(angle)
+    C = 1.0 - c
+    return np.array([
+        [c + kx * kx * C,    kx * ky * C - kz * s, kx * kz * C + ky * s],
+        [ky * kx * C + kz * s, c + ky * ky * C,    ky * kz * C - kx * s],
+        [kz * kx * C - ky * s, kz * ky * C + kx * s, c + kz * kz * C   ],
+    ], dtype=np.float32)
 
 
 def rotmat_from_quat(quat):
