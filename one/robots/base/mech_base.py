@@ -6,10 +6,10 @@ import one.robots.base.kine.numik_sel as orbkis
 
 
 class Mounting:
-    def __init__(self, child, parent_link, engage_tf):
+    def __init__(self, child, parent_link, loc_tf):
         self.child = child
         self.plnk = parent_link
-        self.engage_tf = engage_tf
+        self.loc_tf = loc_tf
 
 
 class MechBase:
@@ -102,20 +102,25 @@ class MechBase:
         self._update_runtime()
         return self.gl_lnk_tfarr
 
-    def mount(self, child, plnk, engage_tf=None):
-        # TODO updated attach_to?
+    def mount(self, child, plnk, loc_tf=None, update=False):
+        """
+            Note: child is not attached to the scene when this is called
+            Caller is responsible for attaching the child to a scene
+        """
         if child is self:
             raise ValueError("Self-mounting not allowed")
         if child in self._mountings:
             raise ValueError("Child already mounted")
         if not child.is_free:
             raise ValueError("Child is not free")
-        if engage_tf is None:
-            engage_tf = np.eye(4, dtype=np.float32)
+        if loc_tf is None:
+            loc_tf = np.eye(4, dtype=np.float32)
         else:
-            engage_tf = np.asarray(engage_tf, dtype=np.float32)
-        self._mountings[child] = Mounting(child, plnk, engage_tf)
+            loc_tf = np.asarray(loc_tf, dtype=np.float32)
+        self._mountings[child] = Mounting(child, plnk, loc_tf)
         child.is_free = False
+        if update:
+            self._update_mounting(self._mountings[child])
 
     def unmount(self, child):
         try:
@@ -125,11 +130,24 @@ class MechBase:
         child.is_free = True
         return m
 
-    def get_solver(self, chain):
+    def _init_solver(self, chain):
         if chain not in self._solvers:
-            _data_dir = os.path.join(self.structure.res_dir, "data")
+            if (chain.base_lidx == self.structure.compiled.root_lnk_idx and
+                    chain.tip_lidx in self.structure.compiled.tip_lnk_ids):
+                _data_dir = os.path.join(self.structure.res_dir, "data")
+            else:
+                _data_dir = os.path.join(
+                    self.structure.res_dir,
+                    "data",
+                    f"chain_{chain.base_lidx}_{chain.tip_lidx}",
+                )
             self._solvers[chain] = orbkis.SELIKSolver(
                 chain, _data_dir)
+        return self._solvers[chain]
+
+    def get_solver(self, chain):
+        if chain not in self._solvers:
+            raise ValueError("Solver is not initialized for this chain")
         return self._solvers[chain]
 
     def clone(self):
@@ -150,7 +168,7 @@ class MechBase:
             plidx = self.runtime_lidx_map[m.plnk]
             plink = new.runtime_lnks[plidx]
             new._mountings[child] = Mounting(
-                child, plink, m.engage_tf.copy())
+                child, plink, m.loc_tf.copy())
         new._home_qs = self._home_qs.copy()
         return new
 
@@ -257,7 +275,7 @@ class MechBase:
             self._update_mounting(m)
 
     def _update_mounting(self, mounting):
-        child_tf = mounting.plnk.tf @ mounting.engage_tf
+        child_tf = mounting.plnk.tf @ mounting.loc_tf
         if isinstance(mounting.child, MechBase):
             mounting.child._rotmat[:] = child_tf[:3, :3]
             mounting.child._pos[:] = child_tf[:3, 3]

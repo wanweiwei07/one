@@ -1,11 +1,10 @@
 import os
 import numpy as np
 
-import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
-import one.robots.base.kine.numik as orbkn
 import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.manipulators.denso.cvr038.ik as ormdci
 
 
 def prepare_mechstruct():
@@ -134,38 +133,50 @@ class CVR038(ormmb.ManipulatorBase):
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
 
-    def get_solver(self, chain):
-        # Keep CVR038 robust first; can be switched to analytic IK later.
-        if chain not in self._solvers:
-            self._solvers[chain] = orbkn.NumIKSolver(chain)
-        return self._solvers[chain]
+    def _init_solver(self, chain):
+        if chain is self._main_chain:
+            joint_limits = (chain.lmt_lo, chain.lmt_up)
+            self._solvers[chain] = ormdci.CVR038PencilIK(
+                chain, joint_limits)
+            return self._solvers[chain]
+        return super()._init_solver(chain)
+
+
+def cvr038_with_gripper(rotmat=None, pos=None, jaw_width=0.03):
+    """Convenience factory: CVR038 arm with the stock COBOTTA gripper attached."""
+    from one.robots.end_effectors.denso.cvr038_gripper import CVR038Gripper
+
+    arm = CVR038(rotmat=rotmat, pos=pos)
+    gripper = CVR038Gripper()
+    gripper.set_jaw_width(jaw_width)
+    arm.engage(gripper)
+    return arm, gripper
 
 
 if __name__ == "__main__":
-    import one.viewer.world as ovw
     import one.scene.scene_object_primitive as ossop
+    import one.robots.base.kine_visualizer as orbkv
+    import one.viewer.world as ovw
 
-    base = ovw.World(cam_pos=(1.8, 1.0, 1.2), cam_lookat_pos=(0.0, 0.0, 0.45))
-    ossop.frame().attach_to(base.scene)
-    robot = CVR038()
+    base = ovw.World(cam_pos=(1.8, 1.0, 1.2),
+                     cam_lookat_pos=(0.0, 0.0, 0.45))
+    robot, gripper = cvr038_with_gripper()
     robot.attach_to(base.scene)
+    robot.alpha=0.3
+    kv = orbkv.KineVisualizer(robot, alpha=0.8)
+    kv.attach_to(base.scene)
 
-    tgt_pos = np.array([0.25, 0.15, 0.25], dtype=np.float32)
-    tgt_rotmat = (
-        oum.rotmat_from_axangle(ouc.StandardAxis.Z, np.pi / 6.0)
-        @ oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi)
-    )
-    ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat, color_mat=ouc.CoordColor.DYO).attach_to(base.scene)
+    compiled = robot.structure.compiled
+    joint_frames = []
+    for jidx in robot._main_chain.jnt_ids_in_structure:
+        parent_lidx = compiled.plidx_of_jidx[jidx]
+        parent_lnk = robot.runtime_lnks[parent_lidx]
+        frame = ossop.frame_from_tf(
+            compiled.jtf0_by_idx[jidx],
+            length_scale=0.35,
+            radius_scale=0.45,
+        )
+        frame.attach_to(parent_lnk)
+        joint_frames.append(frame)
 
-    qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
-    print("ik:", qs)
-    if qs is not None:
-        tmp_robot = robot.clone()
-        tmp_robot.fk(qs=qs)
-        tmp_robot.attach_to(base.scene)
-        ossop.frame(
-            pos=tmp_robot.gl_tcp_tf[:3, 3],
-            rotmat=tmp_robot.gl_tcp_tf[:3, :3],
-            color_mat=ouc.CoordColor.MYC,
-        ).attach_to(base.scene)
     base.run()

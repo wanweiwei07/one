@@ -146,11 +146,12 @@ class Lite6(ormmb.ManipulatorBase):
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)
 
-    def get_solver(self, chain):
-        if chain not in self._solvers:
+    def _init_solver(self, chain):
+        if chain is self._main_chain:
             joint_limits = (chain.lmt_lo, chain.lmt_up)
             self._solvers[chain] = orbka.S456X12(chain, joint_limits)
-        return self._solvers[chain]
+            return self._solvers[chain]
+        return super()._init_solver(chain)
 
 
 if __name__ == "__main__":

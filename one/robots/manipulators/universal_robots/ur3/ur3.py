@@ -185,12 +185,12 @@ class UR3(ormmb.ManipulatorBase):
             rotmat=rotmat, pos=pos, home_qs=[0, -np.pi / 2, np.pi / 2, 0, 0, 0]
         )
 
-    def get_solver(self, chain):
-        # overwrite to use analytical IK solver
-        if chain not in self._solvers:
+    def _init_solver(self, chain):
+        if chain is self._main_chain:
             joint_limits = (chain.lmt_lo, chain.lmt_up)
             self._solvers[chain] = orbka.P234X56(chain, joint_limits)
-        return self._solvers[chain]
+            return self._solvers[chain]
+        return super()._init_solver(chain)
 
 
 if __name__ == "__main__":

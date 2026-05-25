@@ -25,12 +25,12 @@ if __name__ == "__main__":
     gripper.set_jaw_width(0.03)
     gripper.attach_to(scene)
 
-    # engage_tf is flange->ee_base transform
-    engage_tf = oum.tf_from_rotmat_pos(
+    # loc_tf is flange->ee_base transform
+    loc_tf = oum.tf_from_rotmat_pos(
         rotmat=np.eye(3, dtype=np.float32),
         pos=np.array([0.0, 0.0, 0.0], dtype=np.float32),
     )
-    robot.engage(gripper, engage_tf=engage_tf)
+    robot.engage(gripper, loc_tf=loc_tf)
 
     tgt_pos = np.array([0.35, -0.20, 0.2], dtype=np.float32)
     tgt_rotmat = (

@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     screwdriver = oreorsd.ORSD()
     screwdriver.attach_to(scene)
-    robot.engage(screwdriver, engage_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.05)))
+    robot.engage(screwdriver, loc_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.05)))
 
     # find a reachable start tcp first (for ORSD this is stricter than 2FG7)
     start_rotmat = oum.rotmat_from_euler(oum.pi, 0.0, oum.pi)

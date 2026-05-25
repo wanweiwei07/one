@@ -50,8 +50,8 @@ class GripperMixin:
         jaw_width = self.jaw_range[0] if jaw_width is None else jaw_width
         self.set_jaw_width(jaw_width)
         parent_tf = self.runtime_root_lnk.tf
-        engage_tf = np.linalg.inv(parent_tf).dot(child.tf)
-        self.mount(child, self.runtime_root_lnk, engage_tf)
+        loc_tf = np.linalg.inv(parent_tf).dot(child.tf)
+        self.mount(child, self.runtime_root_lnk, loc_tf)
 
     def release(self, child, jaw_width=None):
         jaw_width = self.jaw_range[1] if jaw_width is None else jaw_width
@@ -107,10 +107,10 @@ class PointMixin:
             raise RuntimeError("Cannot attach: end effector not activated")
         parent_tf = self.runtime_root_lnk.tf @ self.loc_tcp_tf
         if offset_tf is None:
-            engage_tf = np.linalg.inv(parent_tf) @ child.tf
+            loc_tf = np.linalg.inv(parent_tf) @ child.tf
         else:
-            engage_tf = np.linalg.inv(parent_tf @ offset_tf) @ child.tf
-        self.mount(child, self.runtime_root_lnk, engage_tf)
+            loc_tf = np.linalg.inv(parent_tf @ offset_tf) @ child.tf
+        self.mount(child, self.runtime_root_lnk, loc_tf)
 
     def detach(self, child):
         """Detach object from tool."""

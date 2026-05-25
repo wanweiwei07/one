@@ -24,12 +24,12 @@ if __name__ == "__main__":
     gripper.set_jaw_width(0.03)
     gripper.attach_to(scene)
 
-    # engage_tf is flange->ee_base transform
-    engage_tf = oum.tf_from_rotmat_pos(
+    # loc_tf is flange->ee_base transform
+    loc_tf = oum.tf_from_rotmat_pos(
         rotmat=np.eye(3, dtype=np.float32),
         pos=np.array([0.0, 0.0, 0.0], dtype=np.float32),
     )
-    robot.engage(gripper, engage_tf=engage_tf)
+    robot.engage(gripper, loc_tf=loc_tf)
 
     tgt_pos = np.array([0.55, 0.10, 0.35], dtype=np.float32)
     ico_geom = ogg.gen_icosphere_geom(radius=1.0, n_subs=1)

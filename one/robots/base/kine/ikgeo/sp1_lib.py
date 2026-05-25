@@ -24,8 +24,6 @@ def sp1_run(p1, p2, k):
     KxP = np.cross(k, p1)
     A = np.vstack((KxP, -np.cross(k, KxP)))
     x = np.dot(A, p2)
-    print(abs(np.linalg.norm(p1, 2) - np.linalg.norm(p2, 2)))
-    print(abs(np.dot(k, p1) - np.dot(k, p2)))
     return (
         atan2(x[0], x[1]),
         abs(np.linalg.norm(p1, 2) - np.linalg.norm(p2, 2)) > 1e-5

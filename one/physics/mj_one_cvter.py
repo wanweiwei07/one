@@ -211,14 +211,14 @@ class MJOneConverter:
     def _attach_mountings(self, mecba):
         for m in mecba._mountings.values():
             child = m.child
-            engage_tf = m.engage_tf
+            loc_tf = m.loc_tf
             # child subtree
             if isinstance(child, orbmb.MechBase):  # MechBase
                 child_root = self._cvt_robot(child)
             else:  # SceneObject
                 child_root = self._cvt_sobj(child)
                 self._sobj2bdy[child] = child_root
-            child_root.pos, child_root.quat = oum.pos_quat_from_tf(engage_tf)
+            child_root.pos, child_root.quat = oum.pos_quat_from_tf(loc_tf)
             # find parent link body
             plnk_bdy = self._rutl2bdy[m.plnk]
             child_root.parent = plnk_bdy

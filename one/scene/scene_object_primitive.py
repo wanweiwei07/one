@@ -16,6 +16,41 @@ def _parse_phys(kwargs):
     )
 
 
+def _add_dashed_arrow_visuals(o, axis_rotmat, axis_origin, length,
+                              shaft_radius, head_radius, head_length,
+                              len_solid, len_interval, n_segs,
+                              rgb, alpha, amc):
+    """Append dashed-shaft (+ optional solid head) visuals to `o`, drawn from
+    `axis_origin` along the +Z direction of `axis_rotmat`, expressed in `o`'s
+    local frame. Pass head_length<=0 to draw shaft only."""
+    head_length = max(0.0, float(head_length))
+    shaft_len = max(0.0, float(length) - head_length)
+    z_local = axis_rotmat[:, 2]
+    d = 0.0
+    while d < shaft_len:
+        dash_len = min(len_solid, shaft_len - d)
+        if dash_len > 1e-8:
+            rmodel = osrmp.gen_cylinder_rmodel(
+                length=dash_len, radius=shaft_radius, n_segs=n_segs,
+                rotmat=axis_rotmat, pos=axis_origin + z_local * d,
+                rgb=rgb, alpha=alpha,
+            )
+            o.add_visual(rmodel, auto_make_collision=amc)
+        d += len_solid + len_interval
+    if head_length > 0:
+        head_rmodel = osrmp.gen_arrow_rmodel(
+            length=head_length,
+            shaft_radius=shaft_radius,
+            head_length=head_length,
+            head_radius=head_radius,
+            n_segs=n_segs,
+            rotmat=axis_rotmat,
+            pos=axis_origin + z_local * shaft_len,
+            rgb=rgb, alpha=alpha,
+        )
+        o.add_visual(head_rmodel, auto_make_collision=amc)
+
+
 def cylinder(
     spos=(0, 0, 0),
     epos=(0.01, 0.01, 0.01),
@@ -77,22 +112,16 @@ def dashed_cylinder(
         o.set_inertia(inertia, com, mass)
         return o
 
+    _add_dashed_arrow_visuals(
+        o, axis_rotmat=np.eye(3, dtype=np.float32),
+        axis_origin=np.zeros(3, dtype=np.float32),
+        length=length,
+        shaft_radius=radius, head_radius=0.0, head_length=0.0,
+        len_solid=len_solid, len_interval=len_interval, n_segs=segments,
+        rgb=rgb, alpha=alpha, amc=amc,
+    )
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    d = 0.0
-    while d < float(length):
-        dash_len = min(len_solid, float(length) - d)
-        if dash_len > 1e-8:
-            rmodel = osrmp.gen_cylinder_rmodel(
-                length=dash_len,
-                radius=radius,
-                n_segs=segments,
-                rotmat=rotmat,
-                pos=spos + dir_vec * d,
-                rgb=rgb,
-                alpha=alpha,
-            )
-            o.add_visual(rmodel, auto_make_collision=amc)
-        d += len_solid + len_interval
+    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -257,6 +286,57 @@ def arrow(
     return o
 
 
+def dashed_arrow(
+    spos=np.zeros(3),
+    epos=np.ones(3) * 0.01,
+    shaft_radius=ouc.ArrowSize.SHAFT_RADIUS,
+    head_radius=ouc.ArrowSize.HEAD_RADIUS,
+    head_length=ouc.ArrowSize.HEAD_LENGTH,
+    len_solid=None,
+    len_interval=None,
+    n_segs=8,
+    rgb=ouc.BasicColor.DEFAULT,
+    alpha=1.0,
+    **kwargs,
+):
+    _psd = _parse_phys(kwargs)
+    inertia, com, mass, collision_type, is_free = _psd
+    is_free = False
+    spos = np.asarray(spos, np.float32)
+    epos = np.asarray(epos, np.float32)
+    length, dir_vec = oum.unit_vec(epos - spos, return_length=True)
+    shaft_radius = float(shaft_radius)
+    head_length = float(head_length)
+    head_radius = float(head_radius)
+    if len_solid is None:
+        len_solid = shaft_radius * 3.2
+    if len_interval is None:
+        len_interval = shaft_radius * 2.14
+    len_solid = float(len_solid)
+    len_interval = float(len_interval)
+
+    o = osso.SceneObject(collision_type=collision_type, is_free=is_free)
+    amc = False if collision_type is None else True
+    if float(length) <= 1e-8:
+        o.set_rotmat_pos(pos=spos)
+        o.set_inertia(inertia, com, mass)
+        return o
+
+    _add_dashed_arrow_visuals(
+        o, axis_rotmat=np.eye(3, dtype=np.float32),
+        axis_origin=np.zeros(3, dtype=np.float32),
+        length=length,
+        shaft_radius=shaft_radius, head_radius=head_radius,
+        head_length=head_length,
+        len_solid=len_solid, len_interval=len_interval, n_segs=n_segs,
+        rgb=rgb, alpha=alpha, amc=amc,
+    )
+    rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
+    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    o.set_inertia(inertia, com, mass)
+    return o
+
+
 def frame_from_tf(
     tf,
     length_scale=1.0,
@@ -334,6 +414,54 @@ def frame(
     o.add_visual(rmodel_x, auto_make_collision=amc)
     o.add_visual(rmodel_y, auto_make_collision=amc)
     o.add_visual(rmodel_z, auto_make_collision=amc)
+    o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    o.set_inertia(inertia, com, mass)
+    return o
+
+
+def dashed_frame(
+    pos=np.zeros(3),
+    rotmat=np.eye(3),
+    length_scale=1.0,
+    radius_scale=1.0,
+    len_solid=None,
+    len_interval=None,
+    n_segs=8,
+    color_mat=ouc.CoordColor.RGB,
+    alpha=1.0,
+    **kwargs,
+):
+    _psd = _parse_phys(kwargs)
+    inertia, com, mass, collision_type, is_free = _psd
+    is_free = False
+    arrow_length = ouc.StandardAxis.ARROW_LENGTH * length_scale
+    shaft_radius = ouc.StandardAxis.ARROW_SHAFT_RADIUS * radius_scale
+    head_length = ouc.StandardAxis.ARROW_HEAD_LENGTH * radius_scale
+    head_radius = ouc.StandardAxis.ARROW_HEAD_RADIUS * radius_scale
+    if len_solid is None:
+        len_solid = shaft_radius * 3.2
+    if len_interval is None:
+        len_interval = shaft_radius * 2.14
+    len_solid = float(len_solid)
+    len_interval = float(len_interval)
+
+    o = osso.SceneObject(collision_type=collision_type, is_free=is_free)
+    amc = False if collision_type is None else True
+    axis_rots = [
+        oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi / 2),
+        oum.rotmat_from_axangle(ouc.StandardAxis.X, -np.pi / 2),
+        np.eye(3, dtype=np.float32),
+    ]
+    origin = np.zeros(3, dtype=np.float32)
+    for i in range(3):
+        _add_dashed_arrow_visuals(
+            o, axis_rotmat=axis_rots[i], axis_origin=origin,
+            length=arrow_length,
+            shaft_radius=shaft_radius, head_radius=head_radius,
+            head_length=head_length,
+            len_solid=len_solid, len_interval=len_interval, n_segs=n_segs,
+            rgb=color_mat[:, i], alpha=alpha, amc=amc,
+        )
     o.set_rotmat_pos(rotmat=rotmat, pos=pos)
     o.set_inertia(inertia, com, mass)
     return o

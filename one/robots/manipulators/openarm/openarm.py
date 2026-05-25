@@ -217,11 +217,12 @@ class OALft(ormmb.ManipulatorBase):
     def __init__(self, rotmat=None, pos=None, is_free=True):
         super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
 
-    def get_solver(self, chain):
-        if chain not in self._solvers:
-            _data_dir = os.path.join(self.structure.res_dir, "data_la")
-            self._solvers[chain] = orbkis.SELIKSolver(chain, _data_dir)
-        return self._solvers[chain]
+    def _init_solver(self, chain):
+        if chain is self._main_chain:
+            data_dir = os.path.join(self.structure.res_dir, "data_la")
+            self._solvers[chain] = orbkis.SELIKSolver(chain, data_dir)
+            return self._solvers[chain]
+        return super()._init_solver(chain)
 
 
 class OARgt(ormmb.ManipulatorBase):
@@ -233,11 +234,12 @@ class OARgt(ormmb.ManipulatorBase):
     def __init__(self, rotmat=None, pos=None, is_free=True):
         super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
 
-    def get_solver(self, chain):
-        if chain not in self._solvers:
-            _data_dir = os.path.join(self.structure.res_dir, "data_la")
-            self._solvers[chain] = orbkis.SELIKSolver(chain, _data_dir)
-        return self._solvers[chain]
+    def _init_solver(self, chain):
+        if chain is self._main_chain:
+            data_dir = os.path.join(self.structure.res_dir, "data_la")
+            self._solvers[chain] = orbkis.SELIKSolver(chain, data_dir)
+            return self._solvers[chain]
+        return super()._init_solver(chain)
 
 
 class OABody(orbmb.MechBase):

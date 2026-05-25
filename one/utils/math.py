@@ -30,10 +30,94 @@ _AXES2TUPLE = {
     'rzxz': (2, 0, 1, 1), 'rxyz': (2, 1, 0, 1), 'rzyz': (2, 1, 1, 1)}
 _TUPLE2AXES = dict((v, k) for k, v in _AXES2TUPLE.items())
 
-
 # helpers
 def vec(*args):
     return np.array(args)
+
+
+def axis_from_name(name):
+    text = str(name).strip().lower()
+    sign = -1.0 if text.startswith('-') else 1.0
+    if text.startswith(('+', '-')):
+        if len(text) != 2:
+            raise ValueError(f'Unknown axis: {name}')
+        axis_key = text[1]
+    else:
+        if len(text) != 1:
+            raise ValueError(f'Unknown axis: {name}')
+        axis_key = text
+    axis_id = 'xyz'.find(axis_key)
+    if axis_id < 0:
+        raise ValueError(f'Unknown axis: {name}')
+    axis = np.zeros(3, dtype=np.float32)
+    axis[axis_id] = sign
+    return axis
+
+
+def parse_axis_constraints(axis_constraints):
+    """Parse local-to-target axis constraints into unit vector pairs.
+
+    Supported inputs:
+        - None
+        - {'x': target_axis, 'y': target_axis, 'z': target_axis}
+        - a 3x3 target rotmat, equivalent to constraining x/y/z
+        - [(local_axis, target_axis), ...]
+    """
+    if axis_constraints is None:
+        return []
+    if isinstance(axis_constraints, dict):
+        items = []
+        for key, target_axis in axis_constraints.items():
+            items.append((axis_from_name(key), target_axis))
+    else:
+        arr = np.asarray(axis_constraints, dtype=np.float32)
+        if arr.shape == (3, 3):
+            items = [
+                (axis_from_name('x'), arr[:, 0]),
+                (axis_from_name('y'), arr[:, 1]),
+                (axis_from_name('z'), arr[:, 2]),
+            ]
+        else:
+            items = axis_constraints
+
+    parsed = []
+    for local_axis, target_axis in items:
+        local_axis = unit_vec(
+            np.asarray(local_axis, dtype=np.float32), return_length=False)
+        target_axis = unit_vec(
+            np.asarray(target_axis, dtype=np.float32), return_length=False)
+        parsed.append((local_axis, target_axis))
+    return parsed
+
+
+def axis_angle_error(src_axis, tgt_axis):
+    """Smallest angle between two axes in radians."""
+    src_axis = unit_vec(src_axis, return_length=False)
+    tgt_axis = unit_vec(tgt_axis, return_length=False)
+    return np.arctan2(
+        np.linalg.norm(np.cross(src_axis, tgt_axis)),
+        np.clip(np.dot(src_axis, tgt_axis), -1.0, 1.0),
+    )
+
+
+def rotmat_from_axis_constraints(axis_constraints, ref_rotmat=None, n_iter=4):
+    """Build a rotmat that satisfies axis constraints as closely as possible.
+
+    Unconstrained degrees of freedom are inherited from ``ref_rotmat``.
+    """
+    rotmat = ensure_rotmat(ref_rotmat).copy()
+    parsed = parse_axis_constraints(axis_constraints)
+    for _ in range(int(n_iter)):
+        max_angle = 0.0
+        for local_axis, target_axis in parsed:
+            cur_axis = rotmat @ local_axis
+            angle = axis_angle_error(cur_axis, target_axis)
+            max_angle = max(max_angle, float(angle))
+            if angle > eps:
+                rotmat = rotmat_between_vecs(cur_axis, target_axis) @ rotmat
+        if max_angle <= 1e-6:
+            break
+    return ensure_right_handed(rotmat)
 
 
 ## rotmat

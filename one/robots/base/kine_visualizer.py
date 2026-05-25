@@ -33,8 +33,8 @@ class KineVisualizer:
 
     def _joint_list_and_qs(self):
         if self.mode == 'chain':
-            if hasattr(self.mech, '_chain'):
-                chain = self.mech._chain
+            if hasattr(self.mech, '_main_chain'):
+                chain = self.mech._main_chain
             else:
                 compiled = self.mech.structure.compiled
                 chain = self.mech.structure.get_chain(compiled.root_lnk, compiled.tip_lnks[0])
