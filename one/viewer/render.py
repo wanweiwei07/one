@@ -79,6 +79,11 @@ class Render:
     def _draw_outlined_mesh(self, opaque_group, cam_view, cam_proj):
         if not opaque_group:
             return
+        # pyglet's Window.clear() only clears color+depth, so the stencil
+        # buffer must be cleared here or the outline pass relies on undefined
+        # stencil contents (works on some GPUs, fails on others, e.g. Intel).
+        gl.glStencilMask(0xFF)
+        gl.glClear(gl.GL_STENCIL_BUFFER_BIT)
         # normal pass
         gl.glEnable(gl.GL_STENCIL_TEST)
         gl.glStencilOp(gl.GL_KEEP, gl.GL_KEEP, gl.GL_REPLACE)
