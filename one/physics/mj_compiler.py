@@ -116,7 +116,7 @@ class MJCFCompiler:
 
     def compile_geom(self, g, parent_el):
         ge = ET.SubElement(parent_el, "geom")
-        # ge.set("name", g.name) # name is optional for geom
+        ge.set("name", g.name)
         ge.set("type", g.gtype)
         # size depends on type
         if g.gtype == "sphere":

@@ -108,17 +108,16 @@ def link(prefix, name, idx, mesh_dir, rgb=ouc.ExtendedColor.DEEP_GRAY):
     mass = lnk_mass[idx]
     com = lnk_com[idx]
     inrtmat = lnk_intertia[idx]
-    path = os.path.join(mesh_dir, f"{name}_symp.stl")
+    if prefix == "lft" and idx == 7:
+        path = os.path.join(mesh_dir, f"{name}_symp_mirrorY.stl")
+    else:
+        path = os.path.join(mesh_dir, f"{name}_symp.stl")
     if os.path.isfile(path):
-        scale = (0.001, 0.001, 0.001)
-        if prefix == "lft" and idx == 7:
-            scale = (0.001, -0.001, 0.001)
         lnk = orbms.Link.from_file(
             path,
             loc_pos=loc_pos,
             collision_type=ouc.CollisionType.MESH,
             rgb=rgb,
-            scale=scale,
         )
         lnk.set_inertia(inrtmat=inrtmat, com=com, mass=mass)
         return lnk
@@ -201,7 +200,6 @@ def prepare_bdy_ms():
         os.path.join(mesh_dir, "body_link0_symp.stl"),
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.DEEP_GRAY,
-        scale=(0.001, 0.001, 0.001),
     )
     structure.add_lnk(body_lnk)
     structure.compile()

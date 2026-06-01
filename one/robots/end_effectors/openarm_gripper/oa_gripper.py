@@ -16,19 +16,16 @@ def prepare_ms():
     # links
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "hand.stl"),
-        scale=(1e-3, 1e-3, 1e-3),
         loc_rotmat=None, loc_pos=hand_pos,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SILVER)
     lf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "finger.stl"),
-        scale=(1e-3, 1e-3, 1e-3),
         loc_rotmat=None, loc_pos=left_pos,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.STEEL_BLUE)
     rf_lnk = orbms.Link.from_file(
-        os.path.join(mesh_dir, "finger.stl"),
-        scale=(1e-3, -1e-3, 1e-3),
+        os.path.join(mesh_dir, "finger_mirrorY.stl"),
         loc_rotmat=None, loc_pos=right_pos,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SALMON_PINK)
