@@ -1,0 +1,92 @@
+
+================================================================================
+GEOM <-> PART / STL MAPPING
+================================================================================
+    ID | Body (MJCF name)             | Geom (MJCF name)         | STL / Type
+  ------------------------------------------------------------------------------
+     0 | [LFT] link                   | geom_0                   | mesh(mesh_0)
+     1 | [LFT] link                   | geom_1                   | mesh(mesh_1)
+     2 | [LFT] link                   | geom_2                   | mesh(mesh_2)
+     3 | [LFT] link                   | geom_3                   | mesh(mesh_3)
+     4 | [LFT] link                   | geom_4                   | mesh(mesh_4)
+     5 | [LFT] link                   | geom_5                   | mesh(mesh_5)
+     6 | [LFT] link                   | geom_6                   | mesh(mesh_6)
+     7 | [LFT_GRIP] link              | geom_7                   | mesh(mesh_7)
+     8 | [LFT_GRIP] link              | geom_8                   | mesh(mesh_8)
+     9 | [LFT_GRIP] link              | geom_9                   | mesh(mesh_9)
+    10 | [RGT] link                   | geom_10                  | mesh(mesh_0)
+    11 | [RGT] link                   | geom_11                  | mesh(mesh_1)
+    12 | [RGT] link                   | geom_12                  | mesh(mesh_2)
+    13 | [RGT] link                   | geom_13                  | mesh(mesh_3)
+    14 | [RGT] link                   | geom_14                  | mesh(mesh_4)
+    15 | [RGT] link                   | geom_15                  | mesh(mesh_5)
+    16 | [RGT] link                   | geom_16                  | mesh(mesh_6)
+    17 | [RGT_GRIP] link              | geom_17                  | mesh(mesh_10)
+    18 | [RGT_GRIP] link              | geom_18                  | mesh(mesh_11)
+    19 | [RGT_GRIP] link              | geom_19                  | mesh(mesh_12)
+    20 | [sobj_20]                    | geom_20                  | geom_type=0
+    21 | [sobj_21]                    | geom_21                  | geom_type=6
+    22 | [sobj_22]                    | geom_22                  | geom_type=6
+    23 | [sobj_23]                    | geom_23                  | geom_type=2
+    24 | [sobj_24]                    | geom_24                  | geom_type=2
+    25 | [sobj_25]                    | geom_25                  | geom_type=2
+    26 | [sobj_26]                    | geom_26                  | geom_type=2
+    27 | [sobj_27]                    | geom_27                  | geom_type=2
+    28 | [sobj_28]                    | geom_28                  | geom_type=2
+    29 | [sobj_29]                    | geom_29                  | geom_type=2
+    30 | [sobj_30]                    | geom_30                  | geom_type=2
+    31 | [sobj_31]                    | geom_31                  | geom_type=2
+    32 | [sobj_32]                    | geom_32                  | geom_type=2
+    33 | [sobj_33]                    | geom_33                  | geom_type=2
+    34 | [sobj_34]                    | geom_34                  | geom_type=2
+    35 | [sobj_35]                    | geom_35                  | geom_type=2
+    36 | [sobj_36]                    | geom_36                  | geom_type=2
+    37 | [sobj_37]                    | geom_37                  | geom_type=2
+    38 | [sobj_38]                    | geom_38                  | geom_type=2
+    39 | [sobj_39]                    | geom_39                  | geom_type=2
+    40 | [sobj_40]                    | geom_40                  | geom_type=2
+    41 | [sobj_41]                    | geom_41                  | geom_type=2
+    42 | [sobj_42]                    | geom_42                  | geom_type=2
+    43 | [sobj_43]                    | geom_43                  | geom_type=2
+    44 | [sobj_44]                    | geom_44                  | geom_type=2
+    45 | [sobj_45]                    | geom_45                  | geom_type=2
+    46 | [sobj_46]                    | geom_46                  | geom_type=2
+    47 | [sobj_47]                    | geom_47                  | geom_type=2
+    48 | [sobj_48]                    | geom_48                  | geom_type=2
+    49 | [sobj_49]                    | geom_49                  | geom_type=2
+    50 | [sobj_50]                    | geom_50                  | geom_type=2
+    51 | [sobj_51]                    | geom_51                  | geom_type=2
+    52 | [sobj_52]                    | geom_52                  | geom_type=2
+    53 | [sobj_53]                    | geom_53                  | geom_type=2
+    54 | [sobj_54]                    | geom_54                  | geom_type=2
+    55 | [sobj_55]                    | geom_55                  | geom_type=2
+    56 | [sobj_56]                    | geom_56                  | geom_type=2
+    57 | [sobj_57]                    | geom_57                  | geom_type=2
+    58 | [sobj_58]                    | geom_58                  | geom_type=2
+    59 | [sobj_59]                    | geom_59                  | geom_type=2
+    60 | [sobj_60]                    | geom_60                  | geom_type=2
+    61 | [sobj_61]                    | geom_61                  | geom_type=2
+    62 | [sobj_62]                    | geom_62                  | geom_type=2
+    63 | [sobj_63]                    | geom_63                  | geom_type=2
+    64 | [sobj_64]                    | geom_64                  | geom_type=2
+    65 | [sobj_65]                    | geom_65                  | geom_type=2
+    66 | [sobj_66]                    | geom_66                  | geom_type=2
+    67 | [sobj_67]                    | geom_67                  | geom_type=2
+    68 | [sobj_68]                    | geom_68                  | geom_type=2
+    69 | [sobj_69]                    | geom_69                  | geom_type=2
+    70 | [sobj_70]                    | geom_70                  | geom_type=2
+    71 | [sobj_71]                    | geom_71                  | geom_type=2
+    72 | [sobj_72]                    | geom_72                  | geom_type=2
+    73 | [sobj_73]                    | geom_73                  | geom_type=2
+    74 | [sobj_74]                    | geom_74                  | geom_type=2
+    75 | [sobj_75]                    | geom_75                  | geom_type=2
+    76 | [sobj_76]                    | geom_76                  | geom_type=2
+    77 | [sobj_77]                    | geom_77                  | geom_type=2
+    78 | [sobj_78]                    | geom_78                  | geom_type=2
+    79 | [sobj_79]                    | geom_79                  | geom_type=2
+    80 | [sobj_80]                    | geom_80                  | geom_type=2
+    81 | [sobj_81]                    | geom_81                  | geom_type=2
+    82 | [sobj_82]                    | geom_82                  | geom_type=2
+    83 | [sobj_83]                    | geom_83                  | geom_type=2
+    84 | [sobj_84]                    | geom_84                  | geom_type=2
+================================================================================
