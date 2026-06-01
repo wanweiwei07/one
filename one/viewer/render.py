@@ -79,22 +79,14 @@ class Render:
     def _draw_outlined_mesh(self, opaque_group, cam_view, cam_proj):
         if not opaque_group:
             return
-        # pyglet's Window.clear() only clears color+depth, so the stencil
-        # buffer must be cleared here or the outline pass relies on undefined
-        # stencil contents (works on some GPUs, fails on others, e.g. Intel).
-        gl.glStencilMask(0xFF)
-        gl.glClear(gl.GL_STENCIL_BUFFER_BIT)
-        # normal pass
-        gl.glEnable(gl.GL_STENCIL_TEST)
-        gl.glStencilOp(gl.GL_KEEP, gl.GL_KEEP, gl.GL_REPLACE)
-        gl.glStencilFunc(gl.GL_ALWAYS, 1, 0xFF)
-        gl.glStencilMask(0xFF)
-        gl.glDepthMask(gl.GL_TRUE)
-        gl.glCullFace(gl.GL_BACK)
+        self.outline_shader.use()
+        self.outline_shader.program["u_view"] = cam_view
+        self.outline_shader.program["u_proj"] = cam_proj
         self.mesh_shader.use()
         self.mesh_shader.program["u_view"] = cam_view
         self.mesh_shader.program["u_proj"] = cam_proj
         self.mesh_shader.program["u_view_pos"] = self.camera.pos
+        gl.glDepthMask(gl.GL_TRUE)
         for instance_list in opaque_group.values():
             tf_arr = np.empty((len(instance_list), 4, 4), np.float32)
             rgba_arr = np.empty((len(instance_list), 4), np.float32)
@@ -103,35 +95,20 @@ class Render:
                 rgba_arr[i] = (*model.rgb, model.alpha)
             device = instance_list[0][0].get_device_buffer()
             device.update_instances(tf_arr, rgba_arr)
+            # inflated black hull (back faces only -> halo outside silhouette)
+            gl.glCullFace(gl.GL_FRONT)
+            self.outline_shader.use()
             device.draw_instanced()
-        # outline pass
-        gl.glEnable(gl.GL_STENCIL_TEST)
-        gl.glStencilFunc(gl.GL_NOTEQUAL, 1, 0xFF)
-        gl.glStencilMask(0x00)
-        gl.glDepthMask(gl.GL_FALSE)
-        gl.glCullFace(gl.GL_FRONT)
-        self.outline_shader.use()
-        self.outline_shader.program["u_view"] = cam_view
-        self.outline_shader.program["u_proj"] = cam_proj
-        for instance_list in opaque_group.values():
-            tf_arr = np.empty((len(instance_list), 4, 4), np.float32)
-            for i, (model, node) in enumerate(instance_list):
-                tf_arr[i] = (node.wd_tf @ model.tf).T
-            device = instance_list[0][0].get_device_buffer()
-            device.update_instances(tf_arr)
+            # real mesh on top
+            gl.glCullFace(gl.GL_BACK)
+            self.mesh_shader.use()
             device.draw_instanced()
-        # restore state
-        gl.glStencilMask(0xFF)
-        gl.glDepthMask(gl.GL_TRUE)
-        gl.glDisable(gl.GL_STENCIL_TEST)
-        gl.glCullFace(gl.GL_BACK)
 
     def _draw_transparent_mesh(self, transparent_groups, cam_view, cam_proj):
         if not transparent_groups:
             return
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glDepthMask(gl.GL_FALSE)
-        gl.glDisable(gl.GL_STENCIL_TEST)
         gl.glCullFace(gl.GL_BACK)
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
