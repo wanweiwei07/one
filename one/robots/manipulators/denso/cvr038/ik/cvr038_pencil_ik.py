@@ -4,7 +4,6 @@ import one.utils.math as oum
 import one.robots.base.kine.anaik as orbka
 import one.robots.base.kine.ikgeo.sp2_lib as orbkisp2
 import one.robots.base.kine.ikgeo.sp3_lib as orbkisp3
-import one.robots.manipulators.denso.cvr038.ik.derive_q4_poly as ormdcip
 import one.robots.manipulators.denso.cvr038.ik.q4_resultant_np as ormdcrn
 
 
@@ -17,8 +16,13 @@ class CVR038PencilIK(orbka.AnaIKBase):
         h1 x h2, h2 // h3, h5 x h6
         h3 and h4 have a small common-normal offset.
 
-    q4 is solved by a numeric resultant pencil ('pencil_roots', default) or by
-    the offline sympy resultant ('sympy_roots').
+    q4 is solved by a resultant pencil that uses generated closed-form
+    coefficients (q4_pencil_coeffs) in the base-Z canonical frame, so the pencil
+    is built without any per-call symbolic/dict resultant work and is ~deg 12
+    instead of ~deg 32 -- both faster and better conditioned.  The deflation
+    drops the spurious q4 ~= +-pi (t -> inf) candidate, which the FK residual
+    filter would reject anyway.  The runtime carries no sympy dependency; the
+    coefficients are regenerated offline by gen_q4_pencil_coeffs.py.
     """
 
     def __init__(self, chain, joint_limits=None):
@@ -34,21 +38,11 @@ class CVR038PencilIK(orbka.AnaIKBase):
     def ik_all(
         self,
         tgt_tf_in_root,
-        q4_method='pencil_roots',
         residual_tol=1e-4,
         rot_weight=0.2,
         **kwargs,
     ):
         tgt_tf = np.asarray(tgt_tf_in_root, dtype=np.float32).copy()
-        if q4_method == 'sympy_roots':
-            return self._ik_all_from_sympy_q4_roots(tgt_tf, residual_tol, rot_weight)
-        return self._ik_all_from_pencil_q4_roots(tgt_tf, residual_tol, rot_weight)
-
-    def _ik_all_from_sympy_q4_roots(self, tgt_tf, residual_tol, rot_weight):
-        q4s = self._sympy_q4_roots(tgt_tf)
-        return self._ik_all_from_q4_roots(tgt_tf, q4s, residual_tol, rot_weight)
-
-    def _ik_all_from_pencil_q4_roots(self, tgt_tf, residual_tol, rot_weight):
         q4s = self._pencil_q4_roots(tgt_tf)
         return self._ik_all_from_q4_roots(tgt_tf, q4s, residual_tol, rot_weight)
 
@@ -67,16 +61,9 @@ class CVR038PencilIK(orbka.AnaIKBase):
         v = R06 @ np.array([0.0, 0.0, 1.0], dtype=np.float32)
         return p16, v
 
-    def _sympy_q4_roots(self, tgt_tf):
-        p16, v = self._target_p16_v(tgt_tf)
-        return ormdcip.q4_real_roots(
-            float(p16[0]), float(p16[1]), float(p16[2]),
-            float(v[0]), float(v[1]), float(v[2]),
-        )
-
     def _pencil_q4_roots(self, tgt_tf):
         p16, v = self._target_p16_v(tgt_tf)
-        return ormdcrn.q4_roots_pencil(
+        return ormdcrn.q4_roots_pencil_fast(
             float(p16[0]), float(p16[1]), float(p16[2]),
             float(v[0]), float(v[1]), float(v[2]),
             tol=1e-6,

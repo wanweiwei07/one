@@ -398,9 +398,45 @@ def q4_roots_pencil(px, py, pz, vx, vy, vz, tol=1e-8):
     return roots
 
 
+def _coeff_dict(keys, vals):
+    scale = max((abs(v) for v in vals), default=1.0) or 1.0
+    return {k: v / scale for k, v in zip(keys, vals)}
+
+
+def q4_roots_pencil_fast(px, py, pz, vx, vy, vz, tol=1e-8):
+    """Closed-form-coefficient pencil for the fixed CVR038 geometry.
+
+    q4 is invariant under base-Z rotation of the target, so the target is first
+    rotated to py = 0.  The deflated res_c3 / res_len_unit coefficients then come
+    from the generated closed forms (no sympy, no dict resultant build), and the
+    s3 pencil is ~deg 12 instead of ~deg 32 -- both faster and better conditioned
+    than q4_roots_pencil.
+    """
+    from one.robots.manipulators.denso.cvr038.ik import q4_pencil_coeffs as coeffs
+
+    a = np.arctan2(py, px)
+    ca, sa = np.cos(a), np.sin(a)
+    px_c = px * ca + py * sa            # = hypot(px, py), py rotates to 0
+    vx_c = vx * ca + vy * sa
+    vy_c = -vx * sa + vy * ca
+    c3_vals, lu_vals = coeffs.eval_coeffs(px_c, pz, vx_c, vy_c, vz)
+    rc3 = _coeff_dict(coeffs.C3_KEYS, c3_vals)
+    rlu = _coeff_dict(coeffs.LU_KEYS, lu_vals)
+    syl = _sylvester_for_var(rc3, rlu, 1)
+    mats = _poly_matrix_to_coeff_mats(syl)
+    roots = []
+    for t in _polymat_roots(mats, tol=tol):
+        q4 = 2.0 * np.arctan(t)
+        q4 = (q4 + np.pi) % (2.0 * np.pi) - np.pi
+        if all(abs(((q4 - old + np.pi) % (2.0 * np.pi)) - np.pi) > 1e-7
+               for old in roots):
+            roots.append(float(q4))
+    roots.sort()
+    return roots
+
+
 if __name__ == '__main__':
-    roots = q4_roots_pencil(
-        0.13353576, -0.01027953, 0.30813415,
-        0.99296349, -0.11385252, 0.03257641,
-    )
-    print(roots)
+    target = (0.13353576, -0.01027953, 0.30813415,
+              0.99296349, -0.11385252, 0.03257641)
+    print('pencil     :', q4_roots_pencil(*target))
+    print('pencil_fast:', q4_roots_pencil_fast(*target))
