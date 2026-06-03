@@ -6,6 +6,7 @@ import one.utils.constant as ouc
 import one.robots.base.kine.numik as orbkn
 import one.robots.base.mech_structure as orbms
 import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.manipulators.fanuc.crx5ia.ik as ormfci
 
 
 def prepare_mechstruct():
@@ -269,11 +270,14 @@ class CRX5ia(ormmb.ManipulatorBase):
     def _build_structure(cls):
         return prepare_mechstruct()
 
-    def get_solver(self, chain):
-        # CRX5ia has mixed joint axes (Z, Y, -Y, -X, -Y, -X),
-        # use CRX5iaNumIKSolver (wrapper around numik_custom.NumIKSolver)
-        # which provides a default initial guess for compatibility with
-        # ManipulatorBase.ik_tcp() that does not pass qs_active_init.
+    def _init_solver(self, chain):
+        # Main chain uses the closed-form analytic IK (all 6-axis solutions).
+        # Other chains fall back to the numeric solver (with a home initial
+        # guess) for compatibility with ManipulatorBase.ik_tcp().
+        if chain is self._main_chain:
+            self._solvers[chain] = ormfci.CRX5iaAnalyticIK(
+                chain, joint_limits=(chain.lmt_lo, chain.lmt_up))
+            return self._solvers[chain]
         if chain not in self._solvers:
             self._solvers[chain] = CRX5iaNumIKSolver(chain, self.home_qs)
         return self._solvers[chain]

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_validate.py)",
+      "Bash(C:/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -c ' *)",
+      "Bash(rm -f _crx_prof.py _crx_validate.py)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_why.py)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_why2.py)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof.py 2>&1 | Select-Object -First 34)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof.py 2>&1 | Select-Object -First 22)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_check.py)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof.py 2>&1 | Select-Object -First 16)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_prof.py 2>&1 | Select-Object -First 26)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_val.py)",
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof2.py 2>&1 | Select-Object -First 26)"
+    ]
+  }
+}

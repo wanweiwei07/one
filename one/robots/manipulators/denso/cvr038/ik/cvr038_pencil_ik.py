@@ -1,9 +1,9 @@
+import math
+
 import numpy as np
 
 import one.utils.math as oum
 import one.robots.base.kine.anaik as orbka
-import one.robots.base.kine.ikgeo.sp2_lib as orbkisp2
-import one.robots.base.kine.ikgeo.sp3_lib as orbkisp3
 import one.robots.manipulators.denso.cvr038.ik.q4_resultant_np as ormdcrn
 
 
@@ -33,6 +33,14 @@ class CVR038PencilIK(orbka.AnaIKBase):
         self.h4 = np.asarray(self.chain.axes[3], dtype=np.float32)
         self.h5 = np.asarray(self.chain.axes[4], dtype=np.float32)
         self.h6 = np.asarray(self.chain.axes[5], dtype=np.float32)
+        # fast-FK tables (CVR038 axes are cardinal Z/Y, so motion is Rz/Ry)
+        self._zero_tfs = [np.asarray(jnt.zero_tf, dtype=np.float32)
+                          for jnt in self.chain.jnts]
+        self._axis_kind = []
+        for h in self.chain.axes:
+            h = np.asarray(h, dtype=np.float32)
+            i = int(np.argmax(np.abs(h)))
+            self._axis_kind.append(('xyz'[i], float(np.sign(h[i]))))
         self._setup_equivalent_geometry()
 
     def ik_all(
@@ -123,6 +131,29 @@ class CVR038PencilIK(orbka.AnaIKBase):
             all_qs.append(np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32))
         return all_qs
 
+    @staticmethod
+    def _cos_sin_solve(a, b, c):
+        # all theta with a*cos(theta) + b*sin(theta) = c
+        r = math.hypot(a, b)
+        if r < 1e-12:
+            return []
+        ratio = c / r
+        if ratio > 1.0:
+            if ratio < 1.0 + 1e-9:
+                ratio = 1.0
+            else:
+                return []
+        elif ratio < -1.0:
+            if ratio > -1.0 - 1e-9:
+                ratio = -1.0
+            else:
+                return []
+        phi0 = math.atan2(b, a)
+        delta = math.acos(ratio)
+        if delta < 1e-9:
+            return [phi0]
+        return [phi0 + delta, phi0 - delta]
+
     def _fixed_q4_q123_candidates(self, tgt_tf, q4):
         p06 = tgt_tf[:3, 3]
         R06 = tgt_tf[:3, :3] @ self.chain.tfs[-1][:3, :3].T
@@ -130,15 +161,33 @@ class CVR038PencilIK(orbka.AnaIKBase):
         R34 = self._rotz(q4)
         p36 = self.p34 + R34 @ self.p45
 
-        q3s, _ = orbkisp3.sp3_run(p36, -self.p23, self.h3, float(np.linalg.norm(p16)))
-        q3s = self._angles(q3s)
+        p16x, p16y, p16z = float(p16[0]), float(p16[1]), float(p16[2])
+        p36x, p36y, p36z = float(p36[0]), float(p36[1]), float(p36[2])
+        a23, b23, c23 = float(self.p23[0]), float(self.p23[1]), float(self.p23[2])
+        p16n2 = p16x * p16x + p16y * p16y + p16z * p16z
+        p36n2 = p36x * p36x + p36y * p36y + p36z * p36z
+        p23n2 = a23 * a23 + b23 * b23 + c23 * c23
+
+        # sp3: ||p23 + Ry(q3) p36|| = ||p16||  ->  A cos q3 + B sin q3 = C
+        A3 = a23 * p36x + c23 * p36z
+        B3 = a23 * p36z - c23 * p36x
+        C3 = 0.5 * (p16n2 - p23n2 - p36n2) - b23 * p36y
+
         out = []
-        for q3 in q3s:
-            R23 = self._roty(q3)
-            p26 = self.p23 + R23 @ p36
-            q1s, q2s, _ = orbkisp2.sp2_run(p16, p26, -self.h1, self.h2)
-            for q1, q2 in zip(self._angles(q1s), self._angles(q2s)):
-                out.append((float(q1), float(q2), float(q3), R06))
+        for q3 in self._cos_sin_solve(A3, B3, C3):
+            c3, s3 = math.cos(q3), math.sin(q3)
+            # p26 = p23 + Ry(q3) p36
+            p26x = a23 + p36x * c3 + p36z * s3
+            p26y = b23 + p36y
+            p26z = c23 - p36x * s3 + p36z * c3
+            # sp2: p16 = Rz(q1) Ry(q2) p26
+            #   q2 from p26z cos q2 - p26x sin q2 = p16z
+            for q2 in self._cos_sin_solve(p26z, -p26x, p16z):
+                c2, s2 = math.cos(q2), math.sin(q2)
+                vx = p26x * c2 + p26z * s2
+                vy = p26y
+                q1 = math.atan2(p16y, p16x) - math.atan2(vy, vx)
+                out.append((q1, q2, float(q3), R06))
         return out
 
     def _rotz(self, angle):
@@ -158,13 +207,29 @@ class CVR038PencilIK(orbka.AnaIKBase):
     def _fk_error(self, qs, tgt_tf, rot_weight):
         cur_tf = self._fk_tf(qs)
         pos_err = tgt_tf[:3, 3] - cur_tf[:3, 3]
-        rot_err = oum.delta_rotvec_between_rotmats(cur_tf[:3, :3], tgt_tf[:3, :3])
-        return float(np.linalg.norm(np.concatenate([pos_err, rot_weight * rot_err])))
+        # small-angle rotation error from the antisymmetric part (~sin theta ~
+        # theta); stable near 0, unlike arccos, and scipy-free
+        rel = cur_tf[:3, :3].T @ tgt_tf[:3, :3]
+        vx = rel[2, 1] - rel[1, 2]
+        vy = rel[0, 2] - rel[2, 0]
+        vz = rel[1, 0] - rel[0, 1]
+        theta = 0.5 * float(np.sqrt(vx * vx + vy * vy + vz * vz))
+        return float(np.sqrt(float(pos_err @ pos_err) + (rot_weight * theta) ** 2))
+
+    def _rotx(self, angle):
+        c = float(np.cos(angle))
+        s = float(np.sin(angle))
+        return np.array([[1.0, 0.0, 0.0],
+                         [0.0, c, -s],
+                         [0.0, s, c]], dtype=np.float32)
 
     def _fk_tf(self, qs):
+        rmap = {'x': self._rotx, 'y': self._roty, 'z': self._rotz}
         tf = np.eye(4, dtype=np.float32)
-        for jnt, q in zip(self.chain.jnts, qs):
-            tf = tf @ jnt.zero_tf @ jnt.motion_tf(float(q))
+        m = np.eye(4, dtype=np.float32)
+        for ztf, (char, sign), q in zip(self._zero_tfs, self._axis_kind, qs):
+            m[:3, :3] = rmap[char](sign * float(q))
+            tf = tf @ ztf @ m
         return tf
 
     def _filter_fk_residual(self, qs_list, tgt_tf, residual_tol, rot_weight):
