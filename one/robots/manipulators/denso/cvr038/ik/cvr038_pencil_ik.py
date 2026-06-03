@@ -4,7 +4,7 @@ import numpy as np
 
 import one.utils.math as oum
 import one.robots.base.kine.anaik as orbka
-import one.robots.manipulators.denso.cvr038.ik.q4_resultant_np as ormdcrn
+import one.robots.manipulators.denso.cvr038.ik.q4_pencil_solve as ormdcrn
 
 
 class CVR038PencilIK(orbka.AnaIKBase):

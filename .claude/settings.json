@@ -12,7 +12,9 @@
       "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof.py 2>&1 | Select-Object -First 16)",
       "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_prof.py 2>&1 | Select-Object -First 26)",
       "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _crx_val.py)",
-      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof2.py 2>&1 | Select-Object -First 26)"
+      "PowerShell($py=\"C:\\\\Users\\\\weiwe\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\"; & $py _cvr_prof2.py 2>&1 | Select-Object -First 26)",
+      "Bash(git rm *)",
+      "Bash(C:/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -m one.robots.manipulators.denso.cvr038.ik.q4_pencil_solve)"
     ]
   }
 }
