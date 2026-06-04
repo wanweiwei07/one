@@ -61,9 +61,18 @@ class GripperMixin:
     def set_jaw_width(self, width):
         raise NotImplementedError
 
+    def _grasp_loc_tf(self):
+        """Grasp-center offset relative to the gripper root link.
+
+        New grippers register a tcp named 'grasp_center'; legacy
+        EndEffectorBase grippers expose ``loc_tcp_tf``."""
+        if 'grasp_center' in self.tcps:
+            return self.tcp('grasp_center').loc_tf
+        return self.loc_tcp_tf
+
     def grip_at(self, tgt_pos, tgt_rotmat, tgt_jaw_width):
         """
-        Move TCP to target pose, set jaw width, return base tf.
+        Move grasp center to target pose, set jaw width, return base tf.
         :param tgt_pos: (3,)
         :param tgt_rotmat: (3,3)
         :param tgt_jaw_width: float
@@ -74,7 +83,7 @@ class GripperMixin:
             raise ValueError(f"jaw_width {tgt_jaw_width}"
                              f" out of range {self.jaw_range}")
         tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        base_tf = tgt_tf @ np.linalg.inv(self.loc_tcp_tf)
+        base_tf = tgt_tf @ np.linalg.inv(self._grasp_loc_tf())
         self.set_rotmat_pos(base_tf[:3, :3], base_tf[:3, 3])
         self.set_jaw_width(tgt_jaw_width)
         return base_tf

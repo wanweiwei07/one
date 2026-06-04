@@ -4,6 +4,7 @@ import numpy as np
 import one.utils.constant as ouc
 import one.utils.math as oum
 import one.robots.base.mech_structure as orbms
+import one.robots.base.mech_base as orbmb
 import one.robots.end_effectors.ee_base as oreb
 
 
@@ -59,16 +60,19 @@ def prepare_ms():
     return structure
 
 
-class CVR038Gripper(oreb.EndEffectorBase, oreb.GripperMixin):
+class CVR038Gripper(orbmb.MechBase, oreb.GripperMixin):
+    """Parallel-jaw gripper: a MechBase + GripperMixin. No chain / ik (motion is
+    jaw width, set directly); just a 'grasp_center' tcp and jaw control."""
 
     @classmethod
     def _build_structure(cls):
         return prepare_ms()
 
     def __init__(self):
-        super().__init__(
-            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.06))
-        )
+        super().__init__()   # is_free=True default (free until mounted)
+        self.add_tcp('grasp_center', self.runtime_root_lnk,
+                     oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.06)))
+        self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
         self.jaw_range = np.array([0.0, 0.03], dtype=np.float32)
         self.open_dir = ouc.StandardAxis.Y
         self.set_jaw_width(self.jaw_range[1])
@@ -80,6 +84,7 @@ class CVR038Gripper(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def clone(self):
         new = super().clone()
+        new.contact_pattern = self.contact_pattern.copy()
         new.jaw_range = self.jaw_range.copy()
         new.open_dir = self.open_dir
         new.set_jaw_width(self.qs[0] * 2.0)

@@ -6,6 +6,7 @@ class KinematicChain:
 
     def __init__(self, structure, base_lnk, tip_lnk):
         compiled = structure._compiled
+        self.name = None  # optional, set by MechBase.add_chain
         self.base_lnk = base_lnk
         self.tip_lnk = tip_lnk
         self.base_lidx = compiled.lidx_map[base_lnk]

@@ -91,7 +91,7 @@ class ManipulatorBase(orbmb.MechBase):
             ref_qs = self.qs
         results = self.ik(self._main_chain, self._flange_tcp(),
                           tgt_rotmat, tgt_pos, max_solutions=1, ref_qs=ref_qs)
-        return None if results is None else results[0]
+        return results[0] if results else None
 
     def ik_attached_frame(
             self,

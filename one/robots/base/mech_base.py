@@ -140,10 +140,14 @@ class MechBase:
                     chain.tip_lidx in self.structure.compiled.tip_lnk_ids):
                 _data_dir = os.path.join(self.structure.res_dir, "data")
             else:
+                # use the registered chain name as a readable hint, falling
+                # back to link indices for unnamed (ad-hoc) chains.
+                label = getattr(chain, "name", None) or \
+                    f"{chain.base_lidx}_{chain.tip_lidx}"
                 _data_dir = os.path.join(
                     self.structure.res_dir,
                     "data",
-                    f"chain_{chain.base_lidx}_{chain.tip_lidx}",
+                    f"chain_{label}",
                 )
             self._solvers[chain] = orbkis.SELIKSolver(
                 chain, _data_dir)
@@ -162,6 +166,7 @@ class MechBase:
         if name in self._chains:
             raise ValueError(f"Chain already defined: {name}")
         c = self.structure.get_chain(base_lnk, tip_lnk)
+        c.name = name   # readable hint for solver data dirs / debugging
         self._chains[name] = c
         return c
 
@@ -194,23 +199,39 @@ class MechBase:
     def tcps(self):
         return dict(self._tcps)
 
+    def toggle_tcp(self, name, color_mat=None, **kwargs):
+        """Toggle a coordinate frame for the named tcp: first call shows it
+        (attached to the tcp's parent link, so it follows the robot), second
+        call removes it. Returns the frame sobj when shown, else None."""
+        import one.utils.constant as ouc
+        import one.scene.scene_object_primitive as ossop
+        tcp = self.tcp(name)
+        objs = getattr(self, '_tcp_frame_objs', None)
+        if objs is None:
+            objs = {}
+            self._tcp_frame_objs = objs
+        if name in objs:
+            objs.pop(name).detach_from(tcp.parent_lnk)
+            return None
+        if color_mat is None:
+            color_mat = ouc.CoordColor.MYC
+        f = ossop.frame_from_tf(tcp.loc_tf, color_mat=color_mat, **kwargs)
+        f.attach_to(tcp.parent_lnk)
+        objs[name] = f
+        return f
+
     # ---- ik verb -------------------------------------------------------
-    def ik(self, chain, tcp, tgt_rotmat, tgt_pos,
-           max_solutions=8, ref_qs=None, **kwargs):
-        """Solve IK so that ``tcp`` reaches the target pose, using ``chain``.
+    def _resolve_ik_target(self, chain, tcp):
+        """Resolve str names, validate control, and return
+        (chain, tcp, base_tf, t_tip2tcp) shared by ik / ik_partial.
 
-        chain  : which joints move. A name (str) resolved against this
-                 mechanism's chain registry, or a KinematicChain object. Its
-                 solver is lazily built.
-        tcp    : what point to position. Either a name (str) resolved against
-                 THIS mechanism's own tcp registry, or a TCP object (use the
-                 object form for a foreign/child registry, e.g. an engaged
-                 gripper's tcp, or a transient target). Must be downstream of
-                 the chain's joints; the chain-tip->tcp offset is read from
-                 current FK (a rigid constant for this solve), so tcp need not
-                 sit on chain.tip.
-
-        Returns a list of full qs vectors, or None if unreachable.
+        chain  : name (str, resolved against this mechanism's chain registry)
+                 or a KinematicChain object.
+        tcp    : name (str, this mechanism's tcp registry) or a TCP object
+                 (object form for a foreign/child registry, e.g. an engaged
+                 gripper's tcp, or a transient target).
+        The chain-tip -> tcp offset is read from current FK (a rigid constant
+        for this solve), so tcp need not sit on chain.tip.
         """
         if isinstance(chain, str):
             chain = self.chain(chain)
@@ -223,8 +244,16 @@ class MechBase:
                 "on a child mounted downstream of the chain tip.")
         base_tf = self.runtime_lnks[chain.base_lidx].tf
         tip_tf = self.runtime_lnks[chain.tip_lidx].tf
-        # chain-tip -> tcp rigid offset, read from current FK
         t_tip2tcp = np.linalg.inv(tip_tf) @ tcp.tf
+        return chain, tcp, base_tf, t_tip2tcp
+
+    def ik(self, chain, tcp, tgt_rotmat, tgt_pos,
+           max_solutions=8, ref_qs=None, **kwargs):
+        """Full-pose IK: solve so ``tcp`` reaches the 6-DOF target pose, using
+        ``chain``. Returns a list of full qs vectors (empty if unreachable).
+        For under-constrained targets (position-only / axis-direction) use
+        ``ik_partial``."""
+        chain, tcp, base_tf, t_tip2tcp = self._resolve_ik_target(chain, tcp)
         tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
         tgt_tip_tf = tgt_tcp_tf @ np.linalg.inv(t_tip2tcp)
         solver = self._init_solver(chain)
@@ -237,9 +266,55 @@ class MechBase:
             ref_qs=ref_qs,
             **kwargs,
         )
-        if len(results) == 0:
-            return None
         return [chain.embed_active_qs(q, self.qs) for q in results]
+
+    def ik_partial(self, chain, tcp, tgt_pos=None, axis_constraints=None,
+                   max_solutions=1, ref_qs=None, seed_count=8,
+                   pos_weight=1.0, axis_weight=0.2,
+                   pos_tol=1e-4, axis_tol=1e-3, max_iter=200,
+                   return_infos=False, **kwargs):
+        """Partial IK: under-constrained target -- a position and/or
+        axis-direction constraints, orientation otherwise free (e.g. point a
+        camera's z axis at a target, roll free). Always numerical; the chain's
+        solver must support ik_partial (the analytic main-chain solver does
+        not).
+
+        Returns a list of full qs vectors (empty if unreachable); with
+        ``return_infos=True`` returns ``(qs_list, infos)``.
+        """
+        if tgt_pos is None and axis_constraints is None:
+            raise ValueError('tgt_pos or axis_constraints must be provided')
+        chain, tcp, base_tf, t_tip2tcp = self._resolve_ik_target(chain, tcp)
+        solver = self._init_solver(chain)
+        if not hasattr(solver, 'ik_partial'):
+            raise TypeError(
+                f"Solver {type(solver).__name__} does not support partial IK; "
+                "use a numerical chain (not the analytic main chain).")
+        ac = oum.parse_axis_constraints(axis_constraints)
+        tgt_pos = None if tgt_pos is None else np.asarray(tgt_pos, dtype=np.float32)
+        if ref_qs is None:
+            ref_qs = chain.extract_active_qs(self.qs)
+        tgt_rotmat_hint = oum.rotmat_from_axis_constraints(ac, ref_rotmat=tcp.rotmat)
+        results, infos = solver.ik_partial(
+            root_rotmat=base_tf[:3, :3],
+            root_pos=base_tf[:3, 3],
+            tgt_pos=tgt_pos,
+            axis_constraints=ac,
+            loc_tf=t_tip2tcp,
+            tgt_rotmat_hint=tgt_rotmat_hint,
+            max_solutions=max_solutions,
+            ref_qs=ref_qs,
+            max_iter=max_iter,
+            seed_count=seed_count,
+            return_infos=True,
+            pos_weight=pos_weight,
+            axis_weight=axis_weight,
+            tol_pos=pos_tol,
+            tol_axis=axis_tol,
+            **kwargs,
+        )
+        qs_list = [chain.embed_active_qs(q, self.qs) for q in results]
+        return (qs_list, infos) if return_infos else qs_list
 
     def _chain_controls_tcp(self, chain, tcp):
         """True if moving ``chain`` actually moves ``tcp``.
