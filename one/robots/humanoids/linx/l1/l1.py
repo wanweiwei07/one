@@ -36,6 +36,18 @@ class L1(orbmb.MechBase):
     def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=True):
         super().__init__(rotmat=rotmat, pos=pos,
                          home_qs=home_qs, is_free=is_free)
+        lm = self.structure.lnk_map
+        # named chains (which joints move) -- base/tip are structure links
+        self.add_chain('left_arm', lm['waist_link2'], lm['left_arm_link_6'])
+        self.add_chain('right_arm', lm['waist_link2'], lm['right_arm_link_6'])
+        self.add_chain('left_arm_waist', lm['waist_link1'], lm['left_arm_link_6'])
+        self.add_chain('right_arm_waist', lm['waist_link1'], lm['right_arm_link_6'])
+        self.add_chain('neck', lm['waist_link2'], lm['neck_link2'])
+        # tcps (what point to position) -- a tool point on each arm's last link
+        tcp_tf = oum.tf_from_rotmat_pos(
+            pos=np.array([0.04, 0.0, 0.12], dtype=np.float32))
+        self.add_tcp('left_tcp', self.lnk('left_arm_link_6'), tcp_tf)
+        self.add_tcp('right_tcp', self.lnk('right_arm_link_6'), tcp_tf)
 
     def lnk(self, name):
         lidx = self.structure.compiled.lidx_map[self.structure.lnk_map[name]]
@@ -44,53 +56,16 @@ class L1(orbmb.MechBase):
     def jnt(self, name):
         return self.structure.jnt_map[name]
 
-    def chain(self, base_lnk_name, tip_lnk_name):
-        return self.structure.get_chain(
-            self.structure.lnk_map[base_lnk_name],
-            self.structure.lnk_map[tip_lnk_name],
-        )
-
-    @property
-    def left_arm_chain(self):
-        return self.chain('waist_link2', 'left_arm_link_6')
-
-    @property
-    def right_arm_chain(self):
-        return self.chain('waist_link2', 'right_arm_link_6')
-
-    @property
-    def left_arm_waist_chain(self):
-        return self.chain('waist_link1', 'left_arm_link_6')
-
-    @property
-    def right_arm_waist_chain(self):
-        return self.chain('waist_link1', 'right_arm_link_6')
-
-    @property
-    def neck_chain(self):
-        return self.chain('waist_link2', 'neck_link2')
-
 
 if __name__ == '__main__':
-    import one.scene.scene_object_primitive as ossop
     import one.viewer.world as ovw
 
     base = ovw.World(cam_pos=(2.2, 1.4, 1.6),
                      cam_lookat_pos=(0.0, 0.0, 0.9))
     robot = L1()
     robot.attach_to(base.scene)
-    loc_tcp_tf = np.eye(4, dtype=np.float32)
-    loc_tcp_tf[:3, 3] = np.array([0.04, 0.0, 0.12], dtype=np.float32)
-    left_tcp = ossop.frame_from_tf(
-        loc_tcp_tf,
-        length_scale=0.18,
-        radius_scale=0.6,
-    )
-    right_tcp = ossop.frame_from_tf(
-        loc_tcp_tf,
-        length_scale=0.18,
-        radius_scale=0.6,
-    )
-    left_tcp.attach_to(robot.lnk('left_arm_link_6'))
-    right_tcp.attach_to(robot.lnk('right_arm_link_6'))
+    # arm / hand / manipulator all share the same call:
+    #   robot.ik('left_arm', 'left_tcp', tgt_rotmat, tgt_pos)
+    robot.toggle_tcp('left_tcp', length_scale=0.18, radius_scale=0.6)
+    robot.toggle_tcp('right_tcp', length_scale=0.18, radius_scale=0.6)
     base.run()
