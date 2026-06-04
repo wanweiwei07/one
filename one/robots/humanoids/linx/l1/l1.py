@@ -5,6 +5,7 @@ import numpy as np
 import one.utils.constant as ouc
 import one.robots.base.mech_base as orbmb
 import one.robots.base.urdf_loader as orul
+import one.robots.end_effectors.linkerhand.o6.o6 as oello6
 
 
 _H0602_URDF = os.path.join(
@@ -43,11 +44,28 @@ class L1(orbmb.MechBase):
         self.add_chain('left_arm_waist', lm['waist_link1'], lm['left_arm_link_6'])
         self.add_chain('right_arm_waist', lm['waist_link1'], lm['right_arm_link_6'])
         self.add_chain('neck', lm['waist_link2'], lm['neck_link2'])
-        # tcps (what point to position) -- a tool point on each arm's last link
-        tcp_tf = oum.tf_from_rotmat_pos(
-            pos=np.array([0.04, 0.0, 0.12], dtype=np.float32))
-        self.add_tcp('left_tcp', self.lnk('left_arm_link_6'), tcp_tf)
-        self.add_tcp('right_tcp', self.lnk('right_arm_link_6'), tcp_tf)
+        # dexterous hands: standalone O6 EEs mounted on each arm flange (the
+        # *_linkerhand_mount_joint, xyz=(0,0,0.034), that used to live in the
+        # body URDF). grasp targets come from the hands' center tcps via
+        # cross-object ik, e.g.
+        #   robot.ik('left_arm', robot.left_hand.tcp('power_grasp_center'), R, p)
+        mount_tf = oum.tf_from_rotmat_pos(
+            pos=np.array([0.0, 0.0, 0.034], dtype=np.float32))
+        self.left_hand = oello6.O6Left()
+        self.right_hand = oello6.O6Right()
+        self.mount(self.left_hand, self.lnk('left_arm_link_6'), mount_tf, update=True)
+        self.mount(self.right_hand, self.lnk('right_arm_link_6'), mount_tf, update=True)
+
+    def clone(self):
+        new = super().clone()
+        # MechBase.clone deep-copies the mounted hands but not these instance
+        # handles; re-bind them to the cloned children (by EE class -> side).
+        for child in new._mountings:
+            if isinstance(child, oello6.O6Left):
+                new.left_hand = child
+            elif isinstance(child, oello6.O6Right):
+                new.right_hand = child
+        return new
 
     def lnk(self, name):
         lidx = self.structure.compiled.lidx_map[self.structure.lnk_map[name]]
@@ -64,8 +82,10 @@ if __name__ == '__main__':
                      cam_lookat_pos=(0.0, 0.0, 0.9))
     robot = L1()
     robot.attach_to(base.scene)
-    # arm / hand / manipulator all share the same call:
-    #   robot.ik('left_arm', 'left_tcp', tgt_rotmat, tgt_pos)
-    robot.toggle_tcp('left_tcp', length_scale=0.18, radius_scale=0.6)
-    robot.toggle_tcp('right_tcp', length_scale=0.18, radius_scale=0.6)
+    # arm / hand / manipulator all share the same call; grasp targets are the
+    # mounted hands' center tcps (cross-object ik):
+    #   robot.ik('left_arm', robot.left_hand.tcp('power_grasp_center'), R, p)
+    for hand in (robot.left_hand, robot.right_hand):
+        hand.toggle_tcp('power_grasp_center', length_scale=0.15, radius_scale=0.25)
+        hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)
     base.run()

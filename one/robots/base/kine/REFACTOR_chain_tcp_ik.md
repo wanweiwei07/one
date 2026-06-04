@@ -156,6 +156,7 @@ class CVR038(orbmb.MechBase):
 
 ### 4.5 `humanoids/linx/l1/l1.py`：本来就是 MechBase，无需改继承
 - 在 `__init__` 里定义好 `left_arm_chain` 等 + `add_tcp('left_eye', head_lnk, …)` / `add_tcp('left_palm', …)`，即可 `robot.ik(left_arm_chain, 'left_palm', pose)`。和机械臂、机械手**同一套调用**。
+- **手剥离（已做）**：原 h0602.urdf 把两只 LinkerHand O6 灵巧手（各 11 指关节）硬编码进 body。已切成独立 EE `end_effectors/linkerhand/o6`（`o6_left.urdf`/`o6_right.urdf` + `O6Left`/`O6Right` 两个 MechBase），body URDF 砍到 `*_arm_link_6` 收尾。L1 `__init__` 用 `mount(O6Left(), lnk('left_arm_link_6'), z=0.034)` 把手挂回去——位姿与原一体 URDF **逐点一致（diff=0）**。每只手带两个 center tcp：`power_grasp_center`（全手握爪中心）/ `pinch_center`（拇指-食指捏取中心），抓取走跨对象 ik `robot.ik('left_arm', robot.left_hand.tcp('power_grasp_center'), R, p)`。指链 ik 暂未建模（手当刚体 EE 用）。一次性迁移脚本在 `tools/extract_o6_hands.py` / `tools/strip_o6_hands.py`。
 
 ### 4.6 消除 `end_effectors/ee_base.py` 的 `EndEffectorBase`（同 ManipulatorBase）
 - `EndEffectorBase` 也是「薄 MechBase 子类 + 一个 TCP」→ TCP 进 tcp 注册表，类删掉，gripper 直接继承 `MechBase`。
