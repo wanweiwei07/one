@@ -3,7 +3,7 @@ import numpy as np
 
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
-import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.base.mech_base as orbmb
 import one.robots.manipulators.denso.cvr038.ik as ormdci
 
 
@@ -124,17 +124,23 @@ def prepare_mechstruct():
     return structure
 
 
-class CVR038(ormmb.ManipulatorBase):
+class CVR038(orbmb.MechBase):
+    """6-DOF single-arm: a MechBase configured with one root->tip chain and a
+    flange tcp. No ManipulatorBase -- 'arm' is just this configuration."""
 
     @classmethod
     def _build_structure(cls):
         return prepare_mechstruct()
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos)
+        super().__init__(rotmat=rotmat, pos=pos, is_free=False)
+        c = self.structure.compiled
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0])   # which joints move
+        self.add_tcp('flange', self.runtime_lnks[-1])       # what point to position
+        self._init_solver(self.chain('main'))               # build analytic solver
 
     def _init_solver(self, chain):
-        if chain is self._main_chain:
+        if chain is self.chain('main'):
             joint_limits = (chain.lmt_lo, chain.lmt_up)
             self._solvers[chain] = ormdci.CVR038PencilIK(
                 chain, joint_limits)
@@ -149,7 +155,7 @@ def cvr038_with_gripper(rotmat=None, pos=None, jaw_width=0.03):
     arm = CVR038(rotmat=rotmat, pos=pos)
     gripper = CVR038Gripper()
     gripper.set_jaw_width(jaw_width)
-    arm.engage(gripper)
+    arm.mount(gripper, arm.runtime_lnks[-1], update=True)
     return arm, gripper
 
 
@@ -163,12 +169,12 @@ if __name__ == "__main__":
     robot, gripper = cvr038_with_gripper()
     robot.attach_to(base.scene)
     robot.alpha=0.3
-    kv = orbkv.KineVisualizer(robot, alpha=0.8)
+    kv = orbkv.KineVisualizer(robot, chain=robot.chain('main'), alpha=0.8)
     kv.attach_to(base.scene)
 
     compiled = robot.structure.compiled
     joint_frames = []
-    for jidx in robot._main_chain.jnt_ids_in_structure:
+    for jidx in robot.chain('main').jnt_ids_in_structure:
         parent_lidx = compiled.plidx_of_jidx[jidx]
         parent_lnk = robot.runtime_lnks[parent_lidx]
         frame = ossop.frame_from_tf(

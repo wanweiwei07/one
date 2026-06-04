@@ -8,16 +8,16 @@ import one.scene.scene_object_primitive as ossop
 
 
 class KineVisualizer:
-    def __init__(self, mech, mode='chain',
+    def __init__(self, mech, chain=None,
                  axis_length=None, axis_radius=None, link_radius=0.01,
                  stator_rgb=ouc.ExtendedColor.DEEP_GRAY,
                  rotor_rgb=ouc.ExtendedColor.SILVER_GRAY,
                  link_rgb=ouc.ExtendedColor.GOLD2,
                  alpha=1.0):
-        if mode not in ('chain', 'structure'):
-            raise ValueError("mode must be 'chain' or 'structure'")
+        # chain given -> draw just that chain's joints; None -> draw the whole
+        # mechanism (all joints in the structure).
         self.mech = mech
-        self.mode = mode
+        self.chain = chain
         self.link_radius = float(link_radius)
         if axis_radius is None:
             axis_radius = self.link_radius * 1.5
@@ -32,14 +32,9 @@ class KineVisualizer:
         self._objects = []
 
     def _joint_list_and_qs(self):
-        if self.mode == 'chain':
-            if hasattr(self.mech, '_main_chain'):
-                chain = self.mech._main_chain
-            else:
-                compiled = self.mech.structure.compiled
-                chain = self.mech.structure.get_chain(compiled.root_lnk, compiled.tip_lnks[0])
-            jnts = chain.jnts
-            qs = self.mech.qs[chain.jnt_ids_in_structure]
+        if self.chain is not None:
+            jnts = self.chain.jnts
+            qs = self.mech.qs[self.chain.jnt_ids_in_structure]
         else:
             jnts = self.mech.structure.jnts
             qs = self.mech.qs

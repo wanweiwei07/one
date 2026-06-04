@@ -2,6 +2,7 @@ import numpy as np
 
 import one.utils.math as oum
 from one.robots.base.attached_frame import AttachedFrame
+import one.robots.base.tcp as orbt
 import one.robots.base.mech_base as orbmb
 
 
@@ -73,43 +74,24 @@ class ManipulatorBase(orbmb.MechBase):
     def reset_tcp(self):
         self._loc_tcp_tf[:] = np.eye(4, dtype=np.float32)
 
+    def _flange_tcp(self):
+        """Transient TCP for the current flange@tcp offset on the last link.
+
+        Tracks _loc_tcp_tf live, so no sync needed when the tcp offset changes.
+        """
+        return orbt.TCP(self.runtime_lnks[-1],
+                        self._loc_flange_tf @ self._loc_tcp_tf)
+
     def ik_tcp(self, tgt_rotmat, tgt_pos, max_solutions=8):
-        tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        tgt_lastlnk_tf = tgt_tcp_tf @ np.linalg.inv(
-            self._loc_flange_tf @ self._loc_tcp_tf
-        )
-        ik_results = self.get_solver(self._main_chain).ik(
-            root_rotmat=self.rotmat,
-            root_pos=self.pos,
-            tgt_rotmat=tgt_lastlnk_tf[:3, :3],
-            tgt_pos=tgt_lastlnk_tf[:3, 3],
-            max_solutions=max_solutions,
-        )
-        if len(ik_results) == 0:
-            return None
-        return_list = []
-        for qs_active in ik_results:
-            return_list.append(self._main_chain.embed_active_qs(qs_active, self.qs))
-        return return_list
+        return self.ik(self._main_chain, self._flange_tcp(),
+                       tgt_rotmat, tgt_pos, max_solutions=max_solutions)
 
     def ik_tcp_nearest(self, tgt_rotmat, tgt_pos, ref_qs=None):
-        tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        tgt_lastlnk_tf = tgt_tcp_tf @ np.linalg.inv(
-            self._loc_flange_tf @ self._loc_tcp_tf
-        )
         if ref_qs is None:
             ref_qs = self.qs
-        ik_results = self.get_solver(self._main_chain).ik(
-            root_rotmat=self.rotmat,
-            root_pos=self.pos,
-            tgt_rotmat=tgt_lastlnk_tf[:3, :3],
-            tgt_pos=tgt_lastlnk_tf[:3, 3],
-            max_solutions=1,
-            ref_qs=ref_qs,
-        )
-        if len(ik_results) == 0:
-            return None
-        return self._main_chain.embed_active_qs(ik_results[0], self.qs)
+        results = self.ik(self._main_chain, self._flange_tcp(),
+                          tgt_rotmat, tgt_pos, max_solutions=1, ref_qs=ref_qs)
+        return None if results is None else results[0]
 
     def ik_attached_frame(
             self,

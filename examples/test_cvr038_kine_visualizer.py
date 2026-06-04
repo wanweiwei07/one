@@ -20,10 +20,11 @@ if __name__ == '__main__':
     # qs = np.array([0.2, -0.6, 1.0, -0.8, 0.7, 0.3], dtype=np.float32)
     # robot.fk(qs=qs)
 
-    jviz = orbkv.KineVisualizer(robot, mode='chain')
+    jviz = orbkv.KineVisualizer(robot, chain=robot.chain('main'))
     jviz.attach_to(scene)
 
-    ossop.frame(pos=robot.gl_tcp_tf[:3, 3], rotmat=robot.gl_tcp_tf[:3, :3],
+    flange_tf = robot.tcp('flange').tf
+    ossop.frame(pos=flange_tf[:3, 3], rotmat=flange_tf[:3, :3],
                 color_mat=ouc.CoordColor.MYC).attach_to(scene)
     base.run()
 

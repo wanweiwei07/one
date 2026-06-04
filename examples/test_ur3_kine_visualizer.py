@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # robot.fk(qs=qs)
 
     jviz = orbkv.KineVisualizer(
-        robot, mode='chain')
+        robot, chain=robot._main_chain)
     jviz.attach_to(scene)
     
     ossop.frame(pos=robot.gl_tcp_tf[:3, 3], rotmat=robot.gl_tcp_tf[:3, :3],

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import one.utils.math as oum
 import one.robots.base.mech_structure as orbms
+import one.robots.base.tcp as orbt
 import one.robots.base.kine.numik_sel as orbkis
 
 
@@ -47,6 +48,9 @@ class MechBase:
             (self._compiled.n_lnks, 1, 1))
         # mountings
         self._mountings = {}
+        # named chains (which joints move) + tcps (what point to position)
+        self._chains = {}
+        self._tcps = {}
         # solvers
         self._solvers = {}
         # home
@@ -150,6 +154,125 @@ class MechBase:
             raise ValueError("Solver is not initialized for this chain")
         return self._solvers[chain]
 
+    # ---- chain registry ------------------------------------------------
+    def add_chain(self, name, base_lnk, tip_lnk):
+        """Register a named chain (which joints move). base/tip are STRUCTURE
+        links. The chain object is structure-level + shared (cached by
+        get_chain), so it is clone-safe with no remapping."""
+        if name in self._chains:
+            raise ValueError(f"Chain already defined: {name}")
+        c = self.structure.get_chain(base_lnk, tip_lnk)
+        self._chains[name] = c
+        return c
+
+    def chain(self, name):
+        return self._chains[name]
+
+    @property
+    def chains(self):
+        return dict(self._chains)
+
+    # ---- tcp registry --------------------------------------------------
+    def add_tcp(self, name, parent_lnk, loc_tf=None):
+        """Define a named tcp (link + local offset) used as an ik target.
+
+        parent_lnk must be a runtime link of this mechanism. A single link
+        may host any number of tcps.
+        """
+        if name in self._tcps:
+            raise ValueError(f"TCP already defined: {name}")
+        if parent_lnk not in self.runtime_lidx_map:
+            raise ValueError("parent_lnk must be a runtime link of this mechanism")
+        tcp = orbt.TCP(parent_lnk, loc_tf, name)
+        self._tcps[name] = tcp
+        return tcp
+
+    def tcp(self, name):
+        return self._tcps[name]
+
+    @property
+    def tcps(self):
+        return dict(self._tcps)
+
+    # ---- ik verb -------------------------------------------------------
+    def ik(self, chain, tcp, tgt_rotmat, tgt_pos,
+           max_solutions=8, ref_qs=None, **kwargs):
+        """Solve IK so that ``tcp`` reaches the target pose, using ``chain``.
+
+        chain  : which joints move. A name (str) resolved against this
+                 mechanism's chain registry, or a KinematicChain object. Its
+                 solver is lazily built.
+        tcp    : what point to position. Either a name (str) resolved against
+                 THIS mechanism's own tcp registry, or a TCP object (use the
+                 object form for a foreign/child registry, e.g. an engaged
+                 gripper's tcp, or a transient target). Must be downstream of
+                 the chain's joints; the chain-tip->tcp offset is read from
+                 current FK (a rigid constant for this solve), so tcp need not
+                 sit on chain.tip.
+
+        Returns a list of full qs vectors, or None if unreachable.
+        """
+        if isinstance(chain, str):
+            chain = self.chain(chain)
+        if isinstance(tcp, str):
+            tcp = self.tcp(tcp)
+        if not self._chain_controls_tcp(chain, tcp):
+            raise ValueError(
+                "This chain does not control the tcp: tcp.parent_lnk is "
+                "neither downstream of the chain tip in this mechanism, nor "
+                "on a child mounted downstream of the chain tip.")
+        base_tf = self.runtime_lnks[chain.base_lidx].tf
+        tip_tf = self.runtime_lnks[chain.tip_lidx].tf
+        # chain-tip -> tcp rigid offset, read from current FK
+        t_tip2tcp = np.linalg.inv(tip_tf) @ tcp.tf
+        tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_tip_tf = tgt_tcp_tf @ np.linalg.inv(t_tip2tcp)
+        solver = self._init_solver(chain)
+        results = solver.ik(
+            root_rotmat=base_tf[:3, :3],
+            root_pos=base_tf[:3, 3],
+            tgt_rotmat=tgt_tip_tf[:3, :3],
+            tgt_pos=tgt_tip_tf[:3, 3],
+            max_solutions=max_solutions,
+            ref_qs=ref_qs,
+            **kwargs,
+        )
+        if len(results) == 0:
+            return None
+        return [chain.embed_active_qs(q, self.qs) for q in results]
+
+    def _chain_controls_tcp(self, chain, tcp):
+        """True if moving ``chain`` actually moves ``tcp``.
+
+        Two cases:
+        - tcp on one of this mechanism's runtime links: the link must be
+          chain.tip or a descendant of it.
+        - tcp on a link of a child mounted on this mechanism (e.g. a gripper
+          engaged on the flange): the mount's parent link must be chain.tip
+          or a descendant of it (the child rides rigidly on it).
+        """
+        lnk = tcp.parent_lnk
+        if lnk in self.runtime_lidx_map:
+            return self._lidx_downstream_of_tip(self.runtime_lidx_map[lnk],
+                                                chain.tip_lidx)
+        for m in self._mountings.values():
+            child = m.child
+            child_map = getattr(child, 'runtime_lidx_map', None)
+            if child_map is not None and lnk in child_map:
+                return self._lidx_downstream_of_tip(
+                    self.runtime_lidx_map[m.plnk], chain.tip_lidx)
+        return False
+
+    def _lidx_downstream_of_tip(self, lidx, tip_lidx):
+        """True if link lidx == tip_lidx or is a descendant of it."""
+        compiled = self._compiled
+        cur = lidx
+        while cur >= 0:
+            if cur == tip_lidx:
+                return True
+            cur = compiled.plidx_of_lidx[cur]
+        return False
+
     def clone(self):
         """DOES NOT clone the affiliated scene"""
         new = self.__class__.__new__(self.__class__)
@@ -169,6 +292,12 @@ class MechBase:
             plink = new.runtime_lnks[plidx]
             new._mountings[child] = Mounting(
                 child, plink, m.loc_tf.copy())
+        # chains are structure-level + shared -> copy refs, no remap
+        new._chains = dict(self._chains)
+        new._tcps = {}
+        for name, tcp in self._tcps.items():
+            plidx = self.runtime_lidx_map[tcp.parent_lnk]
+            new._tcps[name] = tcp.copy(parent_lnk=new.runtime_lnks[plidx])
         new._home_qs = self._home_qs.copy()
         return new
 
