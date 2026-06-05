@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<robot name="linkerhand_o6_left">
+<robot name="linkerbot_o6_left">
   <material name="lh_o6_silver">
     <color rgba="0.5 0.5 0.52 1.0" />
   </material>
@@ -15,14 +15,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/hand_base_link.STL" />
+        <mesh filename="../meshes/left_cvx/hand_base_link.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/hand_base_link.STL" />
+        <mesh filename="../meshes/left_cvx/hand_base_link.stl" />
       </geometry>
     </collision>
   </link>
@@ -35,14 +35,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/thumb_metacarpals_base2.STL" />
+        <mesh filename="../meshes/left_cvx/thumb_metacarpals_base2.stl" />
       </geometry>
       <material name="lh_o6_black_accent" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/thumb_metacarpals_base2.STL" />
+        <mesh filename="../meshes/left_cvx/thumb_metacarpals_base2.stl" />
       </geometry>
     </collision>
   </link>
@@ -55,14 +55,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/thumb_metacarpals.STL" />
+        <mesh filename="../meshes/left_cvx/thumb_metacarpals.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/thumb_metacarpals.STL" />
+        <mesh filename="../meshes/left_cvx/thumb_metacarpals.stl" />
       </geometry>
     </collision>
   </link>
@@ -75,14 +75,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/thumb_distal.STL" />
+        <mesh filename="../meshes/left_cvx/thumb_distal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/thumb_distal.STL" />
+        <mesh filename="../meshes/left_cvx/thumb_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -95,14 +95,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/index_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/index_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/index_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/index_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -115,14 +115,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/index_distal.STL" />
+        <mesh filename="../meshes/left_cvx/index_distal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/index_distal.STL" />
+        <mesh filename="../meshes/left_cvx/index_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -135,14 +135,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/middle_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/middle_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/middle_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/middle_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -155,14 +155,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/middle_distal.STL" />
+        <mesh filename="../meshes/left_cvx/middle_distal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/middle_distal.STL" />
+        <mesh filename="../meshes/left_cvx/middle_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -175,14 +175,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/ring_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/ring_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/ring_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/ring_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -195,14 +195,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/ring_distal.STL" />
+        <mesh filename="../meshes/left_cvx/ring_distal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/ring_distal.STL" />
+        <mesh filename="../meshes/left_cvx/ring_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -215,14 +215,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/pinky_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/pinky_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/pinky_proximal.STL" />
+        <mesh filename="../meshes/left_cvx/pinky_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -235,14 +235,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/pinky_distal.STL" />
+        <mesh filename="../meshes/left_cvx/pinky_distal.stl" />
       </geometry>
       <material name="lh_o6_silver" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/left/pinky_distal.STL" />
+        <mesh filename="../meshes/left_cvx/pinky_distal.stl" />
       </geometry>
     </collision>
   </link>

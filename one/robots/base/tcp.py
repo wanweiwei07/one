@@ -36,7 +36,7 @@ class TCP:
         self.loc_tf = oum.ensure_tf(loc_tf)
 
     def set_loc_rotmat_pos(self, rotmat=None, pos=None):
-        self.loc_tf = oum.tf_from_rotmat_pos(rotmat, pos)
+        self.loc_tf = oum.tf_from_pos_rotmat(pos, rotmat)
 
     def copy(self, parent_lnk=None):
         return TCP(parent_lnk or self.parent_lnk, self.loc_tf.copy(), self.name)

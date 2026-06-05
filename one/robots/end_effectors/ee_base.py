@@ -1,36 +1,12 @@
 import numpy as np
 import one.utils.math as oum
-import one.robots.base.mech_base as orbmb
 
 
-class EndEffectorBase(orbmb.MechBase):
-
-    def __init__(self, loc_tcp_tf=None, is_free=True):
-        super().__init__(is_free=is_free)
-        self._loc_tcp_tf = oum.ensure_tf(loc_tcp_tf)
-        self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
-
-    def clone(self):
-        new = super().clone()
-        new._loc_tcp_tf = self._loc_tcp_tf.copy()
-        new.contact_pattern = self.contact_pattern.copy()
-        return new
-
-    def set_loc_tcp_rotmat_pos(self, rotmat=None, pos=None):
-        self._loc_tcp_tf[:3, :3] = oum.ensure_tf(rotmat)
-        self._loc_tcp_tf[:3, 3] = oum.ensure_pos(pos)
-
-    @property
-    def loc_tcp_tf(self):
-        return self._loc_tcp_tf
-
-    @loc_tcp_tf.setter
-    def loc_tcp_tf(self, value):
-        self._loc_tcp_tf[:] = oum.ensure_tf(value)
-
-    @property
-    def gl_tcp_tf(self):
-        return self.runtime_root_lnk.tf @ self._loc_tcp_tf
+# End effectors are plain MechBase subclasses + a behavior mixin (GripperMixin /
+# PointMixin). The working point is a registered tcp ('grasp_center' for
+# grippers, 'tcp' for point tools), so there is no EndEffectorBase: positioning
+# an EE goes through cross-object ik, e.g.
+#   arm.ik(pos, rotmat, tcp=gripper.tcp('grasp_center'))
 
 
 class GripperMixin:
@@ -62,13 +38,9 @@ class GripperMixin:
         raise NotImplementedError
 
     def _grasp_loc_tf(self):
-        """Grasp-center offset relative to the gripper root link.
-
-        New grippers register a tcp named 'grasp_center'; legacy
-        EndEffectorBase grippers expose ``loc_tcp_tf``."""
-        if 'grasp_center' in self.tcps:
-            return self.tcp('grasp_center').loc_tf
-        return self.loc_tcp_tf
+        """Grasp-center offset relative to the gripper root link (the tcp named
+        'grasp_center' that every gripper registers)."""
+        return self.tcp('grasp_center').loc_tf
 
     def grip_at(self, tgt_pos, tgt_rotmat, tgt_jaw_width):
         """
@@ -82,9 +54,9 @@ class GripperMixin:
                 tgt_jaw_width > self.jaw_range[1]):
             raise ValueError(f"jaw_width {tgt_jaw_width}"
                              f" out of range {self.jaw_range}")
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         base_tf = tgt_tf @ np.linalg.inv(self._grasp_loc_tf())
-        self.set_rotmat_pos(base_tf[:3, :3], base_tf[:3, 3])
+        self.set_pos_rotmat(base_tf[:3, 3], base_tf[:3, :3])
         self.set_jaw_width(tgt_jaw_width)
         return base_tf
 
@@ -95,6 +67,11 @@ class GripperMixin:
 
 class PointMixin:
 
+    def _tip_loc_tf(self):
+        """Tool-point offset relative to the root link (the tcp named 'tip'
+        that every point tool registers)."""
+        return self.tcp('tip').loc_tf
+
     def activate(self):
         self._set_activation_state(True)
 
@@ -102,10 +79,10 @@ class PointMixin:
         self._set_activation_state(False)
 
     def touch_at(self, tgt_pos, tgt_rotmat, activate=False):
-        """Move TCP to target pose, return base tf"""
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
-        base_tf = tgt_tf @ np.linalg.inv(self.loc_tcp_tf)
-        self.set_rotmat_pos(base_tf[:3, :3], base_tf[:3, 3])
+        """Move tool tip to target pose, return base tf"""
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
+        base_tf = tgt_tf @ np.linalg.inv(self._tip_loc_tf())
+        self.set_pos_rotmat(base_tf[:3, 3], base_tf[:3, :3])
         if activate:
             self.activate()
         return base_tf
@@ -114,7 +91,7 @@ class PointMixin:
         """Attach object to tool"""
         if not self.is_activated:
             raise RuntimeError("Cannot attach: end effector not activated")
-        parent_tf = self.runtime_root_lnk.tf @ self.loc_tcp_tf
+        parent_tf = self.runtime_root_lnk.tf @ self._tip_loc_tf()
         if offset_tf is None:
             loc_tf = np.linalg.inv(parent_tf) @ child.tf
         else:

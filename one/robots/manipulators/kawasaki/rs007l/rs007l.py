@@ -3,7 +3,7 @@ import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
-import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.base.mech_base as orbmb
 import one.robots.base.kine.anaik as orbka
 
 
@@ -141,21 +141,18 @@ def prepare_mechstruct():
     return structure
 
 
-class RS007L(ormmb.ManipulatorBase):
+class RS007L(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):
         return prepare_mechstruct()
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos)
-
-    def _init_solver(self, chain):
-        if chain is self._main_chain:
-            joint_limits = (chain.lmt_lo, chain.lmt_up)
-            self._solvers[chain] = orbka.S456X12(chain, joint_limits)
-            return self._solvers[chain]
-        return super()._init_solver(chain)
+        super().__init__(rotmat=rotmat, pos=pos, is_free=False)
+        c = self.structure.compiled
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0],
+                       solver=orbka.S456X12)
+        self.add_tcp('flange', self.runtime_lnks[-1])
 
 
 if __name__ == "__main__":
@@ -175,16 +172,17 @@ if __name__ == "__main__":
     ) @ oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi)
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
 
-    # all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat,
-    #                       tgt_pos=tgt_pos, max_solutions=8)
+    # all_qs = robot.ik(tgt_pos, tgt_rotmat, max_solutions=8)
     # for qs in all_qs:
     #     tmp_robot = robot.clone()
     #     tmp_robot.fk(qs=qs)
     #     tmp_robot.attach_to(base.scene)
     # test ik to nearest solution
     prev_qs = np.zeros(6)
-    qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat,
-                              tgt_pos=tgt_pos, ref_qs=prev_qs)
+    _s = robot.ik(tgt_pos, tgt_rotmat, max_solutions=1,
+                  ref_qs=robot.chain('main').extract_active_qs(
+                      np.asarray(prev_qs, dtype=np.float32)))
+    qs = _s[0] if _s else None
     if qs is not None:
         print("Found IK solution:", qs)
         tmp_robot = robot.clone()

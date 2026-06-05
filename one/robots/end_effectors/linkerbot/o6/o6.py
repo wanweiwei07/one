@@ -12,7 +12,7 @@ _URDF_DIR = os.path.join(os.path.dirname(__file__), 'urdf')
 
 
 def prepare_mechstruct(side, collision_type=ouc.CollisionType.MESH):
-    """Load one side of the LinkerHand O6 dexterous hand from its standalone
+    """Load one side of the Linkerbot O6 dexterous hand from its standalone
     URDF (carved out of the L1 h0602 body URDF) into a MechStruct."""
     urdf_path = os.path.abspath(os.path.join(_URDF_DIR, f'o6_{side}.urdf'))
     urdf_dir = os.path.dirname(urdf_path)
@@ -24,7 +24,7 @@ def prepare_mechstruct(side, collision_type=ouc.CollisionType.MESH):
 
 
 class _O6Hand(orbmb.MechBase):
-    """LinkerHand O6 dexterous hand (one side) as a mountable MechBase EE.
+    """Linkerbot O6 dexterous hand (one side) as a mountable MechBase EE.
 
     Carries two grasp-center tcps (offsets on the hand base link, tunable):
 
@@ -35,7 +35,7 @@ class _O6Hand(orbmb.MechBase):
     The 11 finger joints are present in the structure (FK / visualisation work),
     but finger chains + fingertip ik are not modelled yet -- the hand is used as
     a rigid EE mounted on an arm, positioned via a center tcp through cross-object
-    ik (e.g. ``arm.ik('left_arm', hand.tcp('power_grasp_center'), R, p)``).
+    ik (e.g. ``arm.ik(p, R, chain='left_arm', tcp=hand.tcp('power_grasp_center'))``).
     """
 
     # palmar y sign: thumb opposes the fingers across this side of the palm.
@@ -50,10 +50,10 @@ class _O6Hand(orbmb.MechBase):
         super().__init__(rotmat=rotmat, pos=pos)   # is_free=True until mounted
         y = self._Y
         self.add_tcp('power_grasp_center', self.runtime_root_lnk,
-                     oum.tf_from_rotmat_pos(
+                     oum.tf_from_pos_rotmat(
                          pos=np.array([0.038, 0.005 * y, 0.122], dtype=np.float32)))
         self.add_tcp('pinch_center', self.runtime_root_lnk,
-                     oum.tf_from_rotmat_pos(
+                     oum.tf_from_pos_rotmat(
                          pos=np.array([0.055, 0.030 * y, 0.120], dtype=np.float32)))
 
 
@@ -77,12 +77,16 @@ if __name__ == '__main__':
     import one.scene.scene_object_primitive as ossop
     import one.viewer.world as ovw
 
-    base = ovw.World(cam_pos=(0.3, 0.25, 0.25), cam_lookat_pos=(0.0, 0.0, 0.08))
-    hand = O6Left()
-    hand.attach_to(base.scene)
+    base = ovw.World(cam_pos=(0.45, 0.0, 0.25), cam_lookat_pos=(0.0, 0.0, 0.08))
     ossop.frame().attach_to(base.scene)
-    # keep arrows thin and short (head must stay < shaft length): arrow length
-    # = 0.2*length_scale = 0.03 m, head length = 0.04*radius_scale = 0.01 m.
-    hand.toggle_tcp('power_grasp_center', length_scale=0.15, radius_scale=0.25)
-    hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)
+
+    # place the two hands apart in y so they don't overlap
+    left = O6Left(pos=np.array([0.0, 0.12, 0.0], dtype=np.float32))
+    right = O6Right(pos=np.array([0.0, -0.12, 0.0], dtype=np.float32))
+    for hand in (left, right):
+        hand.attach_to(base.scene)
+        # keep arrows thin and short (head must stay < shaft length): arrow
+        # length = 0.2*length_scale = 0.03 m, head = 0.04*radius_scale = 0.01 m.
+        hand.toggle_tcp('power_grasp_center', length_scale=0.15, radius_scale=0.25)
+        hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)
     base.run()

@@ -42,8 +42,8 @@ class NumIKSolver:
                   qs_active_init=None, max_iter=50,
                   tol_pos=1e-4, tol_rot=1e-3, step_scale=1.0,
                   pos_err_max=0.1, rot_err_max=0.3):
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         if qs_active_init is None:
             qs = (self._chain.lmt_lo + self._chain.lmt_up) * 0.5
         else:
@@ -112,7 +112,7 @@ class NumIKSolver:
                           axis_weight=0.2):
         if tgt_pos is None and axis_constraints is None:
             raise ValueError("tgt_pos or axis_constraints must be provided")
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
         loc_tf = oum.ensure_tf(loc_tf)
         loc_pos = loc_tf[:3, 3]
         loc_rotmat = loc_tf[:3, :3]

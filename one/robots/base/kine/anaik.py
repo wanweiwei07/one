@@ -30,19 +30,42 @@ class AnaIKBase:
         ref_qs=None,
         **kwargs,
     ):
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         tgt_tf_in_root = np.linalg.inv(root_tf) @ tgt_tf
         sols = self.ik_all(tgt_tf_in_root, **kwargs)
         if not sols:
             return []
         if ref_qs is not None:
             ref_qs = np.asarray(ref_qs, dtype=np.float32)
-            order = np.argsort([np.linalg.norm(q - ref_qs) for q in sols])
-            sols = [sols[i] for i in order]
+            # Rank by 2pi-wrapped (physical) joint distance so the "nearest"
+            # pick is the physically-closest branch, not whichever happens to
+            # be closest after each joint is snapped to [-pi, pi]. Then unwrap
+            # the returned values toward ref so the joint trajectory stays
+            # continuous (no spurious ~2pi jumps) where joint limits allow.
+            order = np.argsort([self._wrapped_dist(q, ref_qs) for q in sols])
+            sols = [self._unwrap_to_ref(sols[i], ref_qs) for i in order]
         if max_solutions is not None:
             sols = sols[:max_solutions]
         return sols
+
+    @staticmethod
+    def _wrapped_dist(q, ref_qs):
+        """Physical joint distance with each diff wrapped into [-pi, pi]."""
+        d = (q - ref_qs + np.pi) % (2.0 * np.pi) - np.pi
+        return float(np.linalg.norm(d))
+
+    def _unwrap_to_ref(self, q, ref_qs):
+        """Shift each joint of solution ``q`` by the multiple of 2*pi that
+        brings it closest to ``ref_qs`` (continuity), without crossing joint
+        limits. Prismatic joints (small values) are unaffected since
+        round(delta / 2pi) == 0 for them."""
+        qu = q + np.round((ref_qs - q) / (2.0 * np.pi)) * (2.0 * np.pi)
+        if self.joint_limits is not None:
+            lo, hi = self.joint_limits
+            out_of_range = (qu < lo) | (qu > hi)
+            qu = np.where(out_of_range, q, qu)
+        return qu.astype(np.float32)
 
     def ik_all(self, tgt_tf_in_root, **kwargs):
         raise NotImplementedError

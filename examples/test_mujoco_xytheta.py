@@ -22,7 +22,7 @@ xyt_bot = xyt.XYThetaRobot()
 xyt_bot.is_free=False
 xyt_bot.rgb = ouc.ExtendedColor.LAWN_GREEN
 xyt_bot.attach_to(base.scene)
-xyt_bot.set_rotmat_pos(pos=(0, 0, 1.11))
+xyt_bot.set_pos_rotmat(pos=(0, 0, 1.11))
 xyt_bot.toggle_render_collision = True
 
 obstacle = ossop.box(half_extents=(.1, .1, .1),

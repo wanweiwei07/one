@@ -21,11 +21,11 @@ def test_q2_only():
         # FK with q = [0, q2, 0, 0, 0, 0]
         q_input = np.array([0, q2_rad, 0, 0, 0, 0], dtype=np.float32)
         robot.fk(q_input)
-        target_pos = robot.gl_tcp_tf[:3, 3].copy()
-        target_rot = robot.gl_tcp_tf[:3, :3].copy()
+        target_pos = robot.tcp('flange').tf[:3, 3].copy()
+        target_rot = robot.tcp('flange').tf[:3, :3].copy()
         
         # IK
-        ik_solutions = robot.ik_tcp(tgt_pos=target_pos, tgt_rotmat=target_rot)
+        ik_solutions = robot.ik(target_pos, target_rot)
         
         if not ik_solutions:
             print(f"\nq2 = {q2_deg:6.1f}°: NO SOLUTION FOUND")
@@ -47,7 +47,7 @@ def test_q2_only():
         
         # Verify FK of IK solution
         robot.fk(best_sol)
-        actual_pos = robot.gl_tcp_tf[:3, 3].copy()
+        actual_pos = robot.tcp('flange').tf[:3, 3].copy()
         pos_error = np.linalg.norm(actual_pos - target_pos)
         
         print(f"\nq2 = {q2_deg:6.1f}°:")

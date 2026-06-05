@@ -8,8 +8,8 @@ import one.scene.render_model as osrm
 
 class CollisionShape:
     def __init__(self, rotmat=None, pos=None):
-        self._tf = oum.tf_from_rotmat_pos(
-            rotmat, pos)
+        self._tf = oum.tf_from_pos_rotmat(
+            pos, rotmat)
         self._geom = None  # lazy geom cache
         self._aabb = None
 

@@ -25,11 +25,11 @@ if __name__ == "__main__":
     gripper.attach_to(scene)
 
     # loc_tf is flange->ee_base transform
-    loc_tf = oum.tf_from_rotmat_pos(
-        rotmat=np.eye(3, dtype=np.float32),
+    loc_tf = oum.tf_from_pos_rotmat(
         pos=np.array([0.0, 0.0, 0.0], dtype=np.float32),
+        rotmat=np.eye(3, dtype=np.float32),
     )
-    robot.engage(gripper, loc_tf=loc_tf)
+    robot.mount(gripper, robot.runtime_lnks[-1], loc_tf, update=True)
 
     tgt_pos = np.array([0.55, 0.10, 0.35], dtype=np.float32)
     ico_geom = ogg.gen_icosphere_geom(radius=1.0, n_subs=1)
@@ -41,7 +41,8 @@ if __name__ == "__main__":
         # Use each icosphere vertex direction as target TCP +Z direction.
         tgt_rotmat = oum.rotmat_from_normal(d)
         ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat, color_mat=ouc.CoordColor.DYO, alpha=0.2).attach_to(scene)
-        qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+        _s = robot.ik(tgt_pos, tgt_rotmat, tcp=gripper.tcp('grasp_center'), max_solutions=1)
+        qs = _s[0] if _s else None
         if qs is None:
             continue
         n_success += 1
@@ -50,8 +51,8 @@ if __name__ == "__main__":
         tmp_robot.attach_to(base.scene)
         tmp_robot.alpha = .3
         ossop.frame(
-            pos=tmp_robot.gl_tcp_tf[:3, 3],
-            rotmat=tmp_robot.gl_tcp_tf[:3, :3],
+            pos=tmp_robot.tcp('flange').tf[:3, 3],
+            rotmat=tmp_robot.tcp('flange').tf[:3, :3],
             color_mat=ouc.CoordColor.MYC,
         ).attach_to(scene)
     print(f"IK success: {n_success}/{len(dirs)}")

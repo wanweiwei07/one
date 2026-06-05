@@ -2,7 +2,6 @@ import numpy as np
 from one.robots.manipulators.kawasaki.rs007l import rs007l
 
 robot = rs007l.RS007L()
-solver = robot._solver
 
 print("Testing Current IK Implementation")
 print("="*80)
@@ -19,11 +18,11 @@ for name, config in test_cases:
     
     # FK
     robot.fk(qs=config)
-    target_tf = robot.gl_tcp_tf.copy()
+    target_tf = robot.tcp('flange').tf.copy()
     target_pos = target_tf[:3, 3]
     
     # IK
-    solutions = solver.ik_all(target_tf)
+    solutions = robot.ik(target_tf[:3, 3], target_tf[:3, :3])
     
     if solutions:
         print(f"Found {len(solutions)} solution(s)")
@@ -31,7 +30,7 @@ for name, config in test_cases:
         best_error = float('inf')
         for i, sol in enumerate(solutions):
             robot.fk(qs=sol)
-            fk_pos = robot.gl_tcp_tf[:3, 3]
+            fk_pos = robot.tcp('flange').tf[:3, 3]
             error = np.linalg.norm(fk_pos - target_pos)
             
             if error < best_error:

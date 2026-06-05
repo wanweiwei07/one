@@ -70,9 +70,9 @@ class MechBase:
             scene.remove(m.child)
         scene.remove(self)
 
-    def set_rotmat_pos(self, rotmat=None, pos=None):
-        self._rotmat[:] = oum.ensure_rotmat(rotmat)
+    def set_pos_rotmat(self, pos=None, rotmat=None):
         self._pos[:] = oum.ensure_pos(pos)
+        self._rotmat[:] = oum.ensure_rotmat(rotmat)
         self.fk()
 
     def fk(self, qs=None):
@@ -134,7 +134,11 @@ class MechBase:
         child.is_free = True
         return m
 
-    def _init_solver(self, chain):
+    def get_solver(self, chain):
+        """Return the IK solver for ``chain``, lazily building the default
+        numerical (SELIK) solver on first use. A custom solver paired with the
+        chain via ``add_chain(..., solver=...)`` is already in ``_solvers`` and
+        returned directly."""
         if chain not in self._solvers:
             if (chain.base_lidx == self.structure.compiled.root_lnk_idx and
                     chain.tip_lidx in self.structure.compiled.tip_lnk_ids):
@@ -145,29 +149,28 @@ class MechBase:
                 label = getattr(chain, "name", None) or \
                     f"{chain.base_lidx}_{chain.tip_lidx}"
                 _data_dir = os.path.join(
-                    self.structure.res_dir,
-                    "data",
-                    f"chain_{label}",
-                )
-            self._solvers[chain] = orbkis.SELIKSolver(
-                chain, _data_dir)
-        return self._solvers[chain]
-
-    def get_solver(self, chain):
-        if chain not in self._solvers:
-            raise ValueError("Solver is not initialized for this chain")
+                    self.structure.res_dir, "data", f"chain_{label}")
+            self._solvers[chain] = orbkis.SELIKSolver(chain, _data_dir)
         return self._solvers[chain]
 
     # ---- chain registry ------------------------------------------------
-    def add_chain(self, name, base_lnk, tip_lnk):
+    def add_chain(self, name, base_lnk, tip_lnk, solver=None):
         """Register a named chain (which joints move). base/tip are STRUCTURE
         links. The chain object is structure-level + shared (cached by
-        get_chain), so it is clone-safe with no remapping."""
+        get_chain), so it is clone-safe with no remapping.
+
+        ``solver``: optional callable ``chain -> solver`` (e.g. an analytic
+        solver class) that builds this chain's IK solver, paired with the chain
+        right here and built eagerly. Chains without one fall back to the
+        numerical SELIK solver, built lazily on first ik.
+        """
         if name in self._chains:
             raise ValueError(f"Chain already defined: {name}")
         c = self.structure.get_chain(base_lnk, tip_lnk)
         c.name = name   # readable hint for solver data dirs / debugging
         self._chains[name] = c
+        if solver is not None:
+            self._solvers[c] = solver(c)
         return c
 
     def chain(self, name):
@@ -247,16 +250,20 @@ class MechBase:
         t_tip2tcp = np.linalg.inv(tip_tf) @ tcp.tf
         return chain, tcp, base_tf, t_tip2tcp
 
-    def ik(self, chain, tcp, tgt_rotmat, tgt_pos,
+    def ik(self, tgt_pos, tgt_rotmat, chain='main', tcp='flange',
            max_solutions=8, ref_qs=None, **kwargs):
         """Full-pose IK: solve so ``tcp`` reaches the 6-DOF target pose, using
         ``chain``. Returns a list of full qs vectors (empty if unreachable).
-        For under-constrained targets (position-only / axis-direction) use
-        ``ik_partial``."""
+
+        Target is (tgt_pos, tgt_rotmat) -- pos first (ROS Pose order). chain/tcp
+        default to the single-arm convention 'main'/'flange', so a plain arm is
+        just ``arm.ik(pos, rotmat)``; pass chain=/tcp= for other chains or a
+        foreign tcp object (e.g. ``arm.ik(pos, R, tcp=gripper.tcp('grasp_center'))``).
+        For under-constrained targets use ``ik_partial``."""
         chain, tcp, base_tf, t_tip2tcp = self._resolve_ik_target(chain, tcp)
-        tgt_tcp_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        tgt_tcp_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         tgt_tip_tf = tgt_tcp_tf @ np.linalg.inv(t_tip2tcp)
-        solver = self._init_solver(chain)
+        solver = self.get_solver(chain)
         results = solver.ik(
             root_rotmat=base_tf[:3, :3],
             root_pos=base_tf[:3, 3],
@@ -268,7 +275,8 @@ class MechBase:
         )
         return [chain.embed_active_qs(q, self.qs) for q in results]
 
-    def ik_partial(self, chain, tcp, tgt_pos=None, axis_constraints=None,
+    def ik_partial(self, tgt_pos=None, axis_constraints=None,
+                   chain='main', tcp='flange',
                    max_solutions=1, ref_qs=None, seed_count=8,
                    pos_weight=1.0, axis_weight=0.2,
                    pos_tol=1e-4, axis_tol=1e-3, max_iter=200,
@@ -279,13 +287,14 @@ class MechBase:
         solver must support ik_partial (the analytic main-chain solver does
         not).
 
-        Returns a list of full qs vectors (empty if unreachable); with
-        ``return_infos=True`` returns ``(qs_list, infos)``.
+        Target is (tgt_pos, axis_constraints) -- pos first; chain/tcp default
+        to 'main'/'flange'. Returns a list of full qs vectors (empty if
+        unreachable); with ``return_infos=True`` returns ``(qs_list, infos)``.
         """
         if tgt_pos is None and axis_constraints is None:
             raise ValueError('tgt_pos or axis_constraints must be provided')
         chain, tcp, base_tf, t_tip2tcp = self._resolve_ik_target(chain, tcp)
-        solver = self._init_solver(chain)
+        solver = self.get_solver(chain)
         if not hasattr(solver, 'ik_partial'):
             raise TypeError(
                 f"Solver {type(solver).__name__} does not support partial IK; "
@@ -403,7 +412,7 @@ class MechBase:
 
     @property
     def tf(self):
-        return oum.tf_from_rotmat_pos(self._rotmat, self._pos)
+        return oum.tf_from_pos_rotmat(self._pos, self._rotmat)
 
     @property
     def rotmat(self):

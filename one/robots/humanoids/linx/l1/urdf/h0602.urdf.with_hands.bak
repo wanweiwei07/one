@@ -26,7 +26,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/base_link.STL" />
+          filename="../meshes/base_link.stl" />
       </geometry>
       <material
         name="">
@@ -40,7 +40,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/base_link.STL" />
+          filename="../meshes/base_link.stl" />
       </geometry>
     </collision>
   </link>
@@ -66,7 +66,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/waist_link1.STL" />
+          filename="../meshes/waist_link1.stl" />
       </geometry>
       <material
         name="">
@@ -80,7 +80,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/waist_link1.STL" />
+          filename="../meshes/waist_link1.stl" />
       </geometry>
     </collision>
   </link>
@@ -124,7 +124,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/waist_link2.STL" />
+          filename="../meshes/waist_link2.stl" />
       </geometry>
       <material
         name="">
@@ -138,7 +138,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/waist_link2.STL" />
+          filename="../meshes/waist_link2.stl" />
       </geometry>
     </collision>
   </link>
@@ -182,7 +182,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/neck_link1.STL" />
+          filename="../meshes/neck_link1.stl" />
       </geometry>
       <material
         name="">
@@ -196,7 +196,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/neck_link1.STL" />
+          filename="../meshes/neck_link1.stl" />
       </geometry>
     </collision>
   </link>
@@ -240,7 +240,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/neck_link2.STL" />
+          filename="../meshes/neck_link2.stl" />
       </geometry>
       <material
         name="">
@@ -254,7 +254,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/neck_link2.STL" />
+          filename="../meshes/neck_link2.stl" />
       </geometry>
     </collision>
   </link>
@@ -298,7 +298,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_1.STL" />
+          filename="../meshes/left_arm_link_1.stl" />
       </geometry>
       <material
         name="">
@@ -312,7 +312,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_1.STL" />
+          filename="../meshes/left_arm_link_1.stl" />
       </geometry>
     </collision>
   </link>
@@ -356,7 +356,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_2.STL" />
+          filename="../meshes/left_arm_link_2.stl" />
       </geometry>
       <material
         name="">
@@ -370,7 +370,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_2.STL" />
+          filename="../meshes/left_arm_link_2.stl" />
       </geometry>
     </collision>
   </link>
@@ -414,7 +414,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_3.STL" />
+          filename="../meshes/left_arm_link_3.stl" />
       </geometry>
       <material
         name="">
@@ -428,7 +428,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_3.STL" />
+          filename="../meshes/left_arm_link_3.stl" />
       </geometry>
     </collision>
   </link>
@@ -472,7 +472,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_4.STL" />
+          filename="../meshes/left_arm_link_4.stl" />
       </geometry>
       <material
         name="">
@@ -486,7 +486,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_4.STL" />
+          filename="../meshes/left_arm_link_4.stl" />
       </geometry>
     </collision>
   </link>
@@ -530,7 +530,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_5.STL" />
+          filename="../meshes/left_arm_link_5.stl" />
       </geometry>
       <material
         name="">
@@ -544,7 +544,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_5.STL" />
+          filename="../meshes/left_arm_link_5.stl" />
       </geometry>
     </collision>
   </link>
@@ -588,7 +588,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_6.STL" />
+          filename="../meshes/left_arm_link_6.stl" />
       </geometry>
       <material
         name="">
@@ -602,7 +602,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/left_arm_link_6.STL" />
+          filename="../meshes/left_arm_link_6.stl" />
       </geometry>
     </collision>
   </link>
@@ -646,7 +646,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_1.STL" />
+          filename="../meshes/right_arm_link_1.stl" />
       </geometry>
       <material
         name="">
@@ -660,7 +660,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_1.STL" />
+          filename="../meshes/right_arm_link_1.stl" />
       </geometry>
     </collision>
   </link>
@@ -704,7 +704,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_2.STL" />
+          filename="../meshes/right_arm_link_2.stl" />
       </geometry>
       <material
         name="">
@@ -718,7 +718,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_2.STL" />
+          filename="../meshes/right_arm_link_2.stl" />
       </geometry>
     </collision>
   </link>
@@ -762,7 +762,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_3.STL" />
+          filename="../meshes/right_arm_link_3.stl" />
       </geometry>
       <material
         name="">
@@ -776,7 +776,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_3.STL" />
+          filename="../meshes/right_arm_link_3.stl" />
       </geometry>
     </collision>
   </link>
@@ -820,7 +820,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_4.STL" />
+          filename="../meshes/right_arm_link_4.stl" />
       </geometry>
       <material
         name="">
@@ -834,7 +834,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_4.STL" />
+          filename="../meshes/right_arm_link_4.stl" />
       </geometry>
     </collision>
   </link>
@@ -878,7 +878,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_5.STL" />
+          filename="../meshes/right_arm_link_5.stl" />
       </geometry>
       <material
         name="">
@@ -892,7 +892,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_5.STL" />
+          filename="../meshes/right_arm_link_5.stl" />
       </geometry>
     </collision>
   </link>
@@ -936,7 +936,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_6.STL" />
+          filename="../meshes/right_arm_link_6.stl" />
       </geometry>
       <material
         name="">
@@ -950,7 +950,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/right_arm_link_6.STL" />
+          filename="../meshes/right_arm_link_6.stl" />
       </geometry>
     </collision>
   </link>
@@ -1015,7 +1015,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/hand_base_link.STL" />
+          filename="../meshes/o6/left/hand_base_link.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1025,7 +1025,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/hand_base_link.STL" />
+          filename="../meshes/o6/left/hand_base_link.stl" />
       </geometry>
     </collision>
   </link>
@@ -1051,7 +1051,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/thumb_metacarpals_base2.STL" />
+          filename="../meshes/o6/left/thumb_metacarpals_base2.stl" />
       </geometry>
       <material name="lh_o6_black_accent"/>
     </visual>
@@ -1061,7 +1061,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/thumb_metacarpals_base2.STL" />
+          filename="../meshes/o6/left/thumb_metacarpals_base2.stl" />
       </geometry>
     </collision>
   </link>
@@ -1105,7 +1105,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/thumb_metacarpals.STL" />
+          filename="../meshes/o6/left/thumb_metacarpals.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1115,7 +1115,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/thumb_metacarpals.STL" />
+          filename="../meshes/o6/left/thumb_metacarpals.stl" />
       </geometry>
     </collision>
   </link>
@@ -1159,7 +1159,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/thumb_distal.STL" />
+          filename="../meshes/o6/left/thumb_distal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1169,7 +1169,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/thumb_distal.STL" />
+          filename="../meshes/o6/left/thumb_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1217,7 +1217,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/index_proximal.STL" />
+          filename="../meshes/o6/left/index_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1227,7 +1227,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/index_proximal.STL" />
+          filename="../meshes/o6/left/index_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1271,7 +1271,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/index_distal.STL" />
+          filename="../meshes/o6/left/index_distal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1281,7 +1281,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/index_distal.STL" />
+          filename="../meshes/o6/left/index_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1329,7 +1329,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/middle_proximal.STL" />
+          filename="../meshes/o6/left/middle_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1339,7 +1339,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/middle_proximal.STL" />
+          filename="../meshes/o6/left/middle_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1383,7 +1383,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/middle_distal.STL" />
+          filename="../meshes/o6/left/middle_distal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1393,7 +1393,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/middle_distal.STL" />
+          filename="../meshes/o6/left/middle_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1441,7 +1441,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/ring_proximal.STL" />
+          filename="../meshes/o6/left/ring_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1451,7 +1451,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/ring_proximal.STL" />
+          filename="../meshes/o6/left/ring_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1495,7 +1495,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/ring_distal.STL" />
+          filename="../meshes/o6/left/ring_distal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1505,7 +1505,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/ring_distal.STL" />
+          filename="../meshes/o6/left/ring_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1553,7 +1553,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/pinky_proximal.STL" />
+          filename="../meshes/o6/left/pinky_proximal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1563,7 +1563,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/pinky_proximal.STL" />
+          filename="../meshes/o6/left/pinky_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1608,7 +1608,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/pinky_distal.STL" />
+          filename="../meshes/o6/left/pinky_distal.stl" />
       </geometry>
       <material name="lh_o6_silver"/>
     </visual>
@@ -1618,7 +1618,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/left/pinky_distal.STL" />
+          filename="../meshes/o6/left/pinky_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1674,7 +1674,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/hand_base_link.STL" />
+          filename="../meshes/o6/right/hand_base_link.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -1684,7 +1684,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/hand_base_link.STL" />
+          filename="../meshes/o6/right/hand_base_link.stl" />
       </geometry>
     </collision>
   </link>
@@ -1710,7 +1710,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/thumb_metacarpals_base2.STL" />
+          filename="../meshes/o6/right/thumb_metacarpals_base2.stl" />
       </geometry>
       <material name="rh_o6_black_accent"/>
     </visual>
@@ -1720,7 +1720,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/thumb_metacarpals_base2.STL" />
+          filename="../meshes/o6/right/thumb_metacarpals_base2.stl" />
       </geometry>
     </collision>
   </link>
@@ -1764,7 +1764,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/thumb_metacarpals.STL" />
+          filename="../meshes/o6/right/thumb_metacarpals.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -1774,7 +1774,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/thumb_metacarpals.STL" />
+          filename="../meshes/o6/right/thumb_metacarpals.stl" />
       </geometry>
     </collision>
   </link>
@@ -1818,7 +1818,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/thumb_distal.STL" />
+          filename="../meshes/o6/right/thumb_distal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -1828,7 +1828,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/thumb_distal.STL" />
+          filename="../meshes/o6/right/thumb_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1876,7 +1876,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/index_proximal.STL" />
+          filename="../meshes/o6/right/index_proximal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -1886,7 +1886,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/index_proximal.STL" />
+          filename="../meshes/o6/right/index_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1930,7 +1930,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/index_distal.STL" />
+          filename="../meshes/o6/right/index_distal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -1940,7 +1940,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/index_distal.STL" />
+          filename="../meshes/o6/right/index_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -1988,7 +1988,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/middle_proximal.STL" />
+          filename="../meshes/o6/right/middle_proximal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -1998,7 +1998,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/middle_proximal.STL" />
+          filename="../meshes/o6/right/middle_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -2042,7 +2042,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/middle_distal.STL" />
+          filename="../meshes/o6/right/middle_distal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -2052,7 +2052,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/middle_distal.STL" />
+          filename="../meshes/o6/right/middle_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -2100,7 +2100,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/ring_proximal.STL" />
+          filename="../meshes/o6/right/ring_proximal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -2110,7 +2110,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/ring_proximal.STL" />
+          filename="../meshes/o6/right/ring_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -2154,7 +2154,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/ring_distal.STL" />
+          filename="../meshes/o6/right/ring_distal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -2164,7 +2164,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/ring_distal.STL" />
+          filename="../meshes/o6/right/ring_distal.stl" />
       </geometry>
     </collision>
   </link>
@@ -2212,7 +2212,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/pinky_proximal.STL" />
+          filename="../meshes/o6/right/pinky_proximal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -2222,7 +2222,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/pinky_proximal.STL" />
+          filename="../meshes/o6/right/pinky_proximal.stl" />
       </geometry>
     </collision>
   </link>
@@ -2266,7 +2266,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/pinky_distal.STL" />
+          filename="../meshes/o6/right/pinky_distal.stl" />
       </geometry>
       <material name="rh_o6_silver"/>
     </visual>
@@ -2276,7 +2276,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="../meshes/o6/right/pinky_distal.STL" />
+          filename="../meshes/o6/right/pinky_distal.stl" />
       </geometry>
     </collision>
   </link>

@@ -14,7 +14,7 @@ robot.attach_to(base.scene)
 
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 # Check robot's actual geometry bounds
 print(f"\nRobot position: {robot.pos}")

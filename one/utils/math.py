@@ -123,9 +123,17 @@ def rotmat_from_axis_constraints(axis_constraints, ref_rotmat=None, n_iter=4):
 ## rotmat
 def rotmat_from_axangle(ax, angle):
     ax = np.asarray(ax, dtype=np.float32)
-    if np.linalg.norm(ax) == 0:
-        return np.eye(3, dtype=np.float32)
-    return rotmat_from_rotvec(ax / np.linalg.norm(ax) * angle)
+    if ax.ndim == 1:
+        if np.linalg.norm(ax) == 0:
+            return np.eye(3, dtype=np.float32)
+        return rotmat_from_rotvec(ax / np.linalg.norm(ax) * angle)
+    # batched: ax (..., 3) with per-element angle (...) -> (..., 3, 3)
+    angle = np.asarray(angle, dtype=np.float32)
+    norm = np.linalg.norm(ax, axis=-1, keepdims=True)
+    rotvec = ax / (norm + eps) * angle[..., None]
+    lead = rotvec.shape[:-1]
+    mats = rotmat_from_rotvec(rotvec.reshape(-1, 3))
+    return mats.reshape(*lead, 3, 3)
 
 
 def rotmat_from_quat(quat):
@@ -275,7 +283,18 @@ def tf_from_axangle(ax, angle):
                      [0, 0, 0, 1]], dtype=np.float32)
 
 
-def tf_from_rotmat_pos(rotmat=None, pos=None):
+def tf_from_pos_rotmat(pos=None, rotmat=None):
+    # arg order is (pos, rotmat) -- pos first, matching ROS Pose/Transform.
+    # shape guards turn an accidental (rotmat, pos) swap into a loud error
+    # instead of a silent wrong transform.
+    if pos is not None and np.asarray(pos).shape not in ((3,), (1, 3), (3, 1)):
+        raise ValueError(
+            f"pos must be a 3-vector, got shape {np.asarray(pos).shape}; "
+            f"signature is tf_from_pos_rotmat(pos, rotmat) -- swapped args?")
+    if rotmat is not None and np.asarray(rotmat).shape != (3, 3):
+        raise ValueError(
+            f"rotmat must be 3x3, got shape {np.asarray(rotmat).shape}; "
+            f"signature is tf_from_pos_rotmat(pos, rotmat) -- swapped args?")
     rotmat = ensure_rotmat(rotmat)
     pos = ensure_pos(pos)
     tf = np.eye(4)
@@ -295,7 +314,7 @@ def tf_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
     """
     angle, axis = unit_vec(rotvec, return_length=True)
     rotmat = rotmat_from_axangle(axis, angle)
-    return tf_from_rotmat_pos(rotmat, pos)
+    return tf_from_pos_rotmat(pos, rotmat)
 
 
 def tf_from_quat(quat):
@@ -347,7 +366,7 @@ def tf_average(tf_list, bandwidth=10):
     tfarr = np.asarray(tf_list)
     pos_avg = pos_average(tfarr[:, :3, 3], bandwidth)
     rotmat_avg = rotmat_average(tfarr[:, :3, :3], bandwidth)
-    return tf_from_rotmat_pos(rotmat_avg, pos_avg)
+    return tf_from_pos_rotmat(pos_avg, rotmat_avg)
 
 
 def transform_points_by_tf(tf, pnts):
@@ -664,19 +683,31 @@ def orth_vec(vec, toggle_unit=True):
         return out
 
 def frame_from_normal(n):
-    """compute a coordinate frame from a normal vector n
-    :param n: 1x3 nparray
-    :return: 3x3 rotmat"""
-    n = n / (np.linalg.norm(n) + eps)
-    # pick a helper axis not parallel to n
-    ref = np.array([1.0, 0.0, 0.0], dtype=np.float32)
-    if abs(np.dot(n, ref)) > 0.9:
-        ref = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    """compute a coordinate frame whose 3rd column is the (unit) vector n
+    :param n: (3,) nparray, or batched (..., 3)
+    :return: 3x3 rotmat, or batched (..., 3, 3); columns are (u, v, n)"""
+    n = np.asarray(n, dtype=np.float32)
+    if n.ndim == 1:
+        n = n / (np.linalg.norm(n) + eps)
+        # pick a helper axis not parallel to n
+        ref = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        if abs(np.dot(n, ref)) > 0.9:
+            ref = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+        u = np.cross(n, ref)
+        u = u / (np.linalg.norm(u) + 1e-12)
+        v = np.cross(n, u)
+        v = v / (np.linalg.norm(v) + 1e-12)
+        return np.column_stack((u, v, n)).astype(np.float32)
+    # batched: n (..., 3) -> (..., 3, 3), per-row helper-axis selection
+    n = n / (np.linalg.norm(n, axis=-1, keepdims=True) + eps)
+    ref1 = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    ref2 = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    ref = np.where((np.abs(n @ ref1) > 0.9)[..., None], ref2, ref1)
     u = np.cross(n, ref)
-    u = u / (np.linalg.norm(u) + 1e-12)
+    u = u / (np.linalg.norm(u, axis=-1, keepdims=True) + 1e-12)
     v = np.cross(n, u)
-    v = v / (np.linalg.norm(v) + 1e-12)
-    return np.column_stack((u, v, n)).astype(np.float32)
+    v = v / (np.linalg.norm(v, axis=-1, keepdims=True) + 1e-12)
+    return np.stack([u, v, n], axis=-1).astype(np.float32)
 
 
 def closest_point_between_lines(p1, d1, p2, d2):

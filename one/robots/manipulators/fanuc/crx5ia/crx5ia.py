@@ -3,9 +3,8 @@ import numpy as np
 
 import one.utils.math as oum
 import one.utils.constant as ouc
-import one.robots.base.kine.numik as orbkn
 import one.robots.base.mech_structure as orbms
-import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.base.mech_base as orbmb
 import one.robots.manipulators.fanuc.crx5ia.ik as ormfci
 
 
@@ -226,66 +225,20 @@ def prepare_mechstruct():
     return structure
 
 
-class CRX5iaNumIKSolver(orbkn.NumIKSolver):
-    """CRX5ia-specific numerical IK solver with default initial guess.
-
-    Extends numik_custom.NumIKSolver to provide a default initial guess
-    (home configuration) when qs_active_init is not explicitly provided.
-    This ensures compatibility with ManipulatorBase.ik_tcp() which does
-    not pass qs_active_init on the first call.
-    """
-
-    def __init__(self, chain, home_qs):
-        super().__init__(chain)
-        self._home_qs = np.array(home_qs, dtype=np.float32)
-
-    def ik(self, root_rotmat, root_pos, tgt_rotmat, tgt_pos,
-           qs_active_init=None, max_iter=50, ref_qs=None, **kwargs):
-        if qs_active_init is None:
-            if ref_qs is not None:
-                qs_active_init = ref_qs
-            else:
-                qs_active_init = self._home_qs
-        return super().ik(root_rotmat, root_pos, tgt_rotmat, tgt_pos,
-                          qs_active_init=qs_active_init, max_iter=max_iter,
-                          **kwargs)
-
-    def ik_partial(self, root_rotmat, root_pos, tgt_pos=None,
-                   axis_constraints=None, loc_tf=None,
-                   qs_active_init=None, max_iter=50, ref_qs=None, **kwargs):
-        if qs_active_init is None:
-            if ref_qs is not None:
-                qs_active_init = ref_qs
-            else:
-                qs_active_init = self._home_qs
-        return super().ik_partial(root_rotmat, root_pos, tgt_pos,
-                                   axis_constraints, loc_tf,
-                                   qs_active_init=qs_active_init,
-                                   max_iter=max_iter, **kwargs)
-
-
-class CRX5ia(ormmb.ManipulatorBase):
+class CRX5ia(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):
         return prepare_mechstruct()
 
-    def _init_solver(self, chain):
-        # Main chain uses the closed-form analytic IK (all 6-axis solutions).
-        # Other chains fall back to the numeric solver (with a home initial
-        # guess) for compatibility with ManipulatorBase.ik_tcp().
-        if chain is self._main_chain:
-            self._solvers[chain] = ormfci.CRX5iaAnalyticIK(
-                chain, joint_limits=(chain.lmt_lo, chain.lmt_up))
-            return self._solvers[chain]
-        if chain not in self._solvers:
-            self._solvers[chain] = CRX5iaNumIKSolver(chain, self.home_qs)
-        return self._solvers[chain]
-
     def __init__(self, rotmat=None, pos=None):
         super().__init__(
-            rotmat=rotmat, pos=pos, home_qs=[0, 0, 0, 0, 0, 0]
+            rotmat=rotmat, pos=pos, is_free=False, home_qs=[0, 0, 0, 0, 0, 0]
         )
+        c = self.structure.compiled
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0],
+                       solver=ormfci.CRX5iaAnalyticIK)
+        self.add_tcp('flange', self.runtime_lnks[-1])
 
 
 if __name__ == "__main__":
@@ -303,8 +256,8 @@ if __name__ == "__main__":
     base.run()
     builtins.robot = robot
     ossop.frame(
-        pos=robot.gl_tcp_tf[:3, 3],
-        rotmat=robot.gl_tcp_tf[:3, :3],
+        pos=robot.tcp('flange').tf[:3, 3],
+        rotmat=robot.tcp('flange').tf[:3, :3],
         color_mat=ouc.CoordColor.MYC,
     ).attach_to(scene)
 
@@ -314,8 +267,7 @@ if __name__ == "__main__":
     ) @ oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi)
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(scene)
 
-    all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat,
-                          tgt_pos=tgt_pos, max_solutions=8)
+    all_qs = robot.ik(tgt_pos, tgt_rotmat, max_solutions=8)
     for qs in all_qs:
         tmp_robot = robot.clone()
         tmp_robot.fk(qs=qs)

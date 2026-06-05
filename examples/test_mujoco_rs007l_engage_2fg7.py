@@ -11,23 +11,22 @@ robot.attach_to(base.scene)
 tgt_pos = np.array([0, .5, .3])
 tgt_rotmat = oum.rotmat_from_euler(oum.pi, 0, 0)
 ossop.frame(rotmat=tgt_rotmat, pos=tgt_pos).attach_to(base.scene)
-qs_list = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+qs_list = robot.ik(tgt_pos, tgt_rotmat)
 robot_ik = robot.clone()
 robot_ik.rgb = ouc.BasicColor.LIME
 robot_ik.fk(qs=qs_list[0])
 robot_ik.attach_to(base.scene)
-wd_tcp_rotmat = robot_ik.gl_tcp_tf[:3, :3]
-wd_tcp_pos = robot_ik.gl_tcp_tf[:3, 3]
+wd_tcp_rotmat = robot_ik.tcp('flange').tf[:3, :3]
+wd_tcp_pos = robot_ik.tcp('flange').tf[:3, 3]
 ossop.frame(rotmat=wd_tcp_rotmat, pos=wd_tcp_pos,
             color_mat=ouc.CoordColor.MYC).attach_to(base.scene)
 
 robot2 = robot.clone()
-robot2.set_rotmat_pos(pos=(-.5, 0, 0))
+robot2.set_pos_rotmat(pos=(-.5, 0, 0))
 gripper = or_2fg7.OR2FG7()
-robot2.engage(gripper)
+robot2.mount(gripper, robot2.runtime_lnks[-1], update=True)
 robot2.attach_to(base.scene)
-qs2_list = robot2.ik_tcp(
-    tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+qs2_list = robot2.ik(tgt_pos, tgt_rotmat, tcp=gripper.tcp('grasp_center'))
 
 box = ossop.cylinder(
     spos=(-.3, 0, .3), epos=(.3, 0, .1),
@@ -47,6 +46,6 @@ base.schedule_interval(mjenv.step)
 base.run()
 
 # # engage later
-# robot.engage(gripper)
+# robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 # robot.fk(qs=[0, -oum.pi / 4, 0, -oum.pi / 2, 0, oum.pi / 3])
 # base.run()

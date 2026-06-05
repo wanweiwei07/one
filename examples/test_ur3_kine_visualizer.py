@@ -23,10 +23,10 @@ if __name__ == '__main__':
     # robot.fk(qs=qs)
 
     jviz = orbkv.KineVisualizer(
-        robot, chain=robot._main_chain)
+        robot, chain=robot.chain('main'))
     jviz.attach_to(scene)
     
-    ossop.frame(pos=robot.gl_tcp_tf[:3, 3], rotmat=robot.gl_tcp_tf[:3, :3],
+    ossop.frame(pos=robot.tcp('flange').tf[:3, 3], rotmat=robot.tcp('flange').tf[:3, :3],
                 color_mat=ouc.CoordColor.MYC).attach_to(scene)
     base.run()
 

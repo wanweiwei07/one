@@ -51,8 +51,8 @@ class SELIKSolver(orbkin.NumIKSolver):
            ref_qs=None, max_iter=12, **kwargs):
         if self._tree is None:
             raise RuntimeError("CVT database not loaded.")
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         seeds = self.query_seeds(
             np.linalg.inv(root_tf) @ tgt_tf, k=self._k)
         if ref_qs is not None:
@@ -91,7 +91,7 @@ class SELIKSolver(orbkin.NumIKSolver):
         if self._tree is None:
             raise RuntimeError("CVT database not loaded.")
         loc_tf = oum.ensure_tf(loc_tf)
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
         if tgt_pos is None:
             if ref_qs is None:
                 ref_qs = (self._chain.lmt_lo + self._chain.lmt_up) * 0.5
@@ -100,7 +100,7 @@ class SELIKSolver(orbkin.NumIKSolver):
         if tgt_rotmat_hint is None:
             tgt_rotmat_hint = oum.rotmat_from_axis_constraints(
                 axis_constraints)
-        tgt_frame_tf = oum.tf_from_rotmat_pos(tgt_rotmat_hint, tgt_pos)
+        tgt_frame_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat_hint)
         tgt_tip_tf = tgt_frame_tf @ oum.tf_inverse(loc_tf)
         if seed_count is None:
             seed_count = self._k

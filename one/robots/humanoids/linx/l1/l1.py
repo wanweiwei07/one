@@ -5,7 +5,7 @@ import numpy as np
 import one.utils.constant as ouc
 import one.robots.base.mech_base as orbmb
 import one.robots.base.urdf_loader as orul
-import one.robots.end_effectors.linkerhand.o6.o6 as oello6
+import one.robots.end_effectors.linkerbot.o6.o6 as oello6
 
 
 _H0602_URDF = os.path.join(
@@ -45,11 +45,11 @@ class L1(orbmb.MechBase):
         self.add_chain('right_arm_waist', lm['waist_link1'], lm['right_arm_link_6'])
         self.add_chain('neck', lm['waist_link2'], lm['neck_link2'])
         # dexterous hands: standalone O6 EEs mounted on each arm flange (the
-        # *_linkerhand_mount_joint, xyz=(0,0,0.034), that used to live in the
+        # *_linkerbot_mount_joint, xyz=(0,0,0.034), that used to live in the
         # body URDF). grasp targets come from the hands' center tcps via
         # cross-object ik, e.g.
-        #   robot.ik('left_arm', robot.left_hand.tcp('power_grasp_center'), R, p)
-        mount_tf = oum.tf_from_rotmat_pos(
+        #   robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_grasp_center'))
+        mount_tf = oum.tf_from_pos_rotmat(
             pos=np.array([0.0, 0.0, 0.034], dtype=np.float32))
         self.left_hand = oello6.O6Left()
         self.right_hand = oello6.O6Right()
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     robot.attach_to(base.scene)
     # arm / hand / manipulator all share the same call; grasp targets are the
     # mounted hands' center tcps (cross-object ik):
-    #   robot.ik('left_arm', robot.left_hand.tcp('power_grasp_center'), R, p)
+    #   robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_grasp_center'))
     for hand in (robot.left_hand, robot.right_hand):
         hand.toggle_tcp('power_grasp_center', length_scale=0.15, radius_scale=0.25)
         hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)

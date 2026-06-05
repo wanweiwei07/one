@@ -33,7 +33,7 @@ class RenderModel:
         self._rotmat = oum.ensure_rotmat(rotmat)
         self._pos = oum.ensure_pos(pos)
         # cached
-        self._tf = oum.tf_from_rotmat_pos(self._rotmat, self._pos)
+        self._tf = oum.tf_from_pos_rotmat(self._pos, self._rotmat)
         self._dirty = True
 
     def clone(self):
@@ -107,7 +107,7 @@ class RenderModel:
         return self._tf.copy()
 
     @oud.mark_dirty('_mark_dirty')
-    def set_rotmat_pos(self, rotmat, pos):
+    def set_pos_rotmat(self, pos, rotmat):
         self._rotmat[:] = oum.ensure_rotmat(rotmat)
         self._pos[:] = oum.ensure_pos(pos)
 

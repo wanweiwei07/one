@@ -72,7 +72,7 @@ def cylinder(
     o = osso.SceneObject(collision_type=collision_type, is_free=is_free)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
-    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    o.set_pos_rotmat(pos=spos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -108,7 +108,7 @@ def dashed_cylinder(
             length=1e-6, radius=radius, n_segs=segments, rgb=rgb, alpha=alpha
         )
         o.add_visual(rmodel, auto_make_collision=amc)
-        o.set_rotmat_pos(pos=spos)
+        o.set_pos_rotmat(pos=spos)
         o.set_inertia(inertia, com, mass)
         return o
 
@@ -121,7 +121,7 @@ def dashed_cylinder(
         rgb=rgb, alpha=alpha, amc=amc,
     )
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    o.set_pos_rotmat(pos=spos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -147,7 +147,7 @@ def cone(
     o = osso.SceneObject(collision_type=collision_type, is_free=is_free)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
-    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    o.set_pos_rotmat(pos=spos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -210,7 +210,7 @@ def box(
     o = osso.SceneObject(collision_type=collision_type, is_free=is_free)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
-    o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    o.set_pos_rotmat(pos=pos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -281,7 +281,7 @@ def arrow(
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    o.set_pos_rotmat(pos=spos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -318,7 +318,7 @@ def dashed_arrow(
     o = osso.SceneObject(collision_type=collision_type, is_free=is_free)
     amc = False if collision_type is None else True
     if float(length) <= 1e-8:
-        o.set_rotmat_pos(pos=spos)
+        o.set_pos_rotmat(pos=spos)
         o.set_inertia(inertia, com, mass)
         return o
 
@@ -332,7 +332,7 @@ def dashed_arrow(
         rgb=rgb, alpha=alpha, amc=amc,
     )
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    o.set_rotmat_pos(rotmat=rotmat, pos=spos)
+    o.set_pos_rotmat(pos=spos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -414,7 +414,7 @@ def frame(
     o.add_visual(rmodel_x, auto_make_collision=amc)
     o.add_visual(rmodel_y, auto_make_collision=amc)
     o.add_visual(rmodel_z, auto_make_collision=amc)
-    o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    o.set_pos_rotmat(pos=pos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -462,7 +462,7 @@ def dashed_frame(
             len_solid=len_solid, len_interval=len_interval, n_segs=n_segs,
             rgb=color_mat[:, i], alpha=alpha, amc=amc,
         )
-    o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    o.set_pos_rotmat(pos=pos, rotmat=rotmat)
     o.set_inertia(inertia, com, mass)
     return o
 
@@ -484,7 +484,7 @@ def plane(
     o = osso.SceneObject(collision_type=ouc.CollisionType.PLANE, is_free=False)
     o.add_visual(rmodel)
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, normal)
-    o.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    o.set_pos_rotmat(pos=pos, rotmat=rotmat)
     return o
 
 

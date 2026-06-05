@@ -12,13 +12,13 @@ base_rotmat = oum.rotmat_from_euler(0, 0, -np.pi / 2)
 # robot 1 (left robot)
 robot1 = khi_rs007l.RS007L()
 robot1.attach_to(base.scene)
-robot1.set_rotmat_pos(rotmat=base_rotmat, pos=base_pos1)
+robot1.set_pos_rotmat(pos=base_pos1, rotmat=base_rotmat)
 robot1.toggle_render_collision = True
 # robot 2 (right robot)
 robot2 = robot1.clone()
 base_pos2 = np.array([0, -0.5, 0])
 robot2.attach_to(base.scene)
-robot2.set_rotmat_pos(rotmat=base_rotmat, pos=base_pos2)
+robot2.set_pos_rotmat(pos=base_pos2, rotmat=base_rotmat)
 robot2.toggle_render_collision = True
 
 # robot1

@@ -1,9 +1,9 @@
-"""One-off: strip the LinkerHand O6 hands out of the L1 h0602 body URDF.
+"""One-off: strip the Linkerbot O6 hands out of the L1 h0602 body URDF.
 
 Removes every <link>/<joint>/<material> named lh_*/rh_* plus the two
 *_linkerhand_mount_joint fixed joints, leaving the body ending at
 left_arm_link_6 / right_arm_link_6 (the new flange tips). The hands now live
-as standalone EEs under end_effectors/linkerhand/o6 and are mounted in code.
+as standalone EEs under end_effectors/linkerbot/o6 and are mounted in code.
 """
 import os
 import shutil

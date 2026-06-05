@@ -49,14 +49,14 @@ class MJSynchronizer:
         for mecba, bid in self._freebase_map.items():
             rotmat = data.xmat[bid].reshape(3, 3)
             pos = data.xpos[bid]
-            mecba.set_rotmat_pos(rotmat, pos)
+            mecba.set_pos_rotmat(pos, rotmat)
 
     def pull_all_sobj_pose(self):
         data = self.mj_runtime.data
         for sobj, bid in self._body_map.items():
             pos = data.xpos[bid]
             rot = data.xmat[bid].reshape(3, 3)
-            sobj.set_rotmat_pos(rot, pos)
+            sobj.set_pos_rotmat(pos, rot)
 
     def push_all_sobj_qpos(self):
         data = self.mj_runtime.data

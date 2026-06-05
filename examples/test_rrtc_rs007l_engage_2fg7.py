@@ -8,10 +8,10 @@ builtins.base = base
 oframe = ossop.frame()
 oframe.attach_to(base.scene)
 robot = khi_rs007l.RS007L()
-robot.set_rotmat_pos(pos=(0, 0, 0.01))
+robot.set_pos_rotmat(pos=(0, 0, 0.01))
 gripper = or_2fg7.OR2FG7()
 # gripper.open()
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 robot.attach_to(base.scene)
 builtins.robot = robot
 

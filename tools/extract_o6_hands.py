@@ -1,4 +1,4 @@
-"""One-off: carve the lh_/rh_ LinkerHand O6 subtrees out of the L1 h0602.urdf
+"""One-off: carve the lh_/rh_ Linkerbot O6 subtrees out of the L1 h0602.urdf
 into two standalone EE URDFs (o6_left.urdf / o6_right.urdf).
 
 - root link of each hand becomes lh_hand_base_link / rh_hand_base_link
@@ -13,7 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', 'one', 'robots', 'humanoids', 'linx', 'l1',
                    'urdf', 'h0602.urdf')
 OUT_DIR = os.path.join(HERE, '..', 'one', 'robots', 'end_effectors',
-                       'linkerhand', 'o6', 'urdf')
+                       'linkerbot', 'o6', 'urdf')
 
 
 def extract(prefix, side):
@@ -43,7 +43,7 @@ def extract(prefix, side):
             fn = mesh.get('filename', '')
             mesh.set('filename', fn.replace(f'../meshes/o6/{side}/',
                                             f'../meshes/{side}/'))
-    new_robot = ET.Element('robot', {'name': f'linkerhand_o6_{side}'})
+    new_robot = ET.Element('robot', {'name': f'linkerbot_o6_{side}'})
     new_robot.extend(keep)
     ET.indent(new_robot, space='  ')
     out = os.path.join(OUT_DIR, f'o6_{side}.urdf')

@@ -113,11 +113,61 @@ def icosahedron():
     return verts, faces
 
 
+def triangle_areas(vs, fs):
+    """Per-face triangle areas of a mesh. vs (V,3), fs (F,3) -> (F,)."""
+    v0 = vs[fs[:, 0]]
+    v1 = vs[fs[:, 1]]
+    v2 = vs[fs[:, 2]]
+    return 0.5 * np.linalg.norm(np.cross(v1 - v0, v2 - v0), axis=1)
+
+
+def sample_count_from_area(vs, fs, density):
+    """Number of surface samples for a target spacing ``density`` (one
+    sample per density-by-density patch). Always at least 1."""
+    area_total = float(np.sum(triangle_areas(vs, fs)))
+    return max(int(np.ceil(area_total / (density * density))), 1)
+
+
+def ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=1e-6):
+    """Moller-Trumbore ray-triangle intersection (batch version).
+
+    For each ray (origins[i], directions[i]) returns the *farthest* hit
+    distance and triangle id over all triangles (v0, v1, v2); misses are
+    (-1.0, -1). origins/directions (N,3); v0/v1/v2 (M,3)."""
+    o = origins[:, None, :]
+    d = directions[:, None, :]
+    v0 = v0[None, :, :]
+    v1 = v1[None, :, :]
+    v2 = v2[None, :, :]
+    e1 = v1 - v0
+    e2 = v2 - v0
+    h = np.cross(d, e2)
+    a = np.sum(e1 * h, axis=2)
+    mask = np.abs(a) > eps
+    f = np.zeros_like(a)
+    f[mask] = 1.0 / a[mask]
+    s = o - v0
+    u = f * np.sum(s * h, axis=2)
+    mask &= (u >= 0.0) & (u <= 1.0)
+    q = np.cross(s, e1)
+    v = f * np.sum(d * q, axis=2)
+    mask &= (v >= 0.0) & (u + v <= 1.0)
+    t = f * np.sum(e2 * q, axis=2)
+    mask &= (t > eps)
+    t_masked = np.where(mask, t, -np.inf)
+    hit_t = np.max(t_masked, axis=1)
+    hit_id = np.argmax(t_masked, axis=1)
+    no_hit = np.isneginf(hit_t)
+    hit_t = np.where(no_hit, -1.0, hit_t)
+    hit_id = np.where(no_hit, -1, hit_id)
+    return hit_t, hit_id
+
+
 def sample_surface(vs, fs, n_samples):
     v0 = vs[fs[:, 0]]
     v1 = vs[fs[:, 1]]
     v2 = vs[fs[:, 2]]
-    areas = 0.5 * np.linalg.norm(np.cross(v1 - v0, v2 - v0), axis=1)
+    areas = triangle_areas(vs, fs)
     prob = areas / np.sum(areas)
     fids = np.random.choice(len(fs), size=n_samples, p=prob)
     r1 = np.sqrt(np.random.rand(n_samples))

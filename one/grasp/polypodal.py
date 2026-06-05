@@ -19,9 +19,8 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 import one.collider.cpu_simd as occs
-import one.collider.gpu_simd_batch as ocgcb
 import one.scene.geometry_ops as osgop
-from one.grasp.antipodal import _ray_triangles_batch_far
+import one.grasp._common as ogc
 
 
 # ---------------------------------------------------------------------
@@ -93,22 +92,6 @@ def _hand_poses_from_pair(pattern, front_pts, back_pts,
             np.float32)
         out.append((pose, jaw_width))
     return out
-
-
-def _build_collision_detector(gripper, target_sobj):
-    """Build the gripper-vs-target collision batch (mirrors antipodal)
-    so callers can prune colliding grasps in a single batch call."""
-    items = gripper.runtime_lnks + [target_sobj]
-    tgt_idx = len(items) - 1
-    pairs = [(i, tgt_idx) for i in range(len(gripper.runtime_lnks))]
-    try:
-        detector = ocgcb.create_detector()
-        batch = ocgcb.build_batch(items, pairs)
-    except Exception:
-        detlib = occs
-        detector = detlib.create_detector()
-        batch = detlib.build_batch(items, pairs)
-    return detector, batch
 
 
 def _check_grasp_collision(gripper, detector, batch, pose, jaw):
@@ -258,7 +241,7 @@ def pair_pattern(samples, tgt_vs, tgt_fs,
         origins = front_pts + eps_offset * ray_dir
         directions = np.broadcast_to(
             ray_dir, front_pts.shape).copy()
-        hit_t, hit_id = _ray_triangles_batch_far(
+        hit_t, hit_id = osgop.ray_triangles_batch_far(
             origins, directions, v0, v1, v2)
         if np.any(hit_id < 0):
             continue
@@ -335,7 +318,7 @@ def polypodal(gripper, target_sobj, n_samples,
         min_thickness=min_thickness,
         max_thickness=max_thickness)
     gripper = gripper.clone()
-    detector, batch = _build_collision_detector(gripper, target_sobj)
+    detector, batch = ogc.build_ee_target_detector(gripper, target_sobj)
     out = []
     for front, back in pairs:
         for pose, jaw in _hand_poses_from_pair(

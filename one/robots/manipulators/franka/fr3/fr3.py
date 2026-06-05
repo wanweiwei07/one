@@ -3,7 +3,7 @@ import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
-import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.base.mech_base as orbmb
 
 
 def prepare_mechstruct():
@@ -156,7 +156,7 @@ def prepare_mechstruct():
     return structure
 
 
-class FR3(ormmb.ManipulatorBase):
+class FR3(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):
@@ -166,12 +166,16 @@ class FR3(ormmb.ManipulatorBase):
         super().__init__(
             rotmat=rotmat,
             pos=pos,
+            is_free=False,
             home_qs=[0.0, -np.pi / 4, 0.0,
                      -3 * np.pi / 4, 0.0, np.pi / 2,
                      np.pi / 4],
         )
+        c = self.structure.compiled
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0])
         # link7 -> link8 (flange) fixed offset: +0.107 m along z
-        self._loc_flange_tf = oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.107))
+        self.add_tcp('flange', self.runtime_lnks[-1],
+                     oum.tf_from_pos_rotmat(pos=(0.0, 0.0, 0.107)))
 
 
 def fr3_with_hand(rotmat=None, pos=None, jaw_width=0.08):
@@ -182,10 +186,10 @@ def fr3_with_hand(rotmat=None, pos=None, jaw_width=0.08):
     hand = FR3Gripper()
     hand.set_jaw_width(jaw_width)
     # panda_hand_joint: hand rotated -pi/4 about Z relative to link7
-    loc_tf = oum.tf_from_rotmat_pos(
+    loc_tf = oum.tf_from_pos_rotmat(
         rotmat=oum.rotmat_from_euler(0, 0, -np.pi / 4)
     )
-    arm.engage(hand, loc_tf=loc_tf)
+    arm.mount(hand, arm.runtime_lnks[-1], loc_tf, update=True)
     return arm, hand
 
 
@@ -201,6 +205,6 @@ if __name__ == "__main__":
     builtins.hand = hand
     arm.attach_to(base.scene)
     ossop.frame().attach_to(base.scene)
-    arm.toggle_tcp()
+    arm.toggle_tcp('flange')
 
     base.run()

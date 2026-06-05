@@ -24,9 +24,9 @@ for x in xs:
             tgt_pos = (x, y, z)
             ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
             tic = time.perf_counter_ns()
-            qs_list = robot.ik_tcp(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat)
+            qs_list = robot.ik(tgt_pos, tgt_rotmat)
             toc = time.perf_counter_ns()
-            success = (qs_list is not None)
+            success = bool(qs_list)
             time_ns = toc - tic
             results.append(
                 {"pos": tgt_pos, "success": success, "time_ns": time_ns,

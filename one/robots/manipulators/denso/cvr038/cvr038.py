@@ -135,17 +135,10 @@ class CVR038(orbmb.MechBase):
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos, is_free=False)
         c = self.structure.compiled
-        self.add_chain('main', c.root_lnk, c.tip_lnks[0])   # which joints move
-        self.add_tcp('flange', self.runtime_lnks[-1])       # what point to position
-        self._init_solver(self.chain('main'))               # build analytic solver
-
-    def _init_solver(self, chain):
-        if chain is self.chain('main'):
-            joint_limits = (chain.lmt_lo, chain.lmt_up)
-            self._solvers[chain] = ormdci.CVR038PencilIK(
-                chain, joint_limits)
-            return self._solvers[chain]
-        return super()._init_solver(chain)
+        # chain + its analytic solver, declared together
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0],
+                       solver=ormdci.CVR038PencilIK)
+        self.add_tcp('flange', self.runtime_lnks[-1])
 
 
 def cvr038_with_gripper(rotmat=None, pos=None, jaw_width=0.03):

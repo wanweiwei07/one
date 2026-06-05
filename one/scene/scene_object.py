@@ -80,8 +80,8 @@ class SceneObject(ossn.SceneNode):
                              is_free=self.is_free)
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
-        new.set_rotmat_pos(rotmat=self.rotmat,
-                           pos=self.pos)
+        new.set_pos_rotmat(pos=self.pos,
+                           rotmat=self.rotmat)
         new.set_inertia(self._inrtmat, self._com, self._mass)
         # clone all visuals
         for m in self.visuals:
