@@ -33,6 +33,8 @@ class MJSynchronizer:
                 qadr = model.jnt_qposadr[jid]
                 self._freebase_qpos_adr[mecba] = qadr
         for (mecba, jidx), jnode in self.mecj2jnt.items():
+            if jnode.jtype_str == "fixed":
+                continue  # fixed joints have no MuJoCo joint / qpos address
             jid = self.mj_runtime.model.joint(jnode.name).id
             qadr = model.jnt_qposadr[jid]
             self._qpos_map[(mecba, jidx)] = qadr
@@ -82,10 +84,13 @@ class MJSynchronizer:
             data.qpos[adr] = state.qs[jidx]
 
     def push_one_mecba_qpos(self, mecba, qs):
+        # qs is the mecba's full per-joint vector (len == n_jnts); only the
+        # actuated joints have a qpos address (fixed joints are skipped in the
+        # map), so index by the full joint id rather than enumerating qs.
         data = self.mj_runtime.data
-        for jidx, q in enumerate(qs):
-            qadr = self._qpos_map[(mecba, jidx)]
-            data.qpos[qadr] = q
+        for (m, jidx), qadr in self._qpos_map.items():
+            if m is mecba:
+                data.qpos[qadr] = qs[jidx]
 
     def push_one_mecba_freebase_pose(self, mecba, quat, pos):
         """

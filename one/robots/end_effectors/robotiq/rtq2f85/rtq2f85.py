@@ -6,7 +6,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
-import one.robots.end_effectors.ee_base as oreb
+import one.robots.end_effectors.ee_mixins as oreb
 
 
 def prepare_ms():

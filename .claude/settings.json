@@ -26,7 +26,10 @@
       "PowerShell($roots = @\\(\"$env:USERPROFILE\",\"C:\\\\ProgramData\",\"C:\\\\Python313\",\"C:\\\\Python312\"\\); $found = @\\(\\); foreach \\($r in $roots\\) { Get-ChildItem -Path $r -Filter \"xacro\" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match \"site-packages\" } | ForEach-Object { $found += $_.FullName } }; $found | Select-Object -Unique | Select-Object -First 10)",
       "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -m pip install --quiet xacro urdf_parser_py)",
       "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -)",
-      "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe tools/strip_o6_hands.py)"
+      "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe tools/strip_o6_hands.py)",
+      "Bash(sed -n '1,40p' one/physics/mj_env.py)",
+      "Bash(sed -n '60,80p' one/physics/mj_one_cvter.py)",
+      "Bash(ONE_HEADLESS=1 /c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe examples/test_l1o6_pinch_bunny.py)"
     ]
   }
 }

@@ -29,7 +29,7 @@ class MJOneConverter:
         # mounted children
         self._mounted_children = set()
 
-    def convert(self, scene):
+    def convert(self, scene, extra_excludes=None):
         self._mesh_assets.clear()
         self._actuators.clear()
         self._sobj2bdy.clear()
@@ -72,6 +72,13 @@ class MJOneConverter:
                 body_a = self._rutl2bdy[rta]
                 body_b = self._rutl2bdy[rtb]
                 world.contact_excludes.append((body_a, body_b))
+        # extra scene-level excludes (e.g. an auto-ACM of resting collisions),
+        # given as semantic ((mecba_a, lidx_a), (mecba_b, lidx_b)) pairs so they
+        # survive a rebuild and can cross mecba boundaries (mounted EE vs arm).
+        for (ma, la), (mb, lb) in (extra_excludes or []):
+            body_a = self._rutl2bdy[ma.runtime_lnks[la]]
+            body_b = self._rutl2bdy[mb.runtime_lnks[lb]]
+            world.contact_excludes.append((body_a, body_b))
         return world, self._sobj2bdy, self._rutl2bdy, self._mecj2jnt
 
     @property

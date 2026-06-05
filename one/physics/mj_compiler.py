@@ -98,6 +98,10 @@ class MJCFCompiler:
             self.compile_body(c, body_el)
 
     def compile_joint(self, j, parent_el):
+        if j.jtype_str == "fixed":
+            # MuJoCo has no 'fixed' joint type: a body with no joint element is
+            # already rigidly fixed to its parent, so emit nothing.
+            return
         if j.jtype_str == "free":
             ET.SubElement(parent_el, "freejoint")
             return
