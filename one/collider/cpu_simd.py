@@ -1,3 +1,8 @@
+"""CPU triangle-mesh collision detection (numpy/SIMD). create_detector +
+build_batch build a reusable batch; CPUDetector.detect_collision[_batch]
+runs it. Helpers: cols_to_vffns/vfs/tris, compute_aabb, point_in_tri_batch.
+
+Prefer this (or the GPU backend gpu_simd_batch) over fcl / trimesh.collision."""
 import numpy as np
 import one.collider.collision_batch as occb
 

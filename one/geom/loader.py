@@ -1,3 +1,7 @@
+"""Mesh file loading: ``load_geometry(path)`` reads STL (ascii/binary) and
+DAE into in-house (vertices, faces) geometry. Use this instead of
+trimesh.load / open3d for reading meshes into the `one` pipeline.
+(URDF/xacro robot assets are loaded by one/robots/base/urdf_loader.)"""
 import os
 import xml
 import struct

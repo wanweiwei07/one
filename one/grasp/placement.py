@@ -1,3 +1,6 @@
+"""Stable placement poses: ``compute_stable_poses`` finds the resting
+orientations of an object on a flat support (from its convex hull / faces),
+for place planning."""
 import numpy as np
 import one.utils.math as oum
 import one.utils.helper as ouh

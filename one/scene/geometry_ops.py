@@ -1,3 +1,8 @@
+"""Mesh geometry operations on raw (vertices, faces) arrays: surface
+sampling, triangle areas, ray-mesh intersection, convex hull, surface
+segmentation, profile revolve, subdivision, convex-region clipping.
+
+Prefer these over trimesh / open3d for in-house mesh work."""
 import numpy as np
 import one.utils.math as oum
 

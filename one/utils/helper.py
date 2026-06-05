@@ -1,3 +1,4 @@
+"""Misc utility helpers: array pretty-printing, random color generation."""
 import numpy as np
 
 def print_arr(name, arr, precision=8):

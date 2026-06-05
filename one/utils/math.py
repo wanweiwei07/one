@@ -1,3 +1,9 @@
+"""Transform & rotation math: rotmat_from_* (axangle, quat, euler, rotvec,
+normal, two-vecs, look_at), tf_from_pos_rotmat, quat/euler/rotvec
+conversions, slerp, interpolation, relative poses. Many rotmat_from_* and
+frame_from_normal accept batched (..., 3) inputs.
+
+Prefer these over scipy.spatial.transform / transforms3d for in-house work."""
 import warnings
 import numpy as np
 import numpy.typing as npt

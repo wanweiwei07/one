@@ -1,3 +1,5 @@
+"""Geometry container (vertices/faces/normals) and mesh-level helpers used
+throughout the scene/collision/grasp stack."""
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc

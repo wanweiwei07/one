@@ -1,3 +1,6 @@
+"""GPU batch triangle-mesh collision detection (pyglet/OpenGL compute).
+Same create_detector + build_batch + detect_collision_batch interface as
+cpu_simd; grasp planners try this backend first and fall back to CPU."""
 import os, ctypes
 import numpy as np
 import pyglet.gl as gl

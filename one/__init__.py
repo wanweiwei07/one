@@ -13,10 +13,17 @@ import one.scene.scene as oss
 import one.scene.scene_object as osso
 import one.scene.scene_object_primitive as ossop
 import one.scene.render_model as osrm
+import one.scene.geometry_ops as osgop
 
 import one.viewer.world as ovw
 
 import one.collider.mj_collider as ocm
+import one.collider.cpu_simd as occs
+
+import one.grasp.antipodal as ogab
+import one.grasp.polypodal as ogpp
+import one.grasp.monocontact as ogmc
+import one.grasp.placement as ogpl
 
 import one.motion.probabilistic.planning_context as omppc
 import one.motion.probabilistic.rrt as ompr
@@ -30,6 +37,7 @@ import one.robots.end_effectors.onrobot.or_2fg7.or_2fg7 as or_2fg7
 import one.robots.vehicle.xytheta as xyt
 
 __all__ = ['np', 'key', 'oum', 'ouh', 'ouc',
-           'oss', 'osso', 'ossop', 'ogg', 'osrm', 'ogl', 'ovw',
-           'ocm', 'omppc', 'ompr', 'ompp', 'omtr', 'omttp',
+           'oss', 'osso', 'ossop', 'ogg', 'osrm', 'ogl', 'osgop', 'ovw',
+           'ocm', 'occs', 'ogab', 'ogpp', 'ogmc', 'ogpl',
+           'omppc', 'ompr', 'ompp', 'omtr', 'omttp',
            'khi_rs007l', 'xarm_lite6', 'or_2fg7', 'xyt']

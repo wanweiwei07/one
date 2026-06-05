@@ -1,3 +1,8 @@
+"""Antipodal grasp planning: 2-point opposing pinch (force-closure) grasps
+for a parallel-jaw gripper. ``antipodal``/``antipodal_iter`` sample the
+target surface for antipodal contact pairs, align the jaw, and reject
+gripper-vs-target collisions. See also polypodal (N-point) and monocontact
+(single-contact / suction)."""
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
