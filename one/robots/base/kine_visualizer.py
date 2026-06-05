@@ -31,43 +31,40 @@ class KineVisualizer:
         self.alpha = float(alpha)
         self._objects = []
 
-    def _joint_list_and_qs(self):
+    def _joint_ids(self):
+        comp = self.mech.structure.compiled
         if self.chain is not None:
-            jnts = self.chain.jnts
-            qs = self.mech.qs[self.chain.jnt_ids_in_structure]
-        else:
-            jnts = self.mech.structure.jnts
-            qs = self.mech.qs
-        return jnts, np.asarray(qs, dtype=np.float32)
+            return list(self.chain.jnt_ids_in_structure)
+        return [comp.jidx_map[j] for j in self.mech.structure.jnts]
 
-    @staticmethod
-    def _compute_joint_frames(jnts, qs, root_tf):
-        origins = []
-        axes = []
-        tf = root_tf.copy()
-        for jnt, q in zip(jnts, qs):
-            jtf = tf @ jnt.zero_tf
+    def _joint_frames(self, jids):
+        # Joint world frames read from the mechanism's already-computed
+        # per-link world tfs. Correct for branched trees and for chains not
+        # rooted at the base; a serial re-accumulation (tf @= jnt.motion_tf)
+        # only works for a single base-rooted chain and mis-places branches.
+        comp = self.mech.structure.compiled
+        origins, axes = [], []
+        for jidx in jids:
+            parent_tf = self.mech.runtime_lnks[comp.plidx_of_jidx[jidx]].tf
+            jtf = parent_tf @ comp.jtf0_by_idx[jidx]
             origins.append(jtf[:3, 3].copy())
-            axes.append((jtf[:3, :3] @ jnt.ax).copy())
-            tf = jtf @ jnt.motion_tf(float(q))
+            axes.append((jtf[:3, :3] @ comp.jax_by_idx[jidx]).copy())
         return origins, axes
 
     def _build_objects(self):
-        jnts, qs = self._joint_list_and_qs()
-        root_tf = self.mech.tf
-        origins, axes = self._compute_joint_frames(jnts, qs, root_tf) if len(jnts) > 0 else ([], [])
+        comp = self.mech.structure.compiled
+        jids = self._joint_ids()
+        origins, axes = self._joint_frames(jids) if jids else ([], [])
 
         objs = []
         fr_h = self.link_radius * 3.0
-        fr_bottom = fr_h
-        fr_top = fr_h * (2.0 / 3.0)
         base_pos = self.mech.pos
         base_rotmat = self.mech.rotmat
         base_top = base_pos + base_rotmat[:, 2] * fr_h
         fr_rmodel = osrmp.gen_frustrum_rmodel(
             height=fr_h,
-            bottom_length=fr_bottom,
-            top_length=fr_top,
+            bottom_length=fr_h,
+            top_length=fr_h * (2.0 / 3.0),
             rotmat=base_rotmat,
             pos=base_pos,
             rgb=ouc.ExtendedColor.SALMON_PINK,
@@ -76,34 +73,34 @@ class KineVisualizer:
         fr_obj.add_visual(fr_rmodel, auto_make_collision=False)
         objs.append(fr_obj)
 
-        if len(origins) > 0:
-            objs.append(ossop.dashed_cylinder(
-                spos=base_top,
-                epos=origins[0],
-                radius=self.link_radius,
-                rgb=ouc.ExtendedColor.SALMON_PINK,
-                alpha=self.alpha))
+        # Link rods follow the kinematic tree: connect each joint to the joint
+        # that drives its parent link; a joint whose parent is the root link
+        # connects (dashed) to the base marker.
+        drives = {comp.clidx_of_jidx[jidx]: pos
+                  for pos, jidx in enumerate(jids)}
+        for pos, jidx in enumerate(jids):
+            plidx = comp.plidx_of_jidx[jidx]
+            if plidx in drives:
+                spos = origins[drives[plidx]]
+                if np.linalg.norm(origins[pos] - spos) < 1e-8:
+                    continue
+                objs.append(ossop.cylinder(
+                    spos=spos, epos=origins[pos], radius=self.link_radius,
+                    rgb=self.link_rgb, alpha=self.alpha))
+            else:
+                objs.append(ossop.dashed_cylinder(
+                    spos=base_top, epos=origins[pos], radius=self.link_radius,
+                    rgb=ouc.ExtendedColor.SALMON_PINK, alpha=self.alpha))
 
         for origin, axis in zip(origins, axes):
             axis_u = oum.unit_vec(axis, return_length=False)
             # Stator is on negative axis side, rotor on positive axis side.
-            stator_s = origin - axis_u * self.axis_length
-            stator_e = origin
-            rotor_s = origin
-            rotor_e = origin + axis_u * self.axis_length
             objs.append(ossop.cylinder(
-                spos=stator_s, epos=stator_e, radius=self.axis_radius,
-                rgb=self.stator_rgb, alpha=self.alpha))
+                spos=origin - axis_u * self.axis_length, epos=origin,
+                radius=self.axis_radius, rgb=self.stator_rgb, alpha=self.alpha))
             objs.append(ossop.cylinder(
-                spos=rotor_s, epos=rotor_e, radius=self.axis_radius,
-                rgb=self.rotor_rgb, alpha=self.alpha))
-
-        for i in range(len(origins) - 1):
-            if np.linalg.norm(origins[i + 1] - origins[i]) < 1e-8:
-                continue
-            objs.append(ossop.cylinder(
-                spos=origins[i], epos=origins[i + 1], radius=self.link_radius,
-                rgb=self.link_rgb, alpha=self.alpha))
+                spos=origin, epos=origin + axis_u * self.axis_length,
+                radius=self.axis_radius, rgb=self.rotor_rgb, alpha=self.alpha))
         return objs
 
     def attach_to(self, scene):

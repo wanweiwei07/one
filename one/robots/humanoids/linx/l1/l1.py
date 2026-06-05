@@ -28,7 +28,9 @@ def prepare_mechstruct(collision_type=ouc.CollisionType.MESH):
 
 
 class L1(orbmb.MechBase):
-    """Linx L1 upper-body humanoid model based on the H0602 URDF."""
+    """Linx L1 upper-body humanoid, bare (no end-effectors). Arms tip at the
+    ``*_arm_link_6`` flanges; mount hands/grippers there yourself, or use
+    :class:`L1O6` for the version pre-fitted with two O6 hands."""
 
     @classmethod
     def _build_structure(cls):
@@ -44,11 +46,27 @@ class L1(orbmb.MechBase):
         self.add_chain('left_arm_waist', lm['waist_link1'], lm['left_arm_link_6'])
         self.add_chain('right_arm_waist', lm['waist_link1'], lm['right_arm_link_6'])
         self.add_chain('neck', lm['waist_link2'], lm['neck_link2'])
-        # dexterous hands: standalone O6 EEs mounted on each arm flange (the
-        # *_linkerbot_mount_joint, xyz=(0,0,0.034), that used to live in the
-        # body URDF). grasp targets come from the hands' center tcps via
-        # cross-object ik, e.g.
-        #   robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_grasp_center'))
+
+    def lnk(self, name):
+        lidx = self.structure.compiled.lidx_map[self.structure.lnk_map[name]]
+        return self.runtime_lnks[lidx]
+
+    def jnt(self, name):
+        return self.structure.jnt_map[name]
+
+
+class L1O6(L1):
+    """Linx L1 with two dexterous Linkerbot O6 hands mounted on the arm
+    flanges. Grasp targets come from the hands' center tcps via cross-object
+    ik, e.g.
+        robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_grasp_center'))
+    """
+
+    def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=True):
+        super().__init__(rotmat=rotmat, pos=pos,
+                         home_qs=home_qs, is_free=is_free)
+        # O6 EEs mounted on each arm flange (the *_linkerbot_mount_joint,
+        # xyz=(0,0,0.034), that used to live in the body URDF).
         mount_tf = oum.tf_from_pos_rotmat(
             pos=np.array([0.0, 0.0, 0.034], dtype=np.float32))
         self.left_hand = oello6.O6Left()
@@ -67,25 +85,20 @@ class L1(orbmb.MechBase):
                 new.right_hand = child
         return new
 
-    def lnk(self, name):
-        lidx = self.structure.compiled.lidx_map[self.structure.lnk_map[name]]
-        return self.runtime_lnks[lidx]
-
-    def jnt(self, name):
-        return self.structure.jnt_map[name]
-
 
 if __name__ == '__main__':
     import one.viewer.world as ovw
+    import one.robots.base.kine_visualizer as orbkv
 
     base = ovw.World(cam_pos=(2.2, 1.4, 1.6),
                      cam_lookat_pos=(0.0, 0.0, 0.9))
-    robot = L1()
+    robot = L1O6()
     robot.attach_to(base.scene)
-    # arm / hand / manipulator all share the same call; grasp targets are the
-    # mounted hands' center tcps (cross-object ik):
-    #   robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_grasp_center'))
-    for hand in (robot.left_hand, robot.right_hand):
-        hand.toggle_tcp('power_grasp_center', length_scale=0.15, radius_scale=0.25)
-        hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)
+    # render the meshes semi-transparent so the kinematic skeleton shows through
+    robot.alpha = 0.3
+    robot.left_hand.alpha = 0.3
+    robot.right_hand.alpha = 0.3
+    # stick (skeleton) model of the whole mechanism (chain=None -> all joints)
+    kv = orbkv.KineVisualizer(robot, alpha=0.9)
+    kv.attach_to(base.scene)
     base.run()
