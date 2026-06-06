@@ -88,6 +88,14 @@ class _O6Hand(orbmb.MechBase, oremx.DexHandMixin):
             for prim, shape in self._SYNERGY_SHAPES.items()
         }
 
+    def clone(self):
+        # MechBase.clone bypasses __init__, so carry the per-instance synergy
+        # table over (otherwise a cloned hand can't pinch/grasp).
+        new = super().clone()
+        new.grasp_synergies = {prim: dict(d)
+                               for prim, d in self.grasp_synergies.items()}
+        return new
+
 
 class O6Left(_O6Hand):
     _Y = -1.0

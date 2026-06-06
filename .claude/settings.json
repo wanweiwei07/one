@@ -29,7 +29,9 @@
       "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe tools/strip_o6_hands.py)",
       "Bash(sed -n '1,40p' one/physics/mj_env.py)",
       "Bash(sed -n '60,80p' one/physics/mj_one_cvter.py)",
-      "Bash(ONE_HEADLESS=1 /c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe examples/test_l1o6_pinch_bunny.py)"
+      "Bash(ONE_HEADLESS=1 /c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe examples/test_l1o6_pinch_bunny.py)",
+      "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -m py_compile examples/test_antipodal_o6pinch.py)",
+      "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -W error::RuntimeWarning -)"
     ]
   }
 }

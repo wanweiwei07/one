@@ -39,6 +39,30 @@ bool point_in_tri(vec3 p, vec3 a, vec3 b, vec3 c, float eps) {
     return (u >= -eps) && (v >= -eps) && (u + v <= 1.0 + eps);
 }
 
+// Interval where a triangle meets the planes' intersection line L: its two
+// edges that pierce the OTHER plane (sign change in per-vertex distances d*)
+// give two points on L, parameterised by the vertex projections q*. Returns
+// false if the triangle does not properly cross (fewer than 2 edge crossings).
+bool chord_interval(float d0, float d1, float d2,
+                    float q0, float q1, float q2,
+                    float eps, out float lo, out float hi) {
+    lo = 1e30; hi = -1e30;
+    int cnt = 0;
+    if (d0 * d1 <= 0.0 && abs(d0 - d1) > eps) {
+        float t = q0 + (q1 - q0) * (d0 / (d0 - d1));
+        lo = min(lo, t); hi = max(hi, t); cnt++;
+    }
+    if (d1 * d2 <= 0.0 && abs(d1 - d2) > eps) {
+        float t = q1 + (q2 - q1) * (d1 / (d1 - d2));
+        lo = min(lo, t); hi = max(hi, t); cnt++;
+    }
+    if (d2 * d0 <= 0.0 && abs(d2 - d0) > eps) {
+        float t = q2 + (q0 - q2) * (d2 / (d2 - d0));
+        lo = min(lo, t); hi = max(hi, t); cnt++;
+    }
+    return cnt >= 2;
+}
+
 // tri-tri intersection
 // returns true and hit point
 bool tri_tri_intersect(vec3 a0, vec3 a1, vec3 a2,
@@ -75,24 +99,24 @@ bool tri_tri_intersect(vec3 a0, vec3 a1, vec3 a2,
     vec3 dirN = dir / dirLen;
     float dirLenSq = dirLen * dirLen;
     vec3 p0 = cross(dB * nA - dA * nB, dir) / (dirLenSq + eps);
-    // project triangle vertices onto line
-    float projA0 = dot(a0 - p0, dirN);
-    float projA1 = dot(a1 - p0, dirN);
-    float projA2 = dot(a2 - p0, dirN);
-    float minA = min(min(projA0, projA1), projA2);
-    float maxA = max(max(projA0, projA1), projA2);
-    float projB0 = dot(b0 - p0, dirN);
-    float projB1 = dot(b1 - p0, dirN);
-    float projB2 = dot(b2 - p0, dirN);
-    float minB = min(min(projB0, projB1), projB2);
-    float maxB = max(max(projB0, projB1), projB2);
-    float t0 = max(minA, minB);
-    float t1 = min(maxA, maxB);
-    if (t0 >= t1 - eps) return false;
-    float tMid = 0.5 * (t0 + t1);
-    hitPoint = p0 + dirN * tMid;
-    if (!point_in_tri(hitPoint, a0, a1, a2, eps)) return false;
-    if (!point_in_tri(hitPoint, b0, b1, b2, eps)) return false;
+    // vertex projections onto L (relative to p0)
+    float qa0 = dot(a0 - p0, dirN);
+    float qa1 = dot(a1 - p0, dirN);
+    float qa2 = dot(a2 - p0, dirN);
+    float qb0 = dot(b0 - p0, dirN);
+    float qb1 = dot(b1 - p0, dirN);
+    float qb2 = dot(b2 - p0, dirN);
+    // each triangle's TRUE chord on L (distA* = A verts to plane B; distB* = B
+    // verts to plane A); the triangles intersect iff the chords overlap.
+    float aLo, aHi, bLo, bHi;
+    if (!chord_interval(distA0, distA1, distA2, qa0, qa1, qa2, eps, aLo, aHi))
+        return false;
+    if (!chord_interval(distB0, distB1, distB2, qb0, qb1, qb2, eps, bLo, bHi))
+        return false;
+    float ov0 = max(aLo, bLo);
+    float ov1 = min(aHi, bHi);
+    if (ov0 >= ov1) return false;
+    hitPoint = p0 + dirN * (0.5 * (ov0 + ov1));
     return true;
 }
 

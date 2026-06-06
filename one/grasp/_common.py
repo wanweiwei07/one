@@ -20,6 +20,10 @@ def build_ee_target_detector(ee, target_sobj):
     try:
         detector = ocgcb.create_detector()
         batch = ocgcb.build_batch(items, pairs)
+        # trial dispatch: the GPU work-group count is fixed by the meshes'
+        # triangle counts (pose-independent), so if dense EE meshes overflow the
+        # GL dispatch limit it fails deterministically here -> fall back to CPU.
+        detector.detect_collision_batch(batch)
     except Exception:
         detector = occs.create_detector()
         batch = occs.build_batch(items, pairs)
