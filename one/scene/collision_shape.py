@@ -221,7 +221,7 @@ class AABBCollisionShape(CollisionShape):
 
     def _build_geom(self):
         return ogg.gen_box_geom(
-            half_extents=self._half_extents)
+            xyz_lengths=self._half_extents * 2)
 
 
 class OBBCollisionShape(CollisionShape):
@@ -278,7 +278,7 @@ class OBBCollisionShape(CollisionShape):
 
     def _build_geom(self):
         return ogg.gen_box_geom(
-            half_extents=self._half_extents)
+            xyz_lengths=self._half_extents * 2)
 
 
 class PlaneCollisionShape(CollisionShape):
@@ -328,11 +328,11 @@ class PlaneCollisionShape(CollisionShape):
         return min_corner, max_corner
 
     def _build_geom(self):
-        half_extents = np.array(
-            [100.0, 100.0, 1e-3],
+        xyz_lengths = np.array(
+            [200.0, 200.0, 2e-3],
             dtype=np.float32)
         return ogg.gen_box_geom(
-            half_extents=half_extents)
+            xyz_lengths=xyz_lengths)
 
 
 class MeshCollisionShape(CollisionShape):

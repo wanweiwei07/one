@@ -23,8 +23,9 @@ class SceneObject(ossn.SceneNode):
             auto_make_collision=True)
         return instance
 
-    def __init__(self, collision_type=None, is_free=False):
+    def __init__(self, collision_type=None, is_free=False, name=None):
         super().__init__()
+        self.name = name
         self.file_path = None
         self.visuals = []
         self.collisions = []
@@ -78,6 +79,7 @@ class SceneObject(ossn.SceneNode):
         """DOES NOT clone the affiliated scene."""
         new = self.__class__(collision_type=self._collision_type,
                              is_free=self.is_free)
+        new.name = self.name
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
         new.set_pos_rotmat(pos=self.pos,

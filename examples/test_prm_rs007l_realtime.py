@@ -15,7 +15,7 @@ robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
 # obstacles
-box = ossop.box(half_extents=(.5, .03, .03), pos=(.0, -0.2, 1),
+box = ossop.box(xyz_lengths=(1, 0.06, 0.06), pos=(.0, -0.2, 1),
                 collision_type=ouc.CollisionType.AABB,
                 is_free=True)
 box.attach_to(base.scene)

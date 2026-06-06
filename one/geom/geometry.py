@@ -89,8 +89,8 @@ def gen_arrow_geom(
     return g
 
 
-def gen_box_geom(half_extents=(0.05, 0.05, 0.05)):
-    hx, hy, hz = half_extents
+def gen_box_geom(xyz_lengths=(0.1, 0.1, 0.1)):
+    hx, hy, hz = xyz_lengths[0] / 2, xyz_lengths[1] / 2, xyz_lengths[2] / 2
     key = ("box", hx, hy, hz)
     if key in _geom_cache:
         return _geom_cache[key]

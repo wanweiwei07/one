@@ -35,7 +35,7 @@ for i, lnk in enumerate(robot.runtime_lnks):
 
 # Create ground at different heights
 ground = ossop.box(
-    half_extents=(50, 50, 0.05),
+    xyz_lengths=(100, 100, 0.1),
     pos=(0, 0, -0.05),
     collision_type=ouc.CollisionType.AABB
 )

@@ -17,7 +17,7 @@ robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 # NEW: Use a box at z=0.2 (robot collision geometry extends to ~z=0.25)
 ground = ossop.box(
-    half_extents=(50, 50, 0.05),
+    xyz_lengths=(100, 100, 0.1),
     pos=(0, 0, 0.2),
     collision_type=ouc.CollisionType.AABB,
     rgb=(0.5, 0.5, 0.5))

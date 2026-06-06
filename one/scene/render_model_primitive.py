@@ -46,10 +46,10 @@ def gen_icosphere_rmodel(radius=0.05, n_subs=2,
         geom=geometry, rgb=rgb, alpha=alpha)
 
 
-def gen_box_rmodel(half_extents=(0.05, 0.05, 0.05),
+def gen_box_rmodel(xyz_lengths=(0.1, 0.1, 0.1),
                    rgb=ouc.BasicColor.DEFAULT, alpha=1.0):
     """Gen box render model centered at (0,0,0)."""
-    geometry = ogg.gen_box_geom(half_extents)
+    geometry = ogg.gen_box_geom(xyz_lengths)
     return osrm.RenderModel(
         geom=geometry, rgb=rgb, alpha=alpha)
 

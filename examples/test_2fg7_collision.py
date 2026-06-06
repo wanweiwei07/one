@@ -9,7 +9,7 @@ base = ovw.World(cam_pos=(.5, .5, .5), cam_lookat_pos=(0, 0, .2),
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
 # # box (object to collide)
-# box = ossop.gen_box(half_extents=(0.03, 0.03, 0.03),
+# box = ossop.gen_box(xyz_lengths=(0.06, 0.06, 0.06),
 #                     rgb=ouc.BasicColor.ORANGE,
 #                     collision_type=ouc.CollisionType.AABB,
 #                     is_free=True)

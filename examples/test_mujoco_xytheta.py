@@ -11,7 +11,7 @@ base = ovw.World(cam_pos=(3, 1, 2), cam_lookat_pos=(0, 0, .2),
 plane_bottom = ossop.plane()
 plane_bottom.attach_to(base.scene)
 base_box = ossop.box(name="platform",
-                     half_extents=(.5, .5, .5),
+                     xyz_lengths=(1, 1, 1),
                      pos=(0, 0, .5),
                      collision_type=ouc.CollisionType.AABB,
                      is_free=False)
@@ -25,7 +25,7 @@ xyt_bot.attach_to(base.scene)
 xyt_bot.set_pos_rotmat(pos=(0, 0, 1.11))
 xyt_bot.toggle_render_collision = True
 
-obstacle = ossop.box(half_extents=(.1, .1, .1),
+obstacle = ossop.box(xyz_lengths=(0.2, 0.2, 0.2),
                      collision_type=ouc.CollisionType.AABB,
                      mass=0.1,
                      is_free=True)

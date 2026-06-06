@@ -230,7 +230,7 @@ def segment_surface(geometry, normal_tol_deg=15.0):
 
 def convex_hull(geom):
     from scipy.spatial import ConvexHull
-    import one.scene.geometry as osg
+    import one.geom.geometry as osg
     hull = ConvexHull(geom.vs)
     vs = geom.vs
     fs = hull.simplices.astype(np.uint32)

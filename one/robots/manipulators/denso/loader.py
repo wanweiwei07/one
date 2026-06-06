@@ -19,7 +19,7 @@ robot = orul.load_robot_from_xacro("./denso_robot_descriptions/urdf/denso_robot.
 # for joint in robot.joints:
 #     print(f" {joint.parent} ──[{joint.name} : {joint.type}]──> {joint.child}")
 
-import one.scene.geometry_loader as geomld
+import one.geom.loader as geomld
 
 for link in robot.lnks:
     for geom in link.visuals + link.collisions:
