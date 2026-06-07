@@ -241,21 +241,40 @@ def rotmat_from_rotvec(v):
 
 
 def rotmat_between_vecs(v1, v2):
-    """
-    from v1 to v2?
-    :param v1: 1-by-3 nparray
-    :param v2: 1-by-3 nparray
-    :return:
+    """Rotation mapping v1 onto v2. Scalar (3,) inputs return a (3, 3) matrix;
+    2-D inputs broadcast -- e.g. v1 (N, 3) with v2 (3,) returns (N, 3, 3) -- so
+    one rotation is built per row.
     author: weiwei
     date: 20191228
     """
-    theta = angle_between_vecs(v1, v2)
-    if np.allclose(theta, 0):
-        return np.eye(3)
-    if np.allclose(theta, np.pi):  # in this case, the rotation axis is arbitrary; I am using v1 for reference
-        return rotmat_from_axangle(orth_vec(v1, toggle_unit=True), theta)
-    _, axis = unit_vec(np.cross(v1, v2))
-    return rotmat_from_axangle(axis, theta)
+    v1 = np.asarray(v1, dtype=np.float64)
+    v2 = np.asarray(v2, dtype=np.float64)
+    if v1.ndim == 1 and v2.ndim == 1:
+        theta = angle_between_vecs(v1, v2)
+        if np.allclose(theta, 0):
+            return np.eye(3)
+        if np.allclose(theta, np.pi):  # axis arbitrary; use v1 for reference
+            return rotmat_from_axangle(orth_vec(v1, toggle_unit=True), theta)
+        _, axis = unit_vec(np.cross(v1, v2))
+        return rotmat_from_axangle(axis, theta)
+    # ---- batched via axis-angle (robust near c = -1) ----
+    a, b = np.broadcast_arrays(v1, v2)
+    a = a / (np.linalg.norm(a, axis=-1, keepdims=True) + eps)
+    b = b / (np.linalg.norm(b, axis=-1, keepdims=True) + eps)
+    axis = np.cross(a, b)
+    s = np.linalg.norm(axis, axis=-1)
+    c = np.einsum('...i,...i->...', a, b)
+    rot = rotmat_from_axangle(axis, np.arctan2(s, c)).astype(np.float64)
+    # exactly antiparallel (s ~ 0, c < 0): 180 deg about any axis perp to a
+    anti = (s < 1e-7) & (c < 0)
+    if np.any(anti):
+        aa = a[anti]
+        ref = np.where(np.abs(aa[:, 0:1]) < 0.9,
+                       np.array([1.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]))
+        p = np.cross(aa, ref)
+        p = p / (np.linalg.norm(p, axis=-1, keepdims=True) + eps)
+        rot[anti] = 2.0 * np.einsum('ni,nj->nij', p, p) - np.eye(3)
+    return rot.astype(np.float32)
 
 
 def rotmat_average(rot_mats):

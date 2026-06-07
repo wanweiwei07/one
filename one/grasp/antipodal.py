@@ -14,7 +14,8 @@ import one.grasp._common as ogc
 def build_grasp_rotmat_batch(ray_dirs, open_dir):
     """
     ray_dirs: (N,3) unit vectors
-    open_dir: gripper opening direction vector in TCP local frame, shape (3,)
+    open_dir: gripper opening direction in TCP local frame -- (3,) shared by all
+        candidates, or (N,3) one per candidate (e.g. a closure-dependent pinch).
     returns: rotmats (N,3,3)
     """
     y = ray_dirs / (np.linalg.norm(ray_dirs, axis=1, keepdims=True) + oum.eps)
@@ -29,11 +30,14 @@ def build_grasp_rotmat_batch(ray_dirs, open_dir):
     x = np.cross(y, z)
     x = x / (np.linalg.norm(x, axis=1, keepdims=True) + oum.eps)
     rot_base = np.stack([x, y, z], axis=2).astype(np.float32)
+    open_dir = np.asarray(open_dir, dtype=np.float32)
     if np.linalg.norm(open_dir) < oum.eps:
         raise ValueError('open_dir must be non-zero')
     offset = oum.rotmat_between_vecs(
         open_dir, ouc.StandardAxis.Y).astype(np.float32)
-    return rot_base @ offset
+    if offset.ndim == 2:                       # shared open_dir -> single offset
+        return rot_base @ offset
+    return np.einsum('nij,njk->nik', rot_base, offset)   # per-candidate
 
 
 def _antipodal_candidates(
@@ -73,15 +77,15 @@ def _antipodal_candidates(
     return center, jaw_width, n_all, nq_all, cos_vals, normal_cos_th, roll_step
 
 
-def antipodal_iter(gripper, tgt_sobj,
+def antipodal_iter(gripper, target_sobj,
                    density=0.02, normal_tol_deg=20,
                    roll_step_deg=30, clearance=0.002,
                    score_weights=(0.7, 0.3),
                    exclude_regions=None):
     """
-    Generator: yields (pose_tf, jaw_width, score, collided)
+    Generator: yields (pose, pre_pose, jaw_width, score, collided).
     :param gripper: gripper instance
-    :param: target_sobj: target object to grasp
+    :param target_sobj: target object to grasp
     :param density: surface sampling density
     :param normal_tol_deg: normal tolerance in degrees
     :param roll_step_deg: roll angle step in degrees
@@ -96,11 +100,21 @@ def antipodal_iter(gripper, tgt_sobj,
     Uses gripper.contact_pattern to confirm this is a single-contact
         model and to compensate jaw width for contact depth along the
         gripper opening axis. TCP is aligned to the two-contact midpoint.
-    :return: yields (pose_tf, jaw_width, score, collided)
+    :return: yields (pose, pre_pose, jaw_width, score, collided), where
+        pose: 4x4 world transform of the GRASP CENTER (the grasp_center tcp
+            frame) when closed on the object -- its origin is the contact-pair
+            midpoint, its +z is the approach axis. This is exactly the
+            (tgt_pos, tgt_rotmat) the gripper's grip_at expects.
+        pre_pose: 4x4 world transform of the pre-grasp pose, pose retreated
+            along the approach axis (-pose[:3, 2]).
+        jaw_width: jaw opening for this grasp.
+        score: score_weights-weighted normal-alignment + jaw-centering.
+        collided: True if the gripper collides with the target at pose or
+            pre_pose (both poses are collision-checked).
     """
     gripper = gripper.clone()
     tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vffns(
-        tgt_sobj.collisions)
+        target_sobj.collisions)
     if exclude_regions:
         tgt_vs, tgt_fs = osgop.clip_mesh(
             tgt_vs, tgt_fs, exclude_regions)
@@ -141,9 +155,19 @@ def antipodal_iter(gripper, tgt_sobj,
     n_sel = n_all[mask]
     nq_sel = nq_all[mask]
     ray_dirs = -n_sel
-    rot_base = build_grasp_rotmat_batch(ray_dirs, open_dir)
+    # per-candidate opening axis when the gripper provides one (e.g. a curling
+    # pinch whose pad-opposition axis depends on the closure width); else the
+    # single constant open_dir (a true parallel jaw).
+    if hasattr(gripper, 'open_dir_at'):
+        open_dir_sel = np.asarray(gripper.open_dir_at(jaw_sel), dtype=np.float32)
+    else:
+        open_dir_sel = open_dir
+    rot_base = build_grasp_rotmat_batch(ray_dirs, open_dir_sel)
     angles = np.arange(0.0, 2 * np.pi, roll_step)
-    roll_axes = np.einsum('nij,j->ni', rot_base, open_dir)
+    if open_dir_sel.ndim == 2:
+        roll_axes = np.einsum('nij,nj->ni', rot_base, open_dir_sel)
+    else:
+        roll_axes = np.einsum('nij,j->ni', rot_base, open_dir_sel)
     roll_rots = oum.rotmat_from_axangle(roll_axes[:, None, :], angles[None, :])
     rot_all = roll_rots @ rot_base[:, None, :, :]
     pose_tf = np.tile(np.eye(4, dtype=np.float32),
@@ -163,7 +187,7 @@ def antipodal_iter(gripper, tgt_sobj,
     jaw_all = jaw_all[order]
     score_all = score_all[order]
     # prepare collision batch
-    detector, batch = ogc.build_ee_target_detector(gripper, tgt_sobj)
+    detector, batch = ogc.build_ee_target_detector(gripper, target_sobj)
     # retreat distance
     tcp_len = np.linalg.norm(gripper.tcp('grasp_center').loc_tf[:3, 3])
     retreat_dist = 0.5 * tcp_len
@@ -204,7 +228,13 @@ def antipodal(gripper, target_sobj,
         out of the contact-sampling surface (forwarded to
         antipodal_iter). The full mesh is still used for collision
         checks.
-    :return: list of (pose_tf, jaw_width, score)
+    :return: list of (pose, pre_pose, jaw_width, score) for the
+        collision-free grasps, best score first. pose is the 4x4 world
+        transform of the GRASP CENTER (grasp_center tcp frame, origin at the
+        contact-pair midpoint, +z = approach axis) -- pass pose[:3, 3],
+        pose[:3, :3] straight to the gripper's grip_at. pre_pose is the
+        pre-grasp pose (pose retreated along the approach axis). See
+        antipodal_iter for the full field description.
     """
     results = []
     for pose, pre_pose, jw, sc, collided in antipodal_iter(

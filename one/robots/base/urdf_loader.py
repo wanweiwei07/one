@@ -154,6 +154,16 @@ def urdf_to_mechstruct(urdf, urdf_dir, collision_type=None,
         jnt_map[uj.name] = jnt
         structure.add_jnt(jnt)
 
+    # second pass: wire up <mimic> couplings (source joints now all exist) so
+    # mimic joints follow their source (q = mult*q_src + offset) and drop out of
+    # the active dof -- e.g. the O6 hand's dip/ip joints coupled to mcp/pitch.
+    for uj in urdf.joints:
+        mimic = getattr(uj, "mimic", None)
+        if mimic is not None and getattr(mimic, "joint", None):
+            mult = 1.0 if mimic.multiplier is None else float(mimic.multiplier)
+            offset = 0.0 if mimic.offset is None else float(mimic.offset)
+            jnt_map[uj.name].mmc = (jnt_map[mimic.joint], mult, offset)
+
     structure.lnk_map = lnk_map
     structure.jnt_map = jnt_map
     if res_dir is not None:

@@ -52,23 +52,25 @@ class _O6Hand(orbmb.MechBase, oremx.DexHandMixin):
     _PREFIX = None   # 'lh_' / 'rh_' joint-name prefix (set per side)
 
     # grasp synergies as joint-basename -> closed q (at amount=1.0), prefixed
-    # per side in __init__. Derived from the poses used to place the center tcps.
+    # per side in __init__. Only the INDEPENDENT joints are listed -- thumb_ip
+    # and the *_dip joints are URDF <mimic> couplings (thumb_ip = 2.29*cmc_pitch,
+    # dip = 0.89*mcp) and follow automatically in fk, so setting them here would
+    # be a no-op.
     _SYNERGY_SHAPES = {
+        # NB cmc_pitch <= 0.47 so the mimic thumb_ip (= 2.29*cmc_pitch) stays
+        # within its 1.08 limit.
         'pinch': {   # thumb opposes index
-            'thumb_cmc_yaw': 0.9, 'thumb_cmc_pitch': 0.5, 'thumb_ip': 0.5,
-            'index_mcp_pitch': 0.9, 'index_dip': 0.6,
+            'thumb_cmc_yaw': 0.9, 'thumb_cmc_pitch': 0.45,
+            'index_mcp_pitch': 0.9,
         },
         'tripod': {  # thumb opposes index + middle
-            'thumb_cmc_yaw': 0.9, 'thumb_cmc_pitch': 0.5, 'thumb_ip': 0.5,
-            'index_mcp_pitch': 0.9, 'index_dip': 0.6,
-            'middle_mcp_pitch': 0.9, 'middle_dip': 0.6,
+            'thumb_cmc_yaw': 0.9, 'thumb_cmc_pitch': 0.45,
+            'index_mcp_pitch': 0.9, 'middle_mcp_pitch': 0.9,
         },
         'power': {   # all five fingers envelop
-            'thumb_cmc_yaw': 0.8, 'thumb_cmc_pitch': 0.4, 'thumb_ip': 0.6,
-            'index_mcp_pitch': 1.0, 'index_dip': 0.8,
-            'middle_mcp_pitch': 1.0, 'middle_dip': 0.8,
-            'ring_mcp_pitch': 1.0, 'ring_dip': 0.8,
-            'pinky_mcp_pitch': 1.0, 'pinky_dip': 0.8,
+            'thumb_cmc_yaw': 0.8, 'thumb_cmc_pitch': 0.4,
+            'index_mcp_pitch': 1.0, 'middle_mcp_pitch': 1.0,
+            'ring_mcp_pitch': 1.0, 'pinky_mcp_pitch': 1.0,
         },
     }
 

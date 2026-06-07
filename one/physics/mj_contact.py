@@ -29,8 +29,7 @@ class MJContactViz:
             s = ossop.sphere(radius=radius,
                              rgb=(1, 0, 0),
                              alpha=ouc.ALPHA.SEMI,
-                             collision_type=None,
-                             is_fixed=True)
+                             collision_type=None)
             s.attach_to(self.scene)
             self._spheres.append(s)
 
@@ -71,8 +70,7 @@ class MjContactForceViz:
                 head_length=ouc.ForceArrowSize.HEAD_LENGTH,
                 n_segs=8, rgb=(1, 0, 0),
                 alpha=ouc.ALPHA.SEMI,
-                collision_type=None,
-                is_fixed=True)
+                collision_type=None)
             a.attach_to(self.scene)
             self._arrows.append(a)
 
