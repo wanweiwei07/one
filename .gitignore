@@ -78,6 +78,9 @@ scene_free.xml
 *.pkl
 *.pt
 *.md
+# ...but DO track the published docs site (mkdocs reads these; CI needs them committed)
+!docs/
+!docs/**
 *.svg
 *.pt
 *.out
@@ -86,3 +89,5 @@ scene_free.xml
 *.hdf5
 kurabo/
 coripps/
+# mkdocs build output
+site/

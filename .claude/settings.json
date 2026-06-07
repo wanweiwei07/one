@@ -43,7 +43,9 @@
       "Bash(git mv *)",
       "Read(//c/Users/weiwe/src_code/one/examples/**)",
       "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -c 'import test_o6_pinch, test_o6_tripod; print\\('\\\\''imports OK:'\\\\'', test_o6_tripod.O6Tripod._OPPOSING\\)')",
-      "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -c 'import one.grasp.antipodal as a; import inspect; print\\('\\\\''OK, antipodal_iter sig:'\\\\'', inspect.signature\\(a.antipodal_iter\\)\\)')"
+      "Bash(/c/Users/weiwe/AppData/Local/Programs/Python/Python313/python.exe -c 'import one.grasp.antipodal as a; import inspect; print\\('\\\\''OK, antipodal_iter sig:'\\\\'', inspect.signature\\(a.antipodal_iter\\)\\)')",
+      "Bash(git remote *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
