@@ -8,7 +8,7 @@ import one.scene.collision_shape as osc
 class SceneObject(ossn.SceneNode):
 
     @classmethod
-    def from_file(cls, path, scale=None,  # scale applied during loading
+    def from_file(cls, path,
                   loc_rotmat=None, loc_pos=None,  # render model offset
                   collision_type=None, is_free=False,
                   rgb=None, alpha=1.0):
@@ -17,14 +17,15 @@ class SceneObject(ossn.SceneNode):
                        is_free=is_free)
         instance.file_path = path
         instance.add_visual(
-            osrm.RenderModel(geom=ogl.load_geometry(path, scale=scale),
+            osrm.RenderModel(geom=ogl.load_geometry(path),
                              rotmat=loc_rotmat, pos=loc_pos,
                              rgb=rgb, alpha=alpha),
             auto_make_collision=True)
         return instance
 
-    def __init__(self, collision_type=None, is_free=False):
+    def __init__(self, collision_type=None, is_free=False, name=None):
         super().__init__()
+        self.name = name
         self.file_path = None
         self.visuals = []
         self.collisions = []
@@ -78,10 +79,11 @@ class SceneObject(ossn.SceneNode):
         """DOES NOT clone the affiliated scene."""
         new = self.__class__(collision_type=self._collision_type,
                              is_free=self.is_free)
+        new.name = self.name
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
-        new.set_rotmat_pos(rotmat=self.rotmat,
-                           pos=self.pos)
+        new.set_pos_rotmat(pos=self.pos,
+                           rotmat=self.rotmat)
         new.set_inertia(self._inrtmat, self._com, self._mass)
         # clone all visuals
         for m in self.visuals:

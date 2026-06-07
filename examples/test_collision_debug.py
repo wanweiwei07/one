@@ -13,7 +13,7 @@ robot.attach_to(base.scene)
 
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 # create ground plane at z=0
 ground = ossop.plane(pos=(0, 0, 0))

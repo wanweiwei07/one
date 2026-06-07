@@ -12,14 +12,19 @@ def cartesian_to_jtraj(
     pos_step=0.01,
     rot_step=np.deg2rad(2.0),
     ref_qs=None,
+    chain='main',
+    tcp='flange',
 ):
     """
     Convert Cartesian straight-line trajectory to joint trajectory using IK.
 
     Parameters
     ----------
-    robot : ManipulatorBase-like
-        Must provide `ik_tcp_nearest` and `qs`.
+    robot : MechBase
+        Must provide `ik(chain, tcp, ...)`, `chain(name)` and `qs`.
+    chain, tcp : str
+        Names of the registered chain / tcp to solve against (default the
+        single-arm convention 'main' / 'flange').
     start_rotmat : array-like, shape (3, 3)
     start_pos : array-like, shape (3,)
     goal_rotmat : array-like, shape (3, 3), optional
@@ -44,22 +49,21 @@ def cartesian_to_jtraj(
         pos_step=pos_step,
         rot_step=rot_step,
     )
+    ik_chain = robot.chain(chain)
     if ref_qs is None:
         ref_qs = np.asarray(robot.qs, dtype=np.float32)
     else:
         ref_qs = np.asarray(ref_qs, dtype=np.float32)
+    ref_qs_active = ik_chain.extract_active_qs(ref_qs)
     q_list = []
     for pos, rotmat in zip(pos_seq, rotmat_seq):
-        qs = robot.ik_tcp_nearest(
-            tgt_rotmat=rotmat,
-            tgt_pos=pos,
-            ref_qs=ref_qs,
-        )
-        if qs is None:
+        qs_list = robot.ik(pos, rotmat, chain=chain, tcp=tcp,
+                           max_solutions=1, ref_qs=ref_qs_active)
+        if not qs_list:
             return None, (pos_seq, rotmat_seq)
-        qs = np.asarray(qs, dtype=np.float32)
+        qs = np.asarray(qs_list[0], dtype=np.float32)
         q_list.append(qs)
-        ref_qs = qs
+        ref_qs_active = ik_chain.extract_active_qs(qs)
     return np.asarray(q_list, dtype=np.float32), (pos_seq, rotmat_seq)
 
 

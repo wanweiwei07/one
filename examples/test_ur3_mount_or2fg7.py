@@ -25,12 +25,12 @@ if __name__ == "__main__":
     gripper.set_jaw_width(0.03)
     gripper.attach_to(scene)
 
-    # engage_tf is flange->ee_base transform
-    engage_tf = oum.tf_from_rotmat_pos(
-        rotmat=np.eye(3, dtype=np.float32),
+    # loc_tf is flange->ee_base transform
+    loc_tf = oum.tf_from_pos_rotmat(
         pos=np.array([0.0, 0.0, 0.0], dtype=np.float32),
+        rotmat=np.eye(3, dtype=np.float32),
     )
-    robot.engage(gripper, engage_tf=engage_tf)
+    robot.mount(gripper, robot.runtime_lnks[-1], loc_tf, update=True)
 
     tgt_pos = np.array([0.35, -0.20, 0.2], dtype=np.float32)
     tgt_rotmat = (
@@ -39,13 +39,14 @@ if __name__ == "__main__":
     )
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat, color_mat=ouc.CoordColor.DYO).attach_to(scene)
 
-    qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos)
+    _s = robot.ik(tgt_pos, tgt_rotmat, tcp=gripper.tcp('grasp_center'), max_solutions=1)
+    qs = _s[0] if _s else None
     print("ik:", qs)
     if qs is not None:
         robot.fk(qs=qs)
         ossop.frame(
-            pos=robot.gl_tcp_tf[:3, 3],
-            rotmat=robot.gl_tcp_tf[:3, :3],
+            pos=robot.tcp('flange').tf[:3, 3],
+            rotmat=robot.tcp('flange').tf[:3, :3],
             color_mat=ouc.CoordColor.MYC,
         ).attach_to(scene)
 

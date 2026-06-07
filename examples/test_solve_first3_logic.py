@@ -12,8 +12,8 @@ print("="*80)
 config = [np.radians(45), np.radians(30), 0, 0, 0, 0]
 
 robot.fk(qs=config)
-tcp_pos = robot.gl_tcp_tf[:3, 3]
-tcp_rot = robot.gl_tcp_tf[:3, :3]
+tcp_pos = robot.tcp('flange').tf[:3, 3]
+tcp_rot = robot.tcp('flange').tf[:3, :3]
 
 # Compute wrist center
 pw_target = tcp_pos - tcp_rot @ solver.ow_6
@@ -31,7 +31,7 @@ for i, (q1, q2, q3) in enumerate(solutions):
     
     # Verify
     robot.fk(qs=[q1, q2, q3, 0, 0, 0])
-    wrist_computed = robot.gl_tcp_tf[:3, 3] - robot.gl_tcp_tf[:3, :3] @ solver.ow_6
+    wrist_computed = robot.tcp('flange').tf[:3, 3] - robot.tcp('flange').tf[:3, :3] @ solver.ow_6
     
     error = np.linalg.norm(wrist_computed - pw_target)
     print(f"         Wrist error: {error*1000:.2f} mm")

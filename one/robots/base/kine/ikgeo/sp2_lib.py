@@ -45,16 +45,23 @@ def sp2_setup_LS(p1, p2, k1, k2):
     k2 += rand.rand_normal_vec()
 
 
+# Fast 3-vector cross product (np.cross has heavy dispatch overhead on len-3).
+def _cross3(a, b):
+    return np.array([a[1] * b[2] - a[2] * b[1],
+                     a[2] * b[0] - a[0] * b[2],
+                     a[0] * b[1] - a[1] * b[0]])
+
+
 # Code called to run subproblem
 def sp2_run(p1, p2, k1, k2):
     # Rescale for least-squares (use local copies to avoid mutating caller inputs)
     p1n = p1 / np.linalg.norm(p1, 2)
     p2n = p2 / np.linalg.norm(p2, 2)
-    KxP1 = np.cross(k1, p1n)
-    KxP2 = np.cross(k2, p2n)
-    # np.block appends two arrays together
-    A1 = np.block([[KxP1], [-np.cross(k1, KxP1)]])
-    A2 = np.block([[KxP2], [-np.cross(k2, KxP2)]])
+    KxP1 = _cross3(k1, p1n)
+    KxP2 = _cross3(k2, p2n)
+    # stack two row vectors into a 2x3 matrix
+    A1 = np.array([KxP1, -_cross3(k1, KxP1)])
+    A2 = np.array([KxP2, -_cross3(k2, KxP2)])
     radius_1_sq = np.dot(KxP1, KxP1)
     radius_2_sq = np.dot(KxP2, KxP2)
     # avoid division by zero
@@ -68,20 +75,17 @@ def sp2_run(p1, p2, k1, k2):
     alpha_2 = np.dot(ls_frac, (k2_d_p2 - np.dot(k1_d_k2, k1_d_p1)))
     x_ls_1 = alpha_2 * np.dot(A1, k2) / radius_1_sq
     x_ls_2 = alpha_1 * np.dot(A2, k1) / radius_2_sq
-    x_ls = np.block([[x_ls_1], [x_ls_2]])
-    n_sym = np.cross(k1, k2)
+    x_ls = np.array([x_ls_1, x_ls_2])
+    n_sym = _cross3(k1, k2)
     pinv_A1 = A1 / radius_1_sq
     pinv_A2 = A2 / radius_2_sq
-    A_perp_tilde = np.block([[pinv_A1], [pinv_A2]]) @ n_sym
+    A_perp_tilde = np.vstack((pinv_A1, pinv_A2)) @ n_sym
     # See if this is not a least-squares problem
     if np.linalg.norm(x_ls[0], 2) < 1:
         xi = sqrt(1.0 - pow(np.linalg.norm(x_ls[0], 2), 2)) / np.linalg.norm(A_perp_tilde[0:2], 2)
         sc_1 = x_ls.flatten() + A_perp_tilde * xi
         sc_2 = x_ls.flatten() - A_perp_tilde * xi
-        # Commented out for optimization purposes
-        # theta1 = np.block([[atan2(sc_1[0], sc_1[1])], [atan2(sc_2[0], sc_2[1])]])
-        # theta2 = np.block([[atan2(sc_1[2], sc_1[3])], [atan2(sc_2[2], sc_2[3])]])
-        return np.block([[atan2(sc_1[0], sc_1[1])], [atan2(sc_2[0], sc_2[1])]]), np.block(
+        return np.array([[atan2(sc_1[0], sc_1[1])], [atan2(sc_2[0], sc_2[1])]]), np.array(
             [[atan2(sc_1[2], sc_1[3])], [atan2(sc_2[2], sc_2[3])]]), False
     # Otherwise, this is least-squares
     else:

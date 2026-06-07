@@ -100,5 +100,5 @@ class MjContactForceViz:
             b = 1 - strength
             rgba = (r, g, b, ouc.ALPHA.SOLID)
             a = self._arrows[i]
-            a.set_rotmat_pos(rotmat, pos=spos)
+            a.set_pos_rotmat(pos=spos, rotmat=rotmat)
             a.rgba = rgba

@@ -98,6 +98,10 @@ class MJCFCompiler:
             self.compile_body(c, body_el)
 
     def compile_joint(self, j, parent_el):
+        if j.jtype_str == "fixed":
+            # MuJoCo has no 'fixed' joint type: a body with no joint element is
+            # already rigidly fixed to its parent, so emit nothing.
+            return
         if j.jtype_str == "free":
             ET.SubElement(parent_el, "freejoint")
             return
@@ -116,7 +120,7 @@ class MJCFCompiler:
 
     def compile_geom(self, g, parent_el):
         ge = ET.SubElement(parent_el, "geom")
-        # ge.set("name", g.name) # name is optional for geom
+        ge.set("name", g.name)
         ge.set("type", g.gtype)
         # size depends on type
         if g.gtype == "sphere":

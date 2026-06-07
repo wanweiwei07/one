@@ -34,7 +34,7 @@ if __name__ == "__main__":
         qs[3] = 0.0
         qs[5] = 0.0
         robot.fk(qs=qs)
-        tcp = robot.gl_tcp_tf[:3, 3]
+        tcp = robot.tcp('flange').tf[:3, 3]
         r_xy = float(np.hypot(tcp[0], tcp[1]))
         if tcp[0] < -0.05 and r_xy < 0.25 and not mjc.is_collided(qs):
             found = (qs, tcp)

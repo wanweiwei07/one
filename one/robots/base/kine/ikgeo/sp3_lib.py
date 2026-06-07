@@ -47,10 +47,16 @@ def sp3_setup_LS(p1, p2, k):
 
 
 # Run the problem and return theta
+def _cross3(a, b):
+    return np.array([a[1] * b[2] - a[2] * b[1],
+                     a[2] * b[0] - a[0] * b[2],
+                     a[0] * b[1] - a[1] * b[0]])
+
+
 def sp3_run(p1, p2, k, d):
-    KxP = np.cross(k, p1)
+    KxP = _cross3(k, p1)
     # np.concatenate stacks two arrays here: [arr1; arr2]
-    A1 = np.concatenate(([KxP], [-np.cross(k, KxP)]), axis=0)
+    A1 = np.array([KxP, -_cross3(k, KxP)])
     A = -2 * p2 @ A1.T
     norm_A_sq = np.dot(A, A)
     norm_A = sqrt(norm_A_sq)
@@ -64,7 +70,7 @@ def sp3_run(p1, p2, k, d):
     # Otherwise not a least squares
     else:
         xi = sqrt(1 - pow(b, 2) / norm_A_sq)
-        A_perp_tilde = np.block([A[1], -A[0]])
+        A_perp_tilde = np.array([A[1], -A[0]])
         A_perp = A_perp_tilde / norm_A
         sc_1 = x_ls + xi * A_perp
         sc_2 = x_ls - xi * A_perp

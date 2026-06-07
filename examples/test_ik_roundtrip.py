@@ -13,8 +13,8 @@ def test_fk_to_ik(robot, qs_input, description):
     
     # Forward kinematics
     robot.fk(qs_input)
-    target_tcp = robot.gl_tcp_tf[:3, 3].copy()
-    target_rotmat = robot.gl_tcp_tf[:3, :3].copy()
+    target_tcp = robot.tcp('flange').tf[:3, 3].copy()
+    target_rotmat = robot.tcp('flange').tf[:3, :3].copy()
     wrist_pos = robot.gl_lnk_tfarr[4][:3, 3].copy()
     
     print(f"\nInput angles:")
@@ -26,7 +26,7 @@ def test_fk_to_ik(robot, qs_input, description):
     
     # Inverse kinematics
     print(f"\nAnalytical IK:")
-    qs_list = robot.ik_tcp(tgt_pos=target_tcp, tgt_rotmat=target_rotmat)
+    qs_list = robot.ik(target_tcp, target_rotmat)
     
     if qs_list:
         print(f"  Found {len(qs_list)} solution(s)")
@@ -40,7 +40,7 @@ def test_fk_to_ik(robot, qs_input, description):
             
             # Also check FK error
             robot.fk(qs)
-            actual_tcp = robot.gl_tcp_tf[:3, 3]
+            actual_tcp = robot.tcp('flange').tf[:3, 3]
             actual_wrist = robot.gl_lnk_tfarr[4][:3, 3]
             tcp_error = np.linalg.norm(actual_tcp - target_tcp)
             wrist_error = np.linalg.norm(actual_wrist - wrist_pos)

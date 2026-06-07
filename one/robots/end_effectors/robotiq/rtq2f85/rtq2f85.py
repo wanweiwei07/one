@@ -5,7 +5,8 @@ import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
-import one.robots.end_effectors.ee_base as oreb
+import one.robots.base.mech_base as orbmb
+import one.robots.end_effectors.ee_mixins as oreb
 
 
 def prepare_ms():
@@ -159,14 +160,17 @@ def prepare_ms():
     return structure
 
 
-class Rtq2F85(oreb.EndEffectorBase, oreb.GripperMixin):
+class Rtq2F85(orbmb.MechBase, oreb.GripperMixin):
 
     @classmethod
     def _build_structure(cls):
         return prepare_ms()
 
     def __init__(self):
-        super().__init__(loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.15)))
+        super().__init__()
+        self.add_tcp('grasp_center', self.runtime_root_lnk,
+                     oum.tf_from_pos_rotmat(pos=(0.0, 0.0, 0.15)))
+        self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
         self.jaw_range = np.array([0.0, 0.085], dtype=np.float32)
         self.open_dir = ouc.StandardAxis.X  # defined in tcp_rotmat
         self.set_jaw_width(self.jaw_range[1])
@@ -182,6 +186,7 @@ class Rtq2F85(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def clone(self):
         new = super().clone()
+        new.contact_pattern = self.contact_pattern.copy()
         new.jaw_range = self.jaw_range.copy()
         new.open_dir = self.open_dir
         jaw_width = self.jaw_range[1] * (1.0 - self.qs[0] / 0.8)
@@ -207,12 +212,13 @@ if __name__ == '__main__':
     for i, jaw_width in enumerate(jaw_widths):
         gripper = template.clone()
         gripper.set_jaw_width(jaw_width)
-        gripper.set_rotmat_pos(pos=(0.10 * i, 0.0, 0.0))
+        gripper.set_pos_rotmat(pos=(0.10 * i, 0.0, 0.0))
         gripper.attach_to(base.scene)
         grippers.append(gripper)
         phases.append(i * 0.5)
-        ossop.frame(pos=gripper.gl_tcp_tf[:3, 3],
-                    rotmat=gripper.gl_tcp_tf[:3, :3],
+        _tf = gripper.tcp('grasp_center').tf
+        ossop.frame(pos=_tf[:3, 3],
+                    rotmat=_tf[:3, :3],
                     color_mat=ouc.CoordColor.MYC).attach_to(base.scene)
         print(f'gripper[{i}] jaw_width={jaw_width:.3f} m')
 

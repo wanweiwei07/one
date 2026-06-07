@@ -1,3 +1,7 @@
+"""Mesh file loading: ``load_geometry(path)`` reads STL (ascii/binary) and
+DAE into in-house (vertices, faces) geometry. Use this instead of
+trimesh.load / open3d for reading meshes into the `one` pipeline.
+(URDF/xacro robot assets are loaded by one/robots/base/urdf_loader.)"""
 import os
 import xml
 import struct
@@ -5,16 +9,9 @@ import numpy as np
 import one.geom.geometry as osg
 
 
-def load_geometry(path, scale=None):
-    if scale is None:
-        scale = (1.0, 1.0, 1.0)
-    elif np.isscalar(scale):
-        scale = (float(scale), float(scale), float(scale))
-    else:
-        scale = tuple(scale)
-    key = (path, scale[0], scale[1], scale[2])
-    if key in osg._geom_cache:
-        return osg._geom_cache[key]
+def load_geometry(path):
+    if path in osg._geom_cache:
+        return osg._geom_cache[path]
     ext = os.path.splitext(path)[1].lower()
     if ext == ".stl":
         vs, fs = _load_stl(path)
@@ -22,12 +19,8 @@ def load_geometry(path, scale=None):
         vs, fs = _load_dae(path)
     else:
         raise ValueError(f"Unsupported geom format: {ext}")
-    vs = vs * np.array(scale, dtype=np.float32)
-    if scale[0] * scale[1] * scale[2] < 0:
-        fs = fs.copy()
-        fs[:, [1, 2]] = fs[:, [2, 1]]
     geometry = osg.gen_geom_from_raw(vs, fs)
-    osg._geom_cache[key] = geometry
+    osg._geom_cache[path] = geometry
     return geometry
 
 

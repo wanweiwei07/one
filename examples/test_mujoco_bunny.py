@@ -20,22 +20,22 @@ for i in np.linspace(.5, 10.5, 50):
 plane_ground = ossop.plane()
 plane_ground.attach_to(base.scene)
 wall_left = ossop.box(name="wall", pos=(.0, .35, .2),
-                      half_extents=(.355, .005, .2),
+                      xyz_lengths=(0.71, 0.01, 0.4),
                       collision_type=ouc.CollisionType.AABB,
                       alpha=ouc.ALPHA.TRANSPARENT, is_free=False)
 wall_left.attach_to(base.scene)
 wall_right = ossop.box(name="wall", pos=(.0, -.35, .2),
-                       half_extents=(.355, .005, .2),
+                       xyz_lengths=(0.71, 0.01, 0.4),
                        collision_type=ouc.CollisionType.AABB,
                        alpha=ouc.ALPHA.TRANSPARENT, is_free=False)
 wall_right.attach_to(base.scene)
 wall_front = ossop.box(name="wall", pos=(.35, 0, .2),
-                       half_extents=(.005, .355, .2),
+                       xyz_lengths=(0.01, 0.71, 0.4),
                        collision_type=ouc.CollisionType.AABB,
                        alpha=ouc.ALPHA.TRANSPARENT, is_free=False)
 wall_front.attach_to(base.scene)
 wall_back = ossop.box(name="wall", pos=(-.35, 0, .2),
-                      half_extents=(.005, .355, .2),
+                      xyz_lengths=(0.01, 0.71, 0.4),
                       collision_type=ouc.CollisionType.AABB,
                       alpha=ouc.ALPHA.TRANSPARENT, is_free=False)
 wall_back.attach_to(base.scene)

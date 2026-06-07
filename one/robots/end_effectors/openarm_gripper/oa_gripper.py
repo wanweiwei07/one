@@ -3,7 +3,8 @@ import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
-import one.robots.end_effectors.ee_base as oreb
+import one.robots.base.mech_base as orbmb
+import one.robots.end_effectors.ee_mixins as oreb
 
 
 def prepare_ms():
@@ -16,19 +17,16 @@ def prepare_ms():
     # links
     base_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "hand.stl"),
-        scale=(1e-3, 1e-3, 1e-3),
         loc_rotmat=None, loc_pos=hand_pos,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SILVER)
     lf_lnk = orbms.Link.from_file(
         os.path.join(mesh_dir, "finger.stl"),
-        scale=(1e-3, 1e-3, 1e-3),
         loc_rotmat=None, loc_pos=left_pos,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.STEEL_BLUE)
     rf_lnk = orbms.Link.from_file(
-        os.path.join(mesh_dir, "finger.stl"),
-        scale=(1e-3, -1e-3, 1e-3),
+        os.path.join(mesh_dir, "finger_mirrorY.stl"),
         loc_rotmat=None, loc_pos=right_pos,
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.SALMON_PINK)
@@ -62,15 +60,17 @@ def prepare_ms():
     return structure
 
 
-class OAGripper(oreb.EndEffectorBase, oreb.GripperMixin):
+class OAGripper(orbmb.MechBase, oreb.GripperMixin):
 
     @classmethod
     def _build_structure(cls):
         return prepare_ms()
 
     def __init__(self):
-        super().__init__(
-            loc_tcp_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.1801)))
+        super().__init__()
+        self.add_tcp('grasp_center', self.runtime_root_lnk,
+                     oum.tf_from_pos_rotmat(pos=(0.0, 0.0, 0.1801)))
+        self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
         self.jaw_range = np.array(
             [0.0, 0.088], dtype=np.float32)
         self.set_jaw_width(0.0)
@@ -82,6 +82,7 @@ class OAGripper(oreb.EndEffectorBase, oreb.GripperMixin):
 
     def clone(self):
         new = super().clone()
+        new.contact_pattern = self.contact_pattern.copy()
         new.jaw_range = self.jaw_range.copy()
         new.set_jaw_width(self.qs[0] * 2.0)
         return new
@@ -96,8 +97,9 @@ if __name__ == '__main__':
     oframe.attach_to(base.scene)
     gripper = OAGripper()
     gripper.attach_to(base.scene)
-    tcp_frame = ossop.frame(rotmat=gripper.gl_tcp_tf[:3, :3],
-                            pos=gripper.gl_tcp_tf[:3, 3],
+    _tf = gripper.tcp('grasp_center').tf
+    tcp_frame = ossop.frame(rotmat=_tf[:3, :3],
+                            pos=_tf[:3, 3],
                             color_mat=ouc.CoordColor.MYC)
     tcp_frame.attach_to(base.scene)
     base.run()

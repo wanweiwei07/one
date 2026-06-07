@@ -4,8 +4,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
-import one.robots.manipulators.manipulator_base as ormmb
-import one.robots.base.kinematics.numik_sel as orbkis
+import one.robots.base.kine.numik_sel as orbkis
 
 
 def _inertia_3x3(ixx, ixy, ixz, iyy, iyz, izz):
@@ -108,17 +107,16 @@ def link(prefix, name, idx, mesh_dir, rgb=ouc.ExtendedColor.DEEP_GRAY):
     mass = lnk_mass[idx]
     com = lnk_com[idx]
     inrtmat = lnk_intertia[idx]
-    path = os.path.join(mesh_dir, f"{name}_symp.stl")
+    if prefix == "lft" and idx == 7:
+        path = os.path.join(mesh_dir, f"{name}_symp_mirrorY.stl")
+    else:
+        path = os.path.join(mesh_dir, f"{name}_symp.stl")
     if os.path.isfile(path):
-        scale = (0.001, 0.001, 0.001)
-        if prefix == "lft" and idx == 7:
-            scale = (0.001, -0.001, 0.001)
         lnk = orbms.Link.from_file(
             path,
             loc_pos=loc_pos,
             collision_type=ouc.CollisionType.MESH,
             rgb=rgb,
-            scale=scale,
         )
         lnk.set_inertia(inrtmat=inrtmat, com=com, mass=mass)
         return lnk
@@ -201,14 +199,13 @@ def prepare_bdy_ms():
         os.path.join(mesh_dir, "body_link0_symp.stl"),
         collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.DEEP_GRAY,
-        scale=(0.001, 0.001, 0.001),
     )
     structure.add_lnk(body_lnk)
     structure.compile()
     return structure
 
 
-class OALft(ormmb.ManipulatorBase):
+class OALft(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):
@@ -216,15 +213,17 @@ class OALft(ormmb.ManipulatorBase):
 
     def __init__(self, rotmat=None, pos=None, is_free=True):
         super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
+        c = self.structure.compiled
+        # left/right arms share one SELIK database ('data_la'): identical arm
+        # kinematics in the chain's own frame; only the base mount (root pose)
+        # differs, which is applied at solve time, not baked into the database.
+        data_dir = os.path.join(self.structure.res_dir, "data_la")
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0],
+                       solver=lambda chain: orbkis.SELIKSolver(chain, data_dir))
+        self.add_tcp('flange', self.runtime_lnks[-1])
 
-    def get_solver(self, chain):
-        if chain not in self._solvers:
-            _data_dir = os.path.join(self.structure.res_dir, "data_la")
-            self._solvers[chain] = orbkis.SELIKSolver(chain, _data_dir)
-        return self._solvers[chain]
 
-
-class OARgt(ormmb.ManipulatorBase):
+class OARgt(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):
@@ -232,12 +231,11 @@ class OARgt(ormmb.ManipulatorBase):
 
     def __init__(self, rotmat=None, pos=None, is_free=True):
         super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
-
-    def get_solver(self, chain):
-        if chain not in self._solvers:
-            _data_dir = os.path.join(self.structure.res_dir, "data_la")
-            self._solvers[chain] = orbkis.SELIKSolver(chain, _data_dir)
-        return self._solvers[chain]
+        c = self.structure.compiled
+        data_dir = os.path.join(self.structure.res_dir, "data_la")
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0],
+                       solver=lambda chain: orbkis.SELIKSolver(chain, data_dir))
+        self.add_tcp('flange', self.runtime_lnks[-1])
 
 
 class OABody(orbmb.MechBase):
@@ -259,11 +257,11 @@ class OpenArm:
         self.body = OABody(rotmat=rotmat, pos=pos)
         self.lft_arm = OALft()
         self.rgt_arm = OARgt()
-        self._left_tf = oum.tf_from_rotmat_pos(
-            rotmat=oum.rotmat_from_euler(-1.5708, 0, 0), pos=(0.0, 0.031, 0.698)
+        self._left_tf = oum.tf_from_pos_rotmat(
+            pos=(0.0, 0.031, 0.698), rotmat=oum.rotmat_from_euler(-1.5708, 0, 0)
         )
-        self._right_tf = oum.tf_from_rotmat_pos(
-            rotmat=oum.rotmat_from_euler(1.5708, 0, 0), pos=(0.0, -0.031, 0.698)
+        self._right_tf = oum.tf_from_pos_rotmat(
+            pos=(0.0, -0.031, 0.698), rotmat=oum.rotmat_from_euler(1.5708, 0, 0)
         )
         self.body.mount(self.lft_arm, self.body.runtime_lnks[-1], self._left_tf)
         self.body.mount(self.rgt_arm, self.body.runtime_lnks[-1], self._right_tf)
@@ -288,8 +286,8 @@ class OpenArm:
     def pos(self):
         return self.body.pos
 
-    def set_rotmat_pos(self, rotmat=None, pos=None):
-        self.body.set_rotmat_pos(rotmat=rotmat, pos=pos)
+    def set_pos_rotmat(self, pos=None, rotmat=None):
+        self.body.set_pos_rotmat(pos=pos, rotmat=rotmat)
         self.body._update_mounting(self.body._mountings[self.lft_arm])
         self.body._update_mounting(self.body._mountings[self.rgt_arm])
 

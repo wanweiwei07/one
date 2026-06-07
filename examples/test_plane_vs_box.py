@@ -16,7 +16,7 @@ robot.attach_to(base.scene)
 
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 print("\n--- Test 1: Using PLANE ---")
 ground_plane = ossop.plane(pos=(0, 0, 0))
@@ -36,7 +36,7 @@ print(f"  Collision detected: {result_plane}")
 print("\n--- Test 2: Using BOX (large flat box) ---")
 # Create a large flat box as ground
 ground_box = ossop.box(
-    half_extents=(50, 50, 0.001),  # Very thin box
+    xyz_lengths=(100, 100, 0.002),  # Very thin box
     pos=(0, 0, -0.001),  # Position slightly below z=0
     collision_type=ouc.CollisionType.AABB
 )

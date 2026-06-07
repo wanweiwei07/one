@@ -5,10 +5,11 @@ from one.physics.mj_contact import MjContactForceViz
 
 
 class MJEnv:
-    def __init__(self, scene, margin=0.0, require_ctrl=False):
+    def __init__(self, scene, margin=0.0, require_ctrl=False,
+                 extra_excludes=None):
         self._cvter = MJOneConverter(margin)
         self._world, sobj2bdy, rutl2bdy, mecj2jnt = (
-            self._cvter.convert(scene))
+            self._cvter.convert(scene, extra_excludes=extra_excludes))
         if not require_ctrl:
             self._world.actuators = None
         self.xml_string = self._world.compile_mjcf()

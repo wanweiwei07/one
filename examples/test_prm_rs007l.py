@@ -10,13 +10,13 @@ robot = khi_rs007l.RS007L()
 robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
-box = ossop.box(half_extents=(1, .01, .15), pos=(.0, -0.3, 1),
+box = ossop.box(xyz_lengths=(2, 0.02, 0.3), pos=(.0, -0.3, 1),
                 collision_type=ouc.CollisionType.AABB)
 box.attach_to(base.scene)
-box2 = ossop.box(half_extents=(.15, .01, 1), pos=(-.5, -0.3, 0.5),
+box2 = ossop.box(xyz_lengths=(0.3, 0.02, 2), pos=(-.5, -0.3, 0.5),
                  collision_type=ouc.CollisionType.AABB)
 box2.attach_to(base.scene)
-box3 = ossop.box(half_extents=(.01, 1, .15), pos=(.3, 0.0, 1),
+box3 = ossop.box(xyz_lengths=(0.02, 2, 0.3), pos=(.3, 0.0, 1),
                  collision_type=ouc.CollisionType.AABB)
 box3.attach_to(base.scene)
 

@@ -1,4 +1,5 @@
 import builtins
+import numpy as np
 from one import ouc, oum, ovw, ossop
 import one.robots.end_effectors.openarm_gripper.oa_gripper as oreeogog
 import one.robots.manipulators.openarm.openarm as ormoo
@@ -16,13 +17,13 @@ lft_gripper = oreeogog.OAGripper()
 rgt_gripper = oreeogog.OAGripper()
 lft_gripper.attach_to(base.scene)
 rgt_gripper.attach_to(base.scene)
-robot.rgt_arm.engage(rgt_gripper)
-robot.lft_arm.engage(lft_gripper)
-lft_tcp_tf = robot.lft_arm.gl_tcp_tf
+robot.rgt_arm.mount(rgt_gripper, robot.rgt_arm.runtime_lnks[-1], update=True)
+robot.lft_arm.mount(lft_gripper, robot.lft_arm.runtime_lnks[-1], update=True)
+lft_tcp_tf = robot.lft_arm.tcp('flange').tf
 lft_tcp_frame = ossop.frame(rotmat=lft_tcp_tf[:3, :3], pos=lft_tcp_tf[:3, 3],
                             color_mat=ouc.CoordColor.MYC)
 lft_tcp_frame.attach_to(base.scene)
-rgt_tcp_tf = robot.rgt_arm.gl_tcp_tf
+rgt_tcp_tf = robot.rgt_arm.tcp('flange').tf
 rgt_tcp_frame = ossop.frame(rotmat=rgt_tcp_tf[:3, :3], pos=rgt_tcp_tf[:3, 3],
                             color_mat=ouc.CoordColor.MYC)
 rgt_tcp_frame.attach_to(base.scene)
@@ -40,8 +41,11 @@ prev_qs = robot.lft_arm.qs.copy()
 for y in range(1, 5):
     for z in range(1, 5):
         tgt_pos = (0.2, y * 0.1, z * 0.1)
-        qs = robot.lft_arm.ik_tcp_nearest(
-            tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat, ref_qs=prev_qs)
+        _s = robot.lft_arm.ik(
+            tgt_pos, tgt_rotmat, max_solutions=1,
+            ref_qs=robot.lft_arm.chain('main').extract_active_qs(
+                np.asarray(prev_qs, dtype=np.float32)))
+        qs = _s[0] if _s else None
         if qs is not None:
             prev_qs = qs
             tmp_lft_arm = robot.lft_arm.clone()

@@ -29,7 +29,7 @@ class MJOneConverter:
         # mounted children
         self._mounted_children = set()
 
-    def convert(self, scene):
+    def convert(self, scene, extra_excludes=None):
         self._mesh_assets.clear()
         self._actuators.clear()
         self._sobj2bdy.clear()
@@ -72,6 +72,13 @@ class MJOneConverter:
                 body_a = self._rutl2bdy[rta]
                 body_b = self._rutl2bdy[rtb]
                 world.contact_excludes.append((body_a, body_b))
+        # extra scene-level excludes (e.g. an auto-ACM of resting collisions),
+        # given as semantic ((mecba_a, lidx_a), (mecba_b, lidx_b)) pairs so they
+        # survive a rebuild and can cross mecba boundaries (mounted EE vs arm).
+        for (ma, la), (mb, lb) in (extra_excludes or []):
+            body_a = self._rutl2bdy[ma.runtime_lnks[la]]
+            body_b = self._rutl2bdy[mb.runtime_lnks[lb]]
+            world.contact_excludes.append((body_a, body_b))
         return world, self._sobj2bdy, self._rutl2bdy, self._mecj2jnt
 
     @property
@@ -211,14 +218,14 @@ class MJOneConverter:
     def _attach_mountings(self, mecba):
         for m in mecba._mountings.values():
             child = m.child
-            engage_tf = m.engage_tf
+            loc_tf = m.loc_tf
             # child subtree
             if isinstance(child, orbmb.MechBase):  # MechBase
                 child_root = self._cvt_robot(child)
             else:  # SceneObject
                 child_root = self._cvt_sobj(child)
                 self._sobj2bdy[child] = child_root
-            child_root.pos, child_root.quat = oum.pos_quat_from_tf(engage_tf)
+            child_root.pos, child_root.quat = oum.pos_quat_from_tf(loc_tf)
             # find parent link body
             plnk_bdy = self._rutl2bdy[m.plnk]
             child_root.parent = plnk_bdy

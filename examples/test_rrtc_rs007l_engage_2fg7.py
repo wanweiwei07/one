@@ -8,20 +8,20 @@ builtins.base = base
 oframe = ossop.frame()
 oframe.attach_to(base.scene)
 robot = khi_rs007l.RS007L()
-robot.set_rotmat_pos(pos=(0, 0, 0.01))
+robot.set_pos_rotmat(pos=(0, 0, 0.01))
 gripper = or_2fg7.OR2FG7()
 # gripper.open()
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 robot.attach_to(base.scene)
 builtins.robot = robot
 
-box = ossop.box(half_extents=(1, .01, .15), pos=(.0, -0.3, .7),
+box = ossop.box(xyz_lengths=(2, 0.02, 0.3), pos=(.0, -0.3, .7),
                 collision_type=ouc.CollisionType.AABB)
 box.attach_to(base.scene)
-box2 = ossop.box(half_extents=(.15, .01, 1), pos=(-.5, -0.3, 0.3),
+box2 = ossop.box(xyz_lengths=(0.3, 0.02, 2), pos=(-.5, -0.3, 0.3),
                  collision_type=ouc.CollisionType.AABB)
 box2.attach_to(base.scene)
-box3 = ossop.box(half_extents=(.01, 1, .15), pos=(.3, 0.0, 1),
+box3 = ossop.box(xyz_lengths=(0.02, 2, 0.3), pos=(.3, 0.0, 1),
                  collision_type=ouc.CollisionType.AABB)
 box3.attach_to(base.scene)
 box4 = box2.clone()

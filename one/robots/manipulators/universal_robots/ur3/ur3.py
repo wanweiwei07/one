@@ -5,7 +5,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.kine.anaik as orbka
 import one.robots.base.mech_structure as orbms
-import one.robots.manipulators.manipulator_base as ormmb
+import one.robots.base.mech_base as orbmb
 
 
 def prepare_mechstruct():
@@ -174,7 +174,7 @@ def prepare_mechstruct():
     return structure
 
 
-class UR3(ormmb.ManipulatorBase):
+class UR3(orbmb.MechBase):
 
     @classmethod
     def _build_structure(cls):
@@ -182,15 +182,13 @@ class UR3(ormmb.ManipulatorBase):
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(
-            rotmat=rotmat, pos=pos, home_qs=[0, -np.pi / 2, np.pi / 2, 0, 0, 0]
+            rotmat=rotmat, pos=pos, is_free=False,
+            home_qs=[0, -np.pi / 2, np.pi / 2, 0, 0, 0]
         )
-
-    def get_solver(self, chain):
-        # overwrite to use analytical IK solver
-        if chain not in self._solvers:
-            joint_limits = (chain.lmt_lo, chain.lmt_up)
-            self._solvers[chain] = orbka.P234X56(chain, joint_limits)
-        return self._solvers[chain]
+        c = self.structure.compiled
+        self.add_chain('main', c.root_lnk, c.tip_lnks[0],
+                       solver=orbka.P234X56)
+        self.add_tcp('flange', self.runtime_lnks[-1])
 
 
 if __name__ == "__main__":
@@ -209,8 +207,8 @@ if __name__ == "__main__":
     # robot.alpha=0.3
     builtins.robot = robot
     ossop.frame(
-        pos=robot.gl_tcp_tf[:3, 3],
-        rotmat=robot.gl_tcp_tf[:3, :3],
+        pos=robot.tcp('flange').tf[:3, 3],
+        rotmat=robot.tcp('flange').tf[:3, :3],
         color_mat=ouc.CoordColor.MYC,
     ).attach_to(scene)
 
@@ -220,8 +218,7 @@ if __name__ == "__main__":
     ) @ oum.rotmat_from_axangle(ouc.StandardAxis.Y, np.pi)
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(scene)
 
-    all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat,
-                          tgt_pos=tgt_pos, max_solutions=8)
+    all_qs = robot.ik(tgt_pos, tgt_rotmat, max_solutions=8)
     for qs in all_qs:
         tmp_robot = robot.clone()
         tmp_robot.fk(qs=qs)

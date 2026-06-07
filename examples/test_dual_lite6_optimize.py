@@ -59,10 +59,16 @@ def score_config(robot_l, robot_r, mjc, tcp_z_above=0.03):
         for iy, y in enumerate(TABLE_Y):
             tgt_pos = np.array([x, y, TABLE_Z + tcp_z_above],
                                dtype=np.float32)
-            ql = robot_l.ik_tcp_nearest(TCP_ROTMAT_DOWN, tgt_pos,
-                                        ref_qs=np.zeros(6))
-            qr = robot_r.ik_tcp_nearest(TCP_ROTMAT_DOWN, tgt_pos,
-                                        ref_qs=np.zeros(6))
+            _sl = robot_l.ik(tgt_pos, TCP_ROTMAT_DOWN,
+                             max_solutions=1,
+                             ref_qs=robot_l.chain('main').extract_active_qs(
+                                 np.asarray(np.zeros(6), dtype=np.float32)))
+            ql = _sl[0] if _sl else None
+            _sr = robot_r.ik(tgt_pos, TCP_ROTMAT_DOWN,
+                             max_solutions=1,
+                             ref_qs=robot_r.chain('main').extract_active_qs(
+                                 np.asarray(np.zeros(6), dtype=np.float32)))
+            qr = _sr[0] if _sr else None
             if ql is None or qr is None:
                 continue
             # self-collision per arm
@@ -169,8 +175,14 @@ def visualize(best):
 
     # pose both arms at a center reach for visual
     ctr = np.array([0.3, 0.0, TABLE_Z + 0.15], dtype=np.float32)
-    ql = left.ik_tcp_nearest(TCP_ROTMAT_DOWN, ctr, ref_qs=np.zeros(6))
-    qr = right.ik_tcp_nearest(TCP_ROTMAT_DOWN, ctr, ref_qs=np.zeros(6))
+    _sl = left.ik(ctr, TCP_ROTMAT_DOWN, max_solutions=1,
+                  ref_qs=left.chain('main').extract_active_qs(
+                      np.asarray(np.zeros(6), dtype=np.float32)))
+    ql = _sl[0] if _sl else None
+    _sr = right.ik(ctr, TCP_ROTMAT_DOWN, max_solutions=1,
+                   ref_qs=right.chain('main').extract_active_qs(
+                       np.asarray(np.zeros(6), dtype=np.float32)))
+    qr = _sr[0] if _sr else None
     if ql is not None:
         left.fk(qs=ql)
     if qr is not None:

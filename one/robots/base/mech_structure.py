@@ -56,16 +56,16 @@ class Joint:
     @property
     @oud.readonly_view
     def zero_tf(self):
-        return oum.tf_from_rotmat_pos(self.rotmat, self.pos)
+        return oum.tf_from_pos_rotmat(self.pos, self.rotmat)
 
     def motion_tf(self, q):
         if self.jtype == ouc.JntType.FIXED:
             return np.eye(4, dtype=np.float32)
         if self.jtype == ouc.JntType.REVOLUTE:
-            return oum.tf_from_rotmat_pos(
+            return oum.tf_from_pos_rotmat(
                 rotmat=oum.rotmat_from_axangle(self.ax, q))
         if self.jtype == ouc.JntType.PRISMATIC:
-            return oum.tf_from_rotmat_pos(pos=self.ax * q)
+            return oum.tf_from_pos_rotmat(pos=self.ax * q)
         raise TypeError(f"Unknown joint type: {self.jtype}")
 
 

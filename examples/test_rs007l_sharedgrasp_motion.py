@@ -21,7 +21,7 @@ robot.attach_to(base.scene)
 
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 # load bunny1
 bunny = osso.SceneObject.from_file(
@@ -84,7 +84,7 @@ print(f"Selected stable pose for bunny1: seg={seg_id}, ratio={ratio:.6f}")
 pos += np.array([-0.5, 0.0, 0.0], dtype=np.float32)
 bunny.pos = pos
 bunny.rotmat = rotmat
-tf_bunny = oum.tf_from_rotmat_pos(rotmat, pos)
+tf_bunny = oum.tf_from_pos_rotmat(pos, rotmat)
 
 # place bunny2 with random offset
 pos2, rotmat2, seg_id2, ratio2, _ = stable_poses[0]
@@ -93,7 +93,7 @@ pos2 += np.array([0.3, 0.3, 0.0], dtype=np.float32)
 rotmat2 = oum.rotmat_from_euler(0, 0, np.deg2rad(45.0)) @ rotmat2
 bunny2.pos = pos2
 bunny2.rotmat = rotmat2
-tf_bunny2 = oum.tf_from_rotmat_pos(rotmat2, pos2)
+tf_bunny2 = oum.tf_from_pos_rotmat(pos2, rotmat2)
 
 # dump all pre-grasp candidates for standalone IK diagnosis
 pre_pose_pos_list = []
@@ -124,7 +124,8 @@ for pose, pre_pose, jaw_width, score in grasps:
     gl_pre_pose = tf_bunny @ pre_pose
     pre_tgt_rotmat = gl_pre_pose[:3, :3]
     pre_tgt_pos = gl_pre_pose[:3, 3]
-    qs = robot.ik_tcp_nearest(tgt_rotmat=pre_tgt_rotmat, tgt_pos=pre_tgt_pos)
+    _s = robot.ik(pre_tgt_pos, pre_tgt_rotmat, tcp=gripper.tcp('grasp_center'), max_solutions=1)
+    qs = _s[0] if _s else None
     if qs is None:
         continue
     mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
@@ -222,8 +223,8 @@ def move_bunny_once():
     if moved:
         bunny.pos = pos
         bunny2.pos = pos2
-        tf_bunny[:] = oum.tf_from_rotmat_pos(bunny.rotmat, bunny.pos)
-        tf_bunny2[:] = oum.tf_from_rotmat_pos(bunny2.rotmat, bunny2.pos)
+        tf_bunny[:] = oum.tf_from_pos_rotmat(bunny.pos, bunny.rotmat)
+        tf_bunny2[:] = oum.tf_from_pos_rotmat(bunny2.pos, bunny2.rotmat)
         need_replan = True
 
 
@@ -255,7 +256,7 @@ def tick(dt):
             pre_pose_world1 = tf_bunny @ pre_pose
             pre_rot1 = pre_pose_world1[:3, :3]
             pre_pos1 = pre_pose_world1[:3, 3]
-            qs_list1 = robot.ik_tcp(tgt_rotmat=pre_rot1, tgt_pos=pre_pos1)
+            qs_list1 = robot.ik(pre_pos1, pre_rot1, tcp=gripper.tcp('grasp_center'))
             if qs_list1:
                 qs1 = qs_list1[0]
                 pln_ctx.set_aux_mecbas(gripper, qs=(
@@ -266,7 +267,7 @@ def tick(dt):
             pre_pose_world2 = tf_bunny2 @ pre_pose
             pre_rot2 = pre_pose_world2[:3, :3]
             pre_pos2 = pre_pose_world2[:3, 3]
-            qs_list2 = robot.ik_tcp(tgt_rotmat=pre_rot2, tgt_pos=pre_pos2)
+            qs_list2 = robot.ik(pre_pos2, pre_rot2, tcp=gripper.tcp('grasp_center'))
             if qs_list2:
                 qs2 = qs_list2[0]
                 pln_ctx.set_aux_mecbas(gripper, qs=(

@@ -30,7 +30,7 @@ for name, wrist_angles in test_cases:
     
     # Get R0_3 and R0_6
     rotmat0_3 = solver.get_rotmat_from_fk([0, 0, 0], k=3)
-    rotmat0_6 = robot.gl_tcp_tf[:3, :3]
+    rotmat0_6 = robot.tcp('flange').tf[:3, :3]
     
     # Compute R3_6
     rotmat3_6 = rotmat0_3.T @ rotmat0_6

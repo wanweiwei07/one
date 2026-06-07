@@ -24,7 +24,7 @@ for name, qs_input in test_configs:
     
     # FK to get target pose
     robot.fk(qs=qs_input)
-    target_tcp_tf = robot.gl_tcp_tf.copy()
+    target_tcp_tf = robot.tcp('flange').tf.copy()
     target_pos = target_tcp_tf[:3, 3]
     target_rot = target_tcp_tf[:3, :3]
     
@@ -38,7 +38,7 @@ for name, qs_input in test_configs:
             # Check each solution
             for i, sol in enumerate(solutions):
                 robot.fk(qs=sol)
-                fk_tcp_tf = robot.gl_tcp_tf
+                fk_tcp_tf = robot.tcp('flange').tf
                 fk_pos = fk_tcp_tf[:3, 3]
                 fk_rot = fk_tcp_tf[:3, :3]
                 

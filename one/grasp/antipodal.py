@@ -1,54 +1,14 @@
+"""Antipodal grasp planning: 2-point opposing pinch (force-closure) grasps
+for a parallel-jaw gripper. ``antipodal``/``antipodal_iter`` sample the
+target surface for antipodal contact pairs, align the jaw, and reject
+gripper-vs-target collisions. See also polypodal (N-point) and monocontact
+(single-contact / suction)."""
 import numpy as np
 import one.utils.math as oum
 import one.utils.constant as ouc
 import one.scene.geometry_ops as osgop
 import one.collider.cpu_simd as occs
-import one.collider.gpu_simd_batch as ocgcb
-
-
-def _triangle_areas(verts, faces):
-    v0 = verts[faces[:, 0]]
-    v1 = verts[faces[:, 1]]
-    v2 = verts[faces[:, 2]]
-    return 0.5 * np.linalg.norm(np.cross(v1 - v0, v2 - v0), axis=1)
-
-
-def _sample_count_from_area(verts, faces, density):
-    areas = _triangle_areas(verts, faces)
-    area_total = float(np.sum(areas))
-    n = int(np.ceil(area_total / (density * density)))
-    return max(n, 1)
-
-
-def _ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=1e-6):
-    """Moller-Trumbore ray-triangle intersection (batch version)."""
-    o = origins[:, None, :]
-    d = directions[:, None, :]
-    v0 = v0[None, :, :]
-    v1 = v1[None, :, :]
-    v2 = v2[None, :, :]
-    e1 = v1 - v0
-    e2 = v2 - v0
-    h = np.cross(d, e2)
-    a = np.sum(e1 * h, axis=2)
-    mask = np.abs(a) > eps
-    f = np.zeros_like(a)
-    f[mask] = 1.0 / a[mask]
-    s = o - v0
-    u = f * np.sum(s * h, axis=2)
-    mask &= (u >= 0.0) & (u <= 1.0)
-    q = np.cross(s, e1)
-    v = f * np.sum(d * q, axis=2)
-    mask &= (v >= 0.0) & (u + v <= 1.0)
-    t = f * np.sum(e2 * q, axis=2)
-    mask &= (t > eps)
-    t_masked = np.where(mask, t, -np.inf)
-    hit_t = np.max(t_masked, axis=1)
-    hit_id = np.argmax(t_masked, axis=1)
-    no_hit = np.isneginf(hit_t)
-    hit_t = np.where(no_hit, -1.0, hit_t)
-    hit_id = np.where(no_hit, -1, hit_id)
-    return hit_t, hit_id
+import one.grasp._common as ogc
 
 
 def build_grasp_rotmat_batch(ray_dirs, open_dir):
@@ -76,47 +36,20 @@ def build_grasp_rotmat_batch(ray_dirs, open_dir):
     return rot_base @ offset
 
 
-def _rotmat_about_axis_batch_vec(axes, angles):
-    """
-    axes: (N,3) unit vectors
-    angles: (K,)
-    returns: (N,K,3,3)
-    """
-    axes = axes / (np.linalg.norm(axes, axis=1, keepdims=True) + oum.eps)
-    ax = axes[:, None, :]  # (N,1,3)
-    x = ax[..., 0]
-    y = ax[..., 1]
-    z = ax[..., 2]
-    c = np.cos(angles)[None, :]  # (1,K)
-    s = np.sin(angles)[None, :]
-    C = 1.0 - c
-    rot = np.zeros((axes.shape[0], angles.shape[0], 3, 3), dtype=np.float32)
-    rot[:, :, 0, 0] = c + x * x * C
-    rot[:, :, 0, 1] = x * y * C - z * s
-    rot[:, :, 0, 2] = x * z * C + y * s
-    rot[:, :, 1, 0] = y * x * C + z * s
-    rot[:, :, 1, 1] = c + y * y * C
-    rot[:, :, 1, 2] = y * z * C - x * s
-    rot[:, :, 2, 0] = z * x * C - y * s
-    rot[:, :, 2, 1] = z * y * C + x * s
-    rot[:, :, 2, 2] = c + z * z * C
-    return rot
-
-
 def _antipodal_candidates(
         tgt_vs, tgt_fs, tgt_fns,
         density, normal_tol_deg,
         roll_step_deg, clearance):
     normal_cos_th = np.cos(np.deg2rad(normal_tol_deg))
     roll_step = np.deg2rad(roll_step_deg)
-    n_samples = _sample_count_from_area(tgt_vs, tgt_fs, density)
+    n_samples = osgop.sample_count_from_area(tgt_vs, tgt_fs, density)
     pts, nrms, _ = osgop.sample_surface(tgt_vs, tgt_fs, n_samples)
     v0 = tgt_vs[tgt_fs[:, 0]]
     v1 = tgt_vs[tgt_fs[:, 1]]
     v2 = tgt_vs[tgt_fs[:, 2]]
     origins = pts
     directions = -nrms
-    hit_t, hit_id = _ray_triangles_batch_far(
+    hit_t, hit_id = osgop.ray_triangles_batch_far(
         origins, directions, v0, v1, v2, eps=float(oum.eps))
     valid = hit_id >= 0
     if not np.any(valid):
@@ -211,7 +144,7 @@ def antipodal_iter(gripper, tgt_sobj,
     rot_base = build_grasp_rotmat_batch(ray_dirs, open_dir)
     angles = np.arange(0.0, 2 * np.pi, roll_step)
     roll_axes = np.einsum('nij,j->ni', rot_base, open_dir)
-    roll_rots = _rotmat_about_axis_batch_vec(roll_axes, angles)
+    roll_rots = oum.rotmat_from_axangle(roll_axes[:, None, :], angles[None, :])
     rot_all = roll_rots @ rot_base[:, None, :, :]
     pose_tf = np.tile(np.eye(4, dtype=np.float32),
                       (rot_all.shape[0], rot_all.shape[1], 1, 1))
@@ -230,19 +163,9 @@ def antipodal_iter(gripper, tgt_sobj,
     jaw_all = jaw_all[order]
     score_all = score_all[order]
     # prepare collision batch
-    items = gripper.runtime_lnks + [tgt_sobj]
-    tgt_idx = len(items) - 1
-    pairs = [(i, tgt_idx) for i in range(len(gripper.runtime_lnks))]
-    try:
-        detlib = ocgcb
-        detector = detlib.create_detector()
-        batch = detlib.build_batch(items, pairs)
-    except Exception:
-        detlib = occs
-        detector = detlib.create_detector()
-        batch = detlib.build_batch(items, pairs)
+    detector, batch = ogc.build_ee_target_detector(gripper, tgt_sobj)
     # retreat distance
-    tcp_len = np.linalg.norm(gripper.loc_tcp_tf[:3, 3])
+    tcp_len = np.linalg.norm(gripper.tcp('grasp_center').loc_tf[:3, 3])
     retreat_dist = 0.5 * tcp_len
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
         collided = False

@@ -23,20 +23,28 @@ if __name__ == '__main__':
 
     screwdriver = oreorsd.ORSD()
     screwdriver.attach_to(scene)
-    robot.engage(screwdriver, engage_tf=oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.05)))
+    robot.mount(screwdriver, robot.runtime_lnks[-1],
+                oum.tf_from_pos_rotmat(pos=(0.0, 0.0, 0.05)), update=True)
 
     # find a reachable start tcp first (for ORSD this is stricter than 2FG7)
     start_rotmat = oum.rotmat_from_euler(oum.pi, 0.0, oum.pi)
     start_pos = np.array([0.45, -0.35, 0.15], dtype=np.float32)
-    q_start = robot.ik_tcp_nearest(tgt_rotmat=start_rotmat, tgt_pos=start_pos)
+    # bias the start config toward joint mid-range: a start near a joint limit
+    # (e.g. j4 at its edge) forces a ~2pi unwind mid-trajectory (visible flip).
+    mid_qs = ((robot.chain('main').lmt_lo + robot.chain('main').lmt_up)
+              * 0.5).astype(np.float32)
+    _s = robot.ik(start_pos, start_rotmat, tcp=screwdriver.tcp('tip'),
+                  max_solutions=1, ref_qs=mid_qs)
+    q_start = _s[0] if _s else None
     if q_start is None:
         print('Cannot find a reachable ORSD start pose.')
         base.run()
         raise SystemExit
 
     robot.fk(qs=q_start)
-    start_rotmat = robot.gl_tcp_tf[:3, :3].copy()
-    start_pos = robot.gl_tcp_tf[:3, 3].copy()
+    orsd_tcp = screwdriver.tcp('tip')
+    start_rotmat = orsd_tcp.tf[:3, :3].copy()
+    start_pos = orsd_tcp.tf[:3, 3].copy()
     goal_pos = start_pos + np.array([0.5, 0.5, 0.2], dtype=np.float32)
     goal_rotmat = start_rotmat.copy()
 
@@ -52,6 +60,7 @@ if __name__ == '__main__':
         pos_step=0.01,
         rot_step=np.deg2rad(2.0),
         ref_qs=q_start,
+        tcp=orsd_tcp,
     )
     if q_seq is None:
         print('cartesian_to_jtraj failed (IK failed on at least one sample).')

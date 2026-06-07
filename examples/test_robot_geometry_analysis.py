@@ -14,7 +14,7 @@ robot.attach_to(base.scene)
 
 gripper = or_2fg7.OR2FG7()
 gripper.attach_to(base.scene)
-robot.engage(gripper)
+robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 # Check robot's actual geometry bounds
 print(f"\nRobot position: {robot.pos}")
@@ -35,7 +35,7 @@ for i, lnk in enumerate(robot.runtime_lnks):
 
 # Create ground at different heights
 ground = ossop.box(
-    half_extents=(50, 50, 0.05),
+    xyz_lengths=(100, 100, 0.1),
     pos=(0, 0, -0.05),
     collision_type=ouc.CollisionType.AABB
 )

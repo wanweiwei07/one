@@ -19,8 +19,8 @@ lft_gripper.attach_to(base.scene)
 rgt_gripper = oreeogog.OAGripper()
 rgt_gripper.attach_to(base.scene)
 
-robot.rgt_arm.engage(rgt_gripper)
-robot.lft_arm.engage(lft_gripper)
+robot.rgt_arm.mount(rgt_gripper, robot.rgt_arm.runtime_lnks[-1], update=True)
+robot.lft_arm.mount(lft_gripper, robot.lft_arm.runtime_lnks[-1], update=True)
 robot.body.alpha = 0.3
 
 tgt_pos = (0.4, 0.2, 0.4)
@@ -38,8 +38,8 @@ for i in range(num_points):
     tgt_pos_list.append((x, y, z))
     ossop.frame(pos=(x, y, z), rotmat=tgt_rotmat).attach_to(base.scene)
 
-qs_list = robot.lft_arm.ik_tcp(tgt_pos=tgt_pos, tgt_rotmat=tgt_rotmat)
-tcp_tf = robot.lft_arm.gl_tcp_tf
+qs_list = robot.lft_arm.ik(tgt_pos, tgt_rotmat, tcp=lft_gripper.tcp('grasp_center'))
+tcp_tf = robot.lft_arm.tcp('flange').tf
 tcp_frame = ossop.frame(rotmat=tcp_tf[:3, :3], pos=tcp_tf[:3, 3],
                         color_mat=ouc.CoordColor.MYC)
 tcp_frame.attach_to(base.scene)

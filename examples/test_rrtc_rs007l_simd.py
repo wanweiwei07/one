@@ -23,17 +23,17 @@ robot.attach_to(scene)
 
 # Create obstacles (use MESH for SIMD collision)
 box = ossop.box(
-    half_extents=(1, 0.01, 0.15),
+    xyz_lengths=(2, 0.02, 0.3),
     pos=(0.0, -0.3, 1),
     collision_type=ouc.CollisionType.MESH)
 box.attach_to(scene)
 box2 = ossop.box(
-    half_extents=(.15, .01, 1),
+    xyz_lengths=(0.3, 0.02, 2),
     pos=(-.5, -0.3, 0.5),
     collision_type=ouc.CollisionType.MESH)
 box2.attach_to(scene)
 box3 = ossop.box(
-    half_extents=(.01, 1, .15),
+    xyz_lengths=(0.02, 2, 0.3),
     pos=(.3, 0.0, 1),
     collision_type=ouc.CollisionType.MESH)
 box3.attach_to(scene)

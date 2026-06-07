@@ -1,3 +1,8 @@
+"""CPU triangle-mesh collision detection (numpy/SIMD). create_detector +
+build_batch build a reusable batch; CPUDetector.detect_collision[_batch]
+runs it. Helpers: cols_to_vffns/vfs/tris, compute_aabb, point_in_tri_batch.
+
+Prefer this (or the GPU backend gpu_simd_batch) over fcl / trimesh.collision."""
 import numpy as np
 import one.collider.collision_batch as occb
 
@@ -102,6 +107,18 @@ class CPUDetector():
         """
         normals_a, offsets_a = compute_triangle_planes(tris_a)
         normals_b, offsets_b = compute_triangle_planes(tris_b)
+        # NORMALIZE the plane normals. compute_triangle_planes returns the raw
+        # cross product (magnitude = 2*area), so for small triangles |n| is tiny
+        # -- then |nA x nB| (= |nA||nB|sin th) underflows the coplanarity eps and
+        # genuinely-crossing small triangles get mis-rejected as coplanar, and
+        # the point-to-plane distances are scale-dependent. Unit normals make eps
+        # a true distance / a true sin(angle).
+        na_norm = np.linalg.norm(normals_a, axis=1, keepdims=True) + self.eps
+        nb_norm = np.linalg.norm(normals_b, axis=1, keepdims=True) + self.eps
+        normals_a = normals_a / na_norm
+        normals_b = normals_b / nb_norm
+        offsets_a = offsets_a / na_norm[:, 0]
+        offsets_b = offsets_b / nb_norm[:, 0]
         dist_to_plane_a = (np.einsum("nij,nj->ni", tris_b, normals_a) +
                            offsets_a[:, None])
         dist_to_plane_b = (np.einsum("nij,nj->ni", tris_a, normals_b) +
@@ -148,19 +165,46 @@ class CPUDetector():
         p0 = np.cross((dB[:, None] * nA - dA[:, None] * nB),
                       dir_vec) / (dir_norm[:, None] ** 2 + self.eps)
         dir_vec = dir_vec / (dir_norm[:, None] + self.eps)
-        proj_a = np.einsum("nij,nj->ni", tris_a, dir_vec)
-        proj_b = np.einsum("nij,nj->ni", tris_b, dir_vec)
-        t0 = np.maximum(proj_a.min(axis=1), proj_b.min(axis=1))
-        t1 = np.minimum(proj_a.max(axis=1), proj_b.max(axis=1))
-        valid &= (t0 < t1)
-        points = p0 + dir_vec * ((t0 + t1) * 0.5)[:, None]
-        inside_a = point_in_tri_batch(points, tris_a)
-        inside_b = point_in_tri_batch(points, tris_b)
-        valid &= inside_a & inside_b
+        # Correct Moller intervals: each triangle meets the planes' intersection
+        # line L only along the CHORD between where its two crossing edges pierce
+        # the other plane -- not the span of its vertex projections. Find those
+        # crossings from the per-vertex signed distances to the other plane and
+        # parameterise them along dir_vec; the triangles intersect iff their
+        # chords overlap on L.
+        dist_a = np.einsum("nj,nkj->nk", nB, tris_a) + dB[:, None]
+        dist_b = np.einsum("nj,nkj->nk", nA, tris_b) + dA[:, None]
+        proj_a = np.einsum("nj,nkj->nk", dir_vec, tris_a)
+        proj_b = np.einsum("nj,nkj->nk", dir_vec, tris_b)
+
+        def _chord(dist, proj):
+            lo = np.full(dist.shape[0], np.inf, dtype=dist.dtype)
+            hi = np.full(dist.shape[0], -np.inf, dtype=dist.dtype)
+            cnt = np.zeros(dist.shape[0], dtype=np.int64)
+            for i, j in ((0, 1), (1, 2), (2, 0)):
+                di, dj = dist[:, i], dist[:, j]
+                denom = di - dj
+                crosses = (di * dj <= 0.0) & (np.abs(denom) > self.eps)
+                w = di / np.where(crosses, denom, 1.0)   # in [0,1] when crossing
+                t = proj[:, i] + (proj[:, j] - proj[:, i]) * w
+                lo = np.where(crosses, np.minimum(lo, t), lo)
+                hi = np.where(crosses, np.maximum(hi, t), hi)
+                cnt += crosses
+            return lo, hi, cnt >= 2
+
+        a0, a1, va = _chord(dist_a, proj_a)
+        b0, b1, vb = _chord(dist_b, proj_b)
+        valid &= va & vb
+        ov0 = np.maximum(a0, b0)
+        ov1 = np.minimum(a1, b1)
+        valid &= ov0 < ov1
+        # invalid rows carry +-inf chord bounds; keep their arithmetic finite
+        # (they are dropped by the mask below) to avoid inf-inf NaN warnings.
+        mid = 0.5 * (np.where(np.isfinite(ov0), ov0, 0.0) +
+                     np.where(np.isfinite(ov1), ov1, 0.0))
+        points = p0 + dir_vec * mid[:, None]
         if np.any(valid):
             return points[valid]
-        else:
-            return None
+        return None
 
 
 def create_detector(eps=1e-9, max_points=200):

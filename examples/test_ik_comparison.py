@@ -31,7 +31,7 @@ def test_target(robot, target_wrist, target_orientation_euler=(np.pi, 0, 0)):
     
     # Get analytical IK solution
     print("\n--- Analytical IK ---")
-    qs_list = robot.ik_tcp(tgt_pos=target_tcp, tgt_rotmat=tgt_rotmat)
+    qs_list = robot.ik(target_tcp, tgt_rotmat)
     
     if qs_list:
         print(f"Found {len(qs_list)} solution(s)")
@@ -42,7 +42,7 @@ def test_target(robot, target_wrist, target_orientation_euler=(np.pi, 0, 0)):
             
             # Verify with FK
             robot.fk(qs)
-            actual_tcp = robot.gl_tcp_tf[:3, 3]
+            actual_tcp = robot.tcp('flange').tf[:3, 3]
             actual_wrist = robot.gl_lnk_tfarr[4][:3, 3]  # Link 4 is wrist center
             
             tcp_error = np.linalg.norm(actual_tcp - target_tcp)
@@ -69,7 +69,7 @@ def test_target(robot, target_wrist, target_orientation_euler=(np.pi, 0, 0)):
         print(f"  q4={np.degrees(qs_numerical[3]):7.2f}°, q5={np.degrees(qs_numerical[4]):7.2f}°, q6={np.degrees(qs_numerical[5]):7.2f}°")
         
         robot.fk(qs_numerical)
-        actual_tcp = robot.gl_tcp_tf[:3, 3]
+        actual_tcp = robot.tcp('flange').tf[:3, 3]
         actual_wrist = robot.gl_lnk_tfarr[4][:3, 3]
         
         tcp_error = np.linalg.norm(actual_tcp - target_tcp)

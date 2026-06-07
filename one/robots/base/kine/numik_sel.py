@@ -64,8 +64,8 @@ class SELIKSolver(orbkin.NumIKSolver):
            ref_qs=None, max_iter=12, **kwargs):
         if self._tree is None:
             raise RuntimeError("CVT database not loaded.")
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         seeds = self.query_seeds(
             np.linalg.inv(root_tf) @ tgt_tf, k=self._k)
         if ref_qs is not None:
@@ -95,6 +95,60 @@ class SELIKSolver(orbkin.NumIKSolver):
             if len(sols) >= max_solutions:
                 break
         return sols
+
+    def ik_partial(self, root_rotmat, root_pos, tgt_pos=None,
+                   axis_constraints=None, loc_tf=None,
+                   tgt_rotmat_hint=None, max_solutions=8,
+                   ref_qs=None, max_iter=12, seed_count=None,
+                   return_infos=False, **kwargs):
+        if self._tree is None:
+            raise RuntimeError("CVT database not loaded.")
+        loc_tf = oum.ensure_tf(loc_tf)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
+        if tgt_pos is None:
+            if ref_qs is None:
+                ref_qs = (self._chain.lmt_lo + self._chain.lmt_up) * 0.5
+            cur_tip_tf = self.fk(np.asarray(ref_qs, dtype=np.float32), root_tf)
+            tgt_pos = (cur_tip_tf @ loc_tf)[:3, 3]
+        if tgt_rotmat_hint is None:
+            tgt_rotmat_hint = oum.rotmat_from_axis_constraints(
+                axis_constraints)
+        tgt_frame_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat_hint)
+        tgt_tip_tf = tgt_frame_tf @ oum.tf_inverse(loc_tf)
+        if seed_count is None:
+            seed_count = self._k
+        seeds = self.query_seeds(
+            np.linalg.inv(root_tf) @ tgt_tip_tf, k=max(1, int(seed_count)))
+        if ref_qs is not None:
+            prefer_qs = np.asarray(ref_qs, dtype=np.float32)
+            if prefer_qs.shape[0] != self._chain.n_active_jnts:
+                raise ValueError(
+                    f"prefer_qs must have {self._chain.n_active_jnts} elements "
+                    f"(active joints), got {prefer_qs.shape[0]}")
+            distances = np.linalg.norm(
+                seeds - prefer_qs[np.newaxis, :], axis=1)
+            seeds = seeds[np.argsort(distances)]
+        sols = []
+        infos = []
+        best_info = None
+        best_cost = np.inf
+        for qs0 in seeds:
+            qs, info = self._backward_partial(
+                root_rotmat, root_pos, tgt_pos, axis_constraints, loc_tf,
+                qs_active_init=qs0, max_iter=max_iter, **kwargs)
+            if not info.get("converged", False):
+                cost = float(np.linalg.norm(info.get("err", np.inf)))
+                if cost < best_cost:
+                    best_cost = cost
+                    best_info = info
+                continue
+            sols.append(qs)
+            infos.append(info)
+            if len(sols) >= max_solutions:
+                break
+        if not sols and best_info is not None:
+            infos.append(best_info)
+        return (sols, infos) if return_infos else sols
 
     def _try_load_database(self):
         if (not os.path.exists(self._q_path) or

@@ -29,10 +29,10 @@ if __name__ == "__main__":
 
     gripper = or_2fg7.OR2FG7()
     gripper.attach_to(scene)
-    robot.engage(gripper)
+    robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
-    ossop.frame(pos =robot.gl_tcp_tf[:3, 3],
-                rotmat=robot.gl_tcp_tf[:3, :3],
+    ossop.frame(pos =robot.tcp('flange').tf[:3, 3],
+                rotmat=robot.tcp('flange').tf[:3, :3],
                 color_mat=ouc.CoordColor.MYC).attach_to(scene)
 
     n_total = len(pre_pos)
@@ -44,7 +44,8 @@ if __name__ == "__main__":
         tgt_rot = pre_rot[i]
         jw = float(jaw_width[i])
 
-        qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rot, tgt_pos=tgt_pos)
+        _s = robot.ik(tgt_pos, tgt_rot, tcp=gripper.tcp('grasp_center'), max_solutions=1)
+        qs = _s[0] if _s else None
         if qs is None:
             ossop.frame(
                 pos=tgt_pos,

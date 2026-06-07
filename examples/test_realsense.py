@@ -18,6 +18,7 @@ state = {"pcd": None}
 
 
 def update(_dt):
+    
     frames = pipeline.poll_for_frames()
     if not frames:
         return

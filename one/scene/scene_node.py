@@ -12,7 +12,7 @@ class SceneNode:
         self._rotmat = oum.ensure_rotmat(rotmat)
         self._pos = oum.ensure_pos(pos)
         # cached
-        self._tf = oum.tf_from_rotmat_pos(self._rotmat, self._pos)
+        self._tf = oum.tf_from_pos_rotmat(self._pos, self._rotmat)
         self._wd_tf = self._tf.copy()
         # dirty flag
         self._dirty = True
@@ -37,7 +37,7 @@ class SceneNode:
         """Override the base class method to propagate to children."""
         if not self._dirty:
             return
-        self._tf[:] = oum.tf_from_rotmat_pos(self._rotmat, self._pos)
+        self._tf[:] = oum.tf_from_pos_rotmat(self._pos, self._rotmat)
         if self.parent is None:
             self._wd_tf[:3, :3] = self._rotmat
             self._wd_tf[:3, 3] = self._pos
@@ -49,7 +49,7 @@ class SceneNode:
         self._dirty = False
 
     @oud.mark_dirty('_mark_dirty')
-    def set_rotmat_pos(self, rotmat=None, pos=None):
+    def set_pos_rotmat(self, pos=None, rotmat=None):
         self._rotmat[:] = oum.ensure_rotmat(rotmat)
         self._pos[:] = oum.ensure_pos(pos)
 

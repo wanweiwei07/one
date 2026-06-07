@@ -30,19 +30,42 @@ class AnaIKBase:
         ref_qs=None,
         **kwargs,
     ):
-        root_tf = oum.tf_from_rotmat_pos(root_rotmat, root_pos)
-        tgt_tf = oum.tf_from_rotmat_pos(tgt_rotmat, tgt_pos)
+        root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
+        tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         tgt_tf_in_root = np.linalg.inv(root_tf) @ tgt_tf
         sols = self.ik_all(tgt_tf_in_root, **kwargs)
         if not sols:
             return []
         if ref_qs is not None:
             ref_qs = np.asarray(ref_qs, dtype=np.float32)
-            order = np.argsort([np.linalg.norm(q - ref_qs) for q in sols])
-            sols = [sols[i] for i in order]
+            # Rank by 2pi-wrapped (physical) joint distance so the "nearest"
+            # pick is the physically-closest branch, not whichever happens to
+            # be closest after each joint is snapped to [-pi, pi]. Then unwrap
+            # the returned values toward ref so the joint trajectory stays
+            # continuous (no spurious ~2pi jumps) where joint limits allow.
+            order = np.argsort([self._wrapped_dist(q, ref_qs) for q in sols])
+            sols = [self._unwrap_to_ref(sols[i], ref_qs) for i in order]
         if max_solutions is not None:
             sols = sols[:max_solutions]
         return sols
+
+    @staticmethod
+    def _wrapped_dist(q, ref_qs):
+        """Physical joint distance with each diff wrapped into [-pi, pi]."""
+        d = (q - ref_qs + np.pi) % (2.0 * np.pi) - np.pi
+        return float(np.linalg.norm(d))
+
+    def _unwrap_to_ref(self, q, ref_qs):
+        """Shift each joint of solution ``q`` by the multiple of 2*pi that
+        brings it closest to ``ref_qs`` (continuity), without crossing joint
+        limits. Prismatic joints (small values) are unaffected since
+        round(delta / 2pi) == 0 for them."""
+        qu = q + np.round((ref_qs - q) / (2.0 * np.pi)) * (2.0 * np.pi)
+        if self.joint_limits is not None:
+            lo, hi = self.joint_limits
+            out_of_range = (qu < lo) | (qu > hi)
+            qu = np.where(out_of_range, q, qu)
+        return qu.astype(np.float32)
 
     def ik_all(self, tgt_tf_in_root, **kwargs):
         raise NotImplementedError
@@ -289,37 +312,3 @@ class P234X56(AnaIKBase):
                     qs = np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32)
                     all_qs.append(qs)
         return all_qs
-
-# class P23X12X34X56(AnaIKBase):
-#     def __init__(self, chain, joint_limits=None):
-#         super().__init__(chain, joint_limits=joint_limits)
-#         o1 = np.asarray(self.chain.origins[0], dtype=np.float32)
-#         o2 = np.asarray(self.chain.origins[1], dtype=np.float32)
-#         o3 = np.asarray(self.chain.origins[2], dtype=np.float32)
-#         o4 = np.asarray(self.chain.origins[3], dtype=np.float32)
-#         o5 = np.asarray(self.chain.origins[4], dtype=np.float32)
-#         o6 = np.asarray(self.chain.origins[5], dtype=np.float32)
-#         a2 = oum.unit_vec(self.chain.axes[1], return_length=False)
-#         a4 = oum.unit_vec(self.chain.axes[3], return_length=False)
-#         a6 = oum.unit_vec(self.chain.axes[5], return_length=False)
-#         # ow2 = origin of second wrist center (intersection of 34),
-#         # ow1 = origin of first wrist center (intersection of 12),
-#         # compute them by least squares
-#         A2 = np.zeros((3, 3), dtype=np.float32)
-#         b2 = np.zeros(3, dtype=np.float32)
-#         for a, o in [(a2, o2), (a4, o4), (a6, o6)]:
-#             a = oum.unit_vec(a, return_length=False)
-#             i_minus_aat = np.eye(3, dtype=np.float32) - np.outer(a, a)
-#             A2 += i_minus_aat
-#             b2 += i_minus_aat @ o
-#         ow2 = np.linalg.solve(A2, b2)
-#         A1 = np.zeros((3, 3), dtype=np.float32)
-#         b1 = np.zeros(3, dtype=np.float32)
-#         for a, o in [(a2, o2), (a4, ow2), (a6, o6)]:
-#             a = oum.unit_vec(a, return_length=False)
-#             i_minus_aat = np.eye(3, dtype=np.float32) - np.outer(a, a)
-#             A1 += i_minus_aat
-#             b1 += i_minus_aat @ o
-#         ow1 = np.linalg.solve(A1, b1)
-#         # paper-style vectors
-#         self.p01 =

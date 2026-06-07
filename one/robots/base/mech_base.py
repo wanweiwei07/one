@@ -2,14 +2,15 @@ import os
 import numpy as np
 import one.utils.math as oum
 import one.robots.base.mech_structure as orbms
+import one.robots.base.tcp as orbt
 import one.robots.base.kine.numik_sel as orbkis
 
 
 class Mounting:
-    def __init__(self, child, parent_link, engage_tf):
+    def __init__(self, child, parent_link, loc_tf):
         self.child = child
         self.plnk = parent_link
-        self.engage_tf = engage_tf
+        self.loc_tf = loc_tf
 
 
 class MechBase:
@@ -47,6 +48,9 @@ class MechBase:
             (self._compiled.n_lnks, 1, 1))
         # mountings
         self._mountings = {}
+        # named chains (which joints move) + tcps (what point to position)
+        self._chains = {}
+        self._tcps = {}
         # solvers
         self._solvers = {}
         # home
@@ -66,9 +70,9 @@ class MechBase:
             scene.remove(m.child)
         scene.remove(self)
 
-    def set_rotmat_pos(self, rotmat=None, pos=None):
-        self._rotmat[:] = oum.ensure_rotmat(rotmat)
+    def set_pos_rotmat(self, pos=None, rotmat=None):
         self._pos[:] = oum.ensure_pos(pos)
+        self._rotmat[:] = oum.ensure_rotmat(rotmat)
         self.fk()
 
     def fk(self, qs=None):
@@ -102,20 +106,25 @@ class MechBase:
         self._update_runtime()
         return self.gl_lnk_tfarr
 
-    def mount(self, child, plnk, engage_tf=None):
-        # TODO updated attach_to?
+    def mount(self, child, plnk, loc_tf=None, update=False):
+        """
+            Note: child is not attached to the scene when this is called
+            Caller is responsible for attaching the child to a scene
+        """
         if child is self:
             raise ValueError("Self-mounting not allowed")
         if child in self._mountings:
             raise ValueError("Child already mounted")
         if not child.is_free:
             raise ValueError("Child is not free")
-        if engage_tf is None:
-            engage_tf = np.eye(4, dtype=np.float32)
+        if loc_tf is None:
+            loc_tf = np.eye(4, dtype=np.float32)
         else:
-            engage_tf = np.asarray(engage_tf, dtype=np.float32)
-        self._mountings[child] = Mounting(child, plnk, engage_tf)
+            loc_tf = np.asarray(loc_tf, dtype=np.float32)
+        self._mountings[child] = Mounting(child, plnk, loc_tf)
         child.is_free = False
+        if update:
+            self._update_mounting(self._mountings[child])
 
     def unmount(self, child):
         try:
@@ -126,11 +135,227 @@ class MechBase:
         return m
 
     def get_solver(self, chain):
+        """Return the IK solver for ``chain``, lazily building the default
+        numerical (SELIK) solver on first use. A custom solver paired with the
+        chain via ``add_chain(..., solver=...)`` is already in ``_solvers`` and
+        returned directly."""
         if chain not in self._solvers:
-            _data_dir = os.path.join(self.structure.res_dir, "data")
-            self._solvers[chain] = orbkis.SELIKSolver(
-                chain, _data_dir)
+            if (chain.base_lidx == self.structure.compiled.root_lnk_idx and
+                    chain.tip_lidx in self.structure.compiled.tip_lnk_ids):
+                _data_dir = os.path.join(self.structure.res_dir, "data")
+            else:
+                # use the registered chain name as a readable hint, falling
+                # back to link indices for unnamed (ad-hoc) chains.
+                label = getattr(chain, "name", None) or \
+                    f"{chain.base_lidx}_{chain.tip_lidx}"
+                _data_dir = os.path.join(
+                    self.structure.res_dir, "data", f"chain_{label}")
+            self._solvers[chain] = orbkis.SELIKSolver(chain, _data_dir)
         return self._solvers[chain]
+
+    # ---- chain registry ------------------------------------------------
+    def add_chain(self, name, base_lnk, tip_lnk, solver=None):
+        """Register a named chain (which joints move). base/tip are STRUCTURE
+        links. The chain object is structure-level + shared (cached by
+        get_chain), so it is clone-safe with no remapping.
+
+        ``solver``: optional callable ``chain -> solver`` (e.g. an analytic
+        solver class) that builds this chain's IK solver, paired with the chain
+        right here and built eagerly. Chains without one fall back to the
+        numerical SELIK solver, built lazily on first ik.
+        """
+        if name in self._chains:
+            raise ValueError(f"Chain already defined: {name}")
+        c = self.structure.get_chain(base_lnk, tip_lnk)
+        c.name = name   # readable hint for solver data dirs / debugging
+        self._chains[name] = c
+        if solver is not None:
+            self._solvers[c] = solver(c)
+        return c
+
+    def chain(self, name):
+        return self._chains[name]
+
+    @property
+    def chains(self):
+        return dict(self._chains)
+
+    # ---- tcp registry --------------------------------------------------
+    def add_tcp(self, name, parent_lnk, loc_tf=None):
+        """Define a named tcp (link + local offset) used as an ik target.
+
+        parent_lnk must be a runtime link of this mechanism. A single link
+        may host any number of tcps.
+        """
+        if name in self._tcps:
+            raise ValueError(f"TCP already defined: {name}")
+        if parent_lnk not in self.runtime_lidx_map:
+            raise ValueError("parent_lnk must be a runtime link of this mechanism")
+        tcp = orbt.TCP(parent_lnk, loc_tf, name)
+        self._tcps[name] = tcp
+        return tcp
+
+    def tcp(self, name):
+        return self._tcps[name]
+
+    @property
+    def tcps(self):
+        return dict(self._tcps)
+
+    def toggle_tcp(self, name, color_mat=None, **kwargs):
+        """Toggle a coordinate frame for the named tcp: first call shows it
+        (attached to the tcp's parent link, so it follows the robot), second
+        call removes it. Returns the frame sobj when shown, else None."""
+        import one.utils.constant as ouc
+        import one.scene.scene_object_primitive as ossop
+        tcp = self.tcp(name)
+        objs = getattr(self, '_tcp_frame_objs', None)
+        if objs is None:
+            objs = {}
+            self._tcp_frame_objs = objs
+        if name in objs:
+            objs.pop(name).detach_from(tcp.parent_lnk)
+            return None
+        if color_mat is None:
+            color_mat = ouc.CoordColor.MYC
+        f = ossop.frame_from_tf(tcp.loc_tf, color_mat=color_mat, **kwargs)
+        f.attach_to(tcp.parent_lnk)
+        objs[name] = f
+        return f
+
+    # ---- ik verb -------------------------------------------------------
+    def _resolve_ik_target(self, chain, tcp):
+        """Resolve str names, validate control, and return
+        (chain, tcp, base_tf, t_tip2tcp) shared by ik / ik_partial.
+
+        chain  : name (str, resolved against this mechanism's chain registry)
+                 or a KinematicChain object.
+        tcp    : name (str, this mechanism's tcp registry) or a TCP object
+                 (object form for a foreign/child registry, e.g. an engaged
+                 gripper's tcp, or a transient target).
+        The chain-tip -> tcp offset is read from current FK (a rigid constant
+        for this solve), so tcp need not sit on chain.tip.
+        """
+        if isinstance(chain, str):
+            chain = self.chain(chain)
+        if isinstance(tcp, str):
+            tcp = self.tcp(tcp)
+        if not self._chain_controls_tcp(chain, tcp):
+            raise ValueError(
+                "This chain does not control the tcp: tcp.parent_lnk is "
+                "neither downstream of the chain tip in this mechanism, nor "
+                "on a child mounted downstream of the chain tip.")
+        base_tf = self.runtime_lnks[chain.base_lidx].tf
+        tip_tf = self.runtime_lnks[chain.tip_lidx].tf
+        t_tip2tcp = np.linalg.inv(tip_tf) @ tcp.tf
+        return chain, tcp, base_tf, t_tip2tcp
+
+    def ik(self, tgt_pos, tgt_rotmat, chain='main', tcp='flange',
+           max_solutions=8, ref_qs=None, **kwargs):
+        """Full-pose IK: solve so ``tcp`` reaches the 6-DOF target pose, using
+        ``chain``. Returns a list of full qs vectors (empty if unreachable).
+
+        Target is (tgt_pos, tgt_rotmat) -- pos first (ROS Pose order). chain/tcp
+        default to the single-arm convention 'main'/'flange', so a plain arm is
+        just ``arm.ik(pos, rotmat)``; pass chain=/tcp= for other chains or a
+        foreign tcp object (e.g. ``arm.ik(pos, R, tcp=gripper.tcp('grasp_center'))``).
+        For under-constrained targets use ``ik_partial``."""
+        chain, tcp, base_tf, t_tip2tcp = self._resolve_ik_target(chain, tcp)
+        tgt_tcp_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
+        tgt_tip_tf = tgt_tcp_tf @ np.linalg.inv(t_tip2tcp)
+        solver = self.get_solver(chain)
+        results = solver.ik(
+            root_rotmat=base_tf[:3, :3],
+            root_pos=base_tf[:3, 3],
+            tgt_rotmat=tgt_tip_tf[:3, :3],
+            tgt_pos=tgt_tip_tf[:3, 3],
+            max_solutions=max_solutions,
+            ref_qs=ref_qs,
+            **kwargs,
+        )
+        return [chain.embed_active_qs(q, self.qs) for q in results]
+
+    def ik_partial(self, tgt_pos=None, axis_constraints=None,
+                   chain='main', tcp='flange',
+                   max_solutions=1, ref_qs=None, seed_count=8,
+                   pos_weight=1.0, axis_weight=0.2,
+                   pos_tol=1e-4, axis_tol=1e-3, max_iter=200,
+                   return_infos=False, **kwargs):
+        """Partial IK: under-constrained target -- a position and/or
+        axis-direction constraints, orientation otherwise free (e.g. point a
+        camera's z axis at a target, roll free). Always numerical; the chain's
+        solver must support ik_partial (the analytic main-chain solver does
+        not).
+
+        Target is (tgt_pos, axis_constraints) -- pos first; chain/tcp default
+        to 'main'/'flange'. Returns a list of full qs vectors (empty if
+        unreachable); with ``return_infos=True`` returns ``(qs_list, infos)``.
+        """
+        if tgt_pos is None and axis_constraints is None:
+            raise ValueError('tgt_pos or axis_constraints must be provided')
+        chain, tcp, base_tf, t_tip2tcp = self._resolve_ik_target(chain, tcp)
+        solver = self.get_solver(chain)
+        if not hasattr(solver, 'ik_partial'):
+            raise TypeError(
+                f"Solver {type(solver).__name__} does not support partial IK; "
+                "use a numerical chain (not the analytic main chain).")
+        ac = oum.parse_axis_constraints(axis_constraints)
+        tgt_pos = None if tgt_pos is None else np.asarray(tgt_pos, dtype=np.float32)
+        if ref_qs is None:
+            ref_qs = chain.extract_active_qs(self.qs)
+        tgt_rotmat_hint = oum.rotmat_from_axis_constraints(ac, ref_rotmat=tcp.rotmat)
+        results, infos = solver.ik_partial(
+            root_rotmat=base_tf[:3, :3],
+            root_pos=base_tf[:3, 3],
+            tgt_pos=tgt_pos,
+            axis_constraints=ac,
+            loc_tf=t_tip2tcp,
+            tgt_rotmat_hint=tgt_rotmat_hint,
+            max_solutions=max_solutions,
+            ref_qs=ref_qs,
+            max_iter=max_iter,
+            seed_count=seed_count,
+            return_infos=True,
+            pos_weight=pos_weight,
+            axis_weight=axis_weight,
+            tol_pos=pos_tol,
+            tol_axis=axis_tol,
+            **kwargs,
+        )
+        qs_list = [chain.embed_active_qs(q, self.qs) for q in results]
+        return (qs_list, infos) if return_infos else qs_list
+
+    def _chain_controls_tcp(self, chain, tcp):
+        """True if moving ``chain`` actually moves ``tcp``.
+
+        Two cases:
+        - tcp on one of this mechanism's runtime links: the link must be
+          chain.tip or a descendant of it.
+        - tcp on a link of a child mounted on this mechanism (e.g. a gripper
+          engaged on the flange): the mount's parent link must be chain.tip
+          or a descendant of it (the child rides rigidly on it).
+        """
+        lnk = tcp.parent_lnk
+        if lnk in self.runtime_lidx_map:
+            return self._lidx_downstream_of_tip(self.runtime_lidx_map[lnk],
+                                                chain.tip_lidx)
+        for m in self._mountings.values():
+            child = m.child
+            child_map = getattr(child, 'runtime_lidx_map', None)
+            if child_map is not None and lnk in child_map:
+                return self._lidx_downstream_of_tip(
+                    self.runtime_lidx_map[m.plnk], chain.tip_lidx)
+        return False
+
+    def _lidx_downstream_of_tip(self, lidx, tip_lidx):
+        """True if link lidx == tip_lidx or is a descendant of it."""
+        compiled = self._compiled
+        cur = lidx
+        while cur >= 0:
+            if cur == tip_lidx:
+                return True
+            cur = compiled.plidx_of_lidx[cur]
+        return False
 
     def clone(self):
         """DOES NOT clone the affiliated scene"""
@@ -150,7 +375,13 @@ class MechBase:
             plidx = self.runtime_lidx_map[m.plnk]
             plink = new.runtime_lnks[plidx]
             new._mountings[child] = Mounting(
-                child, plink, m.engage_tf.copy())
+                child, plink, m.loc_tf.copy())
+        # chains are structure-level + shared -> copy refs, no remap
+        new._chains = dict(self._chains)
+        new._tcps = {}
+        for name, tcp in self._tcps.items():
+            plidx = self.runtime_lidx_map[tcp.parent_lnk]
+            new._tcps[name] = tcp.copy(parent_lnk=new.runtime_lnks[plidx])
         new._home_qs = self._home_qs.copy()
         return new
 
@@ -181,7 +412,7 @@ class MechBase:
 
     @property
     def tf(self):
-        return oum.tf_from_rotmat_pos(self._rotmat, self._pos)
+        return oum.tf_from_pos_rotmat(self._pos, self._rotmat)
 
     @property
     def rotmat(self):
@@ -257,7 +488,7 @@ class MechBase:
             self._update_mounting(m)
 
     def _update_mounting(self, mounting):
-        child_tf = mounting.plnk.tf @ mounting.engage_tf
+        child_tf = mounting.plnk.tf @ mounting.loc_tf
         if isinstance(mounting.child, MechBase):
             mounting.child._rotmat[:] = child_tf[:3, :3]
             mounting.child._pos[:] = child_tf[:3, 3]
