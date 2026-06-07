@@ -12,7 +12,7 @@ bunny = osso.SceneObject.from_file(
 bunny.attach_to(base.scene)
 # bunny.toggle_render_collision = True
 it = antipodal_iter(
-    gripper=gripper, tgt_sobj=bunny,
+    gripper=gripper, target_sobj=bunny,
     density=0.02, normal_tol_deg=20, roll_step_deg=30)
 ghost = gripper.clone()
 ghost.alpha = 0.3

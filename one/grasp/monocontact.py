@@ -31,14 +31,14 @@ import one.collider.cpu_simd as occs
 import one.grasp._common as ogc
 
 
-def monocontact_iter(tool, tgt_sobj, tcp='tip',
+def monocontact_iter(tool, target_sobj, tcp='tip',
                      density=0.02, roll_step_deg=90, retreat=None,
                      approach_bias=(0.0, 0.0, 1.0), exclude_regions=None):
     """
     Generator: yields (pose_tf, pre_pose_tf, score, collided).
     :param tool: single-contact end effector (must expose ``tcp(name)``,
         ``runtime_lnks`` and ``set_pos_rotmat``)
-    :param tgt_sobj: target object to contact
+    :param target_sobj: target object to contact
     :param tcp: name of the contact tcp to align (default 'tip')
     :param density: surface sampling density (smaller -> denser)
     :param roll_step_deg: roll step about the approach axis, in degrees.
@@ -60,7 +60,7 @@ def monocontact_iter(tool, tgt_sobj, tcp='tip',
         retreat = 0.5 * float(np.linalg.norm(tcp_loc[:3, 3]))
     tcp_loc_inv = np.linalg.inv(tcp_loc)
 
-    tgt_vs, tgt_fs, _ = occs.cols_to_vffns(tgt_sobj.collisions)
+    tgt_vs, tgt_fs, _ = occs.cols_to_vffns(target_sobj.collisions)
     if exclude_regions:
         tgt_vs, tgt_fs = osgop.clip_mesh(tgt_vs, tgt_fs, exclude_regions)
         if len(tgt_fs) == 0:
@@ -96,7 +96,7 @@ def monocontact_iter(tool, tgt_sobj, tcp='tip',
     score_all = score_all[order]
 
     # tool-vs-target collision batch
-    detector, batch = ogc.build_ee_target_detector(tool, tgt_sobj)
+    detector, batch = ogc.build_ee_target_detector(tool, target_sobj)
 
     for pose, sc in zip(pose_all, score_all):
         collided = False
