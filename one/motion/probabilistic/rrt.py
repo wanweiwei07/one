@@ -151,11 +151,17 @@ class RRTConnectPlanner:
                 if verbose:
                     print(f"[Iter {it}] status1={status1}, status2={status2}")
                 if status2 == "reached":
-                    # Build full path
+                    # Build full path: t_start.root -> connection -> t_goal.root.
                     path_start = t_start.path_from_root(new_idx_start)
                     path_goal = t_goal.path_from_root(new_idx_goal)
                     path_goal.reverse()
                     raw_path = path_start + path_goal[1:]
+                    # The trees are swapped every iteration, so on odd iterations
+                    # t_start is actually rooted at `goal` and raw_path runs
+                    # goal -> start. Normalize so the result is always start ->
+                    # goal (callers assume path[0] == start, path[-1] == goal).
+                    if not np.allclose(raw_path[0], start):
+                        raw_path.reverse()
                     smooth_path = self._path_pp.shortcut(raw_path)
                     final_path = self._path_pp.densify(smooth_path)
                     yield ("success", final_path, None)

@@ -81,7 +81,7 @@ def antipodal_iter(gripper, target_sobj,
                    density=0.02, normal_tol_deg=20,
                    roll_step_deg=30, clearance=0.002,
                    score_weights=(0.7, 0.3),
-                   exclude_regions=None):
+                   exclude_regions=None, pre_open=0.5):
     """
     Generator: yields (pose, pre_pose, jaw_width, score, collided).
     :param gripper: gripper instance
@@ -97,6 +97,11 @@ def antipodal_iter(gripper, target_sobj,
         mesh is still used for gripper-vs-target collision checks, so
         grasps near a clipped feature will still be rejected if the
         gripper would collide with that feature.
+    :param pre_open: how far OPEN the jaw is at the pre-grasp pose, as a
+        fraction in [0, 1] of the room between the grasp width and the
+        max opening (pre_jw = jw + pre_open*(jaw_max - jw)). 0 keeps it
+        at the grasp width; the default 0.5 opens half-way so the
+        collision check reflects the wider hand swept in on approach.
     Uses gripper.contact_pattern to confirm this is a single-contact
         model and to compensate jaw width for contact depth along the
         gripper opening axis. TCP is aligned to the two-contact midpoint.
@@ -106,7 +111,8 @@ def antipodal_iter(gripper, target_sobj,
             midpoint, its +z is the approach axis. This is exactly the
             (tgt_pos, tgt_rotmat) the gripper's grip_at expects.
         pre_pose: 4x4 world transform of the pre-grasp pose, pose retreated
-            along the approach axis (-pose[:3, 2]).
+            along the approach axis (-pose[:3, 2]); its collision check uses
+            the jaw opened part-way (see pre_open), not the grasp width.
         jaw_width: jaw opening for this grasp.
         score: score_weights-weighted normal-alignment + jaw-centering.
         collided: True if the gripper collides with the target at pose or
@@ -198,11 +204,15 @@ def antipodal_iter(gripper, target_sobj,
         results = detector.detect_collision_batch(batch)
         if results is not None:
             collided = True
-        # check pre-grasp pose
+        # check pre-grasp pose, with the jaw OPENED PART-WAY toward its max
+        # (pre_open in [0, 1]): on approach the fingers should clear the object,
+        # not already be closed to the grasp width. 0 -> same as grasp, 1 -> full
+        # open. The check thus reflects the wider hand actually swept in.
+        pre_jw = jw + pre_open * (jaw_max - jw)
         pre_pos = pose[:3, 3] - retreat_dist * pose[:3, 2]
         pre_pose = pose.copy()
         pre_pose[:3, 3] = pre_pos
-        gripper.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], jw)
+        gripper.grip_at(pre_pose[:3, 3], pre_pose[:3, :3], pre_jw)
         results = detector.detect_collision_batch(batch)
         if results is not None:
             collided = True
@@ -213,7 +223,7 @@ def antipodal(gripper, target_sobj,
               density=0.02, normal_tol_deg=20,
               roll_step_deg=30, clearance=0.002,
               max_grasps=50, score_weights=(0.7, 0.3),
-              exclude_regions=None):
+              exclude_regions=None, pre_open=0.5):
     """
     Collects non-colliding grasps only.
     :param gripper: gripper instance
@@ -228,6 +238,9 @@ def antipodal(gripper, target_sobj,
         out of the contact-sampling surface (forwarded to
         antipodal_iter). The full mesh is still used for collision
         checks.
+    :param pre_open: jaw opening at the pre-grasp pose as a fraction of
+        the room to max (default 0.5 = half-open); forwarded to
+        antipodal_iter.
     :return: list of (pose, pre_pose, jaw_width, score) for the
         collision-free grasps, best score first. pose is the 4x4 world
         transform of the GRASP CENTER (grasp_center tcp frame, origin at the
@@ -241,7 +254,7 @@ def antipodal(gripper, target_sobj,
             gripper, target_sobj,
             density, normal_tol_deg, roll_step_deg,
             clearance, score_weights,
-            exclude_regions=exclude_regions):
+            exclude_regions=exclude_regions, pre_open=pre_open):
         if not collided:
             results.append((pose, pre_pose, jw, float(sc)))
         if (max_grasps is not None and

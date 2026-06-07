@@ -24,79 +24,100 @@ def prepare_mechstruct(side, collision_type=ouc.CollisionType.MESH):
         res_dir=os.path.dirname(__file__))
 
 
-class _O6Hand(orbmb.MechBase, oremx.DexHandMixin):
+class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
     """Linkerbot O6 dexterous hand (one side): a mountable MechBase EE with the
     DexHandMixin grasp behaviors (open_hand / pinch / tripod / power_grasp,
-    grasp / release, *_at positioning).
+    grasp / release, *_at positioning, and ``spawn_jaw`` for antipodal planning).
+
+    DexHandMixin is listed FIRST so its ``clone`` (which carries the jaw
+    calibration) is reached before MechBase's in the MRO and chains up via super.
 
     Carries two grasp-center tcps (offsets on the hand base link, tunable):
 
-    - ``power_grasp_center``: center of a whole-hand power/enveloping grasp,
+    - ``power_center``: center of a whole-hand power/enveloping grasp,
       sitting in the palm cup.
     - ``pinch_center``: thumb-index pinch point, for precision picks (shared by
       the tripod primitive).
 
     Finger chains + fingertip ik are not modelled; the hand closes via the named
-    grasp synergies (a scalar ``amount`` -> coordinated finger qs) and is
+    grasp primitives (a scalar ``amount`` -> coordinated finger qs) and is
     positioned as a rigid EE through a center tcp via cross-object ik, e.g.
-    ``arm.ik(p, R, chain='left_arm', tcp=hand.tcp('power_grasp_center'))``.
+    ``arm.ik(p, R, chain='left_arm', tcp=hand.tcp('power_center'))``.
     """
 
     # palmar y sign: thumb opposes the fingers across this side of the palm.
     # left hand mirrors right exactly in y, so the tcp y-offsets flip with _Y
     # while x (palm normal, +x = palmar/grasping side) and z (along the hand)
-    # stay the same. Offsets derived from mesh geometry: power_grasp_center =
+    # stay the same. Offsets derived from mesh geometry: power_center =
     # centroid of the five fingertips curled into an enveloping grasp;
     # pinch_center = thumb/index fingertip contact point in a precision pinch.
     _Y = None
     _PREFIX = None   # 'lh_' / 'rh_' joint-name prefix (set per side)
 
-    # grasp synergies as joint-basename -> closed q (at amount=1.0), prefixed
-    # per side in __init__. Only the INDEPENDENT joints are listed -- thumb_ip
-    # and the *_dip joints are URDF <mimic> couplings (thumb_ip = 2.29*cmc_pitch,
-    # dip = 0.89*mcp) and follow automatically in fk, so setting them here would
-    # be a no-op.
-    _SYNERGY_SHAPES = {
-        # NB cmc_pitch <= 0.47 so the mimic thumb_ip (= 2.29*cmc_pitch) stays
-        # within its 1.08 limit.
-        'pinch': {   # thumb opposes index
-            'thumb_cmc_yaw': 0.9, 'thumb_cmc_pitch': 0.45,
-            'index_mcp_pitch': 0.9,
+    _TUCK = 1.3   # mcp curl for fingers not participating in the grasp
+
+    # Single per-primitive grasp definition (joint BASEnames; prefixed per side
+    # in grasp_spec). Drives BOTH the shape primitives and the parallel-jaw
+    # planning view -- one source, no second copy.
+    #   preshape: held fixed at every closure (thumb swing that opposes; must not
+    #             scale with amount or it under-swings a wide grip)
+    #   closing:  scaled by amount (the flexion that shuts the grip)
+    #   pads:     (thumb, [opposing fingers]) -> presentable to antipodal as a
+    #             parallel jaw; None for the power envelope.
+    # Only INDEPENDENT joints are listed -- thumb_ip and the *_dip joints are
+    # URDF <mimic> couplings (thumb_ip = 2.29*cmc_pitch, dip = 0.89*mcp) and
+    # follow in fk. cmc_pitch <= 0.47 so the mimic thumb_ip stays within 1.08.
+    _GRASP_TABLE = {
+        'pinch': {
+            'preshape': {'thumb_cmc_yaw': 0.9},
+            'closing': {'thumb_cmc_pitch': 0.45, 'index_mcp_pitch': 0.9},
+            'pads': ('thumb', ['index']),
         },
-        'tripod': {  # thumb opposes index + middle
-            'thumb_cmc_yaw': 0.9, 'thumb_cmc_pitch': 0.45,
-            'index_mcp_pitch': 0.9, 'middle_mcp_pitch': 0.9,
+        'tripod': {
+            # middle flexed deeper (1.15 vs index 0.9): it sits farther from the
+            # thumb, so matched this way both pads track the thumb within a few
+            # mm across the closure -- a genuine third contact, not decorative.
+            'preshape': {'thumb_cmc_yaw': 0.9},
+            'closing': {'thumb_cmc_pitch': 0.45, 'index_mcp_pitch': 0.9,
+                        'middle_mcp_pitch': 1.15},
+            'pads': ('thumb', ['index', 'middle']),
         },
-        'power': {   # all five fingers envelop
-            'thumb_cmc_yaw': 0.8, 'thumb_cmc_pitch': 0.4,
-            'index_mcp_pitch': 1.0, 'middle_mcp_pitch': 1.0,
-            'ring_mcp_pitch': 1.0, 'pinky_mcp_pitch': 1.0,
+        'power': {   # all five fingers envelop -- not a parallel jaw
+            'preshape': {},
+            'closing': {'thumb_cmc_yaw': 0.8, 'thumb_cmc_pitch': 0.4,
+                        'index_mcp_pitch': 1.0, 'middle_mcp_pitch': 1.0,
+                        'ring_mcp_pitch': 1.0, 'pinky_mcp_pitch': 1.0},
+            'pads': None,
         },
     }
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(rotmat=rotmat, pos=pos)   # is_free=True until mounted
         y = self._Y
-        self.add_tcp('power_grasp_center', self.runtime_root_lnk,
+        self.add_tcp('power_center', self.runtime_root_lnk,
                      oum.tf_from_pos_rotmat(
                          pos=np.array([0.038, 0.005 * y, 0.122], dtype=np.float32)))
         self.add_tcp('pinch_center', self.runtime_root_lnk,
                      oum.tf_from_pos_rotmat(
                          pos=np.array([0.055, 0.030 * y, 0.120], dtype=np.float32)))
-        # prefix the synergy joint names for this side
-        p = self._PREFIX
-        self.grasp_synergies = {
-            prim: {p + base: q for base, q in shape.items()}
-            for prim, shape in self._SYNERGY_SHAPES.items()
-        }
 
-    def clone(self):
-        # MechBase.clone bypasses __init__, so carry the per-instance synergy
-        # table over (otherwise a cloned hand can't pinch/grasp).
-        new = super().clone()
-        new.grasp_synergies = {prim: dict(d)
-                               for prim, d in self.grasp_synergies.items()}
-        return new
+    def grasp_spec(self, primitive):
+        """Resolve _GRASP_TABLE[primitive] to a DexGraspSpec with this side's
+        prefixed joint / link names. Tuck = every finger this grasp doesn't
+        drive."""
+        p = self._PREFIX
+        t = self._GRASP_TABLE[primitive]
+        preshape = {p + j: v for j, v in t['preshape'].items()}
+        closing = {p + j: v for j, v in t['closing'].items()}
+        tuck = {f'{p}{f}_mcp_pitch': self._TUCK
+                for f in ('index', 'middle', 'ring', 'pinky')
+                if f'{p}{f}_mcp_pitch' not in closing}
+        pads = t['pads']
+        thumb_pad = None if pads is None else f'{p}{pads[0]}_distal'
+        opp_pads = None if pads is None else [f'{p}{f}_distal' for f in pads[1]]
+        return oremx.DexGraspSpec(
+            preshape=preshape, closing=closing, tuck=tuck,
+            thumb_pad=thumb_pad, opp_pads=opp_pads)
 
 
 class O6Left(_O6Hand):
@@ -133,6 +154,6 @@ if __name__ == '__main__':
         hand.attach_to(base.scene)
         # keep arrows thin and short (head must stay < shaft length): arrow
         # length = 0.2*length_scale = 0.03 m, head = 0.04*radius_scale = 0.01 m.
-        hand.toggle_tcp('power_grasp_center', length_scale=0.15, radius_scale=0.25)
+        hand.toggle_tcp('power_center', length_scale=0.15, radius_scale=0.25)
         hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)
     base.run()

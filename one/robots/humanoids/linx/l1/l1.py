@@ -60,7 +60,7 @@ class L1O6(L1):
     """Linx L1 with two dexterous Linkerbot O6 hands mounted on the arm
     flanges. Grasp targets come from the hands' center tcps via cross-object
     ik, e.g.
-        robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_grasp_center'))
+        robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_center'))
     """
 
     def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=True):
