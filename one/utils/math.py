@@ -128,6 +128,8 @@ def rotmat_from_axis_constraints(axis_constraints, ref_rotmat=None, n_iter=4):
 
 ## rotmat
 def rotmat_from_axangle(ax, angle):
+    # Direct Rodrigues formula. ~3x faster than the scipy round-trip; hot in
+    # IK loops via Joint.motion_tf -> rotmat_from_axangle every iteration.
     ax = np.asarray(ax, dtype=np.float32)
     if ax.ndim == 1:
         if np.linalg.norm(ax) == 0:
