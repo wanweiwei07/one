@@ -39,7 +39,37 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.superfences
+  # embed runnable examples verbatim via `--8<-- "examples/<name>.py"`,
+  # so the docs stay in sync with the live code (base_path = repo root).
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
 
 nav:
   - Home: index.md
-  - API Index: API_INDEX.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quick Start: quickstart.md
+  - Tutorials:
+      - Kinematics: tutorials/kinematics.md
+      - Scene & Geometry: tutorials/scene_geometry.md
+      - Collision: tutorials/collision.md
+      - Grasp Planning: tutorials/grasp_planning.md
+      - Motion Planning: tutorials/motion_planning.md
+      - End-Effectors & Tool Change: tutorials/end_effectors.md
+      - Humanoid (L1): tutorials/humanoid.md
+      - MuJoCo: tutorials/mujoco.md
+  - API:
+      - Overview: api/index.md
+      - one.utils: api/utils.md
+      - one.scene: api/scene.md
+      - one.geom: api/geom.md
+      - one.collider: api/collider.md
+      - one.grasp: api/grasp.md
+      - one.motion: api/motion.md
+      - one.physics: api/physics.md
+      - one.robots: api/robots.md
+      - one.viewer: api/viewer.md
+      - one.stream: api/stream.md
+      - one.devices: api/devices.md
+      - Full Index: API_INDEX.md

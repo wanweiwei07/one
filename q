@@ -1,0 +1,27 @@
+* [33m8ccac02[m[33m ([m[1;31morigin/gh-pages[m[33m)[m Deployed 9045992 with MkDocs version: 1.6.1
+* [33m9045992[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m mkdoc
+* [33m74e954d[m l1o6 planning
+* [33me852858[m rename
+*   [33mb79f5d9[m Merge branch 'main' of https://github.com/wanweiwei07/one
+[32m|[m[33m\[m  
+[32m|[m *   [33madd55ea[m Merge pull request #3 from Yuan-Xinyi/one_clean
+[32m|[m [34m|[m[35m\[m  
+[32m|[m [34m|[m *   [33m72a9dae[m Merge branch 'main' into one_clean
+[32m|[m [34m|[m [36m|[m[34m\[m  
+[32m|[m [34m|[m [36m|[m[34m/[m  
+[32m|[m [34m|[m[34m/[m[36m|[m   
+[32m|[m [34m|[m * [33mf807469[m fixed ik sel issues, reduced t to 3ms
+[32m|[m [34m|[m *   [33mca2288e[m updated to latest
+[32m|[m [34m|[m [1;32m|[m[1;33m\[m  
+[32m|[m [34m|[m * [1;33m|[m [33m90ad9f5[m updated git ignore
+* [34m|[m [1;33m|[m [1;33m|[m [33ma093d5a[m o6 batch pinch
+[34m|[m[34m/[m [1;33m/[m [1;33m/[m  
+* [1;33m|[m [1;33m|[m [33mb77fafc[m geom separated
+* [1;33m|[m [1;33m|[m [33mcc9341e[m o6 pinch planning
+* [1;33m|[m [1;33m|[m [33m11ec7e8[m l1 arm planning
+* [1;33m|[m [1;33m|[m [33m355d3aa[m merge with unikine branch
+* [1;33m|[m [1;33m|[m [33m648a8d9[m kine visualizer
+* [1;33m|[m [1;33m|[m [33m07f080d[m save tokens
+* [1;33m|[m [1;33m|[m [33maeca628[m mechbase only
+* [1;33m|[m [1;33m|[m [33m8afd42e[m linkerbot o6
+* [1;33m|[m [1;33m|[m [33me149fbc[m urdf loader for l1
