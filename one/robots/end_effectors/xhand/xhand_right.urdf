@@ -1,0 +1,318 @@
+<?xml version="1.0"?>
+<!--
+  XHand right (12-DOF dexterous hand) URDF.
+  Generated from the validated one-framework model (xhand_right.py).
+  Kinematics: palm root + 5 fingers
+    thumb  : 3 dof  (joints 0..2  -> conf[0:3])
+    index  : 3 dof  (joints 0..2  -> conf[3:6])
+    middle : 2 dof  (joints 0..1  -> conf[6:8])
+    ring   : 2 dof  (joints 0..1  -> conf[8:10])
+    pinky  : 2 dof  (joints 0..1  -> conf[10:12])
+  Meshes are the converted "_.stl" variants (meters), loaded at link origin.
+-->
+<robot name="xhand_right">
+
+  <material name="dim_gray">
+    <color rgba="0.412 0.412 0.412 1.0"/>
+  </material>
+  <material name="gray">
+    <color rgba="0.67 0.67 0.67 1.0"/>
+  </material>
+
+  <!-- ======================== palm (root) ======================== -->
+  <link name="palm">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_link_.stl"/>
+      </geometry>
+      <material name="dim_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_link_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ============================ thumb =========================== -->
+  <link name="thumb_bend_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_thumb_bend_link_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_thumb_bend_link_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="thumb_rota_link1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_thumb_rota_link1_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_thumb_rota_link1_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="thumb_rota_link2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_thumb_rota_link2_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_thumb_rota_link2_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="thumb_joint0" type="revolute">
+    <parent link="palm"/>
+    <child link="thumb_bend_link"/>
+    <origin xyz="0.0228 -0.0095 0.0305" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="0.0" upper="1.83" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="thumb_joint1" type="revolute">
+    <parent link="thumb_bend_link"/>
+    <child link="thumb_rota_link1"/>
+    <origin xyz="0.028599 0.0083177 0.00178" rpy="0.2618 0 0.0407"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="-1.05" upper="1.57" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="thumb_joint2" type="revolute">
+    <parent link="thumb_rota_link1"/>
+    <child link="thumb_rota_link2"/>
+    <origin xyz="0.0553 0 0" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="-0.175" upper="1.83" effort="10" velocity="3.14"/>
+  </joint>
+
+  <!-- ============================ index =========================== -->
+  <link name="index_bend_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_index_bend_link_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_index_bend_link_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="index_rota_link1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_index_rota_link1_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_index_rota_link1_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="index_rota_link2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_index_rota_link2_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_index_rota_link2_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="index_joint0" type="revolute">
+    <parent link="palm"/>
+    <child link="index_bend_link"/>
+    <origin xyz="0.0265 -0.0065 0.0899" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.175" upper="0.175" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="index_joint1" type="revolute">
+    <parent link="index_bend_link"/>
+    <child link="index_rota_link1"/>
+    <origin xyz="0 0 0.0178" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="index_joint2" type="revolute">
+    <parent link="index_rota_link1"/>
+    <child link="index_rota_link2"/>
+    <origin xyz="0 0 0.0558" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+
+  <!-- ============================ middle ========================== -->
+  <link name="mid_link1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_mid_link1_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_mid_link1_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="mid_link2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_mid_link2_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_mid_link2_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="middle_joint0" type="revolute">
+    <parent link="palm"/>
+    <child link="mid_link1"/>
+    <origin xyz="0.004 -0.0065 0.1082" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="middle_joint1" type="revolute">
+    <parent link="mid_link1"/>
+    <child link="mid_link2"/>
+    <origin xyz="0 0 0.0558" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+
+  <!-- ============================= ring =========================== -->
+  <link name="ring_link1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_ring_link1_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_ring_link1_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="ring_link2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_ring_link2_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_ring_link2_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="ring_joint0" type="revolute">
+    <parent link="palm"/>
+    <child link="ring_link1"/>
+    <origin xyz="-0.016 -0.0065 0.1052" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="ring_joint1" type="revolute">
+    <parent link="ring_link1"/>
+    <child link="ring_link2"/>
+    <origin xyz="0 0 0.0558" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+
+  <!-- ============================ pinky ========================== -->
+  <link name="pinky_link1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_pinky_link1_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_pinky_link1_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="pinky_link2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_pinky_link2_.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="meshes/right_hand_pinky_link2_.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="pinky_joint0" type="revolute">
+    <parent link="palm"/>
+    <child link="pinky_link1"/>
+    <origin xyz="-0.036 -0.0065 0.1022" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+  <joint name="pinky_joint1" type="revolute">
+    <parent link="pinky_link1"/>
+    <child link="pinky_link2"/>
+    <origin xyz="0 0 0.0558" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="0.0" upper="1.92" effort="10" velocity="3.14"/>
+  </joint>
+
+</robot>
