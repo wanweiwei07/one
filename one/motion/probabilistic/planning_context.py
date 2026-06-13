@@ -54,20 +54,19 @@ class PlanningContext:
         return not self._is_collided(state)
 
     def is_motion_valid(self, state1, state2):
-        if (not self.state_space.satisfies_bounds(state1)
-                or not self.state_space.satisfies_bounds(state2)):
+        # Validate every interpolated step with is_state_valid (not _is_collided
+        # directly) so subclass overrides of is_state_valid -- e.g. extra
+        # constraints layered on top of collision -- also gate edges, not just
+        # nodes. is_state_valid already includes the bounds + collision checks.
+        if not self.is_state_valid(state1) or not self.is_state_valid(state2):
             return False
         dist = self.state_space.distance(state1, state2)
-        if dist == 0.0:
-            return not self._is_collided(state1)
         if dist <= self.cd_step_size:
-            return not (self._is_collided(state1)
-                        or self._is_collided(state2))
+            return True
         n_steps = int(np.ceil(dist / self.cd_step_size))
-        for i in range(n_steps + 1):
-            t = i / n_steps
-            s = self.state_space.interpolate(state1, state2, t)
-            if self._is_collided(s):
+        for i in range(1, n_steps):
+            s = self.state_space.interpolate(state1, state2, i / n_steps)
+            if not self.is_state_valid(s):
                 return False
         return True
 

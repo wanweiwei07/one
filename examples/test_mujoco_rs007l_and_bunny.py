@@ -13,7 +13,7 @@ bunny.alpha = 0.4
 base = ovw.World(cam_pos=(3.5, 1, 3.5),
                  cam_lookat_pos=(0, 0, .5),
                  toggle_auto_cam_orbit=False)
-builtins.base = base
+setattr(builtins, "base", base)
 oframe.attach_to(base.scene)
 bunny.attach_to(base.scene)
 for i in np.linspace(5.5, 15.5, 1):
