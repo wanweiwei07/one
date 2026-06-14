@@ -371,6 +371,11 @@ class DexHandMixin:
 
     def _grasp_center_loc_tf(self, jaw_width):
         """Per-width grasp center with the bound primitive tcp orientation."""
+        if getattr(self, '_grasp', None) is None:
+            raise AttributeError(
+                f"{type(self).__name__} is a dexterous hand, not bound as a "
+                f"parallel jaw. Call hand.spawn_jaw('pinch') (or 'tripod') "
+                f"before using grip_at / eval_grasp_tcp.")
         tcp_name = f'{self._grasp}_center'
         rotmat = self.tcp(tcp_name).loc_tf[:3, :3]
         return oum.tf_from_pos_rotmat(pos=self.grasp_center_at(jaw_width),
