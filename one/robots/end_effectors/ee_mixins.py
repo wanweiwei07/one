@@ -330,10 +330,10 @@ class DexHandMixin:
         self._od_amount = self._cal_amount[ok]
         self._od_dir = self._cal_dir[ok]
         ref_idx = int(np.argmin(np.abs(self._cal_amount - self._REF_AMOUNT)))
-        # 'grasp_center' tcp at a representative closure -- antipodal reads it for
-        # the pre-grasp retreat distance; the actual per-grasp center comes from
-        # grasp_center_at() inside grip_at.
-        loc = oum.tf_from_pos_rotmat(pos=self._cal_mid[ref_idx])
+        # 'grasp_center' tcp at a representative closure -- antipodal reads it
+        # for the pre-grasp retreat distance. Keep the primitive tcp rotation so
+        # the approach frame matches the hand's actual grasp frame.
+        loc = self._grasp_center_loc_tf(self._cal_gap[ref_idx])
         if 'grasp_center' in self._tcps:
             self.tcp('grasp_center').set_loc_tf(loc)
         else:
@@ -369,11 +369,18 @@ class DexHandMixin:
         return np.array([np.interp(amount, self._cal_amount, self._cal_mid[:, k])
                          for k in range(3)], dtype=np.float32)
 
+    def _grasp_center_loc_tf(self, jaw_width):
+        """Per-width grasp center with the bound primitive tcp orientation."""
+        tcp_name = f'{self._grasp}_center'
+        rotmat = self.tcp(tcp_name).loc_tf[:3, :3]
+        return oum.tf_from_pos_rotmat(pos=self.grasp_center_at(jaw_width),
+                                      rotmat=rotmat)
+
     def eval_grasp_tcp(self, jaw_width):
         """A fresh TCP at the grasp center for ``jaw_width`` (no state mutation).
         Pass straight to ik: ``arm.ik(p, R, tcp=hand.eval_grasp_tcp(jw))``."""
-        return orbt.TCP(self.runtime_root_lnk, oum.tf_from_pos_rotmat(
-            pos=self.grasp_center_at(jaw_width)))
+        return orbt.TCP(self.runtime_root_lnk,
+                        self._grasp_center_loc_tf(jaw_width))
 
     def set_jaw_width(self, w):
         w = float(np.clip(w, self.jaw_range[0], self.jaw_range[1]))
@@ -384,9 +391,10 @@ class DexHandMixin:
         self._jaw_w = w
 
     def grip_at(self, tgt_pos, tgt_rotmat, jaw_width):
-        # per-grasp center offset (pad midpoint at this closure), not the fixed
-        # tcp -> the object ends up between the pads at the actual closure.
-        loc = oum.tf_from_pos_rotmat(pos=self.grasp_center_at(jaw_width))
+        # Per-grasp center offset (pad midpoint at this closure) with the bound
+        # primitive tcp orientation, so antipodal's approach frame maps onto the
+        # hand's actual grasp frame instead of the hand base.
+        loc = self._grasp_center_loc_tf(jaw_width)
         base = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat) @ np.linalg.inv(loc)
         self.set_pos_rotmat(base[:3, 3], base[:3, :3])
         self.set_jaw_width(jaw_width)

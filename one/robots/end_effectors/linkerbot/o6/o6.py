@@ -77,14 +77,14 @@ class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
             # middle flexed deeper (1.15 vs index 0.9): it sits farther from the
             # thumb, so matched this way both pads track the thumb within a few
             # mm across the closure -- a genuine third contact, not decorative.
-            'preshape': {'thumb_cmc_yaw': 0.9},
-            'closing': {'thumb_cmc_pitch': 0.45, 'index_mcp_pitch': 0.9,
+            'preshape': {'thumb_cmc_yaw': 1.2},
+            'closing': {'thumb_cmc_pitch': 0.55, 'index_mcp_pitch': 0.9,
                         'middle_mcp_pitch': 1.15},
             'pads': ('thumb', ['index', 'middle']),
         },
         'power': {   # all five fingers envelop -- not a parallel jaw
             'preshape': {},
-            'closing': {'thumb_cmc_yaw': 0.8, 'thumb_cmc_pitch': 0.4,
+            'closing': {'thumb_cmc_yaw': 1.0, 'thumb_cmc_pitch': 0.4,
                         'index_mcp_pitch': 1.0, 'middle_mcp_pitch': 1.0,
                         'ring_mcp_pitch': 1.0, 'pinky_mcp_pitch': 1.0},
             'pads': None,
@@ -96,10 +96,22 @@ class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
         y = self._Y
         self.add_tcp('power_center', self.runtime_root_lnk,
                      oum.tf_from_pos_rotmat(
-                         pos=np.array([0.038, 0.005 * y, 0.122], dtype=np.float32)))
+                         pos=np.array([0.041, 0.011 * y, 0.093], dtype=np.float32),
+                         rotmat=np.array([[-0.353, -0.021 * y, 0.935],
+                                          [0.0, -1.0, -0.023 * y],
+                                          [0.936, -0.008 * y, 0.353]], dtype=np.float32)))
         self.add_tcp('pinch_center', self.runtime_root_lnk,
                      oum.tf_from_pos_rotmat(
-                         pos=np.array([0.055, 0.030 * y, 0.120], dtype=np.float32)))
+                         pos=np.array([0.039, 0.027 * y, 0.095], dtype=np.float32),
+                         rotmat=np.array([[-0.340, -0.021 * y, 0.940],
+                                          [0.0, -1.0, -0.023 * y],
+                                          [0.940, -0.008 * y, 0.340]], dtype=np.float32)))
+        self.add_tcp('tripod_center', self.runtime_root_lnk,
+                     oum.tf_from_pos_rotmat(
+                         pos=np.array([0.038, 0.017 * y, 0.096], dtype=np.float32),
+                         rotmat=np.array([[-0.275, -0.022 * y, 0.961],
+                                          [0.0, -1.0, -0.023 * y],
+                                          [0.962, -0.007 * y, 0.275]], dtype=np.float32)))
 
     def grasp_spec(self, primitive):
         """Resolve _GRASP_TABLE[primitive] to a DexGraspSpec with this side's
@@ -156,4 +168,5 @@ if __name__ == '__main__':
         # length = 0.2*length_scale = 0.03 m, head = 0.04*radius_scale = 0.01 m.
         hand.toggle_tcp('power_center', length_scale=0.15, radius_scale=0.25)
         hand.toggle_tcp('pinch_center', length_scale=0.15, radius_scale=0.25)
+        hand.toggle_tcp('tripod_center', length_scale=0.15, radius_scale=0.25)
     base.run()
