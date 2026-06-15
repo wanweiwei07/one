@@ -212,7 +212,7 @@ class DexHandMixin:
         """Tripod grip: thumb opposes index + middle (more stable than pinch)."""
         self._pose_grasp(self.grasp_spec('tripod'), amount)
 
-    def power_grasp(self, amount=1.0):
+    def power(self, amount=1.0):
         """Whole-hand enveloping (power) grasp."""
         self._pose_grasp(self.grasp_spec('power'), amount)
 
@@ -245,7 +245,7 @@ class DexHandMixin:
     def pinch_at(self, tgt_pos, tgt_rotmat, amount=1.0):
         return self.grasp_at(tgt_pos, tgt_rotmat, 'pinch', amount)
 
-    def power_grasp_at(self, tgt_pos, tgt_rotmat, amount=1.0):
+    def power_at(self, tgt_pos, tgt_rotmat, amount=1.0):
         return self.grasp_at(tgt_pos, tgt_rotmat, 'power', amount)
 
     # ---- parallel-jaw view for antipodal planning ----------------------

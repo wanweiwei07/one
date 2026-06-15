@@ -146,7 +146,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 - **class `PointMixin`**
   - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).
-  - methods: `grasp_spec`, `open_hand`, `pinch`, `tripod`, `power_grasp`, `grasp`, `release`, `grasp_at`, `pinch_at`, `power_grasp_at`, `spawn_jaw`, `open_dir_at`, `grasp_center_at`, `eval_grasp_tcp`, `set_jaw_width`, `grip_at`, `clone`
+  - methods: `grasp_spec`, `open_hand`, `pinch`, `tripod`, `power`, `grasp`, `release`, `grasp_at`, `pinch_at`, `power_at`, `spawn_jaw`, `open_dir_at`, `grasp_center_at`, `eval_grasp_tcp`, `set_jaw_width`, `grip_at`, `clone`
 
 ## `one.robots.end_effectors.denso.cvr038_gripper.cvr038_gripper`
 

@@ -302,8 +302,15 @@ def polypodal(gripper, target_sobj, n_samples,
     if pattern.ndim != 2 or pattern.shape[1] != 3 or pattern.shape[0] < 2:
         raise ValueError(
             'polypodal requires gripper.contact_pattern to be (N, 3), N >= 2')
+    # Plan in the target's LOCAL (zero-pose) frame: clone the target and zero
+    # its pose so contact sampling (local geom) and the gripper-vs-target
+    # collision check (CollisionBatch uses target.tf) share one frame. Returned
+    # grasps are in the target's local frame; the caller maps them onto the
+    # placed object (e.g. target_sobj.wd_tf @ pose).
+    target_sobj = target_sobj.clone()
+    target_sobj.set_pos_rotmat(
+        pos=np.zeros(3, dtype=np.float32), rotmat=np.eye(3, dtype=np.float32))
     tgt_vs, tgt_fs, _ = occs.cols_to_vffns(target_sobj.collisions)
-    target_tf = target_sobj.wd_tf
     open_dir = getattr(gripper, 'open_dir', None)
     samples = sample_pattern(
         pattern, tgt_vs, tgt_fs, n_samples,
@@ -326,7 +333,7 @@ def polypodal(gripper, target_sobj, n_samples,
             jaw_lo, jaw_hi = gripper.jaw_range
             if jaw < jaw_lo or jaw > jaw_hi:
                 continue
-            pose = (target_tf @ pose).astype(np.float32)
+            pose = np.asarray(pose, dtype=np.float32)
             if _check_grasp_collision(gripper, detector, batch, pose, jaw):
                 continue
             if verbose:
@@ -364,7 +371,7 @@ if __name__ == "__main__":
     import one.scene.scene_object_primitive as ossop
     import one.utils.constant as ouc
     import one.viewer.world as ovw
-    from kurabo.grippers.krb_right.krb_right import KRBRight
+    from kurabo.end_effectors.krb_right.krb_right import KRBRight
 
     OBJ = os.path.join(_root, "kurabo", "objects", "con_ma.stl")
     N_SAMPLES = 5000

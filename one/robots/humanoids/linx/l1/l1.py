@@ -6,6 +6,7 @@ import one.utils.constant as ouc
 import one.utils.math as oum
 import one.robots.base.mech_base as orbmb
 import one.robots.base.urdf_loader as orul
+import one.robots.base.kine.anaik as orbka
 import one.robots.end_effectors.linkerbot.o6.o6 as oello6
 
 
@@ -42,8 +43,10 @@ class L1(orbmb.MechBase):
                          home_qs=home_qs, is_free=is_free)
         lm = self.structure.lnk_map
         # named chains (which joints move) -- base/tip are structure links
-        self.add_chain('left_arm', lm['waist_link2'], lm['left_arm_link_6'])
-        self.add_chain('right_arm', lm['waist_link2'], lm['right_arm_link_6'])
+        self.add_chain('left_arm', lm['waist_link2'], lm['left_arm_link_6'],
+                       solver=orbka.S456X12)
+        self.add_chain('right_arm', lm['waist_link2'], lm['right_arm_link_6'],
+                       solver=orbka.S456X12)
         self.add_chain('left_arm_waist', lm['waist_link1'], lm['left_arm_link_6'])
         self.add_chain('right_arm_waist', lm['waist_link1'], lm['right_arm_link_6'])
         self.add_chain('neck', lm['waist_link2'], lm['neck_link2'])

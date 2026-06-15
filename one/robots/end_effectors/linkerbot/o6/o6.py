@@ -26,7 +26,7 @@ def prepare_mechstruct(side, collision_type=ouc.CollisionType.MESH):
 
 class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
     """Linkerbot O6 dexterous hand (one side): a mountable MechBase EE with the
-    DexHandMixin grasp behaviors (open_hand / pinch / tripod / power_grasp,
+    DexHandMixin grasp behaviors (open_hand / pinch / tripod / power,
     grasp / release, *_at positioning, and ``spawn_jaw`` for antipodal planning).
 
     DexHandMixin is listed FIRST so its ``clone`` (which carries the jaw
@@ -63,7 +63,7 @@ class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
     #             scale with amount or it under-swings a wide grip)
     #   closing:  scaled by amount (the flexion that shuts the grip)
     #   pads:     (thumb, [opposing fingers]) -> presentable to antipodal as a
-    #             parallel jaw; None for the power envelope.
+    #             parallel jaw; None to disable the jaw view for that primitive.
     # Only INDEPENDENT joints are listed -- thumb_ip and the *_dip joints are
     # URDF <mimic> couplings (thumb_ip = 2.29*cmc_pitch, dip = 0.89*mcp) and
     # follow in fk. cmc_pitch <= 0.47 so the mimic thumb_ip stays within 1.08.
@@ -82,12 +82,15 @@ class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
                         'middle_mcp_pitch': 1.15},
             'pads': ('thumb', ['index', 'middle']),
         },
-        'power': {   # all five fingers envelop -- not a parallel jaw
+        'power': {   # all five fingers envelop
             'preshape': {},
             'closing': {'thumb_cmc_yaw': 1.0, 'thumb_cmc_pitch': 0.4,
                         'index_mcp_pitch': 1.0, 'middle_mcp_pitch': 1.0,
                         'ring_mcp_pitch': 1.0, 'pinky_mcp_pitch': 1.0},
-            'pads': None,
+            # all five fingers envelop, but for the parallel-jaw view the
+            # dominant opposition is modelled as thumb vs the central middle
+            # finger, so the envelope can also be antipodal-planned.
+            'pads': ('thumb', ['index']),
         },
     }
 
@@ -161,7 +164,7 @@ if __name__ == '__main__':
     left = O6Left(pos=np.array([0.0, 0.12, 0.0], dtype=np.float32))
     right = O6Right(pos=np.array([0.0, -0.12, 0.0], dtype=np.float32))
     left.pinch(1.0)          # thumb-index precision pinch
-    right.power_grasp(1.0)   # whole-hand envelope
+    right.power(1.0)         # whole-hand envelope
     for hand in (left, right):
         hand.attach_to(base.scene)
         # keep arrows thin and short (head must stay < shaft length): arrow

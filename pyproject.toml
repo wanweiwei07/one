@@ -13,6 +13,8 @@ dependencies = [
     'scipy',
     'pyglet',
     'mujoco',
+    'xacro',
+    'urdf_parser_py',
 ]
 
 [tool.setuptools.packages.find]

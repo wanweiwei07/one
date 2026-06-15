@@ -44,22 +44,22 @@ def make_cylinder():
         rgb=(0.6, 0.7, 0.5))
 
 
-def main():
+def main(primitive='pinch'):
     headless = bool(os.environ.get("ONE_HEADLESS"))
     hand = O6Left()
     cyl = make_cylinder()
 
-    jaw = hand.spawn_jaw('pinch')
+    jaw = hand.spawn_jaw(primitive)
     grasps = antipodal(jaw, cyl, density=0.0015, normal_tol_deg=25,
                        roll_step_deg=30, max_grasps=60, clearance=0.003)
-    print(f"antipodal: {len(grasps)} pinch grasps on the cylinder "
+    print(f"antipodal: {len(grasps)} {primitive} grasps on the cylinder "
           f"(dia {2 * CYL_RADIUS}, h {CYL_HEIGHT})")
     if not grasps:
-        raise RuntimeError("no antipodal grasp found on the cylinder")
+        raise RuntimeError(f"no antipodal {primitive} grasp found on the cylinder")
 
     save_grasps(grasps, OUT_JSON, gripper_name="O6Left",
                 object_name=f"cylinder_d{2 * CYL_RADIUS}_h{CYL_HEIGHT}")
-    print(f"saved {len(grasps)} grasps -> {OUT_JSON}")
+    print(f"saved {len(grasps)} {primitive} grasps -> {OUT_JSON}")
 
     if headless:
         return
@@ -77,8 +77,8 @@ def main():
     # ``pose`` (closed to the grasp width) and YELLOW at the ``pre`` pre-grasp
     # pose (opened, the approach stand-off). N cycles to the next pose/pre pair.
     jaw_open = float(jaw.jaw_range[1])
-    jaw_pose = hand.spawn_jaw('pinch')          # green = final grasp
-    jaw_pre = hand.spawn_jaw('pinch')           # yellow = pre-grasp / approach
+    jaw_pose = hand.spawn_jaw(primitive)          # green = final grasp
+    jaw_pre = hand.spawn_jaw(primitive)           # yellow = pre-grasp / approach
     jaw_pose.rgb = (0.20, 0.85, 0.25)
     jaw_pre.rgb = (0.95, 0.85, 0.15)
     jaw_pose.attach_to(base.scene)
@@ -89,12 +89,14 @@ def main():
 
     def show(i):
         pose, pre, jw, score = grasps[i]
-        # antipodal returns poses already in the WORLD frame (the GPU-SIMD
-        # collision detector it uses honours the target's wd_tf), so grip
-        # directly -- exactly like examples/test_2fg7_antipodal.py. Applying
-        # cyl.wd_tf here would double-shift the jaw into the cylinder.
-        jaw_pose.grip_at(pose[:3, 3], pose[:3, :3], jw)
-        jaw_pre.grip_at(pre[:3, 3], pre[:3, :3], jaw_open)
+        # antipodal plans in the cylinder's LOCAL (zero-pose) frame and returns
+        # local grasps (that is what we save for l1picking). Map them onto the
+        # cylinder's actual placement before gripping -- the cylinder here sits
+        # at cyl.wd_tf (spos=-h/2), so without this the jaws would be ~0.15 off.
+        wpose = cyl.wd_tf @ pose
+        wpre = cyl.wd_tf @ pre
+        jaw_pose.grip_at(wpose[:3, 3], wpose[:3, :3], jw)
+        jaw_pre.grip_at(wpre[:3, 3], wpre[:3, :3], jaw_open)
         jaw_pose.rgb = (0.20, 0.85, 0.25)       # re-assert after re-grip
         jaw_pre.rgb = (0.95, 0.85, 0.15)
         base.scene.dirty = True
@@ -113,4 +115,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main('power')

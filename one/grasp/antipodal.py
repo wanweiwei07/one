@@ -119,6 +119,14 @@ def antipodal_iter(gripper, target_sobj,
             pre_pose (both poses are collision-checked).
     """
     gripper = gripper.clone()
+    # Plan in the target's LOCAL (zero-pose) frame. Clone the target and zero
+    # its pose so the contact sampling (local geom) and the gripper-vs-target
+    # collision check (CollisionBatch uses target.tf) live in the SAME frame.
+    # The returned grasps are therefore in the target's local frame; the caller
+    # maps them onto the placed object (e.g. target_sobj.wd_tf @ pose).
+    target_sobj = target_sobj.clone()
+    target_sobj.set_pos_rotmat(
+        pos=np.zeros(3, dtype=np.float32), rotmat=np.eye(3, dtype=np.float32))
     tgt_vs, tgt_fs, tgt_fns = occs.cols_to_vffns(
         target_sobj.collisions)
     if exclude_regions:

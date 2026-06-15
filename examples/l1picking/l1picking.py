@@ -27,7 +27,6 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(_THIS))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import one.utils.math as oum                                  # noqa: E402
 import one.utils.constant as ouc                              # noqa: E402
 import one.scene.scene_object as osso                         # noqa: E402
 import one.scene.scene_object_primitive as ossop              # noqa: E402
@@ -39,8 +38,7 @@ import one.robots.humanoids.linx.l1.l1 as l1                  # noqa: E402
 from one.grasp.serialize import load_grasps                   # noqa: E402
 
 GRASPS_JSON = os.path.join(_THIS, "o6_cylinder_grasps.json")
-CHAIN = 'left_arm_waist'      # waist + left arm (a person reaches, torso still)
-WAIST_WEIGHT = 6.0            # prefer IK solutions that keep the waist still
+CHAIN = 'left_arm'      # left arm only (6-DOF, analytic S456X12); waist frozen
 
 # Table: origin at bottom-centre, at world (0.3, 0, 0). Tabletop top z=0.9.
 TABLE_ORIGIN = np.array([0.3, 0.0, 0.0], dtype=np.float32)
@@ -54,7 +52,7 @@ TABLE_RGB = (0.55, 0.42, 0.30)
 # Cylinder (dia 0.05, h 0.3) standing on the tabletop, at a reachable spot.
 CYL_RADIUS = 0.025
 CYL_HEIGHT = 0.30
-CYL_POS = np.array([0.35, 0.15, TABLE_TOP_Z + CYL_HEIGHT / 2], dtype=np.float32)
+CYL_POS = np.array([0.12, 0.12, TABLE_TOP_Z], dtype=np.float32)
 
 UP = np.array([0.0, 0.0, 0.15], dtype=np.float32)   # lift after grasp
 
@@ -84,7 +82,7 @@ def build_scene():
     robot = l1.L1O6()
     table = build_table()
     cyl = ossop.cylinder(
-        spos=(0.0, 0.0, -CYL_HEIGHT / 2), epos=(0.0, 0.0, CYL_HEIGHT / 2),
+        spos=(0.0, 0.0, 0), epos=(0.0, 0.0, CYL_HEIGHT),
         radius=CYL_RADIUS, segments=24, collision_type=ouc.CollisionType.MESH,
         is_free=True, rgb=(0.6, 0.7, 0.5))
     cyl.pos = CYL_POS.copy()
@@ -128,21 +126,19 @@ def load_world_grasps(cyl):
 
 def ik_config(robot, ctx, pos, rotmat, tcp, collision_free=True, ref=None):
     """IK for ``tcp`` at (pos, rotmat); among the (optionally collision-free)
-    solutions return the one closest to ``ref`` (waist weighted heavily so the
-    torso stays still). Returns full qs (n_jnts,) or None."""
+    solutions return the one closest to ``ref`` in joint space. Returns full
+    qs (n_jnts,) or None."""
     chain = robot.chain(CHAIN)
     if ref is None:
         ref = robot.qs
     ref_active = chain.extract_active_qs(ref)
-    w = np.ones_like(ref_active)
-    w[0] = WAIST_WEIGHT
     sols = robot.ik(pos, rotmat, chain=CHAIN, tcp=tcp,
                     ref_qs=ref_active, max_solutions=8)
     best, best_d = None, None
     for s in sols:
         if collision_free and not ctx.is_state_valid(s.astype(np.float64)):
             continue
-        d = float(np.linalg.norm(w * (chain.extract_active_qs(s) - ref_active)))
+        d = float(np.linalg.norm(chain.extract_active_qs(s) - ref_active))
         if best_d is None or d < best_d:
             best, best_d = s.astype(np.float64), d
     return best
@@ -165,10 +161,14 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     pose, pre_pose, jw, _sc = grasp
     rot = pose[:3, :3]
     g = pose[:3, 3]
-    # per-grasp pinch-center tcp on the mounted hand (the calibrated grasp
+    # per-grasp power-center tcp on the mounted hand (the calibrated grasp
     # centre for this closure) -- IK puts the pads where they will close.
+    # Use the FULL grasp-center loc_tf (position AND orientation): jaw's
+    # grasp frame is rotated relative to the hand base, and grip_at applies
+    # that rotation. Feeding IK a position-only (identity-rotation) tcp would
+    # reach the right point with the wrong wrist twist -> hand hits the object.
     center_tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
-                          oum.tf_from_pos_rotmat(pos=jaw.grasp_center_at(jw)))
+                          jaw.eval_grasp_tcp(jw).loc_tf)
     home = robot.qs.astype(np.float64).copy()
     pre = ik_config(robot, ctx, pre_pose[:3, 3], pre_pose[:3, :3], center_tcp)
     grasp_q = ik_config(robot, ctx, g, rot, center_tcp,
@@ -182,7 +182,7 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     traj += jtraj(pre, grasp_q)                 # straight approach to the grasp
     grasp_idx = len(traj) - 1
     traj += jtraj(grasp_q, lift)                # lift (carrying)
-    amount = float(jaw._amount_for(jw))         # jw -> pinch closure amount
+    amount = float(jaw._amount_for(jw))         # jw -> power closure amount
     return traj, grasp_idx, amount
 
 
@@ -207,7 +207,7 @@ def main():
     ctx = chain_planning_context(robot, mjc, CHAIN)
     planner = ompr.RRTConnectPlanner(pln_ctx=ctx, extend_step_size=np.pi / 36,
                                      goal_bias=0.3)
-    jaw = robot.left_hand.spawn_jaw('pinch')
+    jaw = robot.left_hand.spawn_jaw('power')
     grasps = load_world_grasps(cyl)
     print(f"loaded {len(grasps)} grasps from {os.path.basename(GRASPS_JSON)}")
 
@@ -235,6 +235,23 @@ def main():
     ossop.frame().attach_to(base.scene)
     for e in (robot, *table, cyl, ground):
         e.attach_to(base.scene)
+
+    # # Draw every loaded grasp as translucent ghost jaws: GREEN at the grasp
+    # # ``pose`` (closed to the grasp width), YELLOW at the ``pre`` approach pose
+    # # (jaw open). All at alpha 0.3 so the picking animation stays readable.
+    # jaw_open = float(jaw.jaw_range[1])
+    # for pose, pre, jw, _sc in grasps:
+    #     ghost_pose = robot.left_hand.spawn_jaw('power')
+    #     ghost_pose.grip_at(pose[:3, 3], pose[:3, :3], jw)
+    #     ghost_pose.rgb = (0.20, 0.85, 0.25)
+    #     ghost_pose.alpha = 0.3
+    #     ghost_pose.attach_to(base.scene)
+    #     ghost_pre = robot.left_hand.spawn_jaw('power')
+    #     ghost_pre.grip_at(pre[:3, 3], pre[:3, :3], jaw_open)
+    #     ghost_pre.rgb = (0.95, 0.85, 0.15)
+    #     ghost_pre.alpha = 0.3
+    #     ghost_pre.attach_to(base.scene)
+
     cyl_home = (cyl.pos.copy(), cyl.rotmat.copy())
     print("F: step frame   G: play/pause   R: replay   N: next grasp")
 

@@ -60,6 +60,13 @@ def monocontact_iter(tool, target_sobj, tcp='tip',
         retreat = 0.5 * float(np.linalg.norm(tcp_loc[:3, 3]))
     tcp_loc_inv = np.linalg.inv(tcp_loc)
 
+    # Plan in the target's LOCAL (zero-pose) frame: clone the target and zero
+    # its pose so contact sampling (local geom) and the tool-vs-target collision
+    # check (CollisionBatch uses target.tf) share one frame. Returned poses are
+    # in the target's local frame; the caller maps them onto the placed object.
+    target_sobj = target_sobj.clone()
+    target_sobj.set_pos_rotmat(
+        pos=np.zeros(3, dtype=np.float32), rotmat=np.eye(3, dtype=np.float32))
     tgt_vs, tgt_fs, _ = occs.cols_to_vffns(target_sobj.collisions)
     if exclude_regions:
         tgt_vs, tgt_fs = osgop.clip_mesh(tgt_vs, tgt_fs, exclude_regions)
