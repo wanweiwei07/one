@@ -2,7 +2,7 @@
 pre-planned + saved by o6planning.py.
 
 Pipeline:
-    load JSON grasps (O6 pinch, cylinder-LOCAL frame)
+    load JSON grasps (O6, ``PRIMITIVE`` grasp, cylinder-LOCAL frame)
       -> transform onto the cylinder where it stands on the table
       -> keep the ones with a collision-free, reachable IK (hand clears the
          table; the cylinder itself is the target so hand-vs-cylinder is allowed)
@@ -39,6 +39,8 @@ from one.grasp.serialize import load_grasps                   # noqa: E402
 
 GRASPS_JSON = os.path.join(_THIS, "o6_cylinder_grasps.json")
 CHAIN = 'left_arm'      # left arm only (6-DOF, analytic S456X12); waist frozen
+PRIMITIVE = 'power'     # grasp primitive -- MUST match the one o6planning saved
+                        # the JSON with (drives the jaw tcp AND the closing)
 
 # Table: origin at bottom-centre, at world (0.3, 0, 0). Tabletop top z=0.9.
 TABLE_ORIGIN = np.array([0.3, 0.0, 0.0], dtype=np.float32)
@@ -52,7 +54,7 @@ TABLE_RGB = (0.55, 0.42, 0.30)
 # Cylinder (dia 0.05, h 0.3) standing on the tabletop, at a reachable spot.
 CYL_RADIUS = 0.025
 CYL_HEIGHT = 0.30
-CYL_POS = np.array([0.12, 0.12, TABLE_TOP_Z], dtype=np.float32)
+CYL_POS = np.array([0.22, 0.3, TABLE_TOP_Z], dtype=np.float32)
 
 UP = np.array([0.0, 0.0, 0.15], dtype=np.float32)   # lift after grasp
 
@@ -81,20 +83,35 @@ def build_table():
 def build_scene():
     robot = l1.L1O6()
     table = build_table()
+    # Capsule collision (not mesh): the MuJoCo collider needs a native primitive
+    # or a file-backed mesh, and a procedural cylinder mesh has no file. A
+    # capsule is the natural fit for a cylinder (radius matches; rounded ends are
+    # slightly conservative) and the cylinder is only an obstacle here -- grasps
+    # are pre-loaded, not re-planned against this shape.
     cyl = ossop.cylinder(
         spos=(0.0, 0.0, 0), epos=(0.0, 0.0, CYL_HEIGHT),
-        radius=CYL_RADIUS, segments=24, collision_type=ouc.CollisionType.MESH,
+        radius=CYL_RADIUS, segments=24,
+        collision_type=ouc.CollisionType.CAPSULE,
         is_free=True, rgb=(0.6, 0.7, 0.5))
     cyl.pos = CYL_POS.copy()
     ground = ossop.plane(pos=(0, 0, 0.0))
     return robot, table, cyl, ground
 
 
-def make_collider(robot, table, ground):
-    """Collider for motion planning: robot vs table + ground + self. The
-    cylinder is the grasp TARGET (hand contact is intended) so it is NOT here."""
+def make_collider(robot, table, cyl, ground):
+    """Collider for motion planning: robot vs table + cylinder + ground + self.
+    The cylinder IS an obstacle so the free-space approach (home -> pre-grasp)
+    and the pre-grasp pose avoid it; the grasp/lift keyframes are checked with
+    ``collision_free=False`` (and pre->grasp is a straight interpolation), so the
+    intended hand-vs-cylinder contact at the grasp is not flagged.
+
+    The scene cylinder is ``is_free=True`` (it gets grasped/lifted); a free body
+    is not pinned at its pose in the collider and would float to the origin and
+    spuriously collide, so the obstacle is a FIXED clone at the cylinder's pose."""
+    cyl_obstacle = cyl.clone()
+    cyl_obstacle.is_free = False
     mjc = ocm.MJCollider()
-    for e in (robot, *table, ground):
+    for e in (robot, *table, cyl_obstacle, ground):
         mjc.append(e)
     mjc.actors = [robot]
     mjc.compile(margin=0.0, auto_acm=True)
@@ -203,11 +220,12 @@ def main():
     if headless:
         np.random.seed(0)
     robot, table, cyl, ground = build_scene()
-    mjc = make_collider(robot, table, ground)   # cylinder excluded (target)
+    mjc = make_collider(robot, table, cyl, ground)   # cylinder is an obstacle
+                                                     # until the grasp itself
     ctx = chain_planning_context(robot, mjc, CHAIN)
     planner = ompr.RRTConnectPlanner(pln_ctx=ctx, extend_step_size=np.pi / 36,
                                      goal_bias=0.3)
-    jaw = robot.left_hand.spawn_jaw('power')
+    jaw = robot.left_hand.spawn_jaw(PRIMITIVE)
     grasps = load_world_grasps(cyl)
     print(f"loaded {len(grasps)} grasps from {os.path.basename(GRASPS_JSON)}")
 
@@ -287,7 +305,7 @@ def main():
             return
         robot.fk(qs=traj_i[i])
         if i == grasp_idx_i and not state["held"]:
-            robot.left_hand.grasp(cyl, primitive='pinch', amount=amount)
+            robot.left_hand.grasp(cyl, primitive=PRIMITIVE, amount=amount)
             state["held"] = True
         state["i"] += 1
         base.scene.dirty = True
