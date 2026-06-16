@@ -19,15 +19,18 @@ def sp1_setup(p1, p2, k, theta):
     p2 += rand.rot(k, theta) @ p1  # @ is index wise multiplication
 
 
-# Returns theta, is_LS
-def sp1_run(p1, p2, k):
+# Returns theta, is_LS. ``tol`` bounds the residual (norm mismatch + the
+# component along k that a rotation cannot reach) above which the solution is
+# flagged least-squares. The default is tight; analytic solvers on a float32
+# chain pass a looser tol to avoid flagging valid branches (see anaik.sp1_tol).
+def sp1_run(p1, p2, k, tol=1e-5):
     KxP = np.cross(k, p1)
     A = np.vstack((KxP, -np.cross(k, KxP)))
     x = np.dot(A, p2)
     return (
         atan2(x[0], x[1]),
-        abs(np.linalg.norm(p1, 2) - np.linalg.norm(p2, 2)) > 1e-5
-        or abs(np.dot(k, p1) - np.dot(k, p2)) > 1e-5,
+        abs(np.linalg.norm(p1, 2) - np.linalg.norm(p2, 2)) > tol
+        or abs(np.dot(k, p1) - np.dot(k, p2)) > tol,
     )
 
 

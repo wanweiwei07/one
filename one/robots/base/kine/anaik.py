@@ -13,6 +13,16 @@ class AnaIKBase:
     ik(...) returns solutions in root frame.
     """
 
+    # sp1's default is_LS tolerance is a tight 1e-5, but the analytic
+    # decomposition of a real (float32) chain carries a ~7e-4 rad closure
+    # residual, so a geometrically-VALID roll branch gets wrongly flagged is_LS
+    # and dropped (false "no solution"). ik_all therefore passes this looser
+    # tol to sp1_run for the orientation (roll) subproblems -- above the float32
+    # noise floor, below any genuinely-bad branch. Position subproblems
+    # (sp2/sp3/sp4) keep their tight is_LS, so an unreachable target still
+    # yields no solution. (Tighten this only with a float64 analytic-IK path.)
+    sp1_tol = 1e-3
+
     def __init__(self, chain, joint_limits=None):
         self.chain = chain
         if joint_limits is None:
@@ -201,8 +211,10 @@ class S456X12(AnaIKBase):
                     p1 = oum.orth_vec(self.h6)
                     k = self.h6
                     p2 = R54 @ R43 @ R36 @ p1
-                    # compute q6 by sp1
-                    q6, is_ls = orbkisp1.sp1_run(p1, p2, k)
+                    # compute q6 by sp1 with the looser sp1_tol: the float32
+                    # closure residual trips the tight is_LS even for valid
+                    # branches (see sp1_tol).
+                    q6, is_ls = orbkisp1.sp1_run(p1, p2, k, tol=self.sp1_tol)
                     if is_ls:
                         continue
                     qs = np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32)
@@ -296,7 +308,7 @@ class P234X56(AnaIKBase):
                 k = self.h2  # assume all parallel axes have same direction as h2
                 p1 = R45 @ self.h6
                 p2 = R10 @ R06 @ self.h6
-                q234, is_ls = orbkisp1.sp1_run(p1, p2, k)
+                q234, is_ls = orbkisp1.sp1_run(p1, p2, k, tol=self.sp1_tol)
                 if is_ls:
                     continue
                 R14 = oum.rotmat_from_axangle(self.h2, q234)
@@ -306,7 +318,7 @@ class P234X56(AnaIKBase):
                 k = -self.h6
                 p1 = R45.T @ self.h2
                 p2 = R06.T @ R01 @ self.h2
-                q6, is_ls = orbkisp1.sp1_run(p1, p2, k)
+                q6, is_ls = orbkisp1.sp1_run(p1, p2, k, tol=self.sp1_tol)
                 if is_ls:
                     continue
                 # compute q3 by sp3
@@ -328,7 +340,7 @@ class P234X56(AnaIKBase):
                     p2 = rhs
                     p1 = self.p23 + R23 @ self.p34
                     k = self.h2
-                    q2, is_ls = orbkisp1.sp1_run(p1, p2, k)
+                    q2, is_ls = orbkisp1.sp1_run(p1, p2, k, tol=self.sp1_tol)
                     if is_ls:
                         continue
                     # compute q4 by subtraction
