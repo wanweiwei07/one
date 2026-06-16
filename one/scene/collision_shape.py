@@ -172,6 +172,67 @@ class CapsuleCollisionShape(CollisionShape):
         return min_corner, max_corner
 
 
+class CylinderCollisionShape(CollisionShape):
+    """A flat-ended cylinder (MuJoCo native ``cylinder`` geom). Same fit as the
+    capsule but the half-length is the full axial half-extent (no rounded caps),
+    so it matches a real cylinder mesh exactly and rests/stacks flat."""
+
+    @classmethod
+    def fit_from_geom(cls, geom, rotmat, pos):
+        vs = (rotmat @ geom.vs.T).T + pos
+        fs = geom.fs
+        mean, pcmat = oum.area_weighted_pca(vs, fs)
+        pc_ax = pcmat[:, -1]
+        proj = (vs - mean) @ pc_ax
+        mn = proj.min()
+        mx = proj.max()
+        center = mean + pc_ax * (mn + mx) * 0.5
+        d = vs - center
+        axial = d @ pc_ax
+        radial_sq = np.sum(d * d, axis=1) - axial * axial
+        radial_sq = np.maximum(radial_sq, 0.0)
+        radius = np.sqrt(radial_sq).max()
+        half_length = max((mx - mn) * 0.5, 0.001)   # flat ends: full half-extent
+        return cls(radius=radius, half_length=half_length,
+                   rotmat=pcmat, pos=center)
+
+    def __init__(self, radius, half_length, rotmat=None, pos=None):
+        super().__init__(rotmat=rotmat, pos=pos)
+        self._radius = radius
+        self._half_length = half_length
+
+    def clone(self):
+        return self.__class__(
+            radius=self._radius, half_length=self._half_length,
+            rotmat=self.rotmat, pos=self.pos)
+
+    def to_render_model(self):
+        return osrm.RenderModel(
+            geom=self.geom, rotmat=self.rotmat, pos=self.pos,
+            rgb=ouc.BasicColor.ORANGE, alpha=ouc.ALPHA.TRANSPARENT)
+
+    def _build_geom(self):
+        return ogg.gen_cylinder_geom(
+            length=2.0 * self._half_length, radius=self._radius)
+
+    @property
+    def radius(self):
+        return self._radius
+
+    @property
+    def half_length(self):
+        return self._half_length
+
+    @property
+    def aabb(self):
+        if self._aabb is not None:
+            return self._aabb
+        half = np.array([self._radius, self._radius, self._half_length],
+                        dtype=np.float32)
+        ext = np.abs(self.rotmat) @ half
+        return self.pos - ext, self.pos + ext
+
+
 class AABBCollisionShape(CollisionShape):
 
     @classmethod

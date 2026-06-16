@@ -199,6 +199,9 @@ class SceneObject(ossn.SceneNode):
         elif self._collision_type == ouc.CollisionType.CAPSULE:
             shape = osc.CapsuleCollisionShape.fit_from_geom(
                 m.geom, m.rotmat, m.pos)
+        elif self._collision_type == ouc.CollisionType.CYLINDER:
+            shape = osc.CylinderCollisionShape.fit_from_geom(
+                m.geom, m.rotmat, m.pos)
         elif self._collision_type == ouc.CollisionType.AABB:
             shape = osc.AABBCollisionShape.fit_from_geom(
                 m.geom, m.rotmat, m.pos)

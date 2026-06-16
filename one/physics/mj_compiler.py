@@ -125,7 +125,7 @@ class MJCFCompiler:
         # size depends on type
         if g.gtype == "sphere":
             ge.set("size", f"{g.size[0]}")
-        elif g.gtype == "capsule":
+        elif g.gtype in ("capsule", "cylinder"):   # both take (radius, half_len)
             ge.set("size", f"{g.size[0]} {g.size[1]}")
         else:
             ge.set("size", f"{g.size[0]} {g.size[1]} {g.size[2]}")

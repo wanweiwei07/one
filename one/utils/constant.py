@@ -178,6 +178,7 @@ class CollisionType:
     CVXHULL = 4
     MESH = 5
     PLANE = 6
+    CYLINDER = 7
 
 
 class CollisionGroup:

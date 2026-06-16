@@ -129,7 +129,7 @@ for pose, pre_pose, jaw_width, score in grasps:
     if qs is None:
         continue
     mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
-    pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+    pln_ctx.clear_cache()
     if not pln_ctx.is_state_valid(qs):
         continue
 
@@ -259,8 +259,8 @@ def tick(dt):
             qs_list1 = robot.ik(pre_pos1, pre_rot1, tcp=gripper.tcp('grasp_center'))
             if qs_list1:
                 qs1 = qs_list1[0]
-                pln_ctx.set_aux_mecbas(gripper, qs=(
-                    jaw_width / 2, jaw_width / 2))
+                mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
+                pln_ctx.clear_cache()
                 if pln_ctx.is_state_valid(qs1):
                     feasible_bunny1[i] = (qs1, jaw_width)
 
@@ -270,8 +270,8 @@ def tick(dt):
             qs_list2 = robot.ik(pre_pos2, pre_rot2, tcp=gripper.tcp('grasp_center'))
             if qs_list2:
                 qs2 = qs_list2[0]
-                pln_ctx.set_aux_mecbas(gripper, qs=(
-                    jaw_width / 2, jaw_width / 2))
+                mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
+                pln_ctx.clear_cache()
                 if pln_ctx.is_state_valid(qs2):
                     feasible_bunny2[i] = (qs2, jaw_width)
 
@@ -374,7 +374,8 @@ def tick(dt):
         need_replan = False
 
     if path is None:
-        pln_ctx.set_aux_mecbas(gripper, aux_qs)
+        mjc.set_mecba_qpos(gripper, aux_qs)
+        pln_ctx.clear_cache()
         path = planner.solve(start=state, goal=current_target)
         if not path:
             return

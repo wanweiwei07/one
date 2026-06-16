@@ -1,5 +1,5 @@
-"""Plan O6 LEFT-hand antipodal grasps of an upright cylinder (dia 0.05, height
-0.3) and save them to JSON for the L1 picking demo (l1picking.py).
+"""Plan O6 LEFT-hand antipodal grasps of an upright cylinder (loaded from
+cylinder.stl) and save them to JSON for the L1 picking demo (l1picking.py).
 
 The O6 hand is presented to ``antipodal`` as a parallel jaw via
 ``spawn_jaw('pinch')`` (the only opposition wide enough -- the pinch opens to
@@ -24,23 +24,21 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import one.utils.constant as ouc                              # noqa: E402
+import one.scene.scene_object as osso                          # noqa: E402
 import one.scene.scene_object_primitive as ossop              # noqa: E402
 from one.robots.end_effectors.linkerbot.o6.o6 import O6Left   # noqa: E402
 from one.grasp.antipodal import antipodal                     # noqa: E402
 from one.grasp.serialize import save_grasps                   # noqa: E402
 
-# Cylinder: dia 0.05 (radius 0.025), height 0.3, upright (along +Z), centred at
-# its own origin -- the same local frame l1picking.py transforms onto the table.
-CYL_RADIUS = 0.025
-CYL_HEIGHT = 0.30
+# Cylinder mesh; grasps are planned in its LOCAL frame, which l1picking.py maps
+# onto the cylinder wherever it stands on the table (use the SAME mesh there).
+CYL_STL = os.path.join(_THIS, "cylinder.stl")
 OUT_JSON = os.path.join(_THIS, "o6_cylinder_grasps.json")
 
 
 def make_cylinder():
-    return ossop.cylinder(
-        spos=(0.0, 0.0, -CYL_HEIGHT / 2), epos=(0.0, 0.0, CYL_HEIGHT / 2),
-        radius=CYL_RADIUS, segments=24,
-        collision_type=ouc.CollisionType.MESH, is_free=True,
+    return osso.SceneObject.from_file(
+        CYL_STL, collision_type=ouc.CollisionType.MESH, is_free=True,
         rgb=(0.6, 0.7, 0.5))
 
 
@@ -52,13 +50,13 @@ def main(primitive='pinch'):
     jaw = hand.spawn_jaw(primitive)
     grasps = antipodal(jaw, cyl, density=0.0015, normal_tol_deg=25,
                        roll_step_deg=30, max_grasps=60, clearance=0.003)
-    print(f"antipodal: {len(grasps)} {primitive} grasps on the cylinder "
-          f"(dia {2 * CYL_RADIUS}, h {CYL_HEIGHT})")
+    print(f"antipodal: {len(grasps)} {primitive} grasps on "
+          f"{os.path.basename(CYL_STL)}")
     if not grasps:
         raise RuntimeError(f"no antipodal {primitive} grasp found on the cylinder")
 
     save_grasps(grasps, OUT_JSON, gripper_name="O6Left",
-                object_name=f"cylinder_d{2 * CYL_RADIUS}_h{CYL_HEIGHT}")
+                object_name=os.path.basename(CYL_STL))
     print(f"saved {len(grasps)} {primitive} grasps -> {OUT_JSON}")
 
     if headless:
@@ -115,4 +113,4 @@ def main(primitive='pinch'):
 
 
 if __name__ == "__main__":
-    main('power')
+    main('tripod')

@@ -118,7 +118,7 @@ for pose, pre_pose, jaw_width, score in grasps:
     if qs is None:
         continue
     mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
-    pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+    pln_ctx.clear_cache()
     if not pln_ctx.is_state_valid(qs):
         continue
 
@@ -215,7 +215,8 @@ def tick(dt):
             if not qs_list:
                 continue
             qs = qs_list[0]
-            pln_ctx.set_aux_mecbas(gripper, qs=(jaw_width / 2, jaw_width / 2))
+            mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
+            pln_ctx.clear_cache()
             if not pln_ctx.is_state_valid(qs):
                 continue
             if i in drawn_nodes:
@@ -244,7 +245,8 @@ def tick(dt):
         need_replan = False
 
     if path is None:
-        pln_ctx.set_aux_mecbas(gripper, aux_qs)
+        mjc.set_mecba_qpos(gripper, aux_qs)
+        pln_ctx.clear_cache()
         path = planner.solve(start=state, goal=current_target)
         if not path:
             return

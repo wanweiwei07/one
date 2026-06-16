@@ -39,7 +39,7 @@ from one.grasp.serialize import load_grasps                   # noqa: E402
 
 GRASPS_JSON = os.path.join(_THIS, "o6_cylinder_grasps.json")
 CHAIN = 'left_arm'      # left arm only (6-DOF, analytic S456X12); waist frozen
-PRIMITIVE = 'power'     # grasp primitive -- MUST match the one o6planning saved
+PRIMITIVE = 'tripod'     # grasp primitive -- MUST match the one o6planning saved
                         # the JSON with (drives the jaw tcp AND the closing)
 
 # Table: origin at bottom-centre, at world (0.3, 0, 0). Tabletop top z=0.9.
@@ -51,9 +51,10 @@ TOP_THICK = 0.04
 LEG = 0.05                   # square leg cross-section
 TABLE_RGB = (0.55, 0.42, 0.30)
 
-# Cylinder (dia 0.05, h 0.3) standing on the tabletop, at a reachable spot.
-CYL_RADIUS = 0.025
-CYL_HEIGHT = 0.30
+# Cylinder mesh standing on the tabletop -- the SAME mesh o6planning planned the
+# grasps on, so the saved local grasps map straight on via cyl.wd_tf. Its base is
+# at z=0 in its own frame, so cyl.pos places the base on the tabletop.
+CYL_STL = os.path.join(_THIS, "cylinder.stl")
 CYL_POS = np.array([0.22, 0.3, TABLE_TOP_Z], dtype=np.float32)
 
 UP = np.array([0.0, 0.0, 0.15], dtype=np.float32)   # lift after grasp
@@ -83,15 +84,10 @@ def build_table():
 def build_scene():
     robot = l1.L1O6()
     table = build_table()
-    # Capsule collision (not mesh): the MuJoCo collider needs a native primitive
-    # or a file-backed mesh, and a procedural cylinder mesh has no file. A
-    # capsule is the natural fit for a cylinder (radius matches; rounded ends are
-    # slightly conservative) and the cylinder is only an obstacle here -- grasps
-    # are pre-loaded, not re-planned against this shape.
-    cyl = ossop.cylinder(
-        spos=(0.0, 0.0, 0), epos=(0.0, 0.0, CYL_HEIGHT),
-        radius=CYL_RADIUS, segments=24,
-        collision_type=ouc.CollisionType.CAPSULE,
+    # File-backed mesh, so the MuJoCo collider can use MESH collision directly
+    # (a procedural cylinder has no file and previously needed a CAPSULE fallback).
+    cyl = osso.SceneObject.from_file(
+        CYL_STL, collision_type=ouc.CollisionType.MESH,
         is_free=True, rgb=(0.6, 0.7, 0.5))
     cyl.pos = CYL_POS.copy()
     ground = ossop.plane(pos=(0, 0, 0.0))

@@ -22,10 +22,13 @@ def gen_geom_from_raw(vs, fs=None):
 
 
 def gen_cylinder_geom(length, radius=0.05, n_segs=8):
+    """Cylinder of total height ``length`` CENTERED on the origin along +Z
+    (spans [-length/2, +length/2]) -- matches the MuJoCo cylinder geom
+    convention. gen_cylinder_rmodel lifts it for the (0->length) primitives."""
     key = ("cylinder", radius, length, n_segs)
     if key in _geom_cache:
         return _geom_cache[key]
-    profile = [(radius, 0.0), (radius, length)]
+    profile = [(radius, -length / 2.0), (radius, length / 2.0)]
     verts, faces = osgo.revolve(profile, n_segs=n_segs)
     g = _Geom(vs=verts, fs=faces)
     _geom_cache[key] = g

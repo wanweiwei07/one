@@ -191,6 +191,9 @@ class MJOneConverter:
         elif isinstance(c, sco.CapsuleCollisionShape):
             g.gtype = "capsule"
             g.size = (c.radius, c.half_length)
+        elif isinstance(c, sco.CylinderCollisionShape):
+            g.gtype = "cylinder"
+            g.size = (c.radius, c.half_length)
         elif isinstance(c, (sco.AABBCollisionShape, sco.OBBCollisionShape)):
             g.gtype = "box"
             g.size = tuple(c.half_extents)

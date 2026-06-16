@@ -1,3 +1,4 @@
+import numpy as np
 import one.utils.constant as ouc
 import one.geom.geometry as ogg
 import one.scene.render_model as osrm
@@ -17,7 +18,13 @@ def gen_cylinder_rmodel(length=0.1, radius=0.05, n_segs=8,
                         rotmat=None, pos=None,
                         rgb=ouc.BasicColor.DEFAULT, alpha=1.0):
     """Gen cylinder render model from (0,0,0) to (0,0,length)."""
-    geom = ogg.gen_cylinder_geom(length, radius, n_segs)
+    geom = ogg.gen_cylinder_geom(length, radius, n_segs)   # centered on origin
+    # gen_cylinder_geom is centered now; lift it by half the length so this
+    # model keeps its documented (0,0,0)->(0,0,length) span.
+    lift = np.array([0.0, 0.0, length / 2.0], dtype=np.float32)
+    if rotmat is not None:
+        lift = rotmat @ lift
+    pos = lift if pos is None else np.asarray(pos, dtype=np.float32) + lift
     return osrm.RenderModel(
         geom=geom, rotmat=rotmat, pos=pos, rgb=rgb, alpha=alpha)
 
