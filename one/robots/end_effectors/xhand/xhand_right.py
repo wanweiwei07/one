@@ -27,7 +27,7 @@ def prepare_mechstruct(collision_type=ouc.CollisionType.MESH):
 
 class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
     """XHand right: a 12-dof dexterous hand as a mountable MechBase EE with the
-    DexHandMixin grasp behaviors (open_hand / pinch / tripod / power_grasp,
+    DexHandMixin grasp behaviors (open_hand / pinch / tripod / power,
     grasp / release, *_at positioning, and ``spawn_jaw`` for antipodal planning).
 
     DexHandMixin is listed FIRST so its ``clone`` (which carries the jaw
@@ -49,7 +49,7 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
     viewer (run this module) before relying on the *_at helpers or spawn_jaw.
     """
 
-    _TUCK = 1.0   # proximal-flexion curl for fingers not in the grasp
+    _TUCK = 1.92  # flexion curl for fingers not participating in the grasp
 
     # Single per-primitive grasp definition (concrete URDF joint / link names).
     # Drives BOTH the shape primitives and the parallel-jaw planning view.
@@ -65,13 +65,13 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
     # nodes (joint1 proximal + joint2 distal) curl, not just the proximal.
     _GRASP_TABLE = {
         'pinch': {
-            'preshape': {'thumb_joint0': 1.1},
+            'preshape': {'thumb_joint0': 1.35},
             'closing': {'thumb_joint1': 0.9, 'thumb_joint2': 0.4,
                         'index_joint1': 1.0, 'index_joint2': 1.0},
             'pads': ('thumb_rota_link2', ['index_rota_link2']),
         },
         'tripod': {
-            'preshape': {'thumb_joint0': 1.0},
+            'preshape': {'thumb_joint0': 1.5},
             'closing': {'thumb_joint1': 0.9, 'thumb_joint2': 0.4,
                         'index_joint1': 1.0, 'index_joint2': 1.0,
                         'middle_joint0': 1.0, 'middle_joint1': 1.0},
@@ -79,7 +79,7 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
         },
         'power': {   # all five fingers envelop -- not a parallel jaw
             'preshape': {},
-            'closing': {'thumb_joint0': 0.9, 'thumb_joint1': 0.7,
+            'closing': {'thumb_joint0': 1.75, 'thumb_joint1': 0.7,
                         'thumb_joint2': 0.5,
                         'index_joint1': 1.2, 'index_joint2': 1.0,
                         'middle_joint0': 1.2, 'middle_joint1': 1.0,
@@ -89,9 +89,14 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
         },
     }
 
-    # proximal flexion joint of each finger (used to tuck non-participants)
-    _FINGER_PROX = {'index': 'index_joint1', 'middle': 'middle_joint0',
-                    'ring': 'ring_joint0', 'pinky': 'pinky_joint0'}
+    # Flexion joints used to tuck non-participants. XHand joints are independent,
+    # so curl both phalanges instead of relying on mimic coupling.
+    _FINGER_TUCK = {
+        'index': ('index_joint1', 'index_joint2'),
+        'middle': ('middle_joint0', 'middle_joint1'),
+        'ring': ('ring_joint0', 'ring_joint1'),
+        'pinky': ('pinky_joint0', 'pinky_joint1'),
+    }
 
     @classmethod
     def _build_structure(cls):
@@ -120,8 +125,10 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
         t = self._GRASP_TABLE[primitive]
         preshape = dict(t['preshape'])
         closing = dict(t['closing'])
-        tuck = {j: self._TUCK for f, j in self._FINGER_PROX.items()
-                if j not in closing}
+        tuck = {}
+        for joints in self._FINGER_TUCK.values():
+            if not any(j in closing for j in joints):
+                tuck.update({j: self._TUCK for j in joints})
         pads = t['pads']
         thumb_pad = None if pads is None else pads[0]
         opp_pads = None if pads is None else list(pads[1])
@@ -150,7 +157,7 @@ if __name__ == '__main__':
         ('open',   lambda h: h.open_hand(),      None),
         ('pinch',  lambda h: h.pinch(1.0),       'pinch_center'),
         ('tripod', lambda h: h.tripod(1.0),      'pinch_center'),
-        ('power',  lambda h: h.power_grasp(1.0), 'power_center'),
+        ('power',  lambda h: h.power(1.0),       'power_center'),
     ]
     dy = 0.22   # y spacing between hands
 
