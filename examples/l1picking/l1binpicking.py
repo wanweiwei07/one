@@ -42,25 +42,33 @@ import one.viewer.world as ovw                                 # noqa: E402
 from one.grasp.serialize import load_grasps                    # noqa: E402
 
 from l1picking import (build_table, TABLE_TOP_Z, CHAIN,        # noqa: E402
-                       chain_planning_context, ik_config, jtraj, plan_segment)
+                       chain_planning_context, ik_config, plan_segment)
 
 CYL_STL = os.path.join(_THIS, "cylinder.stl")
 GRASPS_JSON = os.path.join(_THIS, "o6_cyl_stl_grasps.json")
 
 # bin geometry (left = pick, right = place)
-BIN_BOTTOM = (0.35, 0.25, 0.01)   # x, y, thickness
-WALL_H = 0.10
+BIN_BOTTOM = (0.35, 0.25, 0.03)   # x, y, thickness
+# shallow tray: the O6 hand is too bulky to dip into a deep bin -- with walls
+# taller than ~3cm NO grasp clears the wall (parts settle ~8cm below a 10cm rim).
+WALL_H = 0.03
 WALL_T = 0.01
 BIN_CX = 0.30
 LEFT_CY = 0.30
 RIGHT_CY = 0.025
 BIN_RGB = (0.32, 0.34, 0.40)
 
-N_CYL = 30
+N_CYL = 20
 UP = np.array([0.0, 0.0, 0.12], dtype=np.float32)             # lift after grasp
 # release point: above the RIGHT bin, clear of its walls
 PLACE_POS = np.array([BIN_CX, RIGHT_CY, TABLE_TOP_Z + WALL_H + 0.16],
                      dtype=np.float32)
+# the dropped part free-falls, so its yaw at release is irrelevant -- we try
+# these place orientations (grasp rot spun about world z) and keep one whose IK
+# has a NORMAL elbow (joint 3 near 0, not the q3~180 flipped branch).
+PLACE_YAWS = np.radians(np.arange(0, 360, 30))
+ELBOW_IDX = 2                                    # active joint 3 (the elbow)
+ELBOW_MAX = np.deg2rad(90.0)                      # |q3| below this == normal
 
 
 def build_bin(cx, cy, z_top):
@@ -129,34 +137,140 @@ def build_world():
 
 def make_pick_collider(robot, statics, cyls, target):
     """Motion-planning collider: robot vs statics vs every cylinder EXCEPT the
-    one being grasped (that one is carried, not an obstacle)."""
+    one being grasped (that one is carried, not an obstacle).
+
+    The obstacle cylinders are cloned as FIXED (is_free=False -> ENV group) at
+    their current settled pose. is_collided() counts global contacts, and a pile
+    of free (OBJECT) cylinders resting on each other and the bin produces dozens
+    of permanent OBJECT-OBJECT / OBJECT-ENV contacts that would mark every robot
+    config as collided. ENV-ENV pairs are filtered by the collision matrix, so
+    fixed clones still block the robot (ROBOT-ENV is checked) without the pile
+    noise. The live free cylinders stay in the physics scene untouched."""
     mjc = ocm.MJCollider()
-    for e in [robot] + statics + [c for c in cyls if c is not target]:
+    obstacles = []
+    for c in cyls:
+        if c is target:
+            continue
+        fixed = c.clone()
+        fixed.is_free = False
+        obstacles.append(fixed)
+    for e in [robot] + statics + obstacles:
         mjc.append(e)
     mjc.actors = [robot]
     mjc.compile(margin=0.0, auto_acm=True)
     return mjc
 
 
+def cartesian_segment(robot, ctx, tcp, ref, p0, p1, rot, nstep=12, check=True):
+    """Straight CARTESIAN move of ``tcp`` from world pos ``p0`` to ``p1`` at a
+    fixed orientation ``rot``, IK-solved at each step and seeded from the
+    previous config (so the branch stays continuous -- no elbow flips). Returns
+    the config list, or None if any step has no IK solution or, when ``check``,
+    the densified path collides.
+
+    A joint-space line between two valid endpoints does NOT move the hand in a
+    straight line -- it bows the wrist sideways, which in a bin drives the hand
+    through a wall mid-descent. Moving the tcp along a straight Cartesian line
+    (the grasp's approach axis) keeps the hand clear, and rejecting segments that
+    still collide naturally selects the top-down, wall-clear grasps."""
+    prev, path = ref, []
+    for t in np.linspace(0, 1, nstep):
+        pos = p0 * (1 - t) + p1 * t
+        q = ik_config(robot, ctx, pos, rot, tcp, collision_free=False, ref=prev)
+        if q is None:
+            return None
+        path.append(q)
+        prev = q
+    if check:
+        for a, bq in zip(path[:-1], path[1:]):
+            a = np.asarray(a, np.float64)
+            bq = np.asarray(bq, np.float64)
+            n = max(2, int(np.ceil(np.max(np.abs(bq - a)) / np.deg2rad(1.5))))
+            for t in np.linspace(0, 1, n):
+                if not ctx.is_state_valid(a + (bq - a) * t):
+                    return None
+    return path
+
+
+def normal_elbow_ik(robot, ctx, pos, rot, tcp, ref):
+    """Nearest-to-``ref`` IK config at (pos, rot) that has a NORMAL elbow
+    (|joint3| < ELBOW_MAX, i.e. not the q3~180 flipped branch), stays in-limit
+    and is collision-free. None if no such solution -- the caller then skips
+    this grasp/orientation rather than execute a reversed elbow."""
+    chain = robot.chain(CHAIN)
+    ref_active = chain.extract_active_qs(ref)
+    best = None
+    for s in robot.ik(pos, rot, chain=CHAIN, tcp=tcp,
+                      ref_qs=ref_active, max_solutions=8):
+        a = chain.extract_active_qs(s)
+        if abs(a[ELBOW_IDX]) >= ELBOW_MAX:            # flipped elbow -> skip
+            continue
+        if not ctx.is_state_valid(s.astype(np.float64)):
+            continue
+        d = float(np.linalg.norm(a - ref_active))
+        if best is None or d < best[0]:
+            best = (d, s.astype(np.float64))
+    return None if best is None else best[1]
+
+
+def place_config(robot, ctx, pos, base_rot, tcp, ref):
+    """Release config over the right bin. The dropped part free-falls, so its
+    yaw is irrelevant: try several orientations (base_rot spun about world z) and
+    return the normal-elbow config nearest to ``ref``, plus the orientation it
+    used -- or None. Nearest-to-ref keeps the lift->place motion small AND
+    prefers the carried orientation."""
+    chain = robot.chain(CHAIN)
+    ref_active = chain.extract_active_qs(ref)
+    best = None
+    for yaw in PLACE_YAWS:
+        rot = oum.rotmat_from_axangle(ouc.StandardAxis.Z, yaw) @ base_rot
+        q = normal_elbow_ik(robot, ctx, pos, rot, tcp, ref)
+        if q is None:
+            continue
+        d = float(np.linalg.norm(chain.extract_active_qs(q) - ref_active))
+        if best is None or d < best[0]:
+            best = (d, q, rot)
+    return None if best is None else (best[1], best[2])
+
+
 def build_pick_place(robot, ctx, planner, jaw, wpose, wpre, jw):
     """home -> pre -> grasp -> lift -> place(over right bin) -> (release).
-    Returns (traj, grasp_idx, amount) or None if any keyframe is infeasible."""
+    Returns (traj, grasp_idx, amount) or None if any keyframe is infeasible.
+
+    The target cylinder is excluded from the collider (make_pick_collider), so
+    every config is collision-CHECKED: contacting the absent target is free, but
+    the hand may NOT pierce the bin walls or neighbour parts. The pre->grasp
+    descent and grasp->lift retreat are straight CARTESIAN moves (see
+    cartesian_segment) so the hand goes straight along the approach axis instead
+    of bowing into a wall."""
     rot, g = wpose[:3, :3], wpose[:3, 3]
     tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
                    jaw.eval_grasp_tcp(jw).loc_tf)
     home = robot.qs.astype(np.float64).copy()
-    pre = ik_config(robot, ctx, wpre[:3, 3], wpre[:3, :3], tcp)
-    grasp_q = ik_config(robot, ctx, g, rot, tcp, collision_free=False, ref=pre)
-    lift = ik_config(robot, ctx, g + UP, rot, tcp, collision_free=False,
-                     ref=grasp_q)
-    place = ik_config(robot, ctx, PLACE_POS, rot, tcp, ref=lift)
-    if any(x is None for x in (pre, grasp_q, lift, place)):
+    # Pick the NORMAL-elbow pre-grasp (joint3 near 0). The grasp orientation is
+    # fixed by the antipodal contact, so we can't spin it like place; if no
+    # normal-elbow solution exists for this grasp we return None and the caller
+    # tries the next grasp (a different orientation). approach/lift then inherit
+    # this elbow branch via the seeded Cartesian steps.
+    pre = normal_elbow_ik(robot, ctx, wpre[:3, 3], wpre[:3, :3], tcp, home)
+    if pre is None:
         return None
-    traj = plan_segment(planner, home, pre)
-    traj += jtraj(pre, grasp_q)
-    grasp_idx = len(traj) - 1
-    traj += jtraj(grasp_q, lift)
-    traj += plan_segment(planner, lift, place)
+    approach = cartesian_segment(robot, ctx, tcp, pre, wpre[:3, 3], g, rot)
+    if approach is None:                       # descent clips a wall -> skip
+        return None
+    grasp_q = approach[-1]
+    lift = cartesian_segment(robot, ctx, tcp, grasp_q, g, g + UP, rot)
+    if lift is None:
+        return None
+    placed = place_config(robot, ctx, PLACE_POS, rot, tcp, lift[-1])
+    if placed is None:                          # no normal-elbow place -> skip
+        return None
+    place, _ = placed
+    traj = plan_segment(planner, home, pre)    # RRT, ends at pre
+    traj += approach[1:]                        # pre already present; descend
+    grasp_idx = len(traj) - 1                   # hand closes here (at grasp_q)
+    traj += lift[1:]                            # grasp already present; retreat
+    traj += plan_segment(planner, lift[-1], place)
     amount = float(jaw._amount_for(jw))
     return traj, grasp_idx, amount
 
