@@ -123,7 +123,10 @@ def sample_pattern(pattern, tgt_vs, tgt_fs, n_samples,
     exclude_regions: optional list of convex regions carved out of the
         candidate pool (see `osgop.clip_mesh`).
 
-    Returns: list of N-tuples of float32 (3,) arrays in target frame.
+    Returns: list of (points, normals) where each is an N-tuple of float32
+        (3,) arrays in the target frame. The normals are the surface normals
+        at the sampled points; pair_pattern needs them (the nearest-face-center
+        normal it would otherwise re-derive is wrong near thin-part edges).
     """
     pattern = np.asarray(pattern, dtype=np.float32)
     if pattern.ndim != 2 or pattern.shape[1] != 3:
@@ -159,6 +162,7 @@ def sample_pattern(pattern, tgt_vs, tgt_fs, n_samples,
         anchor_n = surf_nrms[anchor_idx]
         placed_idx = [int(anchor_idx)]
         placed_pos = [anchor_pos]
+        placed_nrm = [anchor_n]
         ok = True
         for k in range(1, n_contacts):
             tgt_d = float(pattern_pair_dists[0, k])
@@ -195,9 +199,11 @@ def sample_pattern(pattern, tgt_vs, tgt_fs, n_samples,
             j = int(rng.choice(cands))
             placed_idx.append(j)
             placed_pos.append(surf_pts[j])
+            placed_nrm.append(surf_nrms[j])
         if ok:
-            out.append(tuple(
-                np.asarray(p, dtype=np.float32) for p in placed_pos))
+            out.append((
+                tuple(np.asarray(p, dtype=np.float32) for p in placed_pos),
+                tuple(np.asarray(n, dtype=np.float32) for n in placed_nrm)))
             if len(out) >= n_samples:
                 break
     return out
@@ -208,9 +214,9 @@ def pair_pattern(samples, tgt_vs, tgt_fs,
                  distance_tol=0.001,
                  min_thickness=0.0,
                  max_thickness=None):
-    """For every front-side N-tuple in `samples`, ray-cast each contact
-    along the inward surface normal to find a back-side hit. Keep the
-    placements whose back-side hits also form a valid pattern (same
+    """For every front-side (points, normals) sample in `samples`, ray-cast
+    each contact along the inward surface normal to find a back-side hit. Keep
+    the placements whose back-side hits also form a valid pattern (same
     pairwise distances + shared normal within tol). Returns a list of
     (front_tuple, back_tuple).
 
@@ -225,18 +231,20 @@ def pair_pattern(samples, tgt_vs, tgt_fs,
     v2 = tgt_vs[tgt_fs[:, 2]]
     fns = np.cross(v1 - v0, v2 - v0)
     fns = fns / (np.linalg.norm(fns, axis=1, keepdims=True) + 1e-9)
-    centers = (v0 + v1 + v2) / 3.0
-    kd = cKDTree(centers)
     cos_th = float(np.cos(np.deg2rad(normal_tol_deg)))
     sin_th = float(np.sin(np.deg2rad(normal_tol_deg)))
     eps_offset = 1e-5
 
     out = []
-    for sample in samples:
-        front_pts = np.asarray(sample, dtype=np.float32)
-        # Anchor outward normal: nearest face's normal at front[0].
-        _, anchor_face = kd.query(front_pts[0], k=1)
-        anchor_n = fns[anchor_face].astype(np.float32)
+    for front_pts_t, front_nrm_t in samples:
+        front_pts = np.asarray(front_pts_t, dtype=np.float32)
+        front_nrm = np.asarray(front_nrm_t, dtype=np.float32)
+        # Anchor outward normal: the sampled surface normal at front[0] (the
+        # front contacts share a normal within tol). Using the true sampled
+        # normal -- not the nearest-face-CENTER normal -- keeps the ray going
+        # through the part; near a thin part's edge the nearest center can sit
+        # on a perpendicular wall and send the ray sideways.
+        anchor_n = front_nrm[0]
         ray_dir = -anchor_n
         origins = front_pts + eps_offset * ray_dir
         directions = np.broadcast_to(
