@@ -5,7 +5,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.viewer.world as ovw
 import one.scene.scene_object_primitive as ossop
-import one.motion.trajectory.cartesian as omtr
+import one.motion.interpolation.cartesian as omic
 import one.motion.trajectory.time_param as omttp
 import one.robots.manipulators.kawasaki.rs007l.rs007l as ormkr7
 import one.robots.end_effectors.onrobot.or_sd.or_sd as oreorsd
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     ossop.frame(pos=start_pos, rotmat=start_rotmat, color_mat=ouc.CoordColor.DYO).attach_to(scene)
     ossop.frame(pos=goal_pos, rotmat=goal_rotmat, color_mat=ouc.CoordColor.MYC).attach_to(scene)
 
-    q_seq, pose_seq = omtr.cartesian_to_jtraj(
+    q_seq, pose_seq = omic.linear_to_jpath(
         robot=robot,
         start_rotmat=start_rotmat,
         start_pos=start_pos,
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         tcp=orsd_tcp,
     )
     if q_seq is None:
-        print('cartesian_to_jtraj failed (IK failed on at least one sample).')
+        print('linear_to_jpath failed (IK failed on at least one sample).')
         pos_seq, rotmat_seq = pose_seq
         for pos, rotmat in zip(pos_seq, rotmat_seq):
             ossop.frame(
@@ -74,7 +74,7 @@ if __name__ == '__main__':
             ).attach_to(scene)
         base.run()
     else:
-        print(f'cartesian_to_jtraj success: {len(q_seq)} waypoints')
+        print(f'linear_to_jpath success: {len(q_seq)} waypoints')
         # time-parameterize joint waypoints
         n_jnts = q_seq.shape[1]
         v_max = np.full(n_jnts, 1.2, dtype=np.float32)

@@ -31,8 +31,9 @@ import one.utils.constant as ouc                              # noqa: E402
 import one.scene.scene_object as osso                         # noqa: E402
 import one.scene.scene_object_primitive as ossop              # noqa: E402
 import one.collider.mj_collider as ocm                        # noqa: E402
-import one.motion.probabilistic.planning_context as omppc     # noqa: E402
+import one.motion.core.planning_context as omppc     # noqa: E402
 import one.motion.probabilistic.rrt as ompr                   # noqa: E402
+import one.motion.interpolation.joint as omij                    # noqa: E402
 import one.robots.base.tcp as orbt                            # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                  # noqa: E402
 from one.grasp.serialize import load_grasps                   # noqa: E402
@@ -157,16 +158,6 @@ def ik_config(robot, ctx, pos, rotmat, tcp, collision_free=True, ref=None):
     return best
 
 
-def jtraj(q0, q1, step=np.deg2rad(3.0)):
-    n = max(2, int(np.ceil(np.max(np.abs(q1 - q0)) / step)))
-    return [q0 + (q1 - q0) * t for t in np.linspace(0, 1, n)]
-
-
-def plan_segment(planner, q0, q1):
-    path = planner.solve(q0, q1, max_iters=4000)
-    return path if path else jtraj(q0, q1)   # fall back to interpolation
-
-
 def build_motion(robot, ctx, planner, jaw, grasp):
     """Pick motion for one grasp = (pose, pre_pose, jw, score):
     home -> pre-grasp (planned) -> grasp (approach) -> lift. Returns
@@ -190,11 +181,13 @@ def build_motion(robot, ctx, planner, jaw, grasp):
                      collision_free=False, ref=grasp_q)
     if any(x is None for x in (pre, grasp_q, lift)):
         return None
-    traj = []
-    traj += plan_segment(planner, home, pre)   # planned free-space approach
-    traj += jtraj(pre, grasp_q)                 # straight approach to the grasp
+    approach = planner.solve(home, pre, max_iters=4000)   # planned free-space approach
+    if not approach:
+        return None
+    traj = list(approach)
+    traj += list(omij.interp_by_step(pre, grasp_q))   # straight approach to the grasp
     grasp_idx = len(traj) - 1
-    traj += jtraj(grasp_q, lift)                # lift (carrying)
+    traj += list(omij.interp_by_step(grasp_q, lift))  # lift (carrying)
     amount = float(jaw._amount_for(jw))         # jw -> power closure amount
     return traj, grasp_idx, amount
 

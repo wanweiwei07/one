@@ -1,6 +1,6 @@
 import time
 import numpy as np
-import one.motion.probabilistic.post_processor as omppp
+import one.motion.core.post_processor as omppp
 
 
 def shortcut_path(path, pln_ctx, n_iter=200):
@@ -75,46 +75,6 @@ class RRTConnectPlanner:
         else:
             assert step.size == dim
             self.max_step = step
-
-    # def solve(self, start, goal, max_iters=1000,
-    #           time_limit=None, verbose=False):
-    #     start_time = time.time()
-    #     # Two trees: start-tree and goal-tree
-    #     t_start = RRTTree(start)
-    #     t_goal = RRTTree(goal)
-    #     for it in range(max_iters):
-    #         if (time_limit is not None and
-    #                 (time.time() - start_time) > time_limit):
-    #             if verbose:
-    #                 print("[RRTConnect] Time limit exceeded")
-    #             return None
-    #         # Sampling with goal bias
-    #         if np.random.rand() < self.goal_bias:
-    #             rand_state = goal
-    #         else:
-    #             rand_state = self._sspp.ssp.sample_uniform()
-    #         # Extend start-tree towards random sample
-    #         status1, new_idx_start = self._extend_tree(t_start, rand_state)
-    #         if status1 != "trapped":
-    #             # Now try to connect goal-tree toward the new node in start
-    #             new_state = t_start.states[new_idx_start]
-    #             status2, new_idx_goal = self._extend_tree(t_goal, new_state)
-    #             if verbose:
-    #                 print(f"[Iter {it}] stat1={status1}, stat2={status2}")
-    #             # If trees connected (goal tree reached new_state)
-    #             if status2 == "reached":
-    #                 # Build full path
-    #                 path_start = t_start.path_from_root(new_idx_start)
-    #                 path_goal = t_goal.path_from_root(new_idx_goal)
-    #                 path_goal.reverse()  # from connection point to goal
-    #                 raw_path = path_start + path_goal[1:]
-    #                 smooth_path = self._ppp.shortcut(raw_path)
-    #                 return self._ppp.densify(smooth_path)
-    #         # Swap the trees every iteration
-    #         t_start, t_goal = t_goal, t_start
-    #     if verbose:
-    #         print("[RRTConnect] No path found")
-    #     return None
 
     def solve(self, *args, **kwargs):
         last_path = None

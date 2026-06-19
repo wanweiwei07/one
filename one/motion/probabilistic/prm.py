@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
-import one.motion.probabilistic.post_processor as omppp
+import one.motion.core.post_processor as omppp
 
 
 class PRMRoadmap:

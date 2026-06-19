@@ -176,15 +176,32 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 - `save_grasps(grasps, path, gripper_name=None, object_name=None)` — Save planned grasps to a JSON file.
 - `load_grasps(path)` — Load grasps previously saved by `save_grasps`.
 
-## `one.motion.probabilistic.planning_context`
+## `one.motion.core.planning_context`
 
 - **class `PlanningContext`** — Collision + bounds oracle for sampling-based planners.
   - methods: `is_state_valid`, `is_motion_valid`, `states_equal`, `enforce_bounds`, `clear_cache`, `sample_uniform`, `interpolate`, `distance`
 
-## `one.motion.probabilistic.post_processor`
+## `one.motion.core.post_processor`
 
 - **class `PathPostProcessor`**
   - methods: `shortcut`, `densify`
+
+## `one.motion.core.state_space`
+
+- **class `RealVectorStateSpace`** — Simple R^n box-bounded state space, OMPL-style.
+  - methods: `sample_uniform`, `distance`, `vectorized_distance`, `interpolate`, `enforce_bounds`, `satisfies_bounds`
+
+## `one.motion.interpolation.cartesian`
+
+- `linear_to_jpath(robot, start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0), ref_qs=None, chain='main', tcp='flange', ctx=None)` — Convert Cartesian straight-line trajectory to joint trajectory using IK.
+- `interp_by_step(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0))` — Cartesian straight-line interpolation with automatic sample count.
+- `interp_by_n(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, n_steps=2)` — Cartesian straight-line interpolation with fixed number of samples.
+
+## `one.motion.interpolation.joint`
+
+- `interp_by_step(start_qs, goal_qs, step=np.deg2rad(3.0))` — Joint-space straight-line interpolation with automatic sample count.
+- `interp_by_n(start_qs, goal_qs, n_steps=2)` — Joint-space straight-line interpolation with fixed number of samples.
+- `linear_path(start_qs, goal_qs, step=np.deg2rad(3.0), ctx=None)` — Joint-space straight-line path between two configs, optionally collision-gated.
 
 ## `one.motion.probabilistic.prm`
 
@@ -203,17 +220,6 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
   - methods: `add_node`, `nearest`, `nearest_state`, `path_from_root`
 - **class `RRTConnectPlanner`**
   - methods: `solve`, `solve_iter`
-
-## `one.motion.probabilistic.state_space`
-
-- **class `RealVectorStateSpace`** — Simple R^n box-bounded state space, OMPL-style.
-  - methods: `sample_uniform`, `distance`, `vectorized_distance`, `interpolate`, `enforce_bounds`, `satisfies_bounds`
-
-## `one.motion.trajectory.cartesian`
-
-- `cartesian_to_jtraj(robot, start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0), ref_qs=None, chain='main', tcp='flange', ctx=None)` — Convert Cartesian straight-line trajectory to joint trajectory using IK.
-- `line_by_step_size(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0))` — Cartesian straight-line interpolation with automatic sample count.
-- `line_by_n_steps(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, n_steps=2)` — Cartesian straight-line interpolation with fixed number of samples.
 
 ## `one.motion.trajectory.time_param`
 

@@ -24,7 +24,7 @@ Things to notice:
 ## Cartesian trajectories
 
 When you need the tcp to follow a straight Cartesian path (e.g. a tool sweeping
-over a workpiece), `one.motion.trajectory.cartesian.cartesian_to_jtraj` solves
+over a workpiece), `one.motion.interpolation.cartesian.linear_to_jpath` solves
 per-step IK along the line, and `time_param.retime_trapezoidal` adds a velocity/
 acceleration profile. This example mounts a screwdriver and drives its tip along
 a Cartesian segment:
@@ -35,8 +35,8 @@ a Cartesian segment:
 
 Things to notice:
 
-- `cartesian_to_jtraj(robot, start_pos, start_rotmat, goal_pos, goal_rotmat,
-  tcp=...)` returns joint waypoints plus the sampled poses; pass a biased
+- `linear_to_jpath(robot, start_pos, start_rotmat, goal_pos, goal_rotmat,
+  tcp=...)` returns the joint path plus the sampled poses; pass a biased
   `ref_qs` so the per-step IK stays on a smooth branch.
 - `retime_trapezoidal(q_seq, v_max, a_max, dt)` time-parameterizes the waypoints.
 

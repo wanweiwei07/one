@@ -3,7 +3,7 @@ import numpy as np
 import one.utils.math as oum
 
 
-def cartesian_to_jtraj(
+def linear_to_jpath(
     robot,
     start_rotmat,
     start_pos,

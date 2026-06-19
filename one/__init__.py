@@ -25,10 +25,11 @@ import one.grasp.polypodal as ogpp
 import one.grasp.monocontact as ogmc
 import one.grasp.placement as ogpl
 
-import one.motion.probabilistic.planning_context as omppc
+import one.motion.core.planning_context as omppc
 import one.motion.probabilistic.rrt as ompr
 import one.motion.probabilistic.prm as ompp
-import one.motion.trajectory.cartesian as omtr
+import one.motion.interpolation.cartesian as omic
+import one.motion.interpolation.joint as omij
 import one.motion.trajectory.time_param as omttp
 
 import one.robots.manipulators.kawasaki.rs007l.rs007l as khi_rs007l
@@ -39,5 +40,5 @@ import one.robots.vehicle.xytheta as xyt
 __all__ = ['np', 'key', 'oum', 'ouh', 'ouc',
            'oss', 'osso', 'ossop', 'ogg', 'osrm', 'ogl', 'osgop', 'ovw',
            'ocm', 'occs', 'ogab', 'ogpp', 'ogmc', 'ogpl',
-           'omppc', 'ompr', 'ompp', 'omtr', 'omttp',
+           'omppc', 'ompr', 'ompp', 'omic', 'omij', 'omttp',
            'khi_rs007l', 'xarm_lite6', 'or_2fg7', 'xyt']

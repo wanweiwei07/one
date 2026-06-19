@@ -36,14 +36,14 @@ import one.scene.scene_object_primitive as ossop              # noqa: E402
 import one.collider.mj_collider as ocm                         # noqa: E402
 import one.physics.mj_env as opme                              # noqa: E402
 import one.motion.probabilistic.rrt as ompr                    # noqa: E402
-import one.motion.trajectory.cartesian as omtr                 # noqa: E402
+import one.motion.interpolation.cartesian as omic                 # noqa: E402
 import one.robots.base.tcp as orbt                             # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                   # noqa: E402
 import one.viewer.world as ovw                                 # noqa: E402
 from one.grasp.serialize import load_grasps                    # noqa: E402
 
 from l1picking import (build_table, TABLE_TOP_Z, CHAIN,        # noqa: E402
-                       chain_planning_context, plan_segment)
+                       chain_planning_context)
 
 CYL_STL = os.path.join(_THIS, "cylinder.stl")
 GRASPS_JSON = os.path.join(_THIS, "o6_cyl_stl_grasps.json")
@@ -174,10 +174,10 @@ def cartesian_segment(robot, ctx, tcp, ref, p0, p1, rot, check=True):
     through a wall mid-descent. Moving the tcp along a straight Cartesian line
     (the grasp's approach axis) keeps the hand clear, and ``ctx`` rejects
     segments that still collide -- naturally selecting the top-down, wall-clear
-    grasps. Thin wrapper over ``omtr.cartesian_to_jtraj`` (which does the
+    grasps. Thin wrapper over ``omic.linear_to_jpath`` (which does the
     interpolation, seeded per-step IK, and densified ``ctx.is_motion_valid``
     edge check)."""
-    q_seq, _ = omtr.cartesian_to_jtraj(
+    q_seq, _ = omic.linear_to_jpath(
         robot=robot, start_rotmat=rot, start_pos=p0,
         goal_rotmat=rot, goal_pos=p1, ref_qs=ref,
         chain=CHAIN, tcp=tcp, ctx=ctx if check else None)
@@ -258,11 +258,17 @@ def build_pick_place(robot, ctx, planner, jaw, wpose, wpre, jw):
     if placed is None:                          # no normal-elbow place -> skip
         return None
     place, _ = placed
-    traj = plan_segment(planner, home, pre)    # RRT, ends at pre
+    home_to_pre = planner.solve(home, pre, max_iters=4000)    # RRT, ends at pre
+    if not home_to_pre:
+        return None
+    traj = list(home_to_pre)
     traj += approach[1:]                        # pre already present; descend
     grasp_idx = len(traj) - 1                   # hand closes here (at grasp_q)
     traj += lift[1:]                            # grasp already present; retreat
-    traj += plan_segment(planner, lift[-1], place)
+    lift_to_place = planner.solve(lift[-1], place, max_iters=4000)
+    if not lift_to_place:
+        return None
+    traj += lift_to_place
     amount = float(jaw._amount_for(jw))
     return traj, grasp_idx, amount
 

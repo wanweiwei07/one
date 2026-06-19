@@ -1,5 +1,5 @@
 import numpy as np
-import one.motion.probabilistic.state_space as ssp
+import one.motion.core.state_space as ssp
 
 
 class PlanningContext:

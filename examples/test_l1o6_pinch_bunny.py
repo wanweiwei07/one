@@ -25,8 +25,9 @@ import one.viewer.world as ovw
 import one.scene.scene_object as osso
 import one.scene.scene_object_primitive as ossop
 import one.collider.mj_collider as ocm
-import one.motion.probabilistic.planning_context as omppc
+import one.motion.core.planning_context as omppc
 import one.motion.probabilistic.rrt as ompr
+import one.motion.interpolation.joint as omij
 import one.robots.base.tcp as orbt
 import one.robots.humanoids.linx.l1.l1 as l1
 import one.grasp._common as ogc
@@ -157,16 +158,6 @@ def ik_config(robot, ctx, pos, rotmat, tcp, collision_free=True, ref=None):
     return best
 
 
-def jtraj(q0, q1, step=np.deg2rad(3.0)):
-    n = max(2, int(np.ceil(np.max(np.abs(q1 - q0)) / step)))
-    return [q0 + (q1 - q0) * t for t in np.linspace(0, 1, n)]
-
-
-def plan_segment(planner, q0, q1):
-    path = planner.solve(q0, q1, max_iters=4000)
-    return path if path else jtraj(q0, q1)   # fall back to interpolation
-
-
 # ----------------------------------------------------------------------------
 def build_motion(robot, ctx, planner, jaw, grasp):
     """Build the pick-and-place trajectory for one antipodal ``grasp`` =
@@ -195,16 +186,24 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     if any(x is None for x in (pre, grasp_q, lift, carry, place, retreat)):
         return None
 
-    traj = []
-    traj += plan_segment(planner, home, pre)     # planned free-space
-    traj += jtraj(pre, grasp_q)                   # approach
+    approach = planner.solve(home, pre, max_iters=4000)   # planned free-space
+    if not approach:
+        return None
+    traj = list(approach)
+    traj += list(omij.interp_by_step(pre, grasp_q))    # approach
     grasp_idx = len(traj) - 1
-    traj += jtraj(grasp_q, lift)                  # depart (carrying)
-    traj += plan_segment(planner, lift, carry)    # planned carry
-    traj += jtraj(carry, place)                   # approach
+    traj += list(omij.interp_by_step(grasp_q, lift))   # depart (carrying)
+    carry_hop = planner.solve(lift, carry, max_iters=4000)    # planned carry
+    if not carry_hop:
+        return None
+    traj += carry_hop
+    traj += list(omij.interp_by_step(carry, place))    # approach
     release_idx = len(traj) - 1
-    traj += jtraj(place, retreat)                 # depart
-    traj += plan_segment(planner, retreat, home)  # planned return
+    traj += list(omij.interp_by_step(place, retreat))  # depart
+    return_hop = planner.solve(retreat, home, max_iters=4000)  # planned return
+    if not return_hop:
+        return None
+    traj += return_hop
     amount = float(jaw._amount_for(jw))           # jw -> pinch closure amount
     return traj, grasp_idx, release_idx, amount
 
