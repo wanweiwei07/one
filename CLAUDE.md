@@ -35,6 +35,12 @@ Convenience aliases are exported from the package: `from one import oum, osgop, 
 - **Grasp planner naming**: suffix = mechanism, prefix = contact count.
   `-podal` = opposing pinch / force-closure (`antipodal` 2-pt, `polypodal` N-pt);
   `-contact` = single-side adhesion / press (`monocontact` 1-pt suction/tip).
+- **Collision**: `ocm.MJCollider().is_collided(qs)` is the high-level robot
+  self/scene check used by motion planning; `occs` (`cpu_simd`) is the low-level
+  mesh-vs-mesh SIMD path, `gpu_simd_batch` the batched GPU variant.
+- **Motion planning**: build an `omppc.PlanningContext(collider=mjc, cd_step_size=...)`,
+  pass it to `ompr.RRTConnectPlanner(pln_ctx=ctx, extend_step_size=...)`, then
+  `planner.solve(start, goal, max_iters=...)` (returns `None` if no path).
 
 ## Environment
 
@@ -42,6 +48,8 @@ Convenience aliases are exported from the package: `from one import oum, osgop, 
   is 3.14 and lacks pyglet. Examples set up a `World` and call `base.run()`
   (GUI) — for headless checks, import modules and call the planning/IK functions
   directly.
+- Tests / examples live under **`examples/`** (`py -3.12 examples/test_<name>.py`);
+  several ship a `*_nogui.py` headless variant.
 
 ## Keeping the index fresh
 

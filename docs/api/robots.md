@@ -94,7 +94,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 ## `one.robots.base.kine.ikgeo.sp1_lib`
 
 - `sp1_setup(p1, p2, k, theta)`
-- `sp1_run(p1, p2, k)`
+- `sp1_run(p1, p2, k, tol=1e-05)`
 - `sp1_setup_LS(p1, p2, k)`
 - `sp1_error(p1, p2, k, theta)`
 
@@ -187,6 +187,12 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 - `prepare_ms()`
 - **class `Rtq2F85`**
   - methods: `set_jaw_width`, `clone`
+
+## `one.robots.end_effectors.xhand.xhand_right`
+
+- `prepare_mechstruct(collision_type=ouc.CollisionType.MESH)` — Load the XHand right (12-dof dexterous hand) from its URDF into a
+- **class `XHandRight`** — XHand right: a 12-dof dexterous hand as a mountable MechBase EE with the
+  - methods: `grasp_spec`, `goto_given_conf`, `rand_conf`
 
 ## `one.robots.humanoids.linx.l1.l1`
 

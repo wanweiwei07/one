@@ -10,6 +10,8 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
   - methods: `fit_from_geom`, `clone`, `to_render_model`, `radius`, `aabb`
 - **class `CapsuleCollisionShape`**
   - methods: `fit_from_geom`, `clone`, `to_render_model`, `radius`, `half_length`, `aabb`
+- **class `CylinderCollisionShape`** — A flat-ended cylinder (MuJoCo native ``cylinder`` geom). Same fit as the
+  - methods: `fit_from_geom`, `clone`, `to_render_model`, `radius`, `half_length`, `aabb`
 - **class `AABBCollisionShape`**
   - methods: `fit_from_geom`, `clone`, `to_render_model`, `half_extents`, `aabb`
 - **class `OBBCollisionShape`**

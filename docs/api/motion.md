@@ -4,8 +4,8 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 
 ## `one.motion.probabilistic.planning_context`
 
-- **class `PlanningContext`**
-  - methods: `set_aux_mecbas`, `is_state_valid`, `is_motion_valid`, `states_equal`, `enforce_bounds`, `clear_cache`, `sample_uniform`, `interpolate`, `distance`
+- **class `PlanningContext`** — Collision + bounds oracle for sampling-based planners.
+  - methods: `is_state_valid`, `is_motion_valid`, `states_equal`, `enforce_bounds`, `clear_cache`, `sample_uniform`, `interpolate`, `distance`
 
 ## `one.motion.probabilistic.post_processor`
 
@@ -37,7 +37,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 
 ## `one.motion.trajectory.cartesian`
 
-- `cartesian_to_jtraj(robot, start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0), ref_qs=None, chain='main', tcp='flange')` — Convert Cartesian straight-line trajectory to joint trajectory using IK.
+- `cartesian_to_jtraj(robot, start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0), ref_qs=None, chain='main', tcp='flange', ctx=None)` — Convert Cartesian straight-line trajectory to joint trajectory using IK.
 - `line_by_step_size(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0))` — Cartesian straight-line interpolation with automatic sample count.
 - `line_by_n_steps(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, n_steps=2)` — Cartesian straight-line interpolation with fixed number of samples.
 

@@ -50,6 +50,8 @@ nav:
   - Getting Started:
       - Installation: installation.md
       - Quick Start: quickstart.md
+  - Development:
+      - Comment Style: COMMENT_STYLE.md
   - Tutorials:
       - Kinematics: tutorials/kinematics.md
       - Scene & Geometry: tutorials/scene_geometry.md

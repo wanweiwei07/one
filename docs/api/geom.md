@@ -11,7 +11,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 _Geometry container (vertices/faces/normals) and mesh-level helpers used_
 
 - `gen_geom_from_raw(vs, fs=None)`
-- `gen_cylinder_geom(length, radius=0.05, n_segs=8)`
+- `gen_cylinder_geom(length, radius=0.05, n_segs=8)` — Cylinder of total height ``length`` CENTERED on the origin along +Z
 - `gen_cone_geom(length, radius=0.05, n_segs=8)`
 - `gen_sphere_geom(radius=0.05, n_segs=8)`
 - `gen_icosphere_geom(radius=0.05, n_subs=2)`

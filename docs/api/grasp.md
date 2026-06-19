@@ -29,7 +29,7 @@ _Stable placement poses: ``compute_stable_poses`` finds the resting_
 _Polypodal: rigid N-point contact pattern matching against a mesh_
 
 - `sample_pattern(pattern, tgt_vs, tgt_fs, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None)` — Sample N-point pattern placements on the target mesh surface.
-- `pair_pattern(samples, tgt_vs, tgt_fs, normal_tol_deg=0, distance_tol=0.001, min_thickness=0.0, max_thickness=None)` — For every front-side N-tuple in `samples`, ray-cast each contact
+- `pair_pattern(samples, tgt_vs, tgt_fs, normal_tol_deg=0, distance_tol=0.001, min_thickness=0.0, max_thickness=None)` — For every front-side (points, normals) sample in `samples`, ray-cast
 - `polypodal(gripper, target_sobj, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None, clearance=0.0003, min_thickness=0.0, max_thickness=None, verbose=True, return_pairs=False)` — End-to-end polypodal grasp computation.
 
 ## `one.grasp.serialize`

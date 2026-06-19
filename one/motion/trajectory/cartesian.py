@@ -14,6 +14,7 @@ def cartesian_to_jtraj(
     ref_qs=None,
     chain='main',
     tcp='flange',
+    ctx=None,
 ):
     """
     Convert Cartesian straight-line trajectory to joint trajectory using IK.
@@ -33,6 +34,15 @@ def cartesian_to_jtraj(
     rot_step : float
     ref_qs : array-like, optional
         Initial IK seed. If None, use robot.qs.
+    ctx : PlanningContext, optional
+        When given, each newly solved config is checked against the previous one
+        with `ctx.is_motion_valid` (densified at `ctx.cd_step_size`). The first
+        segment that collides (or leaves bounds) aborts and returns `None` for
+        `q_seq`. A joint-space line between two IK-valid endpoints does NOT keep
+        the tcp on the straight Cartesian path, so this rejects segments whose
+        densified motion clips an obstacle. `qs` produced by `robot.ik` must live
+        in the same state space as `ctx` (same convention the planners rely on).
+        Default None disables checking (pure geometry + IK).
 
     Returns
     -------
@@ -56,13 +66,20 @@ def cartesian_to_jtraj(
         ref_qs = np.asarray(ref_qs, dtype=np.float32)
     ref_qs_active = ik_chain.extract_active_qs(ref_qs)
     q_list = []
+    prev_qs = None
     for pos, rotmat in zip(pos_seq, rotmat_seq):
         qs_list = robot.ik(pos, rotmat, chain=chain, tcp=tcp,
                            max_solutions=1, ref_qs=ref_qs_active)
         if not qs_list:
             return None, (pos_seq, rotmat_seq)
         qs = np.asarray(qs_list[0], dtype=np.float32)
+        # gate each densified segment as soon as its endpoint is solved, so a
+        # colliding move aborts before wasting IK on the rest of the line.
+        if ctx is not None and prev_qs is not None \
+                and not ctx.is_motion_valid(prev_qs, qs):
+            return None, (pos_seq, rotmat_seq)
         q_list.append(qs)
+        prev_qs = qs
         ref_qs_active = ik_chain.extract_active_qs(qs)
     return np.asarray(q_list, dtype=np.float32), (pos_seq, rotmat_seq)
 

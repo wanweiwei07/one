@@ -36,13 +36,14 @@ import one.scene.scene_object_primitive as ossop              # noqa: E402
 import one.collider.mj_collider as ocm                         # noqa: E402
 import one.physics.mj_env as opme                              # noqa: E402
 import one.motion.probabilistic.rrt as ompr                    # noqa: E402
+import one.motion.trajectory.cartesian as omtr                 # noqa: E402
 import one.robots.base.tcp as orbt                             # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                   # noqa: E402
 import one.viewer.world as ovw                                 # noqa: E402
 from one.grasp.serialize import load_grasps                    # noqa: E402
 
 from l1picking import (build_table, TABLE_TOP_Z, CHAIN,        # noqa: E402
-                       chain_planning_context, ik_config, plan_segment)
+                       chain_planning_context, plan_segment)
 
 CYL_STL = os.path.join(_THIS, "cylinder.stl")
 GRASPS_JSON = os.path.join(_THIS, "o6_cyl_stl_grasps.json")
@@ -161,7 +162,7 @@ def make_pick_collider(robot, statics, cyls, target):
     return mjc
 
 
-def cartesian_segment(robot, ctx, tcp, ref, p0, p1, rot, nstep=12, check=True):
+def cartesian_segment(robot, ctx, tcp, ref, p0, p1, rot, check=True):
     """Straight CARTESIAN move of ``tcp`` from world pos ``p0`` to ``p1`` at a
     fixed orientation ``rot``, IK-solved at each step and seeded from the
     previous config (so the branch stays continuous -- no elbow flips). Returns
@@ -171,25 +172,16 @@ def cartesian_segment(robot, ctx, tcp, ref, p0, p1, rot, nstep=12, check=True):
     A joint-space line between two valid endpoints does NOT move the hand in a
     straight line -- it bows the wrist sideways, which in a bin drives the hand
     through a wall mid-descent. Moving the tcp along a straight Cartesian line
-    (the grasp's approach axis) keeps the hand clear, and rejecting segments that
-    still collide naturally selects the top-down, wall-clear grasps."""
-    prev, path = ref, []
-    for t in np.linspace(0, 1, nstep):
-        pos = p0 * (1 - t) + p1 * t
-        q = ik_config(robot, ctx, pos, rot, tcp, collision_free=False, ref=prev)
-        if q is None:
-            return None
-        path.append(q)
-        prev = q
-    if check:
-        for a, bq in zip(path[:-1], path[1:]):
-            a = np.asarray(a, np.float64)
-            bq = np.asarray(bq, np.float64)
-            n = max(2, int(np.ceil(np.max(np.abs(bq - a)) / np.deg2rad(1.5))))
-            for t in np.linspace(0, 1, n):
-                if not ctx.is_state_valid(a + (bq - a) * t):
-                    return None
-    return path
+    (the grasp's approach axis) keeps the hand clear, and ``ctx`` rejects
+    segments that still collide -- naturally selecting the top-down, wall-clear
+    grasps. Thin wrapper over ``omtr.cartesian_to_jtraj`` (which does the
+    interpolation, seeded per-step IK, and densified ``ctx.is_motion_valid``
+    edge check)."""
+    q_seq, _ = omtr.cartesian_to_jtraj(
+        robot=robot, start_rotmat=rot, start_pos=p0,
+        goal_rotmat=rot, goal_pos=p1, ref_qs=ref,
+        chain=CHAIN, tcp=tcp, ctx=ctx if check else None)
+    return None if q_seq is None else list(q_seq)
 
 
 def normal_elbow_ik(robot, ctx, pos, rot, tcp, ref):
