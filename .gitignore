@@ -91,3 +91,6 @@ kurabo/
 coripps/
 # mkdocs build output
 site/
+
+# Claude Code local config
+.claude/
