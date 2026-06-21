@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 import one.geom.fitting as ogf
@@ -7,7 +9,12 @@ import one.collider.mj_collider as ocm
 import pyglet.window.key as key
 from one.grasp.antipodal import antipodal
 from one import oum, ouc, ovw, ossop, osso, khi_rs007l, or_2fg7
-from one import omppc, ompp
+from one import omppc, ompp, ogr
+
+# bunny.stl lives at the project root; resolve it from this file so the example
+# runs from any working directory (not just the repo root).
+BUNNY_STL = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bunny.stl")
 
 base = ovw.World(
     cam_pos=(2, 2, 1.5),
@@ -25,13 +32,13 @@ robot.mount(gripper, robot.runtime_lnks[-1], update=True)
 
 # load bunny1
 bunny = osso.SceneObject.from_file(
-    "bunny.stl", collision_type=ouc.CollisionType.MESH)
+    BUNNY_STL, collision_type=ouc.CollisionType.MESH)
 bunny.rgb = (0.8, 0.7, 0.6)
 bunny.attach_to(base.scene)
 
 # load bunny2
 bunny2 = osso.SceneObject.from_file(
-    "bunny.stl", collision_type=ouc.CollisionType.MESH)
+    BUNNY_STL, collision_type=ouc.CollisionType.MESH)
 bunny2.rgb = (0.7, 0.8, 0.6)
 bunny2.attach_to(base.scene)
 
@@ -63,6 +70,12 @@ grasps = antipodal(
     max_grasps=80,
 )
 print(f"Found {len(grasps)} collision-free grasps")
+
+# bind the reasoning session (robot, ctx, grasp set, gripper/tcp) once; the
+# per-replan calls then pass only each bunny's world pose.
+reasoner = ogr.GraspReasoner(
+    robot, pln_ctx, grasps, tcp=gripper.tcp('grasp_center'),
+    gripper=gripper, max_solutions=1)
 
 # --- compute stable poses for both bunnies ---
 geom = bunny.collisions[0].geom
@@ -249,38 +262,17 @@ def tick(dt):
         clear_drawn()
         MAX_DRAW = 30
 
-        feasible_bunny1 = {}
-        feasible_bunny2 = {}
-
-        for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
-            pre_pose_world1 = tf_bunny @ pre_pose
-            pre_rot1 = pre_pose_world1[:3, :3]
-            pre_pos1 = pre_pose_world1[:3, 3]
-            qs_list1 = robot.ik(pre_pos1, pre_rot1, tcp=gripper.tcp('grasp_center'))
-            if qs_list1:
-                qs1 = qs_list1[0]
-                mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
-                pln_ctx.clear_cache()
-                if pln_ctx.is_state_valid(qs1):
-                    feasible_bunny1[i] = (qs1, jaw_width)
-
-            pre_pose_world2 = tf_bunny2 @ pre_pose
-            pre_rot2 = pre_pose_world2[:3, :3]
-            pre_pos2 = pre_pose_world2[:3, 3]
-            qs_list2 = robot.ik(pre_pos2, pre_rot2, tcp=gripper.tcp('grasp_center'))
-            if qs_list2:
-                qs2 = qs_list2[0]
-                mjc.set_mecba_qpos(gripper, (jaw_width / 2, jaw_width / 2))
-                pln_ctx.clear_cache()
-                if pln_ctx.is_state_valid(qs2):
-                    feasible_bunny2[i] = (qs2, jaw_width)
-
-        shared_indices = set(feasible_bunny1.keys()) & set(
-            feasible_bunny2.keys())
+        # which grasps are reachable + collision-free at each bunny's pose, and
+        # which are SHARED between the two (set intersection). The reasoner binds
+        # robot/ctx/grasps/gripper once (see setup); each call passes only the
+        # object pose. find_feasible_gids returns {gid: qs}.
+        feasible_bunny1 = reasoner.find_feasible_gids(tf_bunny)
+        feasible_bunny2 = reasoner.find_feasible_gids(tf_bunny2)
+        shared_indices = set(feasible_bunny1) & set(feasible_bunny2)
 
         count1 = 0
         for i in sorted(feasible_bunny1.keys()):
-            qs, jaw_width = feasible_bunny1[i]
+            qs = feasible_bunny1[i]
             if i in drawn_nodes_bunny1:
                 tmp = drawn_nodes_bunny1[i]
             else:
@@ -295,7 +287,7 @@ def tick(dt):
 
         count2 = 0
         for i in sorted(feasible_bunny2.keys()):
-            qs, jaw_width = feasible_bunny2[i]
+            qs = feasible_bunny2[i]
             if i in drawn_nodes_bunny2:
                 tmp = drawn_nodes_bunny2[i]
             else:
@@ -322,8 +314,8 @@ def tick(dt):
 
             # Ensure: every shared (blue) grasp has corresponding
             # feasible (green) robot poses.
-            qs1, _ = feasible_bunny1[i]
-            qs2, _ = feasible_bunny2[i]
+            qs1 = feasible_bunny1[i]
+            qs2 = feasible_bunny2[i]
             if i in drawn_nodes_bunny1:
                 tmp1 = drawn_nodes_bunny1[i]
             else:

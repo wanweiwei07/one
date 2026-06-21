@@ -69,7 +69,7 @@ class KineVisualizer:
             pos=base_pos,
             rgb=ouc.ExtendedColor.SALMON_PINK,
             alpha=self.alpha)
-        fr_obj = osso.SceneObject(collision_type=None, is_free=False)
+        fr_obj = osso.SceneObject(collision_type=None, is_floating=False)
         fr_obj.add_visual(fr_rmodel, auto_make_collision=False)
         objs.append(fr_obj)
 

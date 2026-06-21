@@ -6,7 +6,7 @@ from one import oum, ovw, ossop, ouc, osso, khi_rs007l
 oframe = ossop.frame()
 bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH,
-    is_free=True)
+    is_floating=True)
 bunny.rgb = ouc.ExtendedColor.PINK
 bunny.alpha = 0.4
 # bunny.toggle_render_collision = True
@@ -28,32 +28,32 @@ wall_left = ossop.box(pos=(.5, .35, .2),
                       xyz_lengths=(0.71, 0.01, 0.4),
                       collision_type=ouc.CollisionType.AABB,
                       alpha=ouc.ALPHA.TRANSPARENT,
-                      is_free=False)
+                      is_floating=False)
 wall_left.attach_to(base.scene)
 wall_right = ossop.box(pos=(.5, -.35, .2),
                        xyz_lengths=(0.71, 0.01, 0.4),
                        collision_type=ouc.CollisionType.AABB,
                        alpha=ouc.ALPHA.TRANSPARENT,
-                       is_free=False)
+                       is_floating=False)
 wall_right.attach_to(base.scene)
 wall_front = ossop.box(pos=(.85, 0, .2),
                        xyz_lengths=(0.01, 0.71, 0.4),
                        collision_type=ouc.CollisionType.AABB,
                        alpha=ouc.ALPHA.TRANSPARENT,
-                       is_free=False)
+                       is_floating=False)
 wall_front.attach_to(base.scene)
 wall_back = ossop.box(pos=(.15, 0, .2),
                       xyz_lengths=(0.01, 0.71, 0.4),
                       collision_type=ouc.CollisionType.AABB,
                       alpha=ouc.ALPHA.TRANSPARENT,
-                      is_free=False)
+                      is_floating=False)
 wall_back.attach_to(base.scene)
 
 # robot
 base_rotmat = oum.rotmat_from_euler(0, 0, -np.pi / 2)
 base_pos = np.array([0, 0.7, 0])
 robot1 = khi_rs007l.RS007L()
-# robot1.is_free=True
+# robot1.is_floating=True
 robot1.attach_to(base.scene)
 robot1.set_pos_rotmat(pos=base_pos, rotmat=base_rotmat)
 robot1.toggle_render_collision = True

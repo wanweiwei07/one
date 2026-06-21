@@ -12,7 +12,7 @@ gripper.attach_to(base.scene)
 # box = ossop.gen_box(xyz_lengths=(0.06, 0.06, 0.06),
 #                     rgb=ouc.BasicColor.ORANGE,
 #                     collision_type=ouc.CollisionType.AABB,
-#                     is_free=True)
+#                     is_floating=True)
 # box.set_pos_rotmat(pos=np.array([0.0, 0.0, 0.05]), rotmat=np.eye(3))
 # box.attach_to(base.scene)
 # bunny (object to collide)

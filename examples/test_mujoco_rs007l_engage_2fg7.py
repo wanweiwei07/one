@@ -30,7 +30,7 @@ qs2_list = robot2.ik(tgt_pos, tgt_rotmat, tcp=gripper.tcp('grasp_center'))
 
 box = ossop.cylinder(
     spos=(-.3, 0, .3), epos=(.3, 0, .1),
-    radius=.03, is_free=True)
+    radius=.03, is_floating=True)
 box.attach_to(base.scene)
 gripper.grasp(box)
 # gripper.release(box)

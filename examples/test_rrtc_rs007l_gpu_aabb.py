@@ -15,7 +15,7 @@ oframe.attach_to(base.scene)
 
 # Create robot
 robot = khi_rs007l.RS007L()
-robot.is_free = True
+robot.is_floating = True
 robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 

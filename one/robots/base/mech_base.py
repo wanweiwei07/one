@@ -28,7 +28,7 @@ class MechBase:
         return cls._structure
 
     def __init__(self, rotmat=None, pos=None,
-                 home_qs=None, is_free=True):
+                 home_qs=None, is_floating=True):
         self._compiled = self.structure._compiled
         self._rotmat = oum.ensure_rotmat(rotmat)
         self._pos = oum.ensure_pos(pos)
@@ -57,7 +57,7 @@ class MechBase:
         self._home_qs = self.qs.copy()
         # free root lnk
         ridx = self.structure.compiled.root_lnk_idx
-        self.runtime_lnks[ridx]._is_free = is_free
+        self.runtime_lnks[ridx]._is_floating = is_floating
         self.fk()
 
     def attach_to(self, scene):
@@ -115,14 +115,14 @@ class MechBase:
             raise ValueError("Self-mounting not allowed")
         if child in self._mountings:
             raise ValueError("Child already mounted")
-        if not child.is_free:
+        if not child.is_floating:
             raise ValueError("Child is not free")
         if loc_tf is None:
             loc_tf = np.eye(4, dtype=np.float32)
         else:
             loc_tf = np.asarray(loc_tf, dtype=np.float32)
         self._mountings[child] = Mounting(child, plnk, loc_tf)
-        child.is_free = False
+        child.is_floating = False   # weld to the parent; collision role is unchanged
         if update:
             self._update_mounting(self._mountings[child])
 
@@ -131,7 +131,7 @@ class MechBase:
             m = self._mountings.pop(child)
         except KeyError:
             raise ValueError("Child not mounted")
-        child.is_free = True
+        child.is_floating = True
         return m
 
     def get_solver(self, chain):
@@ -395,12 +395,12 @@ class MechBase:
         return self.runtime_lnks[ridx]
 
     @property
-    def is_free(self):
-        return self.runtime_root_lnk.is_free
+    def is_floating(self):
+        return self.runtime_root_lnk.is_floating
 
-    @is_free.setter
-    def is_free(self, flag):
-        self.runtime_root_lnk.is_free = flag
+    @is_floating.setter
+    def is_floating(self, flag):
+        self.runtime_root_lnk.is_floating = flag
 
     @property
     def home_qs(self):

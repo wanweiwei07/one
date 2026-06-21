@@ -72,13 +72,16 @@ class MJOneConverter:
                 body_a = self._rutl2bdy[rta]
                 body_b = self._rutl2bdy[rtb]
                 world.contact_excludes.append((body_a, body_b))
-        # extra scene-level excludes (e.g. an auto-ACM of resting collisions),
-        # given as semantic ((mecba_a, lidx_a), (mecba_b, lidx_b)) pairs so they
-        # survive a rebuild and can cross mecba boundaries (mounted EE vs arm).
-        for (ma, la), (mb, lb) in (extra_excludes or []):
-            body_a = self._rutl2bdy[ma.runtime_lnks[la]]
-            body_b = self._rutl2bdy[mb.runtime_lnks[lb]]
-            world.contact_excludes.append((body_a, body_b))
+        # extra scene-level excludes, given as (sobj_a, sobj_b) pairs where each
+        # is a converted runtime Link OR a mounted/free SceneObject (a Link IS a
+        # SceneObject). Resolved through both body maps, so an exclude can name a
+        # held object vs the gripper's finger links, not just link-link pairs.
+        # They are object refs, so they survive a rebuild and cross mecba
+        # boundaries (mounted EE vs arm, held object vs gripper).
+        for sobj_a, sobj_b in (extra_excludes or []):
+            world.contact_excludes.append(
+                (self._lookup_body_node(sobj_a),
+                 self._lookup_body_node(sobj_b)))
         return world, self._sobj2bdy, self._rutl2bdy, self._mecj2jnt
 
     @property
@@ -122,7 +125,7 @@ class MJOneConverter:
                            float(compiled.jlmt_high_by_idx[jidx]))
             # lnk
             lnk = mecba.runtime_lnks[lidx]
-            if lnk.is_free:
+            if lnk.is_floating:
                 raise ValueError(
                     "Free link cannot be child link of a joint")
             jtf0 = compiled.jtf0_by_idx[jidx]
@@ -156,7 +159,7 @@ class MJOneConverter:
         if ref_tf is None:
             ref_tf = np.eye(4, dtype=np.float32)
         b = opmno.BodyNode(opmna.alloc_name("sobj"))
-        if sobj.is_free:
+        if sobj.is_floating:
             jnode = opmno.JointNode("free_root")
             jnode.jtype_str = "free"
             b.hosting_jnts.append(jnode)
@@ -278,4 +281,17 @@ class MJOneConverter:
     def _resolve_body(self, b):
         while b in self._bdy_alias:
             b = self._bdy_alias[b]
+        return b
+
+    def _lookup_body_node(self, sobj):
+        """The (finalized) BodyNode for a converted runtime Link or SceneObject
+        -- both body maps are keyed by the object itself. Call only after the
+        maps are finalized. Asserts rather than returns None, so a stray exclude
+        referencing an unconverted object fails loudly instead of silently."""
+        b = self._rutl2bdy.get(sobj)
+        if b is None:
+            b = self._sobj2bdy.get(sobj)
+        assert b is not None, (
+            f"extra_excludes references {sobj!r}, which has no body in the "
+            f"model (not a converted link / scene object)")
         return b

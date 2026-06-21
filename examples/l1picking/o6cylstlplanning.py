@@ -16,7 +16,7 @@ OUT_JSON = os.path.join(_THIS, "o6_cyl_stl_grasps.json")
 
 def main():
     cyl = osso.SceneObject.from_file(
-        CYL_STL, collision_type=ouc.CollisionType.MESH, is_free=True,
+        CYL_STL, collision_type=ouc.CollisionType.MESH, is_floating=True,
         rgb=(0.6, 0.7, 0.5))
     plan_save_show(cyl, OUT_JSON, "stl")
 

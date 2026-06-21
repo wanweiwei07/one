@@ -47,3 +47,25 @@ def load_grasps(path):
         grasps.append((pose, pre_pose, float(entry["jaw_width"]),
                        float(entry["score"])))
     return grasps
+
+
+def transform_grasps(grasps, tf):
+    """Map object-LOCAL grasps into the world by an object world transform.
+
+    The dual of ``load_grasps``: grasps are authored/saved in the object's local
+    frame, so given the object's world transform (e.g. ``scene_obj.wd_tf``) this
+    places each grasp where the object actually stands. BOTH the grasp pose and
+    its pre-grasp pose are transformed; trailing fields (jaw_width, score) pass
+    through untouched.
+
+    grasps: iterable of (pose_tf, pre_pose_tf, *rest) -- the (pose, pre_pose,
+            jaw_width, score) layout from ``load_grasps`` / ``antipodal`` (also
+            covers monocontact's (pose, pre_pose, score)).
+    tf: (4, 4) object world transform.
+
+    Returns a list of (tf @ pose, tf @ pre_pose, *rest).
+    """
+    tf = np.asarray(tf, dtype=np.float32)
+    return [(tf @ np.asarray(pose, dtype=np.float32),
+             tf @ np.asarray(pre_pose, dtype=np.float32), *rest)
+            for pose, pre_pose, *rest in grasps]

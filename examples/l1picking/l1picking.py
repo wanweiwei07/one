@@ -33,10 +33,10 @@ import one.scene.scene_object_primitive as ossop              # noqa: E402
 import one.collider.mj_collider as ocm                        # noqa: E402
 import one.motion.core.planning_context as omppc     # noqa: E402
 import one.motion.probabilistic.rrt as ompr                   # noqa: E402
-import one.motion.interpolation.joint as omij                    # noqa: E402
+import one.motion.primitives.approach_depart as ompad            # noqa: E402
 import one.robots.base.tcp as orbt                            # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                  # noqa: E402
-from one.grasp.serialize import load_grasps                   # noqa: E402
+from one.grasp.serialize import load_grasps, transform_grasps  # noqa: E402
 
 GRASPS_JSON = os.path.join(_THIS, "o6_cylinder_grasps.json")
 CHAIN = 'left_arm'      # left arm only (6-DOF, analytic S456X12); waist frozen
@@ -89,7 +89,7 @@ def build_scene():
     # (a procedural cylinder has no file and previously needed a CAPSULE fallback).
     cyl = osso.SceneObject.from_file(
         CYL_STL, collision_type=ouc.CollisionType.MESH,
-        is_free=True, rgb=(0.6, 0.7, 0.5))
+        is_floating=True, rgb=(0.6, 0.7, 0.5))
     cyl.pos = CYL_POS.copy()
     ground = ossop.plane(pos=(0, 0, 0.0))
     return robot, table, cyl, ground
@@ -102,11 +102,15 @@ def make_collider(robot, table, cyl, ground):
     ``collision_free=False`` (and pre->grasp is a straight interpolation), so the
     intended hand-vs-cylinder contact at the grasp is not flagged.
 
-    The scene cylinder is ``is_free=True`` (it gets grasped/lifted); a free body
+    The scene cylinder is ``is_floating=True`` (it gets grasped/lifted); a free body
     is not pinned at its pose in the collider and would float to the origin and
     spuriously collide, so the obstacle is a FIXED clone at the cylinder's pose."""
     cyl_obstacle = cyl.clone()
-    cyl_obstacle.is_free = False
+    cyl_obstacle.is_floating = False
+    # pinned clone used purely as a static obstacle here: declare it STATIC so it
+    # does not spuriously contact the table/ground it rests on (STATIC-vs-STATIC
+    # is off). The role no longer follows is_floating, so it is declared explicitly.
+    cyl_obstacle.collision_group = ouc.CollisionGroup.STATIC
     mjc = ocm.MJCollider()
     for e in (robot, *table, cyl_obstacle, ground):
         mjc.append(e)
@@ -133,29 +137,7 @@ def chain_planning_context(robot, mjc, chain_name):
 def load_world_grasps(cyl):
     """Load the cylinder-local grasps and map them onto the cylinder's world
     pose. Returns [(pose_world, pre_world, jaw_width, score), ...]."""
-    local = load_grasps(GRASPS_JSON)
-    tf = cyl.wd_tf
-    return [(tf @ pose, tf @ pre, jw, sc) for pose, pre, jw, sc in local]
-
-
-def ik_config(robot, ctx, pos, rotmat, tcp, collision_free=True, ref=None):
-    """IK for ``tcp`` at (pos, rotmat); among the (optionally collision-free)
-    solutions return the one closest to ``ref`` in joint space. Returns full
-    qs (n_jnts,) or None."""
-    chain = robot.chain(CHAIN)
-    if ref is None:
-        ref = robot.qs
-    ref_active = chain.extract_active_qs(ref)
-    sols = robot.ik(pos, rotmat, chain=CHAIN, tcp=tcp,
-                    ref_qs=ref_active, max_solutions=8)
-    best, best_d = None, None
-    for s in sols:
-        if collision_free and not ctx.is_state_valid(s.astype(np.float64)):
-            continue
-        d = float(np.linalg.norm(chain.extract_active_qs(s) - ref_active))
-        if best_d is None or d < best_d:
-            best, best_d = s.astype(np.float64), d
-    return best
+    return transform_grasps(load_grasps(GRASPS_JSON), cyl.wd_tf)
 
 
 def build_motion(robot, ctx, planner, jaw, grasp):
@@ -174,20 +156,31 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     center_tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
                           jaw.eval_grasp_tcp(jw).loc_tf)
     home = robot.qs.astype(np.float64).copy()
-    pre = ik_config(robot, ctx, pre_pose[:3, 3], pre_pose[:3, :3], center_tcp)
-    grasp_q = ik_config(robot, ctx, g, rot, center_tcp,
-                        collision_free=False, ref=pre)
-    lift = ik_config(robot, ctx, g + UP, rot, center_tcp,
-                     collision_free=False, ref=grasp_q)
-    if any(x is None for x in (pre, grasp_q, lift)):
+    # bind the planning session + this grasp's center tcp once (the tcp depends
+    # on the jaw width, so it is per-grasp); both moves then pass only what varies.
+    adp = ompad.ADPlanner(robot, ctx, planner, chain=CHAIN, tcp=center_tcp)
+    # RRT home -> pre-grasp, then a straight CARTESIAN descent into the grasp
+    # (the pre pose is loaded with the grasp, so pass it explicitly). The hand
+    # comes straight down the approach axis instead of bowing sideways the way a
+    # joint-space line would. check_descent=False: the target cylinder is a
+    # collision obstacle here, so the intended hand-vs-cylinder contact at the
+    # grasp must NOT gate the descent (mirrors the old collision_free=False).
+    approach = adp.gen_approach(
+        g, rot, start_qs=home, pre_pos=pre_pose[:3, 3],
+        pre_rotmat=pre_pose[:3, :3], granularity=0.01, use_rrt=True,
+        check_descent=False, max_iters=4000)
+    if approach is None:
         return None
-    approach = planner.solve(home, pre, max_iters=4000)   # planned free-space approach
-    if not approach:
+    grasp_idx = len(approach) - 1               # hand closes here (at the grasp)
+    grasp_q = approach.jv_list[-1]
+    # straight cartesian lift (carrying); contact still intended -> ungated.
+    lift = adp.gen_depart(
+        g, rot, start_qs=grasp_q, depart_direction=UP,
+        depart_distance=float(np.linalg.norm(UP)),
+        granularity=0.01, check_retreat=False)
+    if lift is None:
         return None
-    traj = list(approach)
-    traj += list(omij.interp_by_step(pre, grasp_q))   # straight approach to the grasp
-    grasp_idx = len(traj) - 1
-    traj += list(omij.interp_by_step(grasp_q, lift))  # lift (carrying)
+    traj = (approach + lift).jv_list
     amount = float(jaw._amount_for(jw))         # jw -> power closure amount
     return traj, grasp_idx, amount
 

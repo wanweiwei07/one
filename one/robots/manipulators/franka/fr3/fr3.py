@@ -166,7 +166,7 @@ class FR3(orbmb.MechBase):
         super().__init__(
             rotmat=rotmat,
             pos=pos,
-            is_free=False,
+            is_floating=False,
             home_qs=[0.0, -np.pi / 4, 0.0,
                      -3 * np.pi / 4, 0.0, np.pi / 2,
                      np.pi / 4],

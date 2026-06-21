@@ -69,7 +69,7 @@ class CVR038Gripper(orbmb.MechBase, oreb.GripperMixin):
         return prepare_ms()
 
     def __init__(self):
-        super().__init__()   # is_free=True default (free until mounted)
+        super().__init__()   # is_floating=True default (free until mounted)
         self.add_tcp('grasp_center', self.runtime_root_lnk,
                      oum.tf_from_pos_rotmat(pos=(0.0, 0.0, 0.06)))
         self.contact_pattern = np.zeros((1, 3), dtype=np.float32)

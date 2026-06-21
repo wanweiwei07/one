@@ -133,7 +133,7 @@ class CVR038(orbmb.MechBase):
         return prepare_mechstruct()
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos, is_free=False)
+        super().__init__(rotmat=rotmat, pos=pos, is_floating=False)
         c = self.structure.compiled
         # chain + its analytic solver, declared together
         self.add_chain('main', c.root_lnk, c.tip_lnks[0],

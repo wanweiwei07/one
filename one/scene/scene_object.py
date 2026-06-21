@@ -10,11 +10,11 @@ class SceneObject(ossn.SceneNode):
     @classmethod
     def from_file(cls, path,
                   loc_rotmat=None, loc_pos=None,  # render model offset
-                  collision_type=None, is_free=False,
+                  collision_type=None, is_floating=False,
                   rgb=None, alpha=1.0):
         """only allows changing local pose of the visual model"""
         instance = cls(collision_type=collision_type,
-                       is_free=is_free)
+                       is_floating=is_floating)
         instance.file_path = path
         instance.add_visual(
             osrm.RenderModel(geom=ogl.load_geometry(path),
@@ -23,7 +23,7 @@ class SceneObject(ossn.SceneNode):
             auto_make_collision=True)
         return instance
 
-    def __init__(self, collision_type=None, is_free=False, name=None):
+    def __init__(self, collision_type=None, is_floating=False, name=None):
         super().__init__()
         self.name = name
         self.file_path = None
@@ -33,11 +33,10 @@ class SceneObject(ossn.SceneNode):
         self._inrtmat = None
         self._com = None
         self._mass = None
-        self._is_free = is_free
+        self._is_floating = is_floating
         self._collision_type = collision_type
         # _collision_type = None: no auto collider generation
-        self._update_collision_group()
-        self._collision_affinity_override = None
+        self._seed_collision_role()   # two-way default from is_floating, then sticky
 
     def attach_to(self, target):
         """Attach to a Scene, or to another SceneObject/Link/MechBase as a
@@ -78,7 +77,7 @@ class SceneObject(ossn.SceneNode):
     def clone(self, postfix="(clone)"):
         """DOES NOT clone the affiliated scene."""
         new = self.__class__(collision_type=self._collision_type,
-                             is_free=self.is_free)
+                             is_floating=self.is_floating)
         new.name = self.name
         new.toggle_render_collision = self.toggle_render_collision
         new.file_path = self.file_path
@@ -105,24 +104,30 @@ class SceneObject(ossn.SceneNode):
     def collision_group(self):
         return self._collision_group
 
+    @collision_group.setter
+    def collision_group(self, group):
+        # The collision ROLE (ACTIVE / STATIC) is INDEPENDENT of is_floating: it is
+        # seeded once at construction (floating -> ACTIVE, fixed -> STATIC), then
+        # sticky. is_floating is physics only (free joint vs welded), so
+        # grasping/mounting a body must NOT reclassify it -- a held object stays
+        # ACTIVE and still collides with walls. A free body deliberately pinned as
+        # a static obstacle declares STATIC explicitly, e.g.
+        # ``obj.collision_group = CollisionGroup.STATIC``.
+        self._collision_group = group
+
     @property
     def collision_affinity(self):
-        if self._collision_affinity_override is not None:
-            return int(self._collision_affinity_override)
-        return int(ouc.CollisionMatrix.DEFAULT[self._collision_group])
-
-    @collision_affinity.setter
-    def collision_affinity(self, mask):
-        self._collision_affinity_override = int(mask)
+        return int(ouc.CollisionMatrix.DEFAULT[self.collision_group])
 
     @property
-    def is_free(self):
-        return self._is_free
+    def is_floating(self):
+        return self._is_floating
 
-    @is_free.setter
-    def is_free(self, flag):
-        self._is_free = flag
-        self._update_collision_group()
+    @is_floating.setter
+    def is_floating(self, flag):
+        # physics only (free joint vs welded). The collision role is decoupled --
+        # see collision_group -- so this does NOT reclassify the body.
+        self._is_floating = flag
 
     @property
     def rgb(self):
@@ -213,8 +218,13 @@ class SceneObject(ossn.SceneNode):
                 m.geom, m.rotmat, m.pos)
         self.add_collision(shape)
 
-    def _update_collision_group(self):
-        if self._is_free:
-            self._collision_group = ouc.CollisionGroup.OBJECT
+    def _seed_collision_role(self):
+        # Seed the collision role ONCE at construction from is_floating: a free body is
+        # a manipulable ACTIVE object, a fixed body is STATIC scenery. This is a
+        # smart two-way default -- it spares both objects and scenery an explicit
+        # call. The role is then independent of is_floating (it does not re-run on
+        # is_floating changes) and can be overridden via the collision_group setter.
+        if self._is_floating:
+            self._collision_group = ouc.CollisionGroup.ACTIVE
         else:
-            self._collision_group = ouc.CollisionGroup.ENV
+            self._collision_group = ouc.CollisionGroup.STATIC

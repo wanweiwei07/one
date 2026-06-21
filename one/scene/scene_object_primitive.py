@@ -11,17 +11,17 @@ def _parse_phys(kwargs):
     # keys, so a typo'd or unsupported name (xyz_length=, collision=, colour=,
     # ...) would otherwise be silently swallowed and ignored.
     extra = set(kwargs) - {
-        "inertia", "com", "mass", "collision_type", "is_free", "name"}
+        "inertia", "com", "mass", "collision_type", "is_floating", "name"}
     if extra:
         raise TypeError(
             f"unexpected keyword argument(s) {sorted(extra)} (primitives accept "
-            f"only inertia/com/mass/collision_type/is_free/name as extra kwargs)")
+            f"only inertia/com/mass/collision_type/is_floating/name as extra kwargs)")
     return (
         kwargs.get("inertia", None),
         kwargs.get("com", None),
         kwargs.get("mass", None),
         kwargs.get("collision_type", None),
-        kwargs.get("is_free", False),
+        kwargs.get("is_floating", False),
         kwargs.get("name", None),
     )
 
@@ -71,7 +71,7 @@ def cylinder(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
     length, dir_vec = oum.unit_vec(epos - spos, return_length=True)
@@ -79,7 +79,7 @@ def cylinder(
         length=length, radius=radius, n_segs=segments, rgb=rgb, alpha=alpha
     )
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -100,7 +100,7 @@ def dashed_cylinder(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
     length, dir_vec = oum.unit_vec(epos - spos, return_length=True)
@@ -112,7 +112,7 @@ def dashed_cylinder(
     len_solid = float(len_solid)
     len_interval = float(len_interval)
 
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     if float(length) <= 1e-8:
@@ -148,7 +148,7 @@ def cone(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
     length, dir_vec = oum.unit_vec(epos - spos, return_length=True)
@@ -156,7 +156,7 @@ def cone(
         length=length, radius=radius, n_segs=segments, rgb=rgb, alpha=alpha
     )
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, dir_vec)
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -174,11 +174,11 @@ def sphere(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     rmodel = osrmp.gen_sphere_rmodel(
         radius=radius, n_segs=segments, rgb=rgb, alpha=alpha
     )
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -196,11 +196,11 @@ def icosphere(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     rmodel = osrmp.gen_icosphere_rmodel(
         radius=radius, n_subs=subdivisions, rgb=rgb, alpha=alpha
     )
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -218,11 +218,11 @@ def box(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     xyz_lengths = np.asarray(xyz_lengths, np.float32)
     rmodel = osrmp.gen_box_rmodel(
         xyz_lengths=xyz_lengths, rgb=rgb, alpha=alpha)
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -248,7 +248,7 @@ def linsegs(segs, radius=0.001, srgbs=None, alpha=1.0):
     else:
         raise ValueError("srgb must be scalar, (3,), or (N,3)")
     # build single SceneObject
-    o = osso.SceneObject(collision_type=None, is_free=False)
+    o = osso.SceneObject(collision_type=None, is_floating=False)
     for i in range(n):
         a = segs[i, 0]
         b = segs[i, 1]
@@ -280,11 +280,11 @@ def arrow(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
-    # if is_free:
+    inertia, com, mass, collision_type, is_floating, name = _psd
+    # if is_floating:
     #     print("Warning: frame is usually not free. Setting to False.")
-    #     is_free = False
-    is_free = False
+    #     is_floating = False
+    is_floating = False
     # collider must be ignored for arrow
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
@@ -293,7 +293,7 @@ def arrow(
         length, shaft_radius, head_length, head_radius,
         n_segs, rgb=rgb, alpha=alpha
     )
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -317,8 +317,8 @@ def dashed_arrow(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
-    is_free = False
+    inertia, com, mass, collision_type, is_floating, name = _psd
+    is_floating = False
     spos = np.asarray(spos, np.float32)
     epos = np.asarray(epos, np.float32)
     length, dir_vec = oum.unit_vec(epos - spos, return_length=True)
@@ -332,7 +332,7 @@ def dashed_arrow(
     len_solid = float(len_solid)
     len_interval = float(len_interval)
 
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     if float(length) <= 1e-8:
@@ -388,11 +388,11 @@ def frame(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
-    # if is_free:
+    inertia, com, mass, collision_type, is_floating, name = _psd
+    # if is_floating:
     #     print("Warning: frame is usually not free. Setting to False.")
-    #     is_free = False
-    is_free = False
+    #     is_floating = False
+    is_floating = False
     # collider must be ignored for frame
     arrow_length = ouc.StandardAxis.ARROW_LENGTH * length_scale
     shaft_radius = ouc.StandardAxis.ARROW_SHAFT_RADIUS * radius_scale
@@ -427,7 +427,7 @@ def frame(
         rgb=color_mat[:, 2],
         alpha=alpha,
     )
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel_x, auto_make_collision=amc)
@@ -451,8 +451,8 @@ def dashed_frame(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
-    is_free = False
+    inertia, com, mass, collision_type, is_floating, name = _psd
+    is_floating = False
     arrow_length = ouc.StandardAxis.ARROW_LENGTH * length_scale
     shaft_radius = ouc.StandardAxis.ARROW_SHAFT_RADIUS * radius_scale
     head_length = ouc.StandardAxis.ARROW_HEAD_LENGTH * radius_scale
@@ -464,7 +464,7 @@ def dashed_frame(
     len_solid = float(len_solid)
     len_interval = float(len_interval)
 
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     axis_rots = [
@@ -501,7 +501,7 @@ def plane(
         [size[0], size[1], thickness], np.float32)
     rmodel = osrmp.gen_box_rmodel(
         xyz_lengths=xyz_lengths, rgb=rgb, alpha=alpha)
-    o = osso.SceneObject(collision_type=ouc.CollisionType.PLANE, is_free=False)
+    o = osso.SceneObject(collision_type=ouc.CollisionType.PLANE, is_floating=False)
     o.add_visual(rmodel)
     rotmat = oum.rotmat_between_vecs(ouc.StandardAxis.Z, normal)
     o.set_pos_rotmat(pos=pos, rotmat=rotmat)
@@ -517,7 +517,7 @@ def point_cloud(vs, vrgbs, alpha=1.0):
     """
     vs = np.asarray(vs, np.float32)
     rmodel = osrmp.gen_pcd_rmodel(vs, vrgbs, alpha)
-    o = osso.SceneObject(collision_type=None, is_free=False)
+    o = osso.SceneObject(collision_type=None, is_floating=False)
     o.add_visual(rmodel, auto_make_collision=False)
     return o
 
@@ -532,7 +532,7 @@ def frustrum(
     **kwargs,
 ):
     _psd = _parse_phys(kwargs)
-    inertia, com, mass, collision_type, is_free, name = _psd
+    inertia, com, mass, collision_type, is_floating, name = _psd
     base_center = np.asarray(base_center, dtype=np.float32)
     top_center = np.asarray(top_center, dtype=np.float32)
     axis = top_center - base_center
@@ -550,7 +550,7 @@ def frustrum(
         rgb=rgb,
         alpha=alpha,
     )
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)
@@ -562,7 +562,7 @@ def mesh(
     vs,
     fs,
     collision_type=None,
-    is_free=False,
+    is_floating=False,
     rgb=ouc.BasicColor.DEFAULT,
     alpha=1.0,
     **kwargs,
@@ -576,7 +576,7 @@ def mesh(
     vs = np.asarray(vs, np.float32)
     fs = np.asarray(fs, np.uint32)
     rmodel = osrmp.gen_mesh_rmodel(vs=vs, fs=fs, rgb=rgb, alpha=alpha)
-    o = osso.SceneObject(collision_type=collision_type, is_free=is_free,
+    o = osso.SceneObject(collision_type=collision_type, is_floating=is_floating,
                          name=name)
     amc = False if collision_type is None else True
     o.add_visual(rmodel, auto_make_collision=amc)

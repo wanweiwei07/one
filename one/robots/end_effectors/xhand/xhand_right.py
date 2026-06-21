@@ -107,7 +107,7 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
     _GRASP_ROT = oum.rotmat_from_euler(oum.pi / 2, oum.pi / 2, 0)
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos)   # is_free=True until mounted
+        super().__init__(rotmat=rotmat, pos=pos)   # is_floating=True until mounted
         # power_center: WRS whole-hand acting center (object sits in the palm
         # cup). pinch_center: measured thumb-index pad contact at full pinch.
         self.add_tcp('power_center', self.runtime_root_lnk,

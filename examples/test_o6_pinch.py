@@ -26,7 +26,7 @@ BUNNY_STL = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 
 def make_bunny():
-    bunny = osso.SceneObject(collision_type=ouc.CollisionType.MESH, is_free=True)
+    bunny = osso.SceneObject(collision_type=ouc.CollisionType.MESH, is_floating=True)
     bunny.add_visual(
         osrm.RenderModel(geom=ogl.load_geometry(BUNNY_STL), rgb=(0.85, 0.7, 0.6)),
         auto_make_collision=True)

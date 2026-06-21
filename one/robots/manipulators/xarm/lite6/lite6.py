@@ -144,7 +144,7 @@ class Lite6(orbmb.MechBase):
         return prepare_mechstruct()
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos, is_free=False)
+        super().__init__(rotmat=rotmat, pos=pos, is_floating=False)
         c = self.structure.compiled
         self.add_chain('main', c.root_lnk, c.tip_lnks[0],
                        solver=orbka.S456X12)

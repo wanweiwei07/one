@@ -32,7 +32,16 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 - `pair_pattern(samples, tgt_vs, tgt_fs, normal_tol_deg=0, distance_tol=0.001, min_thickness=0.0, max_thickness=None)` — For every front-side (points, normals) sample in `samples`, ray-cast
 - `polypodal(gripper, target_sobj, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None, clearance=0.0003, min_thickness=0.0, max_thickness=None, verbose=True, return_pairs=False)` — End-to-end polypodal grasp computation.
 
+## `one.grasp.reasoner`
+_Grasp feasibility reasoning -- the "common grasp" kernel._
+
+- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
+- `reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs)` — Grasps feasible at EVERY object pose in ``obj_pose_list``.
+- **class `GraspReasoner`** — Thin stateful facade over :func:`find_feasible_gids` /
+  - methods: `find_feasible_gids`, `reason_common_gids`
+
 ## `one.grasp.serialize`
 
 - `save_grasps(grasps, path, gripper_name=None, object_name=None)` — Save planned grasps to a JSON file.
 - `load_grasps(path)` — Load grasps previously saved by `save_grasps`.
+- `transform_grasps(grasps, tf)` — Map object-LOCAL grasps into the world by an object world transform.

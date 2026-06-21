@@ -182,21 +182,22 @@ class CollisionType:
 
 
 class CollisionGroup:
-    ROBOT = 1 << 0  # 1
-    ENV = 1 << 1  # 2
-    OBJECT = 1 << 2  # 4
-    ALL = ROBOT | ENV | OBJECT
+    # Two collision roles. ACTIVE = robot links AND manipulable objects (held or
+    # free) -- collides with everything. STATIC = fixed scenery (ground, walls,
+    # pinned obstacles) -- collides with ACTIVE but NOT with other STATIC, so
+    # scenery resting on/against scenery does not spuriously report contacts.
+    # (ROBOT vs OBJECT used to be distinct but had identical affinity, so they are
+    # merged into ACTIVE; split again only if a future matrix needs to.)
+    ACTIVE = 1 << 0  # 1
+    STATIC = 1 << 1  # 2
+    ALL = ACTIVE | STATIC
 
 
 class CollisionMatrix:
-    """Default collision permission table"""
+    """Default collision permission table: which groups each group collides with."""
     DEFAULT = {
-        CollisionGroup.ROBOT:
-            CollisionGroup.ENV | CollisionGroup.OBJECT | CollisionGroup.ROBOT,
-        CollisionGroup.ENV:
-            CollisionGroup.ROBOT | CollisionGroup.OBJECT,
-        CollisionGroup.OBJECT:
-            CollisionGroup.ROBOT | CollisionGroup.ENV | CollisionGroup.OBJECT,
+        CollisionGroup.ACTIVE: CollisionGroup.ACTIVE | CollisionGroup.STATIC,
+        CollisionGroup.STATIC: CollisionGroup.ACTIVE,   # not other STATIC
     }
 
 

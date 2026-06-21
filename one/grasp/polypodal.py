@@ -391,7 +391,7 @@ if __name__ == "__main__":
     ]
 
     obj = osso.SceneObject.from_file(
-        OBJ, collision_type=ouc.CollisionType.MESH, is_free=True)
+        OBJ, collision_type=ouc.CollisionType.MESH, is_floating=True)
     obj.pos = np.zeros(3, dtype=np.float32)
     obj.rotmat = np.eye(3, dtype=np.float32)
     ghost = KRBRight()

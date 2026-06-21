@@ -9,23 +9,35 @@ class MJCollider:
         self._actors = ()
         self._actor_qs_slice = {}
         self._mjenv = None
+        self.acm = ()   # auto-detected resting-collision excludes (link/sobj pairs)
 
     def append(self, entity):
         self.scene.add(entity)
 
-    def compile(self, margin=0.0, auto_acm=False):
+    def compile(self, margin=0.0, auto_acm=False, extra_excludes=None):
+        """Build the MuJoCo model. ``extra_excludes`` is an EXPLICIT list of
+        (sobj_a, sobj_b) collision-exempt pairs (each a runtime Link or a mounted
+        SceneObject) -- e.g. a held object vs the gripper's finger links, a known
+        rule that does NOT need re-detection. ``auto_acm`` additionally DETECTS
+        resting-collision pairs (compact wrists, a mounted EE on its flange) and
+        stores them on ``self.acm`` so a sibling collider (e.g. the same arm now
+        carrying an object) can reuse them via ``extra_excludes`` instead of
+        re-detecting."""
+        explicit = list(extra_excludes or [])
+        self.acm = ()
         self._mjenv = opme.MJEnv(
-            self.scene, margin=margin)
+            self.scene, margin=margin, extra_excludes=explicit or None)
         if auto_acm:
             # Allowed Collision Matrix: whatever overlaps in the current (rest)
             # configuration is structural -- compact wrists, neck/torso, a
             # mounted EE sitting on its flange -- so disable those geom pairs by
             # rebuilding the model with them excluded. (MoveIt's "default in
             # collision -> disable" heuristic, here keyed on the rest pose.)
-            excludes = self._detect_resting_collisions()
-            if excludes:
+            self.acm = tuple(self._detect_resting_collisions())
+            if self.acm:
                 self._mjenv = opme.MJEnv(
-                    self.scene, margin=margin, extra_excludes=excludes)
+                    self.scene, margin=margin,
+                    extra_excludes=explicit + list(self.acm))
 
     def _detect_resting_collisions(self):
         # Second layer of the ACM. Parent-child (adjacent) links are already
@@ -74,7 +86,10 @@ class MJCollider:
             if key in seen:
                 continue
             seen.add(key)
-            pairs.append((lnk2ml[id(la)], lnk2ml[id(lb)]))
+            # link objects directly (a Link IS a SceneObject), so the converter
+            # resolves them through _lookup_body_node and they reuse across a
+            # rebuild / a sibling collider without re-detection.
+            pairs.append((la, lb))
         return pairs
 
     def is_collided(self, qs):

@@ -61,7 +61,7 @@ def build_scene():
     # small bunny (~0.05 m) so it fits a pinch -- pre-scaled mesh on disk
     bunny = osso.SceneObject.from_file(
         BUNNY_STL, collision_type=ouc.CollisionType.MESH,
-        rgb=(0.85, 0.7, 0.6), is_free=True)
+        rgb=(0.85, 0.7, 0.6), is_floating=True)
     bunny.pos = GRASP.copy()
     ground = ossop.plane(pos=(0, 0, 0.0))
     return robot, table, bunny, ground

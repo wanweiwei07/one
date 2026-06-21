@@ -211,8 +211,8 @@ class OALft(orbmb.MechBase):
     def _build_structure(cls):
         return prepare_arm_ms("lft")
 
-    def __init__(self, rotmat=None, pos=None, is_free=True):
-        super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
+    def __init__(self, rotmat=None, pos=None, is_floating=True):
+        super().__init__(rotmat=rotmat, pos=pos, is_floating=is_floating)
         c = self.structure.compiled
         # left/right arms share one SELIK database ('data_la'): identical arm
         # kinematics in the chain's own frame; only the base mount (root pose)
@@ -229,8 +229,8 @@ class OARgt(orbmb.MechBase):
     def _build_structure(cls):
         return prepare_arm_ms("rgt")
 
-    def __init__(self, rotmat=None, pos=None, is_free=True):
-        super().__init__(rotmat=rotmat, pos=pos, is_free=is_free)
+    def __init__(self, rotmat=None, pos=None, is_floating=True):
+        super().__init__(rotmat=rotmat, pos=pos, is_floating=is_floating)
         c = self.structure.compiled
         data_dir = os.path.join(self.structure.res_dir, "data_la")
         self.add_chain('main', c.root_lnk, c.tip_lnks[0],
@@ -246,7 +246,7 @@ class OABody(orbmb.MechBase):
         return prepare_bdy_ms()
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos, is_free=True)
+        super().__init__(rotmat=rotmat, pos=pos, is_floating=True)
 
 
 class OpenArm:

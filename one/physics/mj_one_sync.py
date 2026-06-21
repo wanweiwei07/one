@@ -18,14 +18,14 @@ class MJSynchronizer:
         for sobj, body in self.sobj2bdy.items():
             bid = self.mj_runtime.model.body(body.name).id
             self._body_map[sobj] = bid
-            if not sobj.is_free:
+            if not sobj.is_floating:
                 continue # only free bodies have qpos
             jid = model.body_jntadr[bid]
             qadr = model.jnt_qposadr[jid]
             self._sobj_qpos_adr[sobj] = qadr
         for mecba in self.scene.mecbas:
             root_lnk = mecba.runtime_root_lnk
-            if root_lnk.is_free:
+            if root_lnk.is_floating:
                 body = self.rutl2bdy[root_lnk]
                 bid = model.body(body.name).id
                 self._freebase_map[mecba] = bid

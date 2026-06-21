@@ -18,7 +18,7 @@ def main():
     cyl = ossop.cylinder(
         spos=(0.0, 0.0, 0.0), epos=(0.0, 0.0, CYL_HEIGHT),
         radius=CYL_RADIUS, segments=24,
-        collision_type=ouc.CollisionType.MESH, is_free=True,
+        collision_type=ouc.CollisionType.MESH, is_floating=True,
         rgb=(0.6, 0.7, 0.5))
     plan_save_show(cyl, OUT_JSON, "scnobj")
 

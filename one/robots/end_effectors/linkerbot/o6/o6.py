@@ -95,7 +95,7 @@ class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
     }
 
     def __init__(self, rotmat=None, pos=None):
-        super().__init__(rotmat=rotmat, pos=pos)   # is_free=True until mounted
+        super().__init__(rotmat=rotmat, pos=pos)   # is_floating=True until mounted
         y = self._Y
         self.add_tcp('power_center', self.runtime_root_lnk,
                      oum.tf_from_pos_rotmat(

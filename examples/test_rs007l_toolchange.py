@@ -54,7 +54,7 @@ if __name__ == '__main__':
     bunny = osso.SceneObject.from_file(
         'bunny.stl', collision_type=ouc.CollisionType.MESH,
         rgb=ouc.ExtendedColor.BEIGE)
-    bunny.is_free = True
+    bunny.is_floating = True
     bunny.pos = BUNNY.copy()
     bunny.attach_to(scene)
 

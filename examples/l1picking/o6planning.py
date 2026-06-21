@@ -38,7 +38,7 @@ OUT_JSON = os.path.join(_THIS, "o6_cylinder_grasps.json")
 
 def make_cylinder():
     return osso.SceneObject.from_file(
-        CYL_STL, collision_type=ouc.CollisionType.MESH, is_free=True,
+        CYL_STL, collision_type=ouc.CollisionType.MESH, is_floating=True,
         rgb=(0.6, 0.7, 0.5))
 
 

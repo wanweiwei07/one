@@ -10,12 +10,12 @@ import one.robots.base.kine.kinematic_chain as orbkkc
 
 class Link(osso.SceneObject):
 
-    def __init__(self, collision_type=None, is_free=False):
-        super().__init__(collision_type=collision_type, is_free=is_free)
+    def __init__(self, collision_type=None, is_floating=False):
+        super().__init__(collision_type=collision_type, is_floating=is_floating)
 
-    def _update_collision_group(self):
-        """override to use unique collision group"""
-        self._collision_group = ouc.CollisionGroup.ROBOT
+    def _seed_collision_role(self):
+        """override: robot links are always ACTIVE (collide with everything)."""
+        self._collision_group = ouc.CollisionGroup.ACTIVE
 
 
 class Joint:
@@ -118,9 +118,6 @@ class MechStruct:
             raise ValueError("Parameters a and b are the same")
         pair = (a, b) if id(a) < id(b) else (b, a)
         self._collision_ignores.add(pair)
-
-    def ignore_env_collision(self, lnk):
-        lnk.collision_affinity &= ~ouc.CollisionGroup.ENV
 
     def compile(self):
         self._compiled = FlatMechStructure(self)

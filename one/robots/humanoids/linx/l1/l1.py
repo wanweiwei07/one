@@ -38,9 +38,9 @@ class L1(orbmb.MechBase):
     def _build_structure(cls):
         return prepare_mechstruct()
 
-    def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=True):
+    def __init__(self, rotmat=None, pos=None, home_qs=None, is_floating=True):
         super().__init__(rotmat=rotmat, pos=pos,
-                         home_qs=home_qs, is_free=is_free)
+                         home_qs=home_qs, is_floating=is_floating)
         lm = self.structure.lnk_map
         # named chains (which joints move) -- base/tip are structure links
         self.add_chain('left_arm', lm['waist_link2'], lm['left_arm_link_6'],
@@ -66,9 +66,9 @@ class L1O6(L1):
         robot.ik(p, R, chain='left_arm', tcp=robot.left_hand.tcp('power_center'))
     """
 
-    def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=True):
+    def __init__(self, rotmat=None, pos=None, home_qs=None, is_floating=True):
         super().__init__(rotmat=rotmat, pos=pos,
-                         home_qs=home_qs, is_free=is_free)
+                         home_qs=home_qs, is_floating=is_floating)
         # O6 EEs mounted on each arm flange (the *_linkerbot_mount_joint,
         # xyz=(0,0,0.034), that used to live in the body URDF).
         mount_tf = oum.tf_from_pos_rotmat(

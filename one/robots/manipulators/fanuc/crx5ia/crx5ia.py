@@ -233,7 +233,7 @@ class CRX5ia(orbmb.MechBase):
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(
-            rotmat=rotmat, pos=pos, is_free=False, home_qs=[0, 0, 0, 0, 0, 0]
+            rotmat=rotmat, pos=pos, is_floating=False, home_qs=[0, 0, 0, 0, 0, 0]
         )
         c = self.structure.compiled
         self.add_chain('main', c.root_lnk, c.tip_lnks[0],

@@ -60,8 +60,8 @@ class O6RightCvxHull(oello6.O6Right):
 class L1O6CvxHull(L1CvxHull):
     """L1 plus O6 hands, all rendered with convex-hull collision shapes."""
 
-    def __init__(self, rotmat=None, pos=None, home_qs=None, is_free=True):
-        super().__init__(rotmat=rotmat, pos=pos, home_qs=home_qs, is_free=is_free)
+    def __init__(self, rotmat=None, pos=None, home_qs=None, is_floating=True):
+        super().__init__(rotmat=rotmat, pos=pos, home_qs=home_qs, is_floating=is_floating)
         mount_tf = oum.tf_from_pos_rotmat(
             pos=np.array([0.0, 0.0, 0.034], dtype=np.float32))
         self.left_hand = O6LeftCvxHull()

@@ -1,6 +1,6 @@
 import time
 import numpy as np
-import one.motion.core.post_processor as omppp
+import one.motion.probabilistic.post_processor as omppp
 
 
 def shortcut_path(path, pln_ctx, n_iter=200):

@@ -35,7 +35,7 @@ if results is not None:
         s = ossop.sphere(
             pos=hit_point, radius=0.002,
             rgb=ouc.BasicColor.RED, alpha=ouc.ALPHA.SOLID,
-            collision_type=None, is_free=False)
+            collision_type=None, is_floating=False)
         s.attach_to(base.scene)
 
 print("\nRepeated runs (warm):")

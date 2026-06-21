@@ -36,11 +36,11 @@ import one.scene.scene_object_primitive as ossop              # noqa: E402
 import one.collider.mj_collider as ocm                         # noqa: E402
 import one.physics.mj_env as opme                              # noqa: E402
 import one.motion.probabilistic.rrt as ompr                    # noqa: E402
-import one.motion.interpolation.cartesian as omic                 # noqa: E402
+import one.motion.primitives.approach_depart as ompad             # noqa: E402
 import one.robots.base.tcp as orbt                             # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                   # noqa: E402
 import one.viewer.world as ovw                                 # noqa: E402
-from one.grasp.serialize import load_grasps                    # noqa: E402
+from one.grasp.serialize import load_grasps, transform_grasps  # noqa: E402
 
 from l1picking import (build_table, TABLE_TOP_Z, CHAIN,        # noqa: E402
                        chain_planning_context)
@@ -76,18 +76,18 @@ def build_bin(cx, cy, z_top):
     bx, by, bt = BIN_BOTTOM
     parts = [ossop.box(pos=(cx, cy, z_top + bt / 2),
                        xyz_lengths=(bx, by, bt), rgb=BIN_RGB,
-                       collision_type=ouc.CollisionType.AABB, is_free=False)]
+                       collision_type=ouc.CollisionType.AABB, is_floating=False)]
     wz = z_top + bt + WALL_H / 2
     for sx in (-1, 1):
         parts.append(ossop.box(
             pos=(cx + sx * (bx / 2 + WALL_T / 2), cy, wz),
             xyz_lengths=(WALL_T, by, WALL_H), rgb=BIN_RGB,
-            collision_type=ouc.CollisionType.AABB, is_free=False))
+            collision_type=ouc.CollisionType.AABB, is_floating=False))
     for sy in (-1, 1):
         parts.append(ossop.box(
             pos=(cx, cy + sy * (by / 2 + WALL_T / 2), wz),
             xyz_lengths=(bx + 2 * WALL_T, WALL_T, WALL_H), rgb=BIN_RGB,
-            collision_type=ouc.CollisionType.AABB, is_free=False))
+            collision_type=ouc.CollisionType.AABB, is_floating=False))
     return parts
 
 
@@ -111,7 +111,7 @@ def scatter_cylinders(cx, cy, z_floor, n, seed=0):
         # many small parts (jitter/tunnelling); capsule is the stable proxy. The
         # STL stays the visual.
         c = osso.SceneObject.from_file(
-            CYL_STL, collision_type=ouc.CollisionType.CAPSULE, is_free=True,
+            CYL_STL, collision_type=ouc.CollisionType.CAPSULE, is_floating=True,
             rgb=rgb)
         c.set_pos_rotmat(pos=np.array([px, py, pz], dtype=np.float32),
                          rotmat=oum.rotmat_from_axangle(axis,
@@ -140,48 +140,29 @@ def make_pick_collider(robot, statics, cyls, target):
     """Motion-planning collider: robot vs statics vs every cylinder EXCEPT the
     one being grasped (that one is carried, not an obstacle).
 
-    The obstacle cylinders are cloned as FIXED (is_free=False -> ENV group) at
-    their current settled pose. is_collided() counts global contacts, and a pile
-    of free (OBJECT) cylinders resting on each other and the bin produces dozens
-    of permanent OBJECT-OBJECT / OBJECT-ENV contacts that would mark every robot
-    config as collided. ENV-ENV pairs are filtered by the collision matrix, so
-    fixed clones still block the robot (ROBOT-ENV is checked) without the pile
-    noise. The live free cylinders stay in the physics scene untouched."""
+    The obstacle cylinders are cloned and declared STATIC at their current settled
+    pose. is_collided() counts global contacts, and a pile of ACTIVE cylinders
+    resting on each other and the bin produces dozens of permanent ACTIVE-ACTIVE /
+    ACTIVE-STATIC contacts that would mark every robot config as collided.
+    STATIC-vs-STATIC pairs are filtered by the collision matrix, so the fixed
+    clones still block the robot (ACTIVE-vs-STATIC is checked) without the pile
+    noise. The live cylinders stay in the physics scene untouched."""
     mjc = ocm.MJCollider()
     obstacles = []
     for c in cyls:
         if c is target:
             continue
         fixed = c.clone()
-        fixed.is_free = False
+        fixed.is_floating = False
+        # pinned clone used as a static obstacle: declare STATIC (the role no
+        # longer follows is_floating) so it does not contact its neighbours/ground.
+        fixed.collision_group = ouc.CollisionGroup.STATIC
         obstacles.append(fixed)
     for e in [robot] + statics + obstacles:
         mjc.append(e)
     mjc.actors = [robot]
     mjc.compile(margin=0.0, auto_acm=True)
     return mjc
-
-
-def cartesian_segment(robot, ctx, tcp, ref, p0, p1, rot, check=True):
-    """Straight CARTESIAN move of ``tcp`` from world pos ``p0`` to ``p1`` at a
-    fixed orientation ``rot``, IK-solved at each step and seeded from the
-    previous config (so the branch stays continuous -- no elbow flips). Returns
-    the config list, or None if any step has no IK solution or, when ``check``,
-    the densified path collides.
-
-    A joint-space line between two valid endpoints does NOT move the hand in a
-    straight line -- it bows the wrist sideways, which in a bin drives the hand
-    through a wall mid-descent. Moving the tcp along a straight Cartesian line
-    (the grasp's approach axis) keeps the hand clear, and ``ctx`` rejects
-    segments that still collide -- naturally selecting the top-down, wall-clear
-    grasps. Thin wrapper over ``omic.linear_to_jpath`` (which does the
-    interpolation, seeded per-step IK, and densified ``ctx.is_motion_valid``
-    edge check)."""
-    q_seq, _ = omic.linear_to_jpath(
-        robot=robot, start_rotmat=rot, start_pos=p0,
-        goal_rotmat=rot, goal_pos=p1, ref_qs=ref,
-        chain=CHAIN, tcp=tcp, ctx=ctx if check else None)
-    return None if q_seq is None else list(q_seq)
 
 
 def normal_elbow_ik(robot, ctx, pos, rot, tcp, ref):
@@ -232,43 +213,46 @@ def build_pick_place(robot, ctx, planner, jaw, wpose, wpre, jw):
     The target cylinder is excluded from the collider (make_pick_collider), so
     every config is collision-CHECKED: contacting the absent target is free, but
     the hand may NOT pierce the bin walls or neighbour parts. The pre->grasp
-    descent and grasp->lift retreat are straight CARTESIAN moves (see
-    cartesian_segment) so the hand goes straight along the approach axis instead
-    of bowing into a wall."""
+    descent and grasp->lift retreat are straight CARTESIAN moves (ompad.gen_*,
+    check_*=True so ctx gates them) so the hand goes straight along the approach
+    axis instead of bowing into a wall."""
     rot, g = wpose[:3, :3], wpose[:3, 3]
     tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
                    jaw.eval_grasp_tcp(jw).loc_tf)
     home = robot.qs.astype(np.float64).copy()
-    # Pick the NORMAL-elbow pre-grasp (joint3 near 0). The grasp orientation is
-    # fixed by the antipodal contact, so we can't spin it like place; if no
-    # normal-elbow solution exists for this grasp we return None and the caller
-    # tries the next grasp (a different orientation). approach/lift then inherit
-    # this elbow branch via the seeded Cartesian steps.
-    pre = normal_elbow_ik(robot, ctx, wpre[:3, 3], wpre[:3, :3], tcp, home)
-    if pre is None:
+    chain = robot.chain(CHAIN)
+    # NORMAL-elbow gate (joint3 near 0, not the q3~180 flipped branch): the grasp
+    # orientation is fixed by the antipodal contact, so we can't spin it like
+    # place; the cartesian descent/lift inherit this elbow branch via seeded IK.
+    normal_elbow = lambda q: abs(chain.extract_active_qs(q)[ELBOW_IDX]) < ELBOW_MAX
+    adp = ompad.ADPlanner(robot, ctx, planner, chain=CHAIN, tcp=tcp)
+    # RRT home -> pre-grasp, then a straight CARTESIAN descent into the grasp;
+    # ctx gates the descent (target excluded -> contacting it is free, but bin
+    # walls / neighbours are not), and ik_accept enforces the normal elbow.
+    approach = adp.gen_approach(
+        g, rot, start_qs=home, pre_pos=wpre[:3, 3], pre_rotmat=wpre[:3, :3],
+        granularity=0.01, use_rrt=True, check_descent=True, max_iters=4000,
+        ik_accept=normal_elbow)
+    if approach is None:                        # no normal-elbow pre / wall clip
         return None
-    approach = cartesian_segment(robot, ctx, tcp, pre, wpre[:3, 3], g, rot)
-    if approach is None:                       # descent clips a wall -> skip
-        return None
-    grasp_q = approach[-1]
-    lift = cartesian_segment(robot, ctx, tcp, grasp_q, g, g + UP, rot)
+    grasp_idx = len(approach) - 1               # hand closes here (at grasp_q)
+    grasp_q = approach.jv_list[-1]
+    # straight cartesian retreat back up (still collision-gated)
+    lift = adp.gen_depart(
+        g, rot, start_qs=grasp_q, depart_direction=UP,
+        depart_distance=float(np.linalg.norm(UP)), granularity=0.01,
+        check_retreat=True)
     if lift is None:
         return None
-    placed = place_config(robot, ctx, PLACE_POS, rot, tcp, lift[-1])
+    placed = place_config(robot, ctx, PLACE_POS, rot, tcp, lift.jv_list[-1])
     if placed is None:                          # no normal-elbow place -> skip
         return None
     place, _ = placed
-    home_to_pre = planner.solve(home, pre, max_iters=4000)    # RRT, ends at pre
-    if not home_to_pre:
-        return None
-    traj = list(home_to_pre)
-    traj += approach[1:]                        # pre already present; descend
-    grasp_idx = len(traj) - 1                   # hand closes here (at grasp_q)
-    traj += lift[1:]                            # grasp already present; retreat
-    lift_to_place = planner.solve(lift[-1], place, max_iters=4000)
+    lift_to_place = planner.solve(lift.jv_list[-1], place, max_iters=4000)
     if not lift_to_place:
         return None
-    traj += lift_to_place
+    # pre already present in approach; grasp_q seam between approach & lift.
+    traj = approach.jv_list + lift.jv_list[1:] + list(lift_to_place)
     amount = float(jaw._amount_for(jw))
     return traj, grasp_idx, amount
 
@@ -284,10 +268,8 @@ def plan_next_pick(robot, statics, cyls, grasps_local, picked, jaw):
         planner = ompr.RRTConnectPlanner(pln_ctx=ctx,
                                          extend_step_size=np.pi / 36,
                                          goal_bias=0.3)
-        wd = target.wd_tf
-        for pose, pre, jw, sc in grasps_local:
-            m = build_pick_place(robot, ctx, planner, jaw,
-                                 wd @ pose, wd @ pre, jw)
+        for pose, pre, jw, sc in transform_grasps(grasps_local, target.wd_tf):
+            m = build_pick_place(robot, ctx, planner, jaw, pose, pre, jw)
             if m is not None:
                 return ci, m
     return None, None

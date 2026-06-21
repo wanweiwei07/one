@@ -171,20 +171,30 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 - `pair_pattern(samples, tgt_vs, tgt_fs, normal_tol_deg=0, distance_tol=0.001, min_thickness=0.0, max_thickness=None)` — For every front-side (points, normals) sample in `samples`, ray-cast
 - `polypodal(gripper, target_sobj, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None, clearance=0.0003, min_thickness=0.0, max_thickness=None, verbose=True, return_pairs=False)` — End-to-end polypodal grasp computation.
 
+## `one.grasp.reasoner`
+_Grasp feasibility reasoning -- the "common grasp" kernel._
+
+- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
+- `reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs)` — Grasps feasible at EVERY object pose in ``obj_pose_list``.
+- **class `GraspReasoner`** — Thin stateful facade over :func:`find_feasible_gids` /
+  - methods: `find_feasible_gids`, `reason_common_gids`
+
 ## `one.grasp.serialize`
 
 - `save_grasps(grasps, path, gripper_name=None, object_name=None)` — Save planned grasps to a JSON file.
 - `load_grasps(path)` — Load grasps previously saved by `save_grasps`.
+- `transform_grasps(grasps, tf)` — Map object-LOCAL grasps into the world by an object world transform.
+
+## `one.motion.core.motion_data`
+_A plain, composable motion container._
+
+- **class `MotionData`**
+  - methods: `from_jpath`, `is_empty`, `copy`
 
 ## `one.motion.core.planning_context`
 
 - **class `PlanningContext`** — Collision + bounds oracle for sampling-based planners.
   - methods: `is_state_valid`, `is_motion_valid`, `states_equal`, `enforce_bounds`, `clear_cache`, `sample_uniform`, `interpolate`, `distance`
-
-## `one.motion.core.post_processor`
-
-- **class `PathPostProcessor`**
-  - methods: `shortcut`, `densify`
 
 ## `one.motion.core.state_space`
 
@@ -202,6 +212,20 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 - `interp_by_step(start_qs, goal_qs, step=np.deg2rad(3.0))` — Joint-space straight-line interpolation with automatic sample count.
 - `interp_by_n(start_qs, goal_qs, n_steps=2)` — Joint-space straight-line interpolation with fixed number of samples.
 - `linear_path(start_qs, goal_qs, step=np.deg2rad(3.0), ctx=None)` — Joint-space straight-line path between two configs, optionally collision-gated.
+
+## `one.motion.primitives.approach_depart`
+_Approach / depart motion primitives._
+
+- `nearest_valid_ik(robot, ctx, pos, rotmat, *, chain='main', tcp='flange', ref_qs, max_solutions=8, accept=None)` — IK at ``(pos, rotmat)`` returning the solution nearest ``ref_qs`` (in the
+- `gen_approach(robot, ctx, planner, goal_pos, goal_rotmat, *, tcp, start_qs, chain='main', pre_pos=None, pre_rotmat=None, approach_direction=None, approach_distance=0.05, granularity=0.01, ee_value=None, use_rrt=True, check_descent=True, max_iters=2000, ik_max_solutions=8, ik_accept=None)` — ``start_qs`` -> pre-grasp (probabilistic) -> grasp (cartesian line).
+- `gen_depart(robot, ctx, planner, start_pos, start_rotmat, *, tcp, start_qs, chain='main', depart_direction=None, depart_distance=0.05, granularity=0.01, ee_value=None, end_qs=None, use_rrt=False, check_retreat=True, max_iters=2000)` — ``start_qs`` (at the grasp) -> retreat (cartesian line) -> optional park.
+- **class `ADPlanner`** — Thin stateful facade over :func:`gen_approach` / :func:`gen_depart`.
+  - methods: `gen_approach`, `gen_depart`
+
+## `one.motion.probabilistic.post_processor`
+
+- **class `PathPostProcessor`**
+  - methods: `shortcut`, `densify`
 
 ## `one.motion.probabilistic.prm`
 

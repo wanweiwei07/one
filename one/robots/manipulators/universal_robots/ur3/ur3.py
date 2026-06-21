@@ -182,7 +182,7 @@ class UR3(orbmb.MechBase):
 
     def __init__(self, rotmat=None, pos=None):
         super().__init__(
-            rotmat=rotmat, pos=pos, is_free=False,
+            rotmat=rotmat, pos=pos, is_floating=False,
             home_qs=[0, -np.pi / 2, np.pi / 2, 0, 0, 0]
         )
         c = self.structure.compiled

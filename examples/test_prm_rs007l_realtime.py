@@ -10,14 +10,14 @@ oframe = ossop.frame()
 oframe.attach_to(base.scene)
 
 robot = khi_rs007l.RS007L()
-robot.is_free = True
+robot.is_floating = True
 robot.rotmat = oum.rotmat_from_euler(0, 0, -oum.pi / 2)
 robot.attach_to(base.scene)
 
 # obstacles
 box = ossop.box(xyz_lengths=(1, 0.06, 0.06), pos=(.0, -0.2, 1),
                 collision_type=ouc.CollisionType.AABB,
-                is_free=True)
+                is_floating=True)
 box.attach_to(base.scene)
 
 collider = ocm.MJCollider()
