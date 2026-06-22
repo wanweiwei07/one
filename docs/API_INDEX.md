@@ -174,7 +174,7 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 ## `one.grasp.reasoner`
 _Grasp feasibility reasoning -- the "common grasp" kernel._
 
-- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
+- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
 - `reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs)` — Grasps feasible at EVERY object pose in ``obj_pose_list``.
 - **class `GraspReasoner`** — Thin stateful facade over :func:`find_feasible_gids` /
   - methods: `find_feasible_gids`, `reason_common_gids`
@@ -184,6 +184,13 @@ _Grasp feasibility reasoning -- the "common grasp" kernel._
 - `save_grasps(grasps, path, gripper_name=None, object_name=None)` — Save planned grasps to a JSON file.
 - `load_grasps(path)` — Load grasps previously saved by `save_grasps`.
 - `transform_grasps(grasps, tf)` — Map object-LOCAL grasps into the world by an object world transform.
+
+## `one.manipulation.pick_place`
+_Pick-and-place motion planning -- move an object from a pick pose to a place_
+
+- `gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, statics=(), tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, margin=0.0, approach_iters=4000, transfer_iters=8000, goal_bias=0.3, jaw_to_qs=lambda w: (w / 2.0, w / 2.0))` — Plan home -> pick -> lift -> transfer -> place -> retreat moving ``obj``
+- **class `PickPlacePlanner`** — Thin stateful facade over :func:`gen_pick_place`.
+  - methods: `gen_pick_place`
 
 ## `one.motion.core.motion_data`
 _A plain, composable motion container._
@@ -317,7 +324,7 @@ _Approach / depart motion primitives._
 
 - **class `Mounting`**
 - **class `MechBase`**
-  - methods: `structure`, `attach_to`, `detach_from`, `set_pos_rotmat`, `fk`, `mount`, `unmount`, `get_solver`, `add_chain`, `chain`, `chains`, `add_tcp`, `tcp`, `tcps`, `toggle_tcp`, `ik`, `ik_partial`, `clone`, `ndof`, `runtime_root_lnk`, `is_free`, `home_qs`, `tf`, `rotmat`, `quat`, `pos`, `toggle_render_collision`, `rgba`, `rgb`, `alpha`
+  - methods: `structure`, `attach_to`, `detach_from`, `set_pos_rotmat`, `fk`, `mount`, `unmount`, `get_solver`, `add_chain`, `chain`, `chains`, `add_tcp`, `tcp`, `tcps`, `toggle_tcp`, `ik`, `ik_partial`, `clone`, `ndof`, `runtime_root_lnk`, `is_floating`, `home_qs`, `tf`, `rotmat`, `quat`, `pos`, `toggle_render_collision`, `rgba`, `rgb`, `alpha`
 
 ## `one.robots.base.mech_structure`
 
@@ -325,7 +332,7 @@ _Approach / depart motion primitives._
 - **class `Joint`**
   - methods: `zero_tf`, `motion_tf`
 - **class `MechStruct`**
-  - methods: `get_chain`, `add_lnk`, `add_jnt`, `ignore_collision`, `ignore_env_collision`, `compile`, `collision_ignores_objs`, `n_jnts`, `n_lnks`, `compiled`
+  - methods: `get_chain`, `add_lnk`, `add_jnt`, `ignore_collision`, `compile`, `collision_ignores_objs`, `n_jnts`, `n_lnks`, `compiled`
 - **class `FlatMechStructure`** — flat representation of RobotStructure for efficient computation
   - methods: `resolve_all_qs`, `is_active_jnt`
 
@@ -448,7 +455,7 @@ _Approach / depart motion primitives._
 ## `one.robots.end_effectors.ee_mixins`
 
 - **class `GripperMixin`**
-  - methods: `open`, `close`, `grasp`, `release`, `set_jaw_width`, `grip_at`
+  - methods: `open`, `close`, `grasp`, `release`, `set_jaw_width`, `grip_at`, `eval_grasp_tcp`
 - **class `PointMixin`**
   - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).
@@ -648,7 +655,7 @@ _Mesh geometry operations on raw (vertices, faces) arrays: surface_
 ## `one.scene.scene_object`
 
 - **class `SceneObject`**
-  - methods: `from_file`, `attach_to`, `detach_from`, `add_visual`, `add_collision`, `clone`, `set_inertia`, `collision_group`, `collision_affinity`, `is_free`, `rgb`, `alpha`, `rgba`, `inrtmat`, `com`, `mass`
+  - methods: `from_file`, `attach_to`, `detach_from`, `add_visual`, `add_collision`, `clone`, `set_inertia`, `collision_group`, `collision_affinity`, `is_floating`, `rgb`, `alpha`, `rgba`, `inrtmat`, `com`, `mass`
 
 ## `one.scene.scene_object_primitive`
 
@@ -667,7 +674,7 @@ _Mesh geometry operations on raw (vertices, faces) arrays: surface_
 - `plane(pos=(0, 0, 0), normal=ouc.StandardAxis.Z, size=(100.0, 100.0), thickness=0.001, rgb=ouc.BasicColor.GRAY, alpha=1.0)`
 - `point_cloud(vs, vrgbs, alpha=1.0)` — Build a point-cloud SceneObject from per-vertex positions and colors.
 - `frustrum(base_center=(0, 0, 0), top_center=(0, 0, 0.05), bottom_length=0.05, top_length=0.03, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)`
-- `mesh(vs, fs, collision_type=None, is_free=False, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)` — Build a SceneObject from user-specified vertices/faces.
+- `mesh(vs, fs, collision_type=None, is_floating=False, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)` — Build a SceneObject from user-specified vertices/faces.
 
 ## `one.stream.websocket_server`
 
@@ -694,7 +701,7 @@ _Mesh geometry operations on raw (vertices, faces) arrays: surface_
 - **class `JntType`**
 - **class `CollisionType`**
 - **class `CollisionGroup`**
-- **class `CollisionMatrix`** — Default collision permission table
+- **class `CollisionMatrix`** — Default collision permission table: which groups each group collides with.
 - **class `DefaultPhy`**
 
 ## `one.utils.decorator`

@@ -22,7 +22,7 @@ configures ``ctx`` (and which poses it passes), not baked in here.
 import numpy as np
 
 
-def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None,
+def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None,
                        jaw_to_qs=lambda w: (w / 2, w / 2), chain='main',
                        which='pre', max_solutions=1, ik_accept=None):
     """Feasible grasps at a single object pose.
@@ -40,9 +40,13 @@ def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None,
         the gripper / obstacles; the caller has set ``ctx`` up for this arm).
     grasps : iterable of (pose, pre_pose, jaw_width, score) -- object-LOCAL.
     obj_pose : (4, 4) object world transform.
-    tcp : registered tcp name or TCP object IK solves against.
-    gripper : if given, posed to ``jaw_to_qs(jaw_width)`` on ``ctx.collider``
-        before each collision check (None skips this -- jaw irrelevant).
+    tcp : the IK tcp. Default None DERIVES it per grasp from the gripper --
+        ``gripper.eval_grasp_tcp(jaw_width)`` -- so the grasp's own grasp-center
+        frame is used (a DexHand's shifts with the closure; a parallel gripper's
+        is fixed). Pass a name/TCP to force one fixed tcp for all grasps.
+    gripper : posed to ``jaw_to_qs(jaw_width)`` on ``ctx.collider`` before each
+        collision check (the finger span affects collision); also the source of
+        the per-grasp tcp when ``tcp`` is None. Required if ``tcp`` is None.
     jaw_to_qs : jaw_width -> gripper finger qs (default the symmetric
         parallel-jaw convention, both fingers at width/2).
     which : 'pre' (default) or 'grasp' -- which pose to test for reachability.
@@ -53,13 +57,19 @@ def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None,
     -------
     dict {gid: qs} -- the feasible grasp index -> its collision-free config.
     """
+    if tcp is None and gripper is None:
+        raise ValueError("find_feasible_gids needs a gripper to derive the "
+                         "per-grasp tcp, or an explicit tcp")
     obj_pose = np.asarray(obj_pose, dtype=np.float32)
     feasible = {}
     for gid, grasp in enumerate(grasps):
         pose, pre_pose, jaw_width = grasp[0], grasp[1], grasp[2]
+        # the tcp is the grasp's own grasp-center frame, derived from its
+        # jaw_width (DexHand: shifts with closure; parallel: fixed) unless forced.
+        g_tcp = gripper.eval_grasp_tcp(jaw_width) if tcp is None else tcp
         local = pre_pose if which == 'pre' else pose
         world = obj_pose @ np.asarray(local, dtype=np.float32)
-        sols = robot.ik(world[:3, 3], world[:3, :3], chain=chain, tcp=tcp,
+        sols = robot.ik(world[:3, 3], world[:3, :3], chain=chain, tcp=g_tcp,
                         max_solutions=max_solutions)
         if not sols:
             continue
@@ -112,8 +122,8 @@ class GraspReasoner:
     via keyword (e.g. ``reasoner.find_feasible_gids(pose, which='grasp')``).
     """
 
-    def __init__(self, robot, ctx, grasps, *, tcp, gripper=None, chain='main',
-                 jaw_to_qs=lambda w: (w / 2, w / 2), which='pre',
+    def __init__(self, robot, ctx, grasps, *, tcp=None, gripper=None,
+                 chain='main', jaw_to_qs=lambda w: (w / 2, w / 2), which='pre',
                  max_solutions=1, ik_accept=None):
         self.robot = robot
         self.ctx = ctx

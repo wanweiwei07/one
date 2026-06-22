@@ -67,7 +67,7 @@ tf_place = oum.tf_from_pos_rotmat(pos0 + np.array([0.3, 0.3, 0.0], np.float32),
 # manipulated object (free during reach, collision-checked while carried); the
 # wall is a static obstacle the carried bunny must route around.
 planner = PickPlacePlanner(robot, gripper, statics=[ground, wall],
-                           tcp='grasp_center', lift_height=LIFT)
+                           lift_height=LIFT)   # tcp derived per grasp
 motion = None
 for attempt in range(10):
     grasps = antipodal(gripper=gripper, target_sobj=bunny, density=0.006,

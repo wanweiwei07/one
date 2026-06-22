@@ -35,7 +35,7 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 ## `one.grasp.reasoner`
 _Grasp feasibility reasoning -- the "common grasp" kernel._
 
-- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
+- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
 - `reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs)` — Grasps feasible at EVERY object pose in ``obj_pose_list``.
 - **class `GraspReasoner`** — Thin stateful facade over :func:`find_feasible_gids` /
   - methods: `find_feasible_gids`, `reason_common_gids`

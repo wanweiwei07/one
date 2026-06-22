@@ -69,7 +69,7 @@ _Mesh geometry operations on raw (vertices, faces) arrays: surface_
 ## `one.scene.scene_object`
 
 - **class `SceneObject`**
-  - methods: `from_file`, `attach_to`, `detach_from`, `add_visual`, `add_collision`, `clone`, `set_inertia`, `collision_group`, `collision_affinity`, `is_free`, `rgb`, `alpha`, `rgba`, `inrtmat`, `com`, `mass`
+  - methods: `from_file`, `attach_to`, `detach_from`, `add_visual`, `add_collision`, `clone`, `set_inertia`, `collision_group`, `collision_affinity`, `is_floating`, `rgb`, `alpha`, `rgba`, `inrtmat`, `com`, `mass`
 
 ## `one.scene.scene_object_primitive`
 
@@ -88,4 +88,4 @@ _Mesh geometry operations on raw (vertices, faces) arrays: surface_
 - `plane(pos=(0, 0, 0), normal=ouc.StandardAxis.Z, size=(100.0, 100.0), thickness=0.001, rgb=ouc.BasicColor.GRAY, alpha=1.0)`
 - `point_cloud(vs, vrgbs, alpha=1.0)` — Build a point-cloud SceneObject from per-vertex positions and colors.
 - `frustrum(base_center=(0, 0, 0), top_center=(0, 0, 0.05), bottom_length=0.05, top_length=0.03, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)`
-- `mesh(vs, fs, collision_type=None, is_free=False, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)` — Build a SceneObject from user-specified vertices/faces.
+- `mesh(vs, fs, collision_type=None, is_floating=False, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)` — Build a SceneObject from user-specified vertices/faces.

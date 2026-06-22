@@ -39,7 +39,7 @@ from one.motion.core.motion_data import MotionData
 
 
 def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
-                   statics=(), tcp='grasp_center', chain='main', start_qs=None,
+                   statics=(), tcp=None, chain='main', start_qs=None,
                    lift_height=0.12, granularity=0.01, margin=0.0,
                    approach_iters=4000, transfer_iters=8000, goal_bias=0.3,
                    jaw_to_qs=lambda w: (w / 2.0, w / 2.0)):
@@ -48,8 +48,13 @@ def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
 
     ``grasps``: object-LOCAL grasps (pose, pre_pose, jaw_width, score) as from
     ``antipodal`` / ``load_grasps``. ``statics``: the fixed scenery/obstacles
-    (ground, walls) -- obstacles in BOTH phases. ``tcp``: registered tcp name or
-    a TCP object. Tries each grasp feasible at both poses until one fully plans.
+    (ground, walls) -- obstacles in BOTH phases. Tries each grasp feasible at
+    both poses until one fully plans.
+
+    ``tcp`` is NOT fixed by the caller: by default (None) the IK tcp is DERIVED
+    from each grasp via ``gripper.eval_grasp_tcp(jaw_width)`` -- the grasp's own
+    grasp-center frame (a DexHand's shifts with the closure; a parallel
+    gripper's is fixed). Pass a name/TCP only to force one fixed tcp.
 
     Returns a MotionData with parallel ``jv_list`` (configs), ``ev_list`` (gripper
     opening per waypoint; open->closed marks the grasp, closed->open the release)
@@ -66,6 +71,11 @@ def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
     place_pose = np.asarray(place_pose, dtype=np.float32)
     jaw_open = float(gripper.jaw_range[1])
 
+    # the grasp-center tcp for a grasp: derived from its jaw_width by default
+    # (the gripper is the authority), or the caller's forced tcp.
+    def grasp_tcp(jaw_width):
+        return gripper.eval_grasp_tcp(jaw_width) if tcp is None else tcp
+
     # --- FREE collider: robot + gripper + statics (NOT the object) ---
     mjc_free = ocm.MJCollider()
     for e in (robot, gripper, *statics):
@@ -75,10 +85,9 @@ def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
     base_acm = list(mjc_free.acm)
     ctx_free = omppc.PlanningContext(collider=mjc_free)
     planner_free = ompr.RRTConnectPlanner(pln_ctx=ctx_free, goal_bias=goal_bias)
-    adp_free = ompad.ADPlanner(robot, ctx_free, planner_free,
-                               chain=chain, tcp=tcp)
 
-    # --- grasps feasible at BOTH the pick and the place pose ---
+    # --- grasps feasible at BOTH the pick and the place pose (the reasoner
+    # derives each grasp's tcp the same way, from gripper.eval_grasp_tcp) ---
     reasoner = ogr.GraspReasoner(robot, ctx_free, grasps, tcp=tcp,
                                  gripper=gripper, chain=chain,
                                  jaw_to_qs=jaw_to_qs)
@@ -87,12 +96,15 @@ def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
     for gid in sorted(common):
         pose, pre_pose, jw = grasps[gid][0], grasps[gid][1], grasps[gid][2]
         pose = np.asarray(pose, dtype=np.float32)
+        g_tcp = grasp_tcp(jw)                    # this grasp's grasp-center frame
         pick_g, pick_pre = pick_pose @ pose, pick_pose @ np.asarray(pre_pose,
                                                                     np.float32)
         place_g, place_pre = place_pose @ pose, place_pose @ np.asarray(
             pre_pose, np.float32)
 
         # PICK (free phase, gripper open). Descent into the target is ungated.
+        adp_free = ompad.ADPlanner(robot, ctx_free, planner_free,
+                                   chain=chain, tcp=g_tcp)
         mjc_free.set_mecba_qpos(gripper, jaw_to_qs(jaw_open))
         ctx_free.clear_cache()
         pick = adp_free.gen_approach(
@@ -120,7 +132,7 @@ def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
         planner_carry = ompr.RRTConnectPlanner(pln_ctx=ctx_carry,
                                                goal_bias=goal_bias)
         adp_carry = ompad.ADPlanner(robot, ctx_carry, planner_carry,
-                                    chain=chain, tcp=tcp)
+                                    chain=chain, tcp=g_tcp)
         mjc_carry.set_mecba_qpos(gripper, jaw_to_qs(jw))
         ctx_carry.clear_cache()
 
@@ -161,7 +173,7 @@ def gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
                 tf = pick_pose.astype(np.float64)
             elif i <= release_idx:
                 robot.fk(qs=q)
-                tf = np.asarray(tcp.tf, dtype=np.float64) @ obj_in_grasp
+                tf = np.asarray(g_tcp.tf, dtype=np.float64) @ obj_in_grasp
             else:
                 tf = place_pose.astype(np.float64)
             obj_poses.append(tf.astype(np.float32))
@@ -179,7 +191,7 @@ class PickPlacePlanner:
     (cf. ADPlanner / GraspReasoner). Any bound knob is overridable per call.
     """
 
-    def __init__(self, robot, gripper, *, statics=(), tcp='grasp_center',
+    def __init__(self, robot, gripper, *, statics=(), tcp=None,
                  chain='main', lift_height=0.12, granularity=0.01, margin=0.0,
                  approach_iters=4000, transfer_iters=8000, goal_bias=0.3,
                  jaw_to_qs=lambda w: (w / 2.0, w / 2.0)):

@@ -8,6 +8,7 @@ Browse by subpackage (or see the single-page [API Index](../API_INDEX.md)):
 - [`one.devices`](devices.md) — 1 modules, 0 functions, 2 classes
 - [`one.geom`](geom.md) — 7 modules, 23 functions, 0 classes
 - [`one.grasp`](grasp.md) — 7 modules, 15 functions, 1 classes
+- [`one.manipulation`](manipulation.md) — 1 modules, 1 functions, 1 classes
 - [`one.motion`](motion.md) — 10 modules, 12 functions, 10 classes
 - [`one.physics`](physics.md) — 9 modules, 7 functions, 17 classes
 - [`one.robots`](robots.md) — 43 modules, 72 functions, 43 classes

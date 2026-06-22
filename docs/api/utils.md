@@ -17,7 +17,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 - **class `JntType`**
 - **class `CollisionType`**
 - **class `CollisionGroup`**
-- **class `CollisionMatrix`** — Default collision permission table
+- **class `CollisionMatrix`** — Default collision permission table: which groups each group collides with.
 - **class `DefaultPhy`**
 
 ## `one.utils.decorator`

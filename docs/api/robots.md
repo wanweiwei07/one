@@ -11,7 +11,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 
 - **class `Mounting`**
 - **class `MechBase`**
-  - methods: `structure`, `attach_to`, `detach_from`, `set_pos_rotmat`, `fk`, `mount`, `unmount`, `get_solver`, `add_chain`, `chain`, `chains`, `add_tcp`, `tcp`, `tcps`, `toggle_tcp`, `ik`, `ik_partial`, `clone`, `ndof`, `runtime_root_lnk`, `is_free`, `home_qs`, `tf`, `rotmat`, `quat`, `pos`, `toggle_render_collision`, `rgba`, `rgb`, `alpha`
+  - methods: `structure`, `attach_to`, `detach_from`, `set_pos_rotmat`, `fk`, `mount`, `unmount`, `get_solver`, `add_chain`, `chain`, `chains`, `add_tcp`, `tcp`, `tcps`, `toggle_tcp`, `ik`, `ik_partial`, `clone`, `ndof`, `runtime_root_lnk`, `is_floating`, `home_qs`, `tf`, `rotmat`, `quat`, `pos`, `toggle_render_collision`, `rgba`, `rgb`, `alpha`
 
 ## `one.robots.base.mech_structure`
 
@@ -19,7 +19,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 - **class `Joint`**
   - methods: `zero_tf`, `motion_tf`
 - **class `MechStruct`**
-  - methods: `get_chain`, `add_lnk`, `add_jnt`, `ignore_collision`, `ignore_env_collision`, `compile`, `collision_ignores_objs`, `n_jnts`, `n_lnks`, `compiled`
+  - methods: `get_chain`, `add_lnk`, `add_jnt`, `ignore_collision`, `compile`, `collision_ignores_objs`, `n_jnts`, `n_lnks`, `compiled`
 - **class `FlatMechStructure`** — flat representation of RobotStructure for efficient computation
   - methods: `resolve_all_qs`, `is_active_jnt`
 
@@ -142,7 +142,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 ## `one.robots.end_effectors.ee_mixins`
 
 - **class `GripperMixin`**
-  - methods: `open`, `close`, `grasp`, `release`, `set_jaw_width`, `grip_at`
+  - methods: `open`, `close`, `grasp`, `release`, `set_jaw_width`, `grip_at`, `eval_grasp_tcp`
 - **class `PointMixin`**
   - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).

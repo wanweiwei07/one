@@ -79,6 +79,15 @@ class GripperMixin:
         self.set_jaw_width(tgt_jaw_width)
         return base_tf
 
+    def eval_grasp_tcp(self, jaw_width=None):
+        """The grasp-center TCP for a grasp of this jaw width. A parallel
+        gripper's grasp_center is FIXED (independent of the opening), so
+        jaw_width is ignored and the registered 'grasp_center' tcp is returned.
+        DexHands override this -- their grasp center shifts with the closure. Lets
+        grasp-level planners DERIVE the IK tcp from each grasp (its jaw_width)
+        rather than be told one fixed tcp."""
+        return self.tcp('grasp_center')
+
     def _require_attr(self, name):
         if not hasattr(self, name):
             raise AttributeError(f"{type(self).__name__} must define {name}")

@@ -74,8 +74,7 @@ print(f"Found {len(grasps)} collision-free grasps")
 # bind the reasoning session (robot, ctx, grasp set, gripper/tcp) once; the
 # per-replan calls then pass only each bunny's world pose.
 reasoner = ogr.GraspReasoner(
-    robot, pln_ctx, grasps, tcp=gripper.tcp('grasp_center'),
-    gripper=gripper, max_solutions=1)
+    robot, pln_ctx, grasps, gripper=gripper, max_solutions=1)  # tcp per grasp
 
 # --- compute stable poses for both bunnies ---
 geom = bunny.collisions[0].geom
