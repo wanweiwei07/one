@@ -147,7 +147,7 @@ def cvr038_with_gripper(rotmat=None, pos=None, jaw_width=0.03):
 
     arm = CVR038(rotmat=rotmat, pos=pos)
     gripper = CVR038Gripper()
-    gripper.set_jaw_width(jaw_width)
+    gripper.set_opening(jaw_width)
     arm.mount(gripper, arm.runtime_lnks[-1], update=True)
     return arm, gripper
 

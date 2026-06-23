@@ -9,8 +9,8 @@ Two thin functions, no class, no hidden state:
 
 These consolidate the pattern hand-rolled in pick-and-place / shared-grasp demos:
 transform each object-local grasp onto the object's world pose, IK the (pre-)grasp
-frame, set the gripper to the grasp's opening, and keep the collision-free ones.
-Grasps are the (pose, pre_pose, jaw_width, score) tuples from ``antipodal`` /
+frame, set the gripper to the grasp's frozen qpos, and keep the collision-free
+ones. Grasps are :class:`~one.grasp.grasp.Grasp` records from ``antipodal`` /
 ``load_grasps``; world placement reuses ``serialize.transform_grasps``' convention
 (``obj_pose @ local``).
 
@@ -23,33 +23,33 @@ import numpy as np
 
 
 def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None,
-                       jaw_to_qs=lambda w: (w / 2, w / 2), chain='main',
-                       which='pre', max_solutions=1, ik_accept=None):
+                       chain='main', which='pre', max_solutions=1,
+                       ik_accept=None):
     """Feasible grasps at a single object pose.
 
-    For each grasp: place its pose (``which='grasp'``) or pre-grasp pose
+    For each grasp: place its grasp pose (``which='grasp'``) or pre-grasp pose
     (``which='pre'``, the default -- approach reachability) into the world via
-    ``obj_pose @ local``, IK it for ``tcp``, set the ``gripper`` to the grasp's
-    opening on the collider (so the finger span affects collision), and keep the
-    first IK solution that is collision-free under ``ctx`` (and passes the
-    optional ``ik_accept(full_qs)`` predicate).
+    ``obj_pose @ local``, IK it for the grasp's frozen tcp, set the ``gripper``
+    to the matching frozen qpos on the collider (so the finger span affects
+    collision), and keep the first IK solution that is collision-free under
+    ``ctx`` (and passes the optional ``ik_accept(full_qs)`` predicate).
 
     Parameters
     ----------
     robot, ctx : the arm and its PlanningContext (``ctx.collider`` already holds
         the gripper / obstacles; the caller has set ``ctx`` up for this arm).
-    grasps : iterable of (pose, pre_pose, jaw_width, score) -- object-LOCAL.
+    grasps : iterable of :class:`~one.grasp.grasp.Grasp` -- object-LOCAL.
     obj_pose : (4, 4) object world transform.
-    tcp : the IK tcp. Default None DERIVES it per grasp from the gripper --
-        ``gripper.eval_grasp_tcp(jaw_width)`` -- so the grasp's own grasp-center
-        frame is used (a DexHand's shifts with the closure; a parallel gripper's
-        is fixed). Pass a name/TCP to force one fixed tcp for all grasps.
-    gripper : posed to ``jaw_to_qs(jaw_width)`` on ``ctx.collider`` before each
-        collision check (the finger span affects collision); also the source of
-        the per-grasp tcp when ``tcp`` is None. Required if ``tcp`` is None.
-    jaw_to_qs : jaw_width -> gripper finger qs (default the symmetric
-        parallel-jaw convention, both fingers at width/2).
-    which : 'pre' (default) or 'grasp' -- which pose to test for reachability.
+    tcp : the IK tcp. Default None uses each grasp's FROZEN tcp
+        (``grasp.make_tcp(gripper)``) -- no re-derivation from gripper state, so
+        a dexterous hand's per-mode tcp is honored unambiguously. Pass a
+        name/TCP to force one fixed tcp for all grasps.
+    gripper : posed to the grasp's frozen ``qpos`` / ``pre_qpos`` on
+        ``ctx.collider`` before each collision check (the finger span affects
+        collision); also the link host for the per-grasp tcp when ``tcp`` is
+        None. Required if ``tcp`` is None.
+    which : 'pre' (default) or 'grasp' -- which pose to test for reachability;
+        also selects ``pre_qpos`` vs ``qpos`` for the collider.
     max_solutions : IK solutions to consider per grasp (1 = nearest only).
     ik_accept : optional predicate on the full qs (e.g. a normal-elbow gate).
 
@@ -58,23 +58,23 @@ def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None,
     dict {gid: qs} -- the feasible grasp index -> its collision-free config.
     """
     if tcp is None and gripper is None:
-        raise ValueError("find_feasible_gids needs a gripper to derive the "
+        raise ValueError("find_feasible_gids needs a gripper to host the "
                          "per-grasp tcp, or an explicit tcp")
     obj_pose = np.asarray(obj_pose, dtype=np.float32)
     feasible = {}
     for gid, grasp in enumerate(grasps):
-        pose, pre_pose, jaw_width = grasp[0], grasp[1], grasp[2]
-        # the tcp is the grasp's own grasp-center frame, derived from its
-        # jaw_width (DexHand: shifts with closure; parallel: fixed) unless forced.
-        g_tcp = gripper.eval_grasp_tcp(jaw_width) if tcp is None else tcp
-        local = pre_pose if which == 'pre' else pose
+        # the tcp is the grasp's OWN frozen grasp-center frame (no re-derivation
+        # from the gripper's current mode / closure) unless one is forced.
+        g_tcp = grasp.make_tcp(gripper) if tcp is None else tcp
+        local = grasp.pre_pose if which == 'pre' else grasp.pose
         world = obj_pose @ np.asarray(local, dtype=np.float32)
         sols = robot.ik(world[:3, 3], world[:3, :3], chain=chain, tcp=g_tcp,
                         max_solutions=max_solutions)
         if not sols:
             continue
         if gripper is not None:
-            ctx.collider.set_mecba_qpos(gripper, jaw_to_qs(jaw_width))
+            qpos = grasp.pre_qpos if which == 'pre' else grasp.qpos
+            ctx.collider.set_mecba_qpos(gripper, qpos)
             ctx.clear_cache()
         for s in sols:
             s64 = np.asarray(s, dtype=np.float64)
@@ -123,13 +123,12 @@ class GraspReasoner:
     """
 
     def __init__(self, robot, ctx, grasps, *, tcp=None, gripper=None,
-                 chain='main', jaw_to_qs=lambda w: (w / 2, w / 2), which='pre',
-                 max_solutions=1, ik_accept=None):
+                 chain='main', which='pre', max_solutions=1, ik_accept=None):
         self.robot = robot
         self.ctx = ctx
         self.grasps = grasps
         self._defaults = dict(
-            tcp=tcp, gripper=gripper, chain=chain, jaw_to_qs=jaw_to_qs,
+            tcp=tcp, gripper=gripper, chain=chain,
             which=which, max_solutions=max_solutions, ik_accept=ik_accept)
 
     def _kw(self, overrides):

@@ -2,7 +2,7 @@
 grasp poses come from ANTIPODAL planning (not a hand-picked top-down pose).
 
 The O6 left hand is presented to ``antipodal`` as a parallel jaw via
-``spawn_jaw('pinch')``; each returned grasp is a world-frame pose of the pinch
+``as_jaw('pinch')``; each returned grasp is a world-frame pose of the pinch
 center + a jaw width. For a chosen grasp we solve the pick-and-place keyframes
 (IK targeting a per-grasp center tcp) and plan the free-space hops:
 
@@ -19,7 +19,6 @@ import os
 
 import numpy as np
 
-import one.utils.math as oum
 import one.utils.constant as ouc
 import one.viewer.world as ovw
 import one.scene.scene_object as osso
@@ -28,7 +27,6 @@ import one.collider.mj_collider as ocm
 import one.motion.core.planning_context as omppc
 import one.motion.probabilistic.rrt as ompr
 import one.motion.interpolation.joint as omij
-import one.robots.base.tcp as orbt
 import one.robots.humanoids.linx.l1.l1 as l1
 import one.grasp._common as ogc
 from one.grasp.antipodal import antipodal
@@ -100,13 +98,14 @@ def plan_grasps(robot, bunny):
     """Antipodal pinch grasps on the bunny, best score first. antipodal plans in
     the object's LOCAL frame (its collision mesh), so we map every pose by
     ``bunny.wd_tf`` to world before returning -- that is the frame IK needs.
-    Returns (jaw, grasps): the spawned parallel-jaw view (holds the jw->closure
-    calibration) and the list of world-frame (pose, pre_pose, jw, score)."""
-    jaw = robot.left_hand.spawn_jaw('pinch')
+    Returns (jaw, grasps): the as_jaw parallel-jaw view (a JawView holding the
+    jw->closure calibration) and the list of world-frame Grasp records
+    (pose/pre_pose mapped to world; tcp/qpos hand-relative, untouched)."""
+    jaw = robot.left_hand.as_jaw('pinch')
     local = antipodal(jaw, bunny, density=0.0008, normal_tol_deg=25,
                       roll_step_deg=30, max_grasps=40, clearance=0.003)
     tf = bunny.wd_tf
-    grasps = [(tf @ pose, tf @ pre, jw, sc) for pose, pre, jw, sc in local]
+    grasps = [g.transformed(tf) for g in local]
     return jaw, grasps
 
 
@@ -123,7 +122,9 @@ def filter_grasps(jaw, grasps, env_sobj):
     det, batch = ogc.build_ee_target_detector(jaw, env_sobj)
     jaw_max = float(jaw.jaw_range[1])
     kept = []
-    for pose, pre, jw, sc in grasps:
+    for g in grasps:
+        pose, pre = g.pose, g.pre_pose
+        jw = g.provenance["jaw_width"]
         pre_jw = jw + PRE_OPEN * (jaw_max - jw)
         jaw.grip_at(pose[:3, 3], pose[:3, :3], jw)
         if det.detect_collision_batch(batch) is not None:
@@ -131,7 +132,7 @@ def filter_grasps(jaw, grasps, env_sobj):
         jaw.grip_at(pre[:3, 3], pre[:3, :3], pre_jw)
         if det.detect_collision_batch(batch) is not None:
             continue
-        kept.append((pose, pre, jw, sc))
+        kept.append(g)
     return kept
 
 
@@ -159,18 +160,19 @@ def ik_config(robot, ctx, pos, rotmat, tcp, collision_free=True, ref=None):
 
 
 # ----------------------------------------------------------------------------
-def build_motion(robot, ctx, planner, jaw, grasp):
-    """Build the pick-and-place trajectory for one antipodal ``grasp`` =
-    (pose, pre_pose, jw, score). Returns (traj, grasp_idx, release_idx, amount)
-    or None if any keyframe is unreachable / colliding."""
-    pose, _pre_pose, jw, _sc = grasp
+def build_motion(robot, ctx, planner, grasp):
+    """Build the pick-and-place trajectory for one antipodal ``grasp`` (a Grasp
+    record). Returns (traj, grasp_idx, release_idx, qpos) -- ``qpos`` is the
+    hand's frozen closure for the mount -- or None if any keyframe is
+    unreachable / colliding."""
+    pose = grasp.pose
     rot = pose[:3, :3]
     g = pose[:3, 3]
-    # per-grasp center tcp on the MOUNTED hand: the calibrated pinch center for
-    # this closure (hand-base offset), so IK puts the hand where the pads will
-    # close around the object. +z of the grasp pose is the approach axis.
-    center_tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
-                          oum.tf_from_pos_rotmat(pos=jaw.grasp_center_at(jw)))
+    # the grasp's OWN frozen grasp-center tcp on the MOUNTED hand -- the exact
+    # frame antipodal authored ``pose`` against (pinch-center translation AND
+    # primitive orientation for this closure), so IK puts the hand where the
+    # pads close around the object. +z of the grasp pose is the approach axis.
+    center_tcp = grasp.make_tcp(robot.left_hand)
     home = robot.qs.astype(np.float64).copy()
     pre_pos = g - STANDOFF * rot[:, 2]            # back off along the approach
     pre = ik_config(robot, ctx, pre_pos, rot, center_tcp)
@@ -204,16 +206,15 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     if not return_hop:
         return None
     traj += return_hop
-    amount = float(jaw._amount_for(jw))           # jw -> pinch closure amount
-    return traj, grasp_idx, release_idx, amount
+    return traj, grasp_idx, release_idx, grasp.qpos   # frozen closure for mount
 
 
-def first_reachable(robot, ctx, planner, jaw, grasps, start=0):
+def first_reachable(robot, ctx, planner, grasps, start=0):
     """Build the motion for the first reachable grasp at/after ``start`` (wrap
     around). Returns (grasp_index, motion) or (None, None)."""
     for k in range(len(grasps)):
         idx = (start + k) % len(grasps)
-        motion = build_motion(robot, ctx, planner, jaw, grasps[idx])
+        motion = build_motion(robot, ctx, planner, grasps[idx])
         if motion is not None:
             return idx, motion
     return None, None
@@ -238,11 +239,11 @@ def main():
     if not grasps:
         raise RuntimeError('no antipodal grasp clears the table')
 
-    gi, motion = first_reachable(robot, ctx, planner, jaw, grasps)
+    gi, motion = first_reachable(robot, ctx, planner, grasps)
     if motion is None:
         raise RuntimeError('no antipodal grasp is reachable by the left arm')
-    traj, grasp_idx, release_idx, _amount = motion
-    print(f'grasp {gi} (score {grasps[gi][3]:.2f}): {len(traj)} waypoints '
+    traj, grasp_idx, release_idx, _qpos = motion
+    print(f'grasp {gi} (score {grasps[gi].score:.2f}): {len(traj)} waypoints '
           f'(pinch@{grasp_idx}, release@{release_idx})')
 
     if headless:
@@ -268,7 +269,7 @@ def main():
 
     def reset_play():
         if state['held']:
-            robot.left_hand.release(bunny)   # unmount + reopen
+            robot.left_hand.detach(bunny)    # unmount (open_hand below reopens)
             state['held'] = False
         robot.left_hand.open_hand()
         bunny.pos, bunny.rotmat = bunny_home[0].copy(), bunny_home[1].copy()
@@ -277,13 +278,13 @@ def main():
 
     def select_next():
         reset_play()
-        gi2, motion2 = first_reachable(robot, ctx, planner, jaw, grasps,
+        gi2, motion2 = first_reachable(robot, ctx, planner, grasps,
                                        start=state['gi'] + 1)
         if motion2 is None:
             print('no other reachable grasp'); return
         state['gi'], state['motion'] = gi2, motion2
         t, gidx, ridx, _ = motion2
-        print(f'grasp {gi2} (score {grasps[gi2][3]:.2f}): {len(t)} waypoints')
+        print(f'grasp {gi2} (score {grasps[gi2].score:.2f}): {len(t)} waypoints')
         reset_play()
 
     reset_play()
@@ -293,16 +294,17 @@ def main():
             select_next(); return
         if base.input_manager.is_key_pressed_edge(key.R):
             reset_play(); return
-        traj_i, grasp_idx_i, release_idx_i, amount = state['motion']
+        traj_i, grasp_idx_i, release_idx_i, qpos = state['motion']
         i = state['i']
         if i >= len(traj_i):
             return
         robot.fk(qs=traj_i[i])
         if i == grasp_idx_i and not state['held']:
-            robot.left_hand.grasp(bunny, primitive='pinch', amount=amount)
+            robot.left_hand.attach(bunny, qpos)       # frozen closure, no jw
             state['held'] = True
         if i == release_idx_i and state['held']:
-            robot.left_hand.release(bunny)
+            robot.left_hand.open_hand()               # reopen, then drop
+            robot.left_hand.detach(bunny)
             state['held'] = False
         state['i'] += 1
 

@@ -32,9 +32,10 @@ PLAN_KW = dict(density=0.0015, normal_tol_deg=25, roll_step_deg=30,
 
 def plan_save_show(cyl, out_json, label, primitive='pinch'):
     hand = O6Left()
-    jaw = hand.spawn_jaw(primitive)
+    jaw = hand.as_jaw(primitive)
     grasps = antipodal(jaw, cyl, **PLAN_KW)
-    pos = np.array([g[0][:3, 3] for g in grasps]) if grasps else np.zeros((0, 3))
+    pos = (np.array([g.pose[:3, 3] for g in grasps]) if grasps
+           else np.zeros((0, 3)))
     print(f"[{label}] antipodal: {len(grasps)} {primitive} grasps")
     if len(pos):
         print(f"[{label}] grasp-pose pos bbox  x{np.round([pos[:,0].min(),pos[:,0].max()],4)}"
@@ -57,8 +58,8 @@ def plan_save_show(cyl, out_json, label, primitive='pinch'):
     ossop.frame(length_scale=0.3).attach_to(base.scene)
     cyl.attach_to(base.scene)
     jaw_open = float(jaw.jaw_range[1])
-    jaw_pose = hand.spawn_jaw(primitive)
-    jaw_pre = hand.spawn_jaw(primitive)
+    jaw_pose = hand.as_jaw(primitive)
+    jaw_pre = hand.as_jaw(primitive)
     jaw_pose.rgb = (0.20, 0.85, 0.25)
     jaw_pre.rgb = (0.95, 0.85, 0.15)
     jaw_pose.attach_to(base.scene)
@@ -66,9 +67,10 @@ def plan_save_show(cyl, out_json, label, primitive='pinch'):
     state = {"i": 0}
 
     def show(i):
-        pose, pre, jw, score = grasps[i]
-        wpose = cyl.wd_tf @ pose
-        wpre = cyl.wd_tf @ pre
+        g = grasps[i]
+        jw = g.provenance["jaw_width"]
+        wpose = cyl.wd_tf @ g.pose
+        wpre = cyl.wd_tf @ g.pre_pose
         jaw_pose.grip_at(wpose[:3, 3], wpose[:3, :3], jw)
         jaw_pre.grip_at(wpre[:3, 3], wpre[:3, :3], jaw_open)
         jaw_pose.rgb = (0.20, 0.85, 0.25)

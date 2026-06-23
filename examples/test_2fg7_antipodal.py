@@ -29,14 +29,21 @@ print(f"\nPlanning completed in {planning_time:.3f} seconds")
 print(f"Found {len(grasps)} collision-free grasps")
 if len(grasps) > 0:
     print(f"Planning rate: {len(grasps) / planning_time:.1f} grasps/sec")
-    print(f"Score range: [{min(g[2] for g in grasps):.4f}, {max(g[2] for g in grasps):.4f}]")
+    print(f"Score range: [{min(g.score for g in grasps):.4f}, "
+          f"{max(g.score for g in grasps):.4f}]")
     print("\nTop 10 grasps:")
-    for i, (pose, _, jaw_width, score) in enumerate(grasps[:10]):
+    for i, g in enumerate(grasps[:10]):
+        pose = g.pose
+        jaw_width = g.provenance["jaw_width"]
+        score = g.score
         pos = pose[:3, 3]
         print(f"  {i + 1:2d}. score={score:.4f}, jaw={jaw_width:.4f}, "
               f"pos=[{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}]")
     print(f"\nVisualizing all {len(grasps)} grasps...")
-    for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
+    for i, g in enumerate(grasps):
+        pose = g.pose
+        pre_pose = g.pre_pose
+        jaw_width = g.provenance["jaw_width"]
         # pose
         ghost = gripper.clone()
         ghost.grip_at(pose[:3, 3], pose[:3, :3], jaw_width)

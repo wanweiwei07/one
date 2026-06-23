@@ -16,7 +16,8 @@ box = ossop.cylinder(spos=(.3, 0, 0), epos=(.3, 0, .1), radius=.03,
 box.attach_to(base.scene)
 # box.toggle_render_collision = True
 
-gripper.grasp(box)
+gripper.close()
+gripper.attach(box)
 
 # robot_list = [robot]
 #

@@ -27,8 +27,10 @@ def prepare_mechstruct(collision_type=ouc.CollisionType.MESH):
 
 class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
     """XHand right: a 12-dof dexterous hand as a mountable MechBase EE with the
-    DexHandMixin grasp behaviors (open_hand / pinch / tripod / power,
-    grasp / release, *_at positioning, and ``spawn_jaw`` for antipodal planning).
+    DexHandMixin grasp behaviors. Closure is the ``pinch`` / ``tripod`` /
+    ``power`` (alias ``grip``) primitives and ``open_hand``; holding a child is
+    the uniform ``attach`` / ``detach``; ``as_jaw`` returns a parallel-jaw
+    ``JawView`` for antipodal planning.
 
     DexHandMixin is listed FIRST so its ``clone`` (which carries the jaw
     calibration) is reached before MechBase's in the MRO and chains up via super.
@@ -46,7 +48,7 @@ class XHandRight(oremx.DexHandMixin, orbmb.MechBase):
 
     NOTE: the grasp-table closures and the tcp offsets below are a first pass
     derived from the joint axes / mesh layout. Verify and tune them in the
-    viewer (run this module) before relying on the *_at helpers or spawn_jaw.
+    viewer (run this module) before relying on the *_at helpers or as_jaw.
     """
 
     _TUCK = 1.92  # flexion curl for fingers not participating in the grasp

@@ -25,6 +25,8 @@ import one.grasp.polypodal as ogpp
 import one.grasp.monocontact as ogmc
 import one.grasp.placement as ogpl
 import one.grasp.reasoner as ogr
+import one.grasp.serialize as ogs
+from one.grasp.grasp import Grasp
 
 import one.motion.core.planning_context as omppc
 import one.motion.probabilistic.rrt as ompr
@@ -45,7 +47,7 @@ import one.robots.vehicle.xytheta as xyt
 
 __all__ = ['np', 'key', 'oum', 'ouh', 'ouc',
            'oss', 'osso', 'ossop', 'ogg', 'osrm', 'ogl', 'osgop', 'ovw',
-           'ocm', 'occs', 'ogab', 'ogpp', 'ogmc', 'ogpl', 'ogr',
+           'ocm', 'occs', 'ogab', 'ogpp', 'ogmc', 'ogpl', 'ogr', 'ogs', 'Grasp',
            'omppc', 'ompr', 'ompp', 'omic', 'omij', 'omttp', 'ompad', 'MotionData',
            'gen_pick_place', 'PickPlacePlanner',
            'khi_rs007l', 'xarm_lite6', 'or_2fg7', 'xyt']

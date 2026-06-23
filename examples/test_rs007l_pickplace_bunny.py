@@ -110,7 +110,7 @@ def show(i):
     robot.fk(qs=motion.jv_list[i])
     ev = motion.ev_list[i]
     if ev is not None:
-        gripper.set_jaw_width(ev)
+        gripper.set_opening(ev)
     op = motion.obj_pose_list[i]
     if op is not None:
         bunny.pos, bunny.rotmat = op[:3, 3], op[:3, :3]

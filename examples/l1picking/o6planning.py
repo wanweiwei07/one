@@ -2,7 +2,7 @@
 cylinder.stl) and save them to JSON for the L1 picking demo (l1picking.py).
 
 The O6 hand is presented to ``antipodal`` as a parallel jaw via
-``spawn_jaw('pinch')`` (the only opposition wide enough -- the pinch opens to
+``as_jaw('pinch')`` (the only opposition wide enough -- the pinch opens to
 ~0.082 m, comfortably over the 0.05 m cylinder; the 'power' grasp is an envelope
 with no opposing pads so it cannot be antipodal-planned). Each grasp is a pose
 of the pinch *grasp center* in the cylinder's LOCAL frame plus a jaw width;
@@ -47,7 +47,7 @@ def main(primitive='pinch'):
     hand = O6Left()
     cyl = make_cylinder()
 
-    jaw = hand.spawn_jaw(primitive)
+    jaw = hand.as_jaw(primitive)
     grasps = antipodal(jaw, cyl, density=0.0015, normal_tol_deg=25,
                        roll_step_deg=30, max_grasps=60, clearance=0.003)
     print(f"antipodal: {len(grasps)} {primitive} grasps on "
@@ -75,8 +75,8 @@ def main(primitive='pinch'):
     # ``pose`` (closed to the grasp width) and YELLOW at the ``pre`` pre-grasp
     # pose (opened, the approach stand-off). N cycles to the next pose/pre pair.
     jaw_open = float(jaw.jaw_range[1])
-    jaw_pose = hand.spawn_jaw(primitive)          # green = final grasp
-    jaw_pre = hand.spawn_jaw(primitive)           # yellow = pre-grasp / approach
+    jaw_pose = hand.as_jaw(primitive)          # green = final grasp
+    jaw_pre = hand.as_jaw(primitive)           # yellow = pre-grasp / approach
     jaw_pose.rgb = (0.20, 0.85, 0.25)
     jaw_pre.rgb = (0.95, 0.85, 0.15)
     jaw_pose.attach_to(base.scene)
@@ -86,20 +86,21 @@ def main(primitive='pinch'):
     state = {"i": 0}
 
     def show(i):
-        pose, pre, jw, score = grasps[i]
+        g = grasps[i]
+        jw = g.provenance["jaw_width"]
         # antipodal plans in the cylinder's LOCAL (zero-pose) frame and returns
         # local grasps (that is what we save for l1picking). Map them onto the
         # cylinder's actual placement before gripping -- the cylinder here sits
         # at cyl.wd_tf (spos=-h/2), so without this the jaws would be ~0.15 off.
-        wpose = cyl.wd_tf @ pose
-        wpre = cyl.wd_tf @ pre
+        wpose = cyl.wd_tf @ g.pose
+        wpre = cyl.wd_tf @ g.pre_pose
         jaw_pose.grip_at(wpose[:3, 3], wpose[:3, :3], jw)
         jaw_pre.grip_at(wpre[:3, 3], wpre[:3, :3], jaw_open)
         jaw_pose.rgb = (0.20, 0.85, 0.25)       # re-assert after re-grip
         jaw_pre.rgb = (0.95, 0.85, 0.15)
         base.scene.dirty = True
         base.set_caption(f"pair {i}/{len(grasps)}  green=pose yellow=pre  "
-                         f"jaw={jw * 1000:.1f}mm  score={score:.2f}   N: next")
+                         f"jaw={jw * 1000:.1f}mm  score={g.score:.2f}   N: next")
 
     show(0)
 

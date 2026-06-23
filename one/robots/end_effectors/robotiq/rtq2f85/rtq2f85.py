@@ -173,9 +173,9 @@ class Rtq2F85(orbmb.MechBase, oreb.GripperMixin):
         self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
         self.jaw_range = np.array([0.0, 0.085], dtype=np.float32)
         self.open_dir = ouc.StandardAxis.X  # defined in tcp_rotmat
-        self.set_jaw_width(self.jaw_range[1])
+        self.set_opening(self.jaw_range[1])
 
-    def set_jaw_width(self, jaw_width):
+    def set_opening(self, jaw_width):
         if jaw_width < self.jaw_range[0] or jaw_width > self.jaw_range[1]:
             raise ValueError(f'jaw_width {jaw_width} out of range {self.jaw_range}')
         close_ratio = 1.0 - jaw_width / self.jaw_range[1]
@@ -190,7 +190,7 @@ class Rtq2F85(orbmb.MechBase, oreb.GripperMixin):
         new.jaw_range = self.jaw_range.copy()
         new.open_dir = self.open_dir
         jaw_width = self.jaw_range[1] * (1.0 - self.qs[0] / 0.8)
-        new.set_jaw_width(jaw_width)
+        new.set_opening(jaw_width)
         return new
 
 
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     phases = []
     for i, jaw_width in enumerate(jaw_widths):
         gripper = template.clone()
-        gripper.set_jaw_width(jaw_width)
+        gripper.set_opening(jaw_width)
         gripper.set_pos_rotmat(pos=(0.10 * i, 0.0, 0.0))
         gripper.attach_to(base.scene)
         grippers.append(gripper)
@@ -231,7 +231,7 @@ if __name__ == '__main__':
         t[0] += dt
         for i, gripper in enumerate(grippers):
             width = mid + amp * math.sin(2.0 * math.pi * 0.5 * t[0] + phases[i])
-            gripper.set_jaw_width(width)
+            gripper.set_opening(width)
 
     base.schedule_interval(update, interval=1.0 / 60.0, t=t, grippers=grippers, phases=phases)
     base.run()

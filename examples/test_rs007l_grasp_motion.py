@@ -88,11 +88,11 @@ tf_bunny = oum.tf_from_pos_rotmat(pos, rotmat)
 pre_pose_pos_list = []
 pre_pose_rot_list = []
 jaw_width_list = []
-for pose, pre_pose, jaw_width, score in grasps:
-    gl_pre_pose = tf_bunny @ pre_pose
+for g in grasps:
+    gl_pre_pose = tf_bunny @ g.pre_pose
     pre_pose_pos_list.append(gl_pre_pose[:3, 3].astype(np.float32))
     pre_pose_rot_list.append(gl_pre_pose[:3, :3].astype(np.float32))
-    jaw_width_list.append(np.float32(jaw_width))
+    jaw_width_list.append(np.float32(g.provenance["jaw_width"]))
 if len(pre_pose_pos_list) > 0:
     np.savez(
         "rs007l_grasp_candidates.npz",
@@ -109,11 +109,12 @@ n_failed = 0
 goal_qs = None
 aux_qs = None
 
-for pose, pre_pose, jaw_width, score in grasps:
-    gl_pre_pose = tf_bunny @ pre_pose
+for g in grasps:
+    jaw_width = g.provenance["jaw_width"]
+    gl_pre_pose = tf_bunny @ g.pre_pose
     pre_tgt_rotmat = gl_pre_pose[:3, :3]
     pre_tgt_pos = gl_pre_pose[:3, 3]
-    _s = robot.ik(pre_tgt_pos, pre_tgt_rotmat, tcp=gripper.tcp('grasp_center'), max_solutions=1)
+    _s = robot.ik(pre_tgt_pos, pre_tgt_rotmat, tcp=g.make_tcp(gripper), max_solutions=1)
     qs = _s[0] if _s else None
     if qs is None:
         continue
@@ -131,8 +132,9 @@ for pose, pre_pose, jaw_width, score in grasps:
 if goal_qs is None:
     # show failed pre-pose
     if grasps:
-        pose, pre_pose, jaw_width, score = grasps[0]
-        gl_pre_pose = tf_bunny @ pre_pose
+        g = grasps[0]
+        jaw_width = g.provenance["jaw_width"]
+        gl_pre_pose = tf_bunny @ g.pre_pose
         ghost = gripper.clone()
         ghost.grip_at(gl_pre_pose[:3, 3], gl_pre_pose[:3, :3], jaw_width)
         ghost.rgb = (1.0, 0.0, 0.0)
@@ -207,11 +209,12 @@ def tick(dt):
         clear_drawn()
         MAX_DRAW = 10
         count = 0
-        for i, (pose, pre_pose, jaw_width, score) in enumerate(grasps):
-            pre_pose_world = tf_bunny @ pre_pose
+        for i, g in enumerate(grasps):
+            jaw_width = g.provenance["jaw_width"]
+            pre_pose_world = tf_bunny @ g.pre_pose
             pre_rot = pre_pose_world[:3, :3]
             pre_pos = pre_pose_world[:3, 3]
-            qs_list = robot.ik(pre_pos, pre_rot, tcp=gripper.tcp('grasp_center'))
+            qs_list = robot.ik(pre_pos, pre_rot, tcp=g.make_tcp(gripper))
             if not qs_list:
                 continue
             qs = qs_list[0]

@@ -141,24 +141,28 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 
 ## `one.robots.end_effectors.ee_mixins`
 
-- **class `GripperMixin`**
-  - methods: `open`, `close`, `grasp`, `release`, `set_jaw_width`, `grip_at`, `eval_grasp_tcp`
+- **class `EndEffectorMixin`** — Uniform object-holding for any actuated end effector (gripper, hand).
+  - methods: `attach`, `detach`
+- **class `GripperMixin`** — A parallel-jaw gripper: closes via a single scalar ``set_opening``, and
+  - methods: `open`, `close`, `set_opening`, `grip_at`, `grasp_center_tcp`, `qpos`, `mode`
 - **class `PointMixin`**
   - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).
-  - methods: `grasp_spec`, `open_hand`, `pinch`, `tripod`, `power`, `grasp`, `release`, `grasp_at`, `pinch_at`, `power_at`, `spawn_jaw`, `open_dir_at`, `grasp_center_at`, `eval_grasp_tcp`, `set_jaw_width`, `grip_at`, `clone`
+  - methods: `grasp_spec`, `open_hand`, `grip`, `pinch`, `tripod`, `power`, `grasp_at`, `pinch_at`, `power_at`, `as_jaw`
+- **class `JawView`** — A parallel-jaw view of a dexterous hand, bound to one opposition
+  - methods: `runtime_lnks`, `qpos`, `attach_to`, `rgb`, `alpha`, `clone`, `set_opening`, `open_dir_at`, `grasp_center_at`, `grasp_center_tcp`, `grip_at`
 
 ## `one.robots.end_effectors.denso.cvr038_gripper.cvr038_gripper`
 
 - `prepare_ms()`
 - **class `CVR038Gripper`** — Parallel-jaw gripper: a MechBase + GripperMixin. No chain / ik (motion is
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.fr3_gripper.fr3_gripper`
 
 - `prepare_ms()`
 - **class `FR3Gripper`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.linkerbot.o6.o6`
 
@@ -170,7 +174,7 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 
 - `prepare_ms()`
 - **class `OR2FG7`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.onrobot.or_sd.or_sd`
 
@@ -180,13 +184,13 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 
 - `prepare_ms()`
 - **class `OAGripper`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.robotiq.rtq2f85.rtq2f85`
 
 - `prepare_ms()`
 - **class `Rtq2F85`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.xhand.xhand_right`
 

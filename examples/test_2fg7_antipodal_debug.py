@@ -25,9 +25,12 @@ pre_ghost.alpha = 0.5
 
 def play(dt):
     try:
-        pose, pre_pose, jaw_width, score, collided = next(it)
+        grasp, collided = next(it)
     except StopIteration:
         return
+    pose = grasp.pose
+    pre_pose = grasp.pre_pose
+    jaw_width = grasp.provenance["jaw_width"]
     ghost.grip_at(pose[:3, 3], pose[:3, :3], jaw_width)
     if collided:
         ghost.rgb = (1.0, 0.0, 0.0)

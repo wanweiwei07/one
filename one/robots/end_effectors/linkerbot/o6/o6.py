@@ -26,8 +26,10 @@ def prepare_mechstruct(side, collision_type=ouc.CollisionType.MESH):
 
 class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
     """Linkerbot O6 dexterous hand (one side): a mountable MechBase EE with the
-    DexHandMixin grasp behaviors (open_hand / pinch / tripod / power,
-    grasp / release, *_at positioning, and ``spawn_jaw`` for antipodal planning).
+    DexHandMixin grasp behaviors. Closure is the ``pinch`` / ``tripod`` /
+    ``power`` (alias ``grip``) primitives and ``open_hand``; holding a child is
+    the uniform ``attach`` / ``detach``; ``as_jaw`` returns a parallel-jaw
+    ``JawView`` for antipodal planning.
 
     DexHandMixin is listed FIRST so its ``clone`` (which carries the jaw
     calibration) is reached before MechBase's in the MRO and chains up via super.

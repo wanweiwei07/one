@@ -33,7 +33,7 @@ from l1picking import build_scene, load_world_grasps           # noqa: E402
 def main():
     robot, table, cyl, ground = build_scene()
     grasps = load_world_grasps(cyl)
-    jaw = robot.left_hand.spawn_jaw('pinch')
+    jaw = robot.left_hand.as_jaw('pinch')
     print(f"{len(grasps)} grasps; cylinder at {np.round(cyl.pos, 3)}")
 
     base = ovw.World(cam_pos=(1.5, -0.4, 1.4), cam_lookat_pos=(0.15, 0.2, 1.0))
@@ -43,7 +43,8 @@ def main():
         e.attach_to(base.scene)
 
     # grasp target frames (RGB), pre-grasp frames faint
-    for pose, pre, jw, sc in grasps:
+    for grasp in grasps:
+        pose, pre = grasp.pose, grasp.pre_pose
         ossop.frame(pos=pose[:3, 3], rotmat=pose[:3, :3],
                     length_scale=0.22).attach_to(base.scene)
         f = ossop.frame(pos=pre[:3, 3], rotmat=pre[:3, :3], length_scale=0.16)
@@ -53,7 +54,7 @@ def main():
     # robot's grasp-center tcp at HOME (the IK target frame), drawn in MYC
     jw0 = float(jaw.jaw_range[1]) * 0.5
     center_tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
-                          jaw.eval_grasp_tcp(jw0).loc_tf)
+                          jaw.grasp_center_tcp(jw0).loc_tf)
     tf = center_tcp.tf
     print("robot grasp-center tcp (home) pos:", np.round(tf[:3, 3], 3))
     ossop.frame(pos=tf[:3, 3], rotmat=tf[:3, :3], length_scale=0.6,

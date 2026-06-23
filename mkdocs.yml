@@ -25,7 +25,8 @@ theme:
   features:
     - navigation.sections
     - navigation.top
-    - navigation.instant
+    # navigation.instant is intentionally omitted: it is incompatible with the
+    # mkdocs-static-i18n language switcher contextual links.
     - content.code.copy
     - search.suggest
     - search.highlight
@@ -33,6 +34,7 @@ theme:
 markdown_extensions:
   - admonition
   - tables
+  - attr_list           # explicit {#id} on headings -> stable cross-lang anchors
   - toc:
       permalink: true
   - pymdownx.highlight:
@@ -44,6 +46,31 @@ markdown_extensions:
   - pymdownx.snippets:
       base_path: ["."]
       check_paths: true
+
+plugins:
+  # listing plugins disables the implicit default search plugin, so re-add it.
+  - search
+  # Japanese / Chinese translations live beside each English page as
+  # ``<name>.ja.md`` / ``<name>.zh.md`` (suffix structure). The auto-generated
+  # API reference (api/*.md, API_INDEX.md) is intentionally English-only -- it
+  # regenerates from English docstrings, so ``fallback_to_default`` serves the
+  # English page under every locale. Adds the Material language switcher.
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ja
+          name: 日本語
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
 
 nav:
   - Home: index.md
@@ -68,6 +95,7 @@ nav:
       - one.geom: api/geom.md
       - one.collider: api/collider.md
       - one.grasp: api/grasp.md
+      - one.manipulation: api/manipulation.md
       - one.motion: api/motion.md
       - one.physics: api/physics.md
       - one.robots: api/robots.md

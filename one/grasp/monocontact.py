@@ -29,13 +29,14 @@ import one.utils.math as oum
 import one.scene.geometry_ops as osgop
 import one.collider.cpu_simd as occs
 import one.grasp._common as ogc
+from one.grasp.grasp import Grasp
 
 
 def monocontact_iter(tool, target_sobj, tcp='tip',
                      density=0.02, roll_step_deg=90, retreat=None,
                      approach_bias=(0.0, 0.0, 1.0), exclude_regions=None):
     """
-    Generator: yields (pose_tf, pre_pose_tf, score, collided).
+    Generator: yields (grasp, collided) -- a Grasp and its collision flag.
     :param tool: single-contact end effector (must expose ``tcp(name)``,
         ``runtime_lnks`` and ``set_pos_rotmat``)
     :param target_sobj: target object to contact
@@ -51,8 +52,12 @@ def monocontact_iter(tool, target_sobj, tcp='tip',
         approached from above). Set to None to score all contacts equally.
     :param exclude_regions: optional convex regions carved out of the
         contact-sampling surface (full mesh still used for collisions).
-    :return: yields (pose_tf, pre_pose_tf, score, collided). ``pose``
-        aligns tcp +z into the surface at the contact point.
+    :return: yields (grasp, collided), where ``grasp`` is a
+        :class:`~one.grasp.grasp.Grasp` in the target's LOCAL frame: ``pose``
+        aligns the tcp +z into the surface at the contact point, ``pre_pose`` is
+        that pose retreated along the approach axis, ``tcp`` is the named contact
+        tcp's loc_tf, and ``qpos`` / ``pre_qpos`` are the tool's (fixed) config.
+        ``collided`` is True if the tool collides at either pose.
     """
     tool = tool.clone()
     tcp_loc = np.asarray(tool.tcp(tcp).loc_tf, dtype=np.float32)
@@ -119,7 +124,9 @@ def monocontact_iter(tool, target_sobj, tcp='tip',
         tool.set_pos_rotmat(pre_base[:3, 3], pre_base[:3, :3])
         if detector.detect_collision_batch(batch) is not None:
             collided = True
-        yield pose, pre_pose, float(sc), collided
+        grasp = Grasp.from_tool(tool, pose, pre_pose, tcp_name=tcp,
+                                score=float(sc))
+        yield grasp, collided
 
 
 def monocontact(tool, target_sobj, tcp='tip',
@@ -137,14 +144,15 @@ def monocontact(tool, target_sobj, tcp='tip',
     :param max_grasps: maximum number of grasps to return
     :param approach_bias: world direction favoured by the score
     :param exclude_regions: convex regions carved out of contact sampling
-    :return: list of (pose_tf, pre_pose_tf, score)
+    :return: list of :class:`~one.grasp.grasp.Grasp`, in the target's LOCAL
+        frame, best score first.
     """
     results = []
-    for pose, pre_pose, sc, collided in monocontact_iter(
+    for grasp, collided in monocontact_iter(
             tool, target_sobj, tcp, density, roll_step_deg,
             retreat, approach_bias, exclude_regions=exclude_regions):
         if not collided:
-            results.append((pose, pre_pose, float(sc)))
+            results.append(grasp)
         if max_grasps is not None and len(results) >= max_grasps:
             break
     return results

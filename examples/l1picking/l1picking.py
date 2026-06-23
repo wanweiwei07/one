@@ -34,7 +34,6 @@ import one.collider.mj_collider as ocm                        # noqa: E402
 import one.motion.core.planning_context as omppc     # noqa: E402
 import one.motion.probabilistic.rrt as ompr                   # noqa: E402
 import one.motion.primitives.approach_depart as ompad            # noqa: E402
-import one.robots.base.tcp as orbt                            # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                  # noqa: E402
 from one.grasp.serialize import load_grasps, transform_grasps  # noqa: E402
 
@@ -136,15 +135,16 @@ def chain_planning_context(robot, mjc, chain_name):
 
 def load_world_grasps(cyl):
     """Load the cylinder-local grasps and map them onto the cylinder's world
-    pose. Returns [(pose_world, pre_world, jaw_width, score), ...]."""
+    pose. Returns a list of world-frame :class:`Grasp`."""
     return transform_grasps(load_grasps(GRASPS_JSON), cyl.wd_tf)
 
 
 def build_motion(robot, ctx, planner, jaw, grasp):
-    """Pick motion for one grasp = (pose, pre_pose, jw, score):
+    """Pick motion for one :class:`Grasp`:
     home -> pre-grasp (planned) -> grasp (approach) -> lift. Returns
     (traj, grasp_idx, amount) or None if a keyframe is unreachable/colliding."""
-    pose, pre_pose, jw, _sc = grasp
+    pose, pre_pose = grasp.pose, grasp.pre_pose
+    jw = grasp.provenance["jaw_width"]
     rot = pose[:3, :3]
     g = pose[:3, 3]
     # per-grasp power-center tcp on the mounted hand (the calibrated grasp
@@ -153,8 +153,7 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     # grasp frame is rotated relative to the hand base, and grip_at applies
     # that rotation. Feeding IK a position-only (identity-rotation) tcp would
     # reach the right point with the wrong wrist twist -> hand hits the object.
-    center_tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
-                          jaw.eval_grasp_tcp(jw).loc_tf)
+    center_tcp = grasp.make_tcp(robot.left_hand)
     home = robot.qs.astype(np.float64).copy()
     # bind the planning session + this grasp's center tcp once (the tcp depends
     # on the jaw width, so it is per-grasp); both moves then pass only what varies.
@@ -207,7 +206,7 @@ def main():
     ctx = chain_planning_context(robot, mjc, CHAIN)
     planner = ompr.RRTConnectPlanner(pln_ctx=ctx, extend_step_size=np.pi / 36,
                                      goal_bias=0.3)
-    jaw = robot.left_hand.spawn_jaw(PRIMITIVE)
+    jaw = robot.left_hand.as_jaw(PRIMITIVE)
     grasps = load_world_grasps(cyl)
     print(f"loaded {len(grasps)} grasps from {os.path.basename(GRASPS_JSON)}")
 
@@ -215,7 +214,7 @@ def main():
     if motion is None:
         raise RuntimeError("no loaded grasp is reachable + collision-free")
     traj, grasp_idx, _amount = motion
-    print(f"first feasible grasp {gi} (score {grasps[gi][3]:.2f}): "
+    print(f"first feasible grasp {gi} (score {grasps[gi].score:.2f}): "
           f"{len(traj)} waypoints (grasp@{grasp_idx})")
 
     if headless:
@@ -240,13 +239,15 @@ def main():
     # # ``pose`` (closed to the grasp width), YELLOW at the ``pre`` approach pose
     # # (jaw open). All at alpha 0.3 so the picking animation stays readable.
     # jaw_open = float(jaw.jaw_range[1])
-    # for pose, pre, jw, _sc in grasps:
-    #     ghost_pose = robot.left_hand.spawn_jaw('power')
+    # for grasp in grasps:
+    #     pose, pre = grasp.pose, grasp.pre_pose
+    #     jw = grasp.provenance["jaw_width"]
+    #     ghost_pose = robot.left_hand.as_jaw('power')
     #     ghost_pose.grip_at(pose[:3, 3], pose[:3, :3], jw)
     #     ghost_pose.rgb = (0.20, 0.85, 0.25)
     #     ghost_pose.alpha = 0.3
     #     ghost_pose.attach_to(base.scene)
-    #     ghost_pre = robot.left_hand.spawn_jaw('power')
+    #     ghost_pre = robot.left_hand.as_jaw('power')
     #     ghost_pre.grip_at(pre[:3, 3], pre[:3, :3], jaw_open)
     #     ghost_pre.rgb = (0.95, 0.85, 0.15)
     #     ghost_pre.alpha = 0.3
@@ -259,7 +260,8 @@ def main():
 
     def reset_play():
         if state["held"]:
-            robot.left_hand.release(cyl)
+            robot.left_hand.open_hand()
+            robot.left_hand.detach(cyl)
             state["held"] = False
         robot.left_hand.open_hand()
         cyl.pos, cyl.rotmat = cyl_home[0].copy(), cyl_home[1].copy()
@@ -275,7 +277,7 @@ def main():
             print("no other feasible grasp")
             return
         state["gi"], state["motion"] = gi2, motion2
-        print(f"grasp {gi2} (score {grasps[gi2][3]:.2f}): "
+        print(f"grasp {gi2} (score {grasps[gi2].score:.2f}): "
               f"{len(motion2[0])} waypoints")
         reset_play()
 
@@ -287,7 +289,8 @@ def main():
             return
         robot.fk(qs=traj_i[i])
         if i == grasp_idx_i and not state["held"]:
-            robot.left_hand.grasp(cyl, primitive=PRIMITIVE, amount=amount)
+            robot.left_hand.grip(PRIMITIVE, amount)
+            robot.left_hand.attach(cyl)
             state["held"] = True
         state["i"] += 1
         base.scene.dirty = True

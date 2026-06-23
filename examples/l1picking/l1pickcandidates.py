@@ -40,16 +40,18 @@ def main(primitive='pinch'):
 
     # One ghost pair, re-gripped on each N press (robot never moves).
     # ``primitive`` picks which jaw to spawn (e.g. 'pinch', 'tripod').
-    jaw_open = float(robot.left_hand.spawn_jaw(primitive).jaw_range[1])
-    ghost_pose = robot.left_hand.spawn_jaw(primitive)
-    ghost_pre = robot.left_hand.spawn_jaw(primitive)
+    jaw_open = float(robot.left_hand.as_jaw(primitive).jaw_range[1])
+    ghost_pose = robot.left_hand.as_jaw(primitive)
+    ghost_pre = robot.left_hand.as_jaw(primitive)
     ghost_pose.attach_to(base.scene)
     ghost_pre.attach_to(base.scene)
 
     state = {"i": 0}
 
     def show(i):
-        pose, pre, jw, score = grasps[i]
+        g = grasps[i]
+        pose, pre = g.pose, g.pre_pose
+        jw, score = g.provenance["jaw_width"], g.score
         ghost_pose.grip_at(pose[:3, 3], pose[:3, :3], jw)
         ghost_pose.rgb = (0.20, 0.85, 0.25)     # green = grasp pose
         ghost_pre.grip_at(pre[:3, 3], pre[:3, :3], jaw_open)

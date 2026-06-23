@@ -1,71 +1,59 @@
+"""Save / load / world-transform a list of :class:`~one.grasp.grasp.Grasp`.
+
+Grasps are authored and saved in the object's LOCAL frame; place them in the
+world with :func:`transform_grasps` (the dual of :func:`load_grasps`) given the
+object's world transform. The on-disk record is fully self-contained -- it
+freezes the tcp loc_tf and the hand qpos -- so a reload needs no gripper-state
+re-derivation (see the ``Grasp`` module docstring). The gripper / object names
+are metadata only, for a load-time sanity check.
+"""
 import json
+
 import numpy as np
+
+from one.grasp.grasp import Grasp
 
 
 def save_grasps(grasps, path, gripper_name=None, object_name=None):
     """Save planned grasps to a JSON file.
 
-    grasps: iterable of (pose_tf, pre_pose_tf, jaw_width, score) as returned
-            by `one.grasp.antipodal.antipodal`. pose_tf and pre_pose_tf are
-            (4, 4) numpy arrays.
+    grasps: iterable of :class:`Grasp` (as returned by ``antipodal`` /
+            ``polypodal`` / ``monocontact``).
     path: output file path.
-    gripper_name: optional gripper class name.
-    object_name: optional object STL file name.
+    gripper_name: optional gripper class name (metadata).
+    object_name: optional object STL file name (metadata).
     """
-    grasp_entries = []
-    for pose, pre_pose, jaw_width, score in grasps:
-        grasp_entries.append({
-            "pose": np.asarray(pose, dtype=np.float32).tolist(),
-            "pre_pose": np.asarray(pre_pose, dtype=np.float32).tolist(),
-            "jaw_width": float(jaw_width),
-            "score": float(score),
-        })
     payload = {
-        "metadata": {
-            "gripper": gripper_name,
-            "object": object_name,
-        },
-        "grasps": grasp_entries,
+        "metadata": {"gripper": gripper_name, "object": object_name},
+        "grasps": [g.to_dict() for g in grasps],
     }
     with open(path, "w") as f:
         json.dump(payload, f, indent=2)
 
 
 def load_grasps(path):
-    """Load grasps previously saved by `save_grasps`.
+    """Load grasps previously saved by :func:`save_grasps`.
 
-    Returns a list of (pose_tf, pre_pose_tf, jaw_width, score) tuples
-    matching the layout produced by `one.grasp.antipodal.antipodal`.
+    Returns a list of :class:`Grasp`, in the object's local frame.
     """
     with open(path, "r") as f:
         payload = json.load(f)
     entries = payload["grasps"] if isinstance(payload, dict) else payload
-    grasps = []
-    for entry in entries:
-        pose = np.asarray(entry["pose"], dtype=np.float32)
-        pre_pose = np.asarray(entry["pre_pose"], dtype=np.float32)
-        grasps.append((pose, pre_pose, float(entry["jaw_width"]),
-                       float(entry["score"])))
-    return grasps
+    return [Grasp.from_dict(e) for e in entries]
 
 
 def transform_grasps(grasps, tf):
     """Map object-LOCAL grasps into the world by an object world transform.
 
-    The dual of ``load_grasps``: grasps are authored/saved in the object's local
-    frame, so given the object's world transform (e.g. ``scene_obj.wd_tf``) this
-    places each grasp where the object actually stands. BOTH the grasp pose and
-    its pre-grasp pose are transformed; trailing fields (jaw_width, score) pass
-    through untouched.
+    Given the object's world transform (e.g. ``scene_obj.wd_tf``) this places
+    each grasp where the object actually stands -- ``pose`` / ``pre_pose`` are
+    transformed; the hand-relative ``tcp`` / ``qpos`` and the ``score`` /
+    ``provenance`` pass through untouched.
 
-    grasps: iterable of (pose_tf, pre_pose_tf, *rest) -- the (pose, pre_pose,
-            jaw_width, score) layout from ``load_grasps`` / ``antipodal`` (also
-            covers monocontact's (pose, pre_pose, score)).
+    grasps: iterable of :class:`Grasp`.
     tf: (4, 4) object world transform.
 
-    Returns a list of (tf @ pose, tf @ pre_pose, *rest).
+    Returns a list of transformed :class:`Grasp`.
     """
     tf = np.asarray(tf, dtype=np.float32)
-    return [(tf @ np.asarray(pose, dtype=np.float32),
-             tf @ np.asarray(pre_pose, dtype=np.float32), *rest)
-            for pose, pre_pose, *rest in grasps]
+    return [g.transformed(tf) for g in grasps]

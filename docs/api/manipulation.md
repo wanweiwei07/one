@@ -5,6 +5,6 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 ## `one.manipulation.pick_place`
 _Pick-and-place motion planning -- move an object from a pick pose to a place_
 
-- `gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, statics=(), tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, margin=0.0, approach_iters=4000, transfer_iters=8000, goal_bias=0.3, jaw_to_qs=lambda w: (w / 2.0, w / 2.0))` — Plan home -> pick -> lift -> transfer -> place -> retreat moving ``obj``
+- `gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, statics=(), tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, margin=0.0, approach_iters=4000, transfer_iters=8000, goal_bias=0.3)` — Plan home -> pick -> lift -> transfer -> place -> retreat moving ``obj``
 - **class `PickPlacePlanner`** — Thin stateful facade over :func:`gen_pick_place`.
   - methods: `gen_pick_place`

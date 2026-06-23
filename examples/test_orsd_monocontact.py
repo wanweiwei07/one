@@ -27,21 +27,26 @@ print(f"\nPlanning completed in {planning_time:.3f} seconds")
 print(f"Found {len(grasps)} collision-free single-contact grasps")
 if len(grasps) > 0:
     print(f"Planning rate: {len(grasps) / planning_time:.1f} grasps/sec")
-    print(f"Score range: [{min(g[2] for g in grasps):.4f}, "
-          f"{max(g[2] for g in grasps):.4f}]")
+    print(f"Score range: [{min(g.score for g in grasps):.4f}, "
+          f"{max(g.score for g in grasps):.4f}]")
     print("\nTop 10 grasps (high score = top-facing surface, suction from above):")
-    for i, (pose, _, score) in enumerate(grasps[:10]):
+    for i, g in enumerate(grasps[:10]):
+        pose = g.pose
+        score = g.score
         pos = pose[:3, 3]
         print(f"  {i + 1:2d}. score={score:.4f}, "
               f"pos=[{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}]")
 
     tip_loc_inv = np.linalg.inv(tool.tcp('tip').loc_tf)
-    s_lo = min(g[2] for g in grasps)
-    s_hi = max(g[2] for g in grasps)
+    s_lo = min(g.score for g in grasps)
+    s_hi = max(g.score for g in grasps)
     s_span = (s_hi - s_lo) + 1e-9
     print(f"\nVisualizing all {len(grasps)} grasps (green = high score, "
           f"red = low score)...")
-    for pose, pre_pose, score in grasps:
+    for g in grasps:
+        pose = g.pose
+        pre_pose = g.pre_pose
+        score = g.score
         t = (score - s_lo) / s_span
         # contact pose, coloured by score
         ghost = tool.clone()

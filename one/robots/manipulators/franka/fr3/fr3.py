@@ -184,7 +184,7 @@ def fr3_with_hand(rotmat=None, pos=None, jaw_width=0.08):
 
     arm = FR3(rotmat=rotmat, pos=pos)
     hand = FR3Gripper()
-    hand.set_jaw_width(jaw_width)
+    hand.set_opening(jaw_width)
     # panda_hand_joint: hand rotated -pi/4 about Z relative to link7
     loc_tf = oum.tf_from_pos_rotmat(
         rotmat=oum.rotmat_from_euler(0, 0, -np.pi / 4)

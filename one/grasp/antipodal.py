@@ -9,6 +9,7 @@ import one.utils.constant as ouc
 import one.scene.geometry_ops as osgop
 import one.collider.cpu_simd as occs
 import one.grasp._common as ogc
+from one.grasp.grasp import Grasp
 
 
 def build_grasp_rotmat_batch(ray_dirs, open_dir):
@@ -83,8 +84,10 @@ def antipodal_iter(gripper, target_sobj,
                    score_weights=(0.7, 0.3),
                    exclude_regions=None, pre_open=0.5):
     """
-    Generator: yields (pose, pre_pose, jaw_width, score, collided).
-    :param gripper: gripper instance
+    Generator: yields (grasp, collided) -- a Grasp and its collision flag.
+    :param gripper: a parallel jaw -- a real gripper, or a dexterous hand's
+        ``hand.as_jaw('pinch')`` (a JawView). Both implement the jaw protocol
+        (jaw_range / set_opening / grasp_center_tcp / grip_at / contact_pattern).
     :param target_sobj: target object to grasp
     :param density: surface sampling density
     :param normal_tol_deg: normal tolerance in degrees
@@ -105,18 +108,18 @@ def antipodal_iter(gripper, target_sobj,
     Uses gripper.contact_pattern to confirm this is a single-contact
         model and to compensate jaw width for contact depth along the
         gripper opening axis. TCP is aligned to the two-contact midpoint.
-    :return: yields (pose, pre_pose, jaw_width, score, collided), where
-        pose: 4x4 world transform of the GRASP CENTER (the grasp_center tcp
-            frame) when closed on the object -- its origin is the contact-pair
-            midpoint, its +z is the approach axis. This is exactly the
-            (tgt_pos, tgt_rotmat) the gripper's grip_at expects.
-        pre_pose: 4x4 world transform of the pre-grasp pose, pose retreated
-            along the approach axis (-pose[:3, 2]); its collision check uses
-            the jaw opened part-way (see pre_open), not the grasp width.
-        jaw_width: jaw opening for this grasp.
-        score: score_weights-weighted normal-alignment + jaw-centering.
-        collided: True if the gripper collides with the target at pose or
-            pre_pose (both poses are collision-checked).
+    :return: yields (grasp, collided), where ``grasp`` is a
+        :class:`~one.grasp.grasp.Grasp` in the target's LOCAL frame:
+        - ``grasp.pose`` is the GRASP CENTER (grasp_center tcp) frame closed on
+          the object -- origin at the contact-pair midpoint, +z the approach
+          axis (exactly the (tgt_pos, tgt_rotmat) grip_at expects).
+        - ``grasp.pre_pose`` is that pose retreated along the approach axis; its
+          collision check uses the jaw opened part-way (see pre_open).
+        - ``grasp.tcp`` / ``grasp.qpos`` / ``grasp.pre_qpos`` are the frozen tcp
+          loc_tf and the hand configs at the grasp and pre-grasp openings.
+        - ``grasp.provenance`` records the mode (if a dexterous hand) and width.
+        ``collided`` is True if the gripper collides with the target at the
+        grasp or pre-grasp pose (both are collision-checked).
     """
     gripper = gripper.clone()
     # Plan in the target's LOCAL (zero-pose) frame. Clone the target and zero
@@ -202,8 +205,10 @@ def antipodal_iter(gripper, target_sobj,
     score_all = score_all[order]
     # prepare collision batch
     detector, batch = ogc.build_ee_target_detector(gripper, target_sobj)
-    # retreat distance
-    tcp_len = np.linalg.norm(gripper.tcp('grasp_center').loc_tf[:3, 3])
+    # retreat distance (grasp-center tcp offset; a JawView's shifts with the
+    # closure, so take it at the widest opening)
+    tcp_len = np.linalg.norm(
+        gripper.grasp_center_tcp(gripper.jaw_range[1]).loc_tf[:3, 3])
     retreat_dist = 0.5 * tcp_len
     for pose, jw, sc in zip(pose_all, jaw_all, score_all):
         collided = False
@@ -224,7 +229,8 @@ def antipodal_iter(gripper, target_sobj,
         results = detector.detect_collision_batch(batch)
         if results is not None:
             collided = True
-        yield pose, pre_pose, jw, float(sc), collided
+        grasp = Grasp.from_jaw(gripper, pose, pre_pose, jw, pre_jw, float(sc))
+        yield grasp, collided
 
 
 def antipodal(gripper, target_sobj,
@@ -249,22 +255,19 @@ def antipodal(gripper, target_sobj,
     :param pre_open: jaw opening at the pre-grasp pose as a fraction of
         the room to max (default 0.5 = half-open); forwarded to
         antipodal_iter.
-    :return: list of (pose, pre_pose, jaw_width, score) for the
-        collision-free grasps, best score first. pose is the 4x4 world
-        transform of the GRASP CENTER (grasp_center tcp frame, origin at the
-        contact-pair midpoint, +z = approach axis) -- pass pose[:3, 3],
-        pose[:3, :3] straight to the gripper's grip_at. pre_pose is the
-        pre-grasp pose (pose retreated along the approach axis). See
-        antipodal_iter for the full field description.
+    :return: list of :class:`~one.grasp.grasp.Grasp` for the collision-free
+        grasps, best score first, in the target's LOCAL frame. Each freezes the
+        grasp-center (tcp) frame, its pre-grasp frame, the tcp loc_tf and the
+        hand qpos at both openings. See antipodal_iter for the field detail.
     """
     results = []
-    for pose, pre_pose, jw, sc, collided in antipodal_iter(
+    for grasp, collided in antipodal_iter(
             gripper, target_sobj,
             density, normal_tol_deg, roll_step_deg,
             clearance, score_weights,
             exclude_regions=exclude_regions, pre_open=pre_open):
         if not collided:
-            results.append((pose, pre_pose, jw, float(sc)))
+            results.append(grasp)
         if (max_grasps is not None and
                 len(results) >= max_grasps):
             break

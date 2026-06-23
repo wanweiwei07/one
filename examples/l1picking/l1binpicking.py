@@ -37,7 +37,6 @@ import one.collider.mj_collider as ocm                         # noqa: E402
 import one.physics.mj_env as opme                              # noqa: E402
 import one.motion.probabilistic.rrt as ompr                    # noqa: E402
 import one.motion.primitives.approach_depart as ompad             # noqa: E402
-import one.robots.base.tcp as orbt                             # noqa: E402
 import one.robots.humanoids.linx.l1.l1 as l1                   # noqa: E402
 import one.viewer.world as ovw                                 # noqa: E402
 from one.grasp.serialize import load_grasps, transform_grasps  # noqa: E402
@@ -206,8 +205,9 @@ def place_config(robot, ctx, pos, base_rot, tcp, ref):
     return None if best is None else (best[1], best[2])
 
 
-def build_pick_place(robot, ctx, planner, jaw, wpose, wpre, jw):
-    """home -> pre -> grasp -> lift -> place(over right bin) -> (release).
+def build_pick_place(robot, ctx, planner, jaw, grasp):
+    """home -> pre -> grasp -> lift -> place(over right bin) -> (release), for a
+    world-frame :class:`Grasp`.
     Returns (traj, grasp_idx, amount) or None if any keyframe is infeasible.
 
     The target cylinder is excluded from the collider (make_pick_collider), so
@@ -216,9 +216,10 @@ def build_pick_place(robot, ctx, planner, jaw, wpose, wpre, jw):
     descent and grasp->lift retreat are straight CARTESIAN moves (ompad.gen_*,
     check_*=True so ctx gates them) so the hand goes straight along the approach
     axis instead of bowing into a wall."""
+    wpose, wpre = grasp.pose, grasp.pre_pose
+    jw = grasp.provenance["jaw_width"]
     rot, g = wpose[:3, :3], wpose[:3, 3]
-    tcp = orbt.TCP(robot.left_hand.runtime_root_lnk,
-                   jaw.eval_grasp_tcp(jw).loc_tf)
+    tcp = grasp.make_tcp(robot.left_hand)
     home = robot.qs.astype(np.float64).copy()
     chain = robot.chain(CHAIN)
     # NORMAL-elbow gate (joint3 near 0, not the q3~180 flipped branch): the grasp
@@ -268,8 +269,8 @@ def plan_next_pick(robot, statics, cyls, grasps_local, picked, jaw):
         planner = ompr.RRTConnectPlanner(pln_ctx=ctx,
                                          extend_step_size=np.pi / 36,
                                          goal_bias=0.3)
-        for pose, pre, jw, sc in transform_grasps(grasps_local, target.wd_tf):
-            m = build_pick_place(robot, ctx, planner, jaw, pose, pre, jw)
+        for grasp in transform_grasps(grasps_local, target.wd_tf):
+            m = build_pick_place(robot, ctx, planner, jaw, grasp)
             if m is not None:
                 return ci, m
     return None, None
@@ -291,7 +292,7 @@ def main():
         mjenv.step(0.01)
 
     grasps_local = load_grasps(GRASPS_JSON)
-    jaw = robot.left_hand.spawn_jaw('pinch')
+    jaw = robot.left_hand.as_jaw('pinch')
     picked = set()
     gi, motion = plan_next_pick(robot, statics, cyls, grasps_local, picked, jaw)
     if motion is None:
@@ -309,7 +310,7 @@ def main():
 
     def reset_play():
         if st["held"]:
-            robot.left_hand.release(cyls[st["gi"]])
+            robot.left_hand.detach(cyls[st["gi"]])   # open_hand below reopens
             st["held"] = False
         robot.left_hand.open_hand()
         robot.fk(qs=st["motion"][0][0])
@@ -323,16 +324,16 @@ def main():
         i = st["i"]
         if i >= len(traj):                       # trajectory done -> release+drop
             if st["held"]:
-                robot.left_hand.release(cyls[st["gi"]])
-                robot.left_hand.open_hand()
+                robot.left_hand.open_hand()          # reopen, then drop
+                robot.left_hand.detach(cyls[st["gi"]])
                 st["held"] = False
                 mjenv.sync.push_all_sobj_qpos()  # sync carried pose into mujoco
                 st["dropping"] = True
             return
         robot.fk(qs=traj[i])
         if i == grasp_idx and not st["held"]:
-            robot.left_hand.grasp(cyls[st["gi"]], primitive='pinch',
-                                  amount=amount)
+            robot.left_hand.grip('pinch', amount)
+            robot.left_hand.attach(cyls[st["gi"]])
             st["held"] = True
         st["i"] += 1
         base.scene.dirty = True

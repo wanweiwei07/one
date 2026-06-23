@@ -75,9 +75,9 @@ class CVR038Gripper(orbmb.MechBase, oreb.GripperMixin):
         self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
         self.jaw_range = np.array([0.0, 0.03], dtype=np.float32)
         self.open_dir = ouc.StandardAxis.Y
-        self.set_jaw_width(self.jaw_range[1])
+        self.set_opening(self.jaw_range[1])
 
-    def set_jaw_width(self, jaw_width):
+    def set_opening(self, jaw_width):
         if jaw_width < self.jaw_range[0] or jaw_width > self.jaw_range[1]:
             raise ValueError(f'jaw_width {jaw_width} out of range {self.jaw_range}')
         self.fk(qs=[jaw_width * 0.5])
@@ -87,7 +87,7 @@ class CVR038Gripper(orbmb.MechBase, oreb.GripperMixin):
         new.contact_pattern = self.contact_pattern.copy()
         new.jaw_range = self.jaw_range.copy()
         new.open_dir = self.open_dir
-        new.set_jaw_width(self.qs[0] * 2.0)
+        new.set_opening(self.qs[0] * 2.0)
         return new
 
 

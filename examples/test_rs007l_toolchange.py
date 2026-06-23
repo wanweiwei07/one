@@ -73,11 +73,11 @@ if __name__ == '__main__':
     # 2. grasp the bunny and place it at the target
     mv(BUNNY + APPROACH, gc)
     mv(BUNNY + GRASP_Z, gc)
-    do(lambda: fg7.grasp(bunny), 'grasp bunny')
+    do(lambda: (fg7.close(), fg7.attach(bunny)), 'grasp bunny')
     mv(BUNNY + APPROACH, gc)
     mv(PLACE + APPROACH, gc)
     mv(PLACE + GRASP_Z, gc)
-    do(lambda: fg7.release(bunny), 'place bunny')
+    do(lambda: (fg7.open(), fg7.detach(bunny)), 'place bunny')
     mv(PLACE + APPROACH, gc)
     # 3. return the gripper to its stand and unmount it
     mv(FG7_STAND, 'flange')

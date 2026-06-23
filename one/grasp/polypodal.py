@@ -21,6 +21,7 @@ from scipy.spatial import cKDTree
 import one.collider.cpu_simd as occs
 import one.scene.geometry_ops as osgop
 import one.grasp._common as ogc
+from one.grasp.grasp import Grasp
 
 
 # ---------------------------------------------------------------------
@@ -293,6 +294,7 @@ def polypodal(gripper, target_sobj, n_samples,
               clearance=0.0003,
               min_thickness=0.0,
               max_thickness=None,
+              pre_open=0.5,
               verbose=True,
               return_pairs=False):
     """End-to-end polypodal grasp computation.
@@ -300,8 +302,12 @@ def polypodal(gripper, target_sobj, n_samples,
         sample_pattern -> pair_pattern -> _hand_poses_from_pair
         -> reject gripper-vs-target collisions.
 
-    Returns: list of (pose_4x4, jaw_width). If return_pairs is True,
-        returns (pose_4x4, jaw_width, front_tuple, back_tuple).
+    Returns a list of :class:`~one.grasp.grasp.Grasp` in the target's LOCAL
+    frame. polypodal has no native pre-grasp, so each grasp's ``pre_pose`` is
+    synthesized by retreating the grasp-center frame along its approach axis
+    (+z) and ``pre_qpos`` opens the jaw part-way (``pre_open`` fraction of the
+    room to the max, as in antipodal). If ``return_pairs`` is True, the matched
+    (front, back) contact tuples are stashed in ``grasp.provenance['pair']``.
     """
     pattern = getattr(gripper, 'contact_pattern', None)
     if pattern is None:
@@ -334,11 +340,11 @@ def polypodal(gripper, target_sobj, n_samples,
         max_thickness=max_thickness)
     gripper = gripper.clone()
     detector, batch = ogc.build_ee_target_detector(gripper, target_sobj)
+    jaw_lo, jaw_hi = gripper.jaw_range
     out = []
     for front, back in pairs:
         for pose, jaw in _hand_poses_from_pair(
                 pattern, front, back, open_dir, clearance):
-            jaw_lo, jaw_hi = gripper.jaw_range
             if jaw < jaw_lo or jaw > jaw_hi:
                 continue
             pose = np.asarray(pose, dtype=np.float32)
@@ -353,10 +359,18 @@ def polypodal(gripper, target_sobj, n_samples,
                     f"polypodal grasp {len(out) + 1}: "
                     f"opening_width={jaw * 1000.0:.3f}mm, "
                     f"pair_dist={pair_dist * 1000.0:.3f}mm")
-            if return_pairs:
-                out.append((pose, jaw, front, back))
-            else:
-                out.append((pose, jaw))
+            # synthesize a pre-grasp by retreating along the approach axis (+z)
+            retreat = 0.5 * float(np.linalg.norm(
+                gripper.grasp_center_tcp(jaw).loc_tf[:3, 3]))
+            pre_pose = pose.copy()
+            pre_pose[:3, 3] = pose[:3, 3] - retreat * pose[:3, 2]
+            pre_jaw = jaw + pre_open * (jaw_hi - jaw)
+            extra = ({"pair": (np.asarray(front, dtype=np.float32).tolist(),
+                               np.asarray(back, dtype=np.float32).tolist())}
+                     if return_pairs else None)
+            out.append(Grasp.from_jaw(gripper, pose, pre_pose, float(jaw),
+                                      float(pre_jaw), 0.0,
+                                      extra_provenance=extra))
     return out
 
 
@@ -410,7 +424,7 @@ if __name__ == "__main__":
     if not poses:
         sys.exit(0)
     n_tup = len(poses)
-    n_pts_per = len(poses[0][2])
+    n_pts_per = len(poses[0].provenance["pair"][0])
 
     base = ovw.World(cam_pos=(0.05, 0.05, 0.05),
                      cam_lookat_pos=(0.0, 0.0, 0.0))
@@ -418,12 +432,13 @@ if __name__ == "__main__":
     obj.rgb = (0.85, 0.6, 0.3)
     obj.alpha = 0.5
     obj.attach_to(base.scene)
+    front0, back0 = poses[0].provenance["pair"]
     front_spheres = [
-        ossop.sphere(pos=poses[0][2][k], radius=SPHERE_R,
+        ossop.sphere(pos=front0[k], radius=SPHERE_R,
                      rgb=ouc.BasicColor.MAGENTA)
         for k in range(n_pts_per)]
     back_spheres = [
-        ossop.sphere(pos=poses[0][3][k], radius=SPHERE_R,
+        ossop.sphere(pos=back0[k], radius=SPHERE_R,
                      rgb=ouc.BasicColor.CYAN)
         for k in range(n_pts_per)]
     for s in front_spheres + back_spheres:
@@ -433,7 +448,10 @@ if __name__ == "__main__":
     cursor = [0]
 
     def _show(i):
-        pose, jaw, front_pts, back_pts = poses[i]
+        g = poses[i]
+        pose = g.pose
+        jaw = g.provenance["jaw_width"]
+        front_pts, back_pts = g.provenance["pair"]
         for k in range(n_pts_per):
             front_spheres[k].pos = front_pts[k]
             back_spheres[k].pos = back_pts[k]

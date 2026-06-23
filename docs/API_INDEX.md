@@ -150,13 +150,19 @@ _Shared grasp-domain helpers (depend on end-effector runtime links and_
 _Antipodal grasp planning: 2-point opposing pinch (force-closure) grasps_
 
 - `build_grasp_rotmat_batch(ray_dirs, open_dir)` — ray_dirs: (N,3) unit vectors
-- `antipodal_iter(gripper, target_sobj, density=0.02, normal_tol_deg=20, roll_step_deg=30, clearance=0.002, score_weights=(0.7, 0.3), exclude_regions=None, pre_open=0.5)` — Generator: yields (pose, pre_pose, jaw_width, score, collided).
+- `antipodal_iter(gripper, target_sobj, density=0.02, normal_tol_deg=20, roll_step_deg=30, clearance=0.002, score_weights=(0.7, 0.3), exclude_regions=None, pre_open=0.5)` — Generator: yields (grasp, collided) -- a Grasp and its collision flag.
 - `antipodal(gripper, target_sobj, density=0.02, normal_tol_deg=20, roll_step_deg=30, clearance=0.002, max_grasps=50, score_weights=(0.7, 0.3), exclude_regions=None, pre_open=0.5)` — Collects non-colliding grasps only.
+
+## `one.grasp.grasp`
+_The ``Grasp`` record -- a self-contained, gripper-agnostic grasp._
+
+- **class `Grasp`** — A frozen, gripper-agnostic grasp record (see module docstring).
+  - methods: `make_tcp`, `base_pose`, `transformed`, `to_dict`, `from_dict`, `from_jaw`, `from_tool`
 
 ## `one.grasp.monocontact`
 _Monocontact: single-contact ("one contact pad") surface-approach_
 
-- `monocontact_iter(tool, target_sobj, tcp='tip', density=0.02, roll_step_deg=90, retreat=None, approach_bias=(0.0, 0.0, 1.0), exclude_regions=None)` — Generator: yields (pose_tf, pre_pose_tf, score, collided).
+- `monocontact_iter(tool, target_sobj, tcp='tip', density=0.02, roll_step_deg=90, retreat=None, approach_bias=(0.0, 0.0, 1.0), exclude_regions=None)` — Generator: yields (grasp, collided) -- a Grasp and its collision flag.
 - `monocontact(tool, target_sobj, tcp='tip', density=0.02, roll_step_deg=90, retreat=None, max_grasps=50, approach_bias=(0.0, 0.0, 1.0), exclude_regions=None)` — Collects non-colliding single-contact grasps only.
 
 ## `one.grasp.placement`
@@ -169,26 +175,27 @@ _Polypodal: rigid N-point contact pattern matching against a mesh_
 
 - `sample_pattern(pattern, tgt_vs, tgt_fs, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None)` — Sample N-point pattern placements on the target mesh surface.
 - `pair_pattern(samples, tgt_vs, tgt_fs, normal_tol_deg=0, distance_tol=0.001, min_thickness=0.0, max_thickness=None)` — For every front-side (points, normals) sample in `samples`, ray-cast
-- `polypodal(gripper, target_sobj, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None, clearance=0.0003, min_thickness=0.0, max_thickness=None, verbose=True, return_pairs=False)` — End-to-end polypodal grasp computation.
+- `polypodal(gripper, target_sobj, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None, clearance=0.0003, min_thickness=0.0, max_thickness=None, pre_open=0.5, verbose=True, return_pairs=False)` — End-to-end polypodal grasp computation.
 
 ## `one.grasp.reasoner`
 _Grasp feasibility reasoning -- the "common grasp" kernel._
 
-- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None, jaw_to_qs=lambda w: (w / 2, w / 2), chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
+- `find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None, chain='main', which='pre', max_solutions=1, ik_accept=None)` — Feasible grasps at a single object pose.
 - `reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs)` — Grasps feasible at EVERY object pose in ``obj_pose_list``.
 - **class `GraspReasoner`** — Thin stateful facade over :func:`find_feasible_gids` /
   - methods: `find_feasible_gids`, `reason_common_gids`
 
 ## `one.grasp.serialize`
+_Save / load / world-transform a list of :class:`~one.grasp.grasp.Grasp`._
 
 - `save_grasps(grasps, path, gripper_name=None, object_name=None)` — Save planned grasps to a JSON file.
-- `load_grasps(path)` — Load grasps previously saved by `save_grasps`.
+- `load_grasps(path)` — Load grasps previously saved by :func:`save_grasps`.
 - `transform_grasps(grasps, tf)` — Map object-LOCAL grasps into the world by an object world transform.
 
 ## `one.manipulation.pick_place`
 _Pick-and-place motion planning -- move an object from a pick pose to a place_
 
-- `gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, statics=(), tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, margin=0.0, approach_iters=4000, transfer_iters=8000, goal_bias=0.3, jaw_to_qs=lambda w: (w / 2.0, w / 2.0))` — Plan home -> pick -> lift -> transfer -> place -> retreat moving ``obj``
+- `gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, statics=(), tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, margin=0.0, approach_iters=4000, transfer_iters=8000, goal_bias=0.3)` — Plan home -> pick -> lift -> transfer -> place -> retreat moving ``obj``
 - **class `PickPlacePlanner`** — Thin stateful facade over :func:`gen_pick_place`.
   - methods: `gen_pick_place`
 
@@ -454,24 +461,28 @@ _Approach / depart motion primitives._
 
 ## `one.robots.end_effectors.ee_mixins`
 
-- **class `GripperMixin`**
-  - methods: `open`, `close`, `grasp`, `release`, `set_jaw_width`, `grip_at`, `eval_grasp_tcp`
+- **class `EndEffectorMixin`** — Uniform object-holding for any actuated end effector (gripper, hand).
+  - methods: `attach`, `detach`
+- **class `GripperMixin`** — A parallel-jaw gripper: closes via a single scalar ``set_opening``, and
+  - methods: `open`, `close`, `set_opening`, `grip_at`, `grasp_center_tcp`, `qpos`, `mode`
 - **class `PointMixin`**
   - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).
-  - methods: `grasp_spec`, `open_hand`, `pinch`, `tripod`, `power`, `grasp`, `release`, `grasp_at`, `pinch_at`, `power_at`, `spawn_jaw`, `open_dir_at`, `grasp_center_at`, `eval_grasp_tcp`, `set_jaw_width`, `grip_at`, `clone`
+  - methods: `grasp_spec`, `open_hand`, `grip`, `pinch`, `tripod`, `power`, `grasp_at`, `pinch_at`, `power_at`, `as_jaw`
+- **class `JawView`** — A parallel-jaw view of a dexterous hand, bound to one opposition
+  - methods: `runtime_lnks`, `qpos`, `attach_to`, `rgb`, `alpha`, `clone`, `set_opening`, `open_dir_at`, `grasp_center_at`, `grasp_center_tcp`, `grip_at`
 
 ## `one.robots.end_effectors.denso.cvr038_gripper.cvr038_gripper`
 
 - `prepare_ms()`
 - **class `CVR038Gripper`** — Parallel-jaw gripper: a MechBase + GripperMixin. No chain / ik (motion is
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.fr3_gripper.fr3_gripper`
 
 - `prepare_ms()`
 - **class `FR3Gripper`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.linkerbot.o6.o6`
 
@@ -483,7 +494,7 @@ _Approach / depart motion primitives._
 
 - `prepare_ms()`
 - **class `OR2FG7`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.onrobot.or_sd.or_sd`
 
@@ -493,13 +504,13 @@ _Approach / depart motion primitives._
 
 - `prepare_ms()`
 - **class `OAGripper`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.robotiq.rtq2f85.rtq2f85`
 
 - `prepare_ms()`
 - **class `Rtq2F85`**
-  - methods: `set_jaw_width`, `clone`
+  - methods: `set_opening`, `clone`
 
 ## `one.robots.end_effectors.xhand.xhand_right`
 

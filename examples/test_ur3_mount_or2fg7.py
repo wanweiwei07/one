@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     # gripper = oreo2fg7.OR2FG7()
     gripper = oreeogog.OAGripper()
-    gripper.set_jaw_width(0.03)
+    gripper.set_opening(0.03)
     gripper.attach_to(scene)
 
     # loc_tf is flange->ee_base transform
