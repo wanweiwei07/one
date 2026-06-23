@@ -12,13 +12,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
-      - run: pip install mkdocs-material
+      # docs build deps: mkdocs-material + mkdocs-static-i18n (ja/zh) + pymdownx
+      - run: pip install -r docs/requirements.txt
 
       # regenerate the API index from the current source (pure AST, no deps)
       - run: python tools/gen_api_index.py
