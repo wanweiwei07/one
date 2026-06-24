@@ -4,6 +4,7 @@ import numpy as np
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
+from one.manipulation.arm import SingleArmManipulation
 import one.robots.manipulators.denso.cvr038.ik as ormdci
 
 
@@ -124,7 +125,7 @@ def prepare_mechstruct():
     return structure
 
 
-class CVR038(orbmb.MechBase):
+class CVR038(orbmb.MechBase, SingleArmManipulation):
     """6-DOF single-arm: a MechBase configured with one root->tip chain and a
     flange tcp. No ManipulatorBase -- 'arm' is just this configuration."""
 

@@ -226,34 +226,36 @@ def build_pick_place(robot, ctx, planner, jaw, grasp):
     # orientation is fixed by the antipodal contact, so we can't spin it like
     # place; the cartesian descent/lift inherit this elbow branch via seeded IK.
     normal_elbow = lambda q: abs(chain.extract_active_qs(q)[ELBOW_IDX]) < ELBOW_MAX
-    adp = ompad.ADPlanner(robot, ctx, planner, chain=CHAIN, tcp=tcp)
     # RRT home -> pre-grasp, then a straight CARTESIAN descent into the grasp;
     # ctx gates the descent (target excluded -> contacting it is free, but bin
-    # walls / neighbours are not), and ik_accept enforces the normal elbow.
-    approach = adp.gen_approach(
-        g, rot, start_qs=home, pre_pos=wpre[:3, 3], pre_rotmat=wpre[:3, :3],
+    # walls / neighbours are not), and ik_accept enforces the normal elbow. The
+    # custom per-target ctx means we call the free functions directly (no Arm).
+    approach = ompad.gen_approach(
+        robot, ctx, planner, g, rot, tcp=tcp, start_qs=home, chain=CHAIN,
+        pre_pos=wpre[:3, 3], pre_rotmat=wpre[:3, :3],
         granularity=0.01, use_rrt=True, check_descent=True, max_iters=4000,
         ik_accept=normal_elbow)
     if approach is None:                        # no normal-elbow pre / wall clip
         return None
     grasp_idx = len(approach) - 1               # hand closes here (at grasp_q)
-    grasp_q = approach.jv_list[-1]
+    grasp_q = approach.robot_qpos_list[-1]
     # straight cartesian retreat back up (still collision-gated)
-    lift = adp.gen_depart(
-        g, rot, start_qs=grasp_q, depart_direction=UP,
+    lift = ompad.gen_depart(
+        robot, ctx, planner, g, rot, tcp=tcp, start_qs=grasp_q, chain=CHAIN,
+        depart_direction=UP,
         depart_distance=float(np.linalg.norm(UP)), granularity=0.01,
         check_retreat=True)
     if lift is None:
         return None
-    placed = place_config(robot, ctx, PLACE_POS, rot, tcp, lift.jv_list[-1])
+    placed = place_config(robot, ctx, PLACE_POS, rot, tcp, lift.robot_qpos_list[-1])
     if placed is None:                          # no normal-elbow place -> skip
         return None
     place, _ = placed
-    lift_to_place = planner.solve(lift.jv_list[-1], place, max_iters=4000)
+    lift_to_place = planner.solve(lift.robot_qpos_list[-1], place, max_iters=4000)
     if not lift_to_place:
         return None
     # pre already present in approach; grasp_q seam between approach & lift.
-    traj = approach.jv_list + lift.jv_list[1:] + list(lift_to_place)
+    traj = approach.robot_qpos_list + lift.robot_qpos_list[1:] + list(lift_to_place)
     amount = float(jaw._amount_for(jw))
     return traj, grasp_idx, amount
 

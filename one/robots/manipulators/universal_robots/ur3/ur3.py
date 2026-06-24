@@ -6,6 +6,7 @@ import one.utils.constant as ouc
 import one.robots.base.kine.anaik as orbka
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
+from one.manipulation.arm import SingleArmManipulation
 
 
 def prepare_mechstruct():
@@ -174,7 +175,7 @@ def prepare_mechstruct():
     return structure
 
 
-class UR3(orbmb.MechBase):
+class UR3(orbmb.MechBase, SingleArmManipulation):
 
     @classmethod
     def _build_structure(cls):

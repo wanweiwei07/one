@@ -8,6 +8,7 @@ import one.robots.base.mech_base as orbmb
 import one.robots.base.urdf_loader as orul
 import one.robots.base.kine.anaik as orbka
 import one.robots.end_effectors.linkerbot.o6.o6 as oello6
+from one.manipulation.arm import Arm
 
 
 _H0602_URDF = os.path.join(
@@ -77,6 +78,10 @@ class L1O6(L1):
         self.right_hand = oello6.O6Right()
         self.mount(self.left_hand, self.lnk('left_arm_link_6'), mount_tf, update=True)
         self.mount(self.right_hand, self.lnk('right_arm_link_6'), mount_tf, update=True)
+        # per-arm manipulators OWNED by this dual-arm body: each is the arm
+        # (chain) + its end_effector. ``robot.left_arm.pick_place(...)``.
+        self.left_arm = Arm(self, 'left_arm_waist', self.left_hand)
+        self.right_arm = Arm(self, 'right_arm_waist', self.right_hand)
 
     def clone(self):
         new = super().clone()
@@ -87,6 +92,8 @@ class L1O6(L1):
                 new.left_hand = child
             elif isinstance(child, oello6.O6Right):
                 new.right_hand = child
+        new.left_arm = Arm(new, 'left_arm_waist', new.left_hand)
+        new.right_arm = Arm(new, 'right_arm_waist', new.right_hand)
         return new
 
 

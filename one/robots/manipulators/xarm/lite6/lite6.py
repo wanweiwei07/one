@@ -4,6 +4,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
+from one.manipulation.arm import SingleArmManipulation
 import one.robots.base.kine.anaik as orbka
 
 
@@ -137,7 +138,7 @@ def prepare_mechstruct():
     return structure
 
 
-class Lite6(orbmb.MechBase):
+class Lite6(orbmb.MechBase, SingleArmManipulation):
 
     @classmethod
     def _build_structure(cls):

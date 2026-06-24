@@ -121,16 +121,8 @@ def make_collider(robot, table, cyl, ground):
 def chain_planning_context(robot, mjc, chain_name):
     """PlanningContext over the full qs with every joint NOT on ``chain_name``
     frozen at home -> the planner only explores that chain."""
-    c = robot._compiled
-    chain = robot.chain(chain_name)
-    lo = c.jlmt_low_by_idx.astype(np.float64).copy()
-    hi = c.jlmt_high_by_idx.astype(np.float64).copy()
-    home = robot.qs.astype(np.float64).copy()
-    free = np.zeros(c.n_jnts, dtype=bool)
-    free[chain.active_jnt_ids] = True
-    lo[~free] = home[~free]
-    hi[~free] = home[~free]
-    return omppc.PlanningContext(collider=mjc, joint_limits=(lo, hi))
+    return omppc.PlanningContext(
+        collider=mjc, joint_limits=robot.chain_joint_limits(chain_name))
 
 
 def load_world_grasps(cyl):
@@ -155,31 +147,31 @@ def build_motion(robot, ctx, planner, jaw, grasp):
     # reach the right point with the wrong wrist twist -> hand hits the object.
     center_tcp = grasp.make_tcp(robot.left_hand)
     home = robot.qs.astype(np.float64).copy()
-    # bind the planning session + this grasp's center tcp once (the tcp depends
-    # on the jaw width, so it is per-grasp); both moves then pass only what varies.
-    adp = ompad.ADPlanner(robot, ctx, planner, chain=CHAIN, tcp=center_tcp)
     # RRT home -> pre-grasp, then a straight CARTESIAN descent into the grasp
     # (the pre pose is loaded with the grasp, so pass it explicitly). The hand
     # comes straight down the approach axis instead of bowing sideways the way a
     # joint-space line would. check_descent=False: the target cylinder is a
     # collision obstacle here, so the intended hand-vs-cylinder contact at the
     # grasp must NOT gate the descent (mirrors the old collision_free=False).
-    approach = adp.gen_approach(
-        g, rot, start_qs=home, pre_pos=pre_pose[:3, 3],
-        pre_rotmat=pre_pose[:3, :3], granularity=0.01, use_rrt=True,
-        check_descent=False, max_iters=4000)
+    # ``center_tcp`` is this grasp's center (jaw-width dependent), passed per call
+    # to the free approach/depart functions (custom ``ctx`` -> no Arm facade).
+    approach = ompad.gen_approach(
+        robot, ctx, planner, g, rot, tcp=center_tcp, start_qs=home, chain=CHAIN,
+        pre_pos=pre_pose[:3, 3], pre_rotmat=pre_pose[:3, :3], granularity=0.01,
+        use_rrt=True, check_descent=False, max_iters=4000)
     if approach is None:
         return None
     grasp_idx = len(approach) - 1               # hand closes here (at the grasp)
-    grasp_q = approach.jv_list[-1]
+    grasp_q = approach.robot_qpos_list[-1]
     # straight cartesian lift (carrying); contact still intended -> ungated.
-    lift = adp.gen_depart(
-        g, rot, start_qs=grasp_q, depart_direction=UP,
+    lift = ompad.gen_depart(
+        robot, ctx, planner, g, rot, tcp=center_tcp, start_qs=grasp_q,
+        chain=CHAIN, depart_direction=UP,
         depart_distance=float(np.linalg.norm(UP)),
         granularity=0.01, check_retreat=False)
     if lift is None:
         return None
-    traj = (approach + lift).jv_list
+    traj = (approach + lift).robot_qpos_list
     amount = float(jaw._amount_for(jw))         # jw -> power closure amount
     return traj, grasp_idx, amount
 

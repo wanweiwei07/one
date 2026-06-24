@@ -4,6 +4,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
+from one.manipulation.arm import SingleArmManipulation
 
 
 def prepare_mechstruct():
@@ -156,7 +157,7 @@ def prepare_mechstruct():
     return structure
 
 
-class FR3(orbmb.MechBase):
+class FR3(orbmb.MechBase, SingleArmManipulation):
 
     @classmethod
     def _build_structure(cls):

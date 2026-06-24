@@ -5,6 +5,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
+from one.manipulation.arm import SingleArmManipulation
 import one.robots.manipulators.fanuc.crx5ia.ik as ormfci
 
 
@@ -225,7 +226,7 @@ def prepare_mechstruct():
     return structure
 
 
-class CRX5ia(orbmb.MechBase):
+class CRX5ia(orbmb.MechBase, SingleArmManipulation):
 
     @classmethod
     def _build_structure(cls):

@@ -57,7 +57,7 @@ def nearest_valid_ik(robot, ctx, pos, rotmat, *, chain='main', tcp='flange',
 def gen_approach(robot, ctx, planner, goal_pos, goal_rotmat, *, tcp, start_qs,
                  chain='main', pre_pos=None, pre_rotmat=None,
                  approach_direction=None, approach_distance=0.05,
-                 granularity=0.01, ee_value=None, use_rrt=True,
+                 granularity=0.01, ee_qpos=None, use_rrt=True,
                  check_descent=True, max_iters=2000, ik_max_solutions=8,
                  ik_accept=None):
     """``start_qs`` -> pre-grasp (probabilistic) -> grasp (cartesian line).
@@ -76,7 +76,7 @@ def gen_approach(robot, ctx, planner, goal_pos, goal_rotmat, *, tcp, start_qs,
          pass False when the grasp INTENTIONALLY contacts the target (the target
          is a collision body, e.g. l1picking) so the contact is not flagged.
 
-    Returns a MotionData (gripper held at ``ee_value`` throughout) ending at the
+    Returns a MotionData (end-effector held at ``ee_qpos`` throughout) ending at the
     grasp config, or None if any stage is infeasible.
     """
     goal_pos = np.asarray(goal_pos, dtype=np.float32)
@@ -100,12 +100,12 @@ def gen_approach(robot, ctx, planner, goal_pos, goal_rotmat, *, tcp, start_qs,
         path = planner.solve(start_qs, q_pre, max_iters=max_iters)
         if not path:
             return None
-        travel = MotionData.from_jpath(path, ee_value)
+        travel = MotionData.from_jpath(path, ee_qpos)
     else:
         seg = omij.linear_path(start_qs, q_pre, ctx=ctx)
         if seg is None:
             return None
-        travel = MotionData.from_jpath(seg, ee_value)
+        travel = MotionData.from_jpath(seg, ee_qpos)
 
     q_seq, _ = omic.linear_to_jpath(
         robot=robot, start_rotmat=pre_rotmat, start_pos=pre_pos,
@@ -114,12 +114,12 @@ def gen_approach(robot, ctx, planner, goal_pos, goal_rotmat, *, tcp, start_qs,
         ctx=(ctx if check_descent else None))
     if q_seq is None:
         return None
-    return travel + MotionData.from_jpath(q_seq, ee_value)
+    return travel + MotionData.from_jpath(q_seq, ee_qpos)
 
 
 def gen_depart(robot, ctx, planner, start_pos, start_rotmat, *, tcp, start_qs,
                chain='main', depart_direction=None, depart_distance=0.05,
-               granularity=0.01, ee_value=None, end_qs=None, use_rrt=False,
+               granularity=0.01, ee_qpos=None, end_qs=None, use_rrt=False,
                check_retreat=True, max_iters=2000):
     """``start_qs`` (at the grasp) -> retreat (cartesian line) -> optional park.
 
@@ -130,7 +130,7 @@ def gen_depart(robot, ctx, planner, start_pos, start_rotmat, *, tcp, start_qs,
     ``check_retreat`` gates the cartesian leg with ``ctx`` (pass False when still
     in intended contact with the target, mirroring ``gen_approach``).
 
-    Returns a MotionData (gripper held at ``ee_value``) or None if infeasible.
+    Returns a MotionData (end-effector held at ``ee_qpos``) or None if infeasible.
     """
     start_pos = np.asarray(start_pos, dtype=np.float32)
     start_rotmat = np.asarray(start_rotmat, dtype=np.float32)
@@ -145,46 +145,12 @@ def gen_depart(robot, ctx, planner, start_pos, start_rotmat, *, tcp, start_qs,
         ctx=(ctx if check_retreat else None))
     if q_seq is None:
         return None
-    md = MotionData.from_jpath(q_seq, ee_value)
+    md = MotionData.from_jpath(q_seq, ee_qpos)
 
     if end_qs is not None and use_rrt:
-        path = planner.solve(md.jv_list[-1], np.asarray(end_qs, np.float32),
+        path = planner.solve(md.robot_qpos_list[-1], np.asarray(end_qs, np.float32),
                              max_iters=max_iters)
         if not path:
             return None
-        md = md + MotionData.from_jpath(path, ee_value)
+        md = md + MotionData.from_jpath(path, ee_qpos)
     return md
-
-
-class ADPlanner:
-    """Thin stateful facade over :func:`gen_approach` / :func:`gen_depart`.
-
-    Binds the planning *session* -- ``robot``, the collision ``ctx`` and the
-    ``planner`` -- plus default ``chain`` / ``tcp`` once, so call sites pass only
-    what actually varies per move (the grasp pose, start config, distances). The
-    free functions stay the testable core; this is pure ergonomics over them,
-    not a new layer (cf. WRS's ADPlanner, minus the bulk). ``chain`` / ``tcp`` can
-    still be overridden per call -- e.g. l1picking's grasp-center tcp changes
-    with the jaw width, so it rebuilds the planner per grasp or passes ``tcp=``.
-    """
-
-    def __init__(self, robot, ctx, planner, *, chain='main', tcp='flange'):
-        self.robot = robot
-        self.ctx = ctx
-        self.planner = planner
-        self.chain = chain
-        self.tcp = tcp
-
-    def gen_approach(self, goal_pos, goal_rotmat, *, start_qs,
-                     chain=None, tcp=None, **kwargs):
-        return gen_approach(
-            self.robot, self.ctx, self.planner, goal_pos, goal_rotmat,
-            start_qs=start_qs, chain=self.chain if chain is None else chain,
-            tcp=self.tcp if tcp is None else tcp, **kwargs)
-
-    def gen_depart(self, start_pos, start_rotmat, *, start_qs,
-                   chain=None, tcp=None, **kwargs):
-        return gen_depart(
-            self.robot, self.ctx, self.planner, start_pos, start_rotmat,
-            start_qs=start_qs, chain=self.chain if chain is None else chain,
-            tcp=self.tcp if tcp is None else tcp, **kwargs)

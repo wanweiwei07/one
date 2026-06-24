@@ -180,6 +180,26 @@ class MechBase:
     def chains(self):
         return dict(self._chains)
 
+    def chain_joint_limits(self, chain, ref_qs=None):
+        """``(lo, hi)`` joint limits over the FULL qs that free only ``chain``
+        and PIN every other joint to ``ref_qs`` (default the current ``qs``).
+
+        Pass to a ``PlanningContext`` so motion planning explores only that
+        chain: a no-op when the chain spans all the robot's joints (an arm),
+        essential for a humanoid (keeps the torso / other limbs still while one
+        arm reaches). ``chain`` is a name or a ``KinematicChain``."""
+        c = self._compiled
+        ch = self.chain(chain) if isinstance(chain, str) else chain
+        ref = (self.qs if ref_qs is None else np.asarray(ref_qs)).astype(
+            np.float64)
+        lo = c.jlmt_low_by_idx.astype(np.float64).copy()
+        hi = c.jlmt_high_by_idx.astype(np.float64).copy()
+        free = np.zeros(c.n_jnts, dtype=bool)
+        free[ch.active_jnt_ids] = True
+        lo[~free] = ref[~free]
+        hi[~free] = ref[~free]
+        return lo, hi
+
     # ---- tcp registry --------------------------------------------------
     def add_tcp(self, name, parent_lnk, loc_tf=None):
         """Define a named tcp (link + local offset) used as an ik target.

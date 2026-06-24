@@ -129,7 +129,8 @@ class Grasp:
         qpos = np.asarray(jaw.qpos, dtype=np.float32).copy()
         jaw.set_opening(pre_jaw_width)
         pre_qpos = np.asarray(jaw.qpos, dtype=np.float32).copy()
-        prov = {"jaw_width": float(jaw_width)}
+        prov = {"jaw_width": float(jaw_width),
+                "ee": type(getattr(jaw, "hand", jaw)).__name__}
         mode = getattr(jaw, "mode", None)
         if mode is not None:
             prov["mode"] = mode
@@ -147,7 +148,7 @@ class Grasp:
         tcp. ``provenance`` records the ``tcp_name``."""
         tcp = np.asarray(tool.tcp(tcp_name).loc_tf, dtype=np.float32)
         qpos = np.asarray(tool.qs, dtype=np.float32).copy()
-        prov = {"tcp_name": tcp_name}
+        prov = {"tcp_name": tcp_name, "ee": type(tool).__name__}
         if extra_provenance:
             prov.update(extra_provenance)
         return cls(pose, pre_pose, tcp, qpos, qpos.copy(), score, prov)

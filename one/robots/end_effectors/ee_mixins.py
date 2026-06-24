@@ -232,6 +232,13 @@ class DexHandMixin(EndEffectorMixin):
         """Fully extend every finger (all joints to 0)."""
         self.fk(qs=np.zeros(self.ndof, dtype=np.float32))
 
+    def open(self):
+        """Uniform 'fully open' across end effectors (mirrors a parallel
+        gripper's ``open``); for a hand this extends every finger. Lets
+        EE-agnostic callers (e.g. ``gen_pick_place``) get the open config the
+        same way for a gripper or a hand."""
+        self.open_hand()
+
     def grip(self, primitive, amount=1.0):
         """Close a named grasp ``primitive`` to ``amount`` in [0, 1] -- the
         generic form behind ``pinch`` / ``tripod`` / ``power``. Holding is

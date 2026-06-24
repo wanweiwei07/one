@@ -4,6 +4,7 @@ import one.utils.math as oum
 import one.utils.constant as ouc
 import one.robots.base.mech_structure as orbms
 import one.robots.base.mech_base as orbmb
+from one.manipulation.arm import SingleArmManipulation
 import one.robots.base.kine.numik_sel as orbkis
 
 
@@ -205,7 +206,7 @@ def prepare_bdy_ms():
     return structure
 
 
-class OALft(orbmb.MechBase):
+class OALft(orbmb.MechBase, SingleArmManipulation):
 
     @classmethod
     def _build_structure(cls):
@@ -223,7 +224,7 @@ class OALft(orbmb.MechBase):
         self.add_tcp('flange', self.runtime_lnks[-1])
 
 
-class OARgt(orbmb.MechBase):
+class OARgt(orbmb.MechBase, SingleArmManipulation):
 
     @classmethod
     def _build_structure(cls):

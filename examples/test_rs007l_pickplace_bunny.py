@@ -23,8 +23,7 @@ import one.geom.fitting as ogf
 import one.geom.surface as ogs
 import one.grasp.placement as ogp
 from one.grasp.antipodal import antipodal
-from one import (oum, ouc, ossop, osso, khi_rs007l, or_2fg7,  # noqa: F401
-                 PickPlacePlanner)
+from one import oum, ouc, ossop, osso, khi_rs007l, or_2fg7  # noqa: F401
 
 HEADLESS = bool(os.environ.get("ONE_HEADLESS"))
 BUNNY_STL = os.path.join(
@@ -38,6 +37,7 @@ np.random.seed(7)               # antipodal samples randomly; seed for repeatabi
 robot = khi_rs007l.RS007L()
 gripper = or_2fg7.OR2FG7()
 robot.mount(gripper, robot.runtime_lnks[-1], update=True)
+robot.end_effector = gripper     # the arm's mounted EE (swappable)
 bunny = osso.SceneObject.from_file(BUNNY_STL,
                                    collision_type=ouc.CollisionType.MESH,
                                    is_floating=True)   # manipulated object
@@ -66,15 +66,16 @@ tf_place = oum.tf_from_pos_rotmat(pos0 + np.array([0.3, 0.3, 0.0], np.float32),
 # grasps and let the planner reason + compose the motion. The bunny is the
 # manipulated object (free during reach, collision-checked while carried); the
 # wall is a static obstacle the carried bunny must route around.
-planner = PickPlacePlanner(robot, gripper, statics=[ground, wall],
-                           lift_height=LIFT)   # tcp derived per grasp
 motion = None
 for attempt in range(10):
     grasps = antipodal(gripper=gripper, target_sobj=bunny, density=0.006,
                        normal_tol_deg=25, roll_step_deg=30, max_grasps=120)
     if not grasps:
         continue
-    motion = planner.gen_pick_place(bunny, grasps, tf_pick, tf_place)
+    # the arm IS the manipulator; the gripper is its end_effector. tcp derived
+    # per grasp; obstacles passed per task.
+    motion = robot.pick_place(bunny, grasps, tf_pick, tf_place,
+                              statics=[ground, wall], lift_height=LIFT)
     if motion is not None:
         print(f"attempt {attempt}: {len(grasps)} grasps -> "
               f"{len(motion)} waypoints")
@@ -107,10 +108,10 @@ state = {"i": 0, "playing": False}
 
 
 def show(i):
-    robot.fk(qs=motion.jv_list[i])
-    ev = motion.ev_list[i]
-    if ev is not None:
-        gripper.set_opening(ev)
+    robot.fk(qs=motion.robot_qpos_list[i])
+    ee_qpos = motion.ee_qpos_list[i]
+    if ee_qpos is not None:
+        gripper.fk(qs=ee_qpos)             # uniform EE replay (gripper or hand)
     op = motion.obj_pose_list[i]
     if op is not None:
         bunny.pos, bunny.rotmat = op[:3, 3], op[:3, :3]
