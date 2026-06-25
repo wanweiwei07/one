@@ -22,91 +22,97 @@ configures ``ctx`` (and which poses it passes), not baked in here.
 import numpy as np
 
 
-def find_feasible_gids(robot, ctx, grasps, obj_pose, *, tcp=None, gripper=None,
-                       chain='main', which='pre', max_solutions=1,
-                       ik_accept=None):
-    """Feasible grasps at a single object pose.
+def _feasible_at(robot, ctx, grasp, obj_pose, *, tcp=None, gripper=None,
+                 chain='main', which='pre', max_solutions=1, ik_accept=None):
+    """One grasp at one object pose -> a collision-free config, or None.
 
-    For each grasp: place its grasp pose (``which='grasp'``) or pre-grasp pose
-    (``which='pre'``, the default -- approach reachability) into the world via
-    ``obj_pose @ local``, IK it for the grasp's frozen tcp, set the ``gripper``
-    to the matching frozen qpos on the collider (so the finger span affects
-    collision), and keep the first IK solution that is collision-free under
-    ``ctx`` (and passes the optional ``ik_accept(full_qs)`` predicate).
+    The single-grasp kernel shared by every reasoning entry point. Places the
+    grasp's pre-grasp (``which='pre'``, approach reachability) or grasp
+    (``which='grasp'``) pose into the world via ``obj_pose @ local``, IKs it for
+    the grasp's frozen tcp, poses the ``gripper`` to the matching frozen qpos on
+    the collider (so the finger span affects collision), and returns the first IK
+    solution that is collision-free under ``ctx`` and passes the optional
+    ``ik_accept(full_qs)`` predicate. Returns None if unreachable / all colliding.
+    """
+    # the tcp is the grasp's OWN frozen grasp-center frame (no re-derivation from
+    # the gripper's current mode / closure) unless one is forced.
+    g_tcp = grasp.make_tcp(gripper) if tcp is None else tcp
+    local = grasp.pre_pose if which == 'pre' else grasp.pose
+    world = obj_pose @ np.asarray(local, dtype=np.float32)
+    sols = robot.ik(world[:3, 3], world[:3, :3], chain=chain, tcp=g_tcp,
+                    max_solutions=max_solutions)
+    if not sols:
+        return None
+    if gripper is not None:
+        qpos = grasp.pre_qpos if which == 'pre' else grasp.qpos
+        ctx.collider.set_mecba_qpos(gripper, qpos)
+        ctx.clear_cache()
+    for s in sols:
+        s64 = np.asarray(s, dtype=np.float64)
+        if not ctx.is_state_valid(s64):
+            continue
+        if ik_accept is not None and not ik_accept(s64):
+            continue
+        return np.asarray(s, dtype=np.float32)
+    return None
 
-    Parameters
-    ----------
-    robot, ctx : the arm and its PlanningContext (``ctx.collider`` already holds
-        the gripper / obstacles; the caller has set ``ctx`` up for this arm).
-    grasps : iterable of :class:`~one.grasp.grasp.Grasp` -- object-LOCAL.
-    obj_pose : (4, 4) object world transform.
-    tcp : the IK tcp. Default None uses each grasp's FROZEN tcp
-        (``grasp.make_tcp(gripper)``) -- no re-derivation from gripper state, so
-        a dexterous hand's per-mode tcp is honored unambiguously. Pass a
-        name/TCP to force one fixed tcp for all grasps.
-    gripper : posed to the grasp's frozen ``qpos`` / ``pre_qpos`` on
-        ``ctx.collider`` before each collision check (the finger span affects
-        collision); also the link host for the per-grasp tcp when ``tcp`` is
-        None. Required if ``tcp`` is None.
-    which : 'pre' (default) or 'grasp' -- which pose to test for reachability;
-        also selects ``pre_qpos`` vs ``qpos`` for the collider.
-    max_solutions : IK solutions to consider per grasp (1 = nearest only).
-    ik_accept : optional predicate on the full qs (e.g. a normal-elbow gate).
 
-    Returns
-    -------
-    dict {gid: qs} -- the feasible grasp index -> its collision-free config.
+def iter_common_gids(robot, ctx, grasps, obj_pose_list, *, tcp=None,
+                     gripper=None, chain='main', which='pre', max_solutions=1,
+                     ik_accept=None):
+    """Lazily yield grasps feasible at EVERY pose in ``obj_pose_list``.
+
+    The reasoning CORE: a generator that, per grasp in list order, IKs the first
+    pose and -- only if that is feasible -- the next, ..., yielding
+    ``(gid, [qs_at_pose0, qs_at_pose1, ...])`` (``gid`` is the index into
+    ``grasps``) as soon as the grasp passes ALL poses. Two consequences fall out:
+
+      * a consumer that only needs ONE working grasp (``gen_pick_place``) can
+        ``break`` after the first that fully plans -- the remaining grasps are
+        never IK'd (the big speedup vs reasoning all of them up front);
+      * place-pose IK runs only for grasps already feasible at the pick pose
+        (lazy per-pose intersection), no separate intersect step.
+
+    Grasps are visited in LIST order, so to try the likeliest first just pre-sort
+    ``grasps`` before calling (``antipodal`` already returns them best-score
+    first). Remaining parameters are the per-grasp kernel's (see
+    :func:`_feasible_at`).
     """
     if tcp is None and gripper is None:
-        raise ValueError("find_feasible_gids needs a gripper to host the "
-                         "per-grasp tcp, or an explicit tcp")
-    obj_pose = np.asarray(obj_pose, dtype=np.float32)
-    feasible = {}
+        raise ValueError("reasoning needs a gripper to host the per-grasp tcp, "
+                         "or an explicit tcp")
+    poses = [np.asarray(p, dtype=np.float32) for p in obj_pose_list]
+    if not poses:
+        return
+    kw = dict(tcp=tcp, gripper=gripper, chain=chain, which=which,
+              max_solutions=max_solutions, ik_accept=ik_accept)
     for gid, grasp in enumerate(grasps):
-        # the tcp is the grasp's OWN frozen grasp-center frame (no re-derivation
-        # from the gripper's current mode / closure) unless one is forced.
-        g_tcp = grasp.make_tcp(gripper) if tcp is None else tcp
-        local = grasp.pre_pose if which == 'pre' else grasp.pose
-        world = obj_pose @ np.asarray(local, dtype=np.float32)
-        sols = robot.ik(world[:3, 3], world[:3, :3], chain=chain, tcp=g_tcp,
-                        max_solutions=max_solutions)
-        if not sols:
-            continue
-        if gripper is not None:
-            qpos = grasp.pre_qpos if which == 'pre' else grasp.qpos
-            ctx.collider.set_mecba_qpos(gripper, qpos)
-            ctx.clear_cache()
-        for s in sols:
-            s64 = np.asarray(s, dtype=np.float64)
-            if not ctx.is_state_valid(s64):
-                continue
-            if ik_accept is not None and not ik_accept(s64):
-                continue
-            feasible[gid] = np.asarray(s, dtype=np.float32)
-            break
-    return feasible
+        qs_list = []
+        for pose in poses:
+            qs = _feasible_at(robot, ctx, grasp, pose, **kw)
+            if qs is None:
+                break               # not feasible here -> skip (later poses unIK'd)
+            qs_list.append(qs)
+        else:                       # every pose passed
+            yield gid, qs_list
+
+
+def find_feasible_gids(robot, ctx, grasps, obj_pose, **kwargs):
+    """Feasible grasps at a SINGLE object pose -- the one-pose special case of
+    :func:`iter_common_gids`. Returns ``{gid: qs}`` (the collision-free config
+    per feasible grasp). ``kwargs`` are the kernel's (``tcp`` / ``gripper`` /
+    ``chain`` / ``which`` / ``max_solutions`` / ``ik_accept``)."""
+    return {gid: qs_list[0] for gid, qs_list
+            in iter_common_gids(robot, ctx, grasps, [obj_pose], **kwargs)}
 
 
 def reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs):
-    """Grasps feasible at EVERY object pose in ``obj_pose_list``.
-
-    Runs :func:`find_feasible_gids` per pose and intersects the results -- the
-    grasps usable across the whole set (pick AND place, or both bunnies, or a
-    regrasp sequence). ``kwargs`` are forwarded to ``find_feasible_gids``.
-
-    Returns
-    -------
-    dict {gid: [qs_at_pose0, qs_at_pose1, ...]} -- for each common grasp, its
-    config at each pose (ordered like ``obj_pose_list``).
-    """
-    per_pose = [find_feasible_gids(robot, ctx, grasps, p, **kwargs)
-                for p in obj_pose_list]
-    if not per_pose:
-        return {}
-    common = set(per_pose[0])
-    for d in per_pose[1:]:
-        common &= set(d)
-    return {gid: [d[gid] for d in per_pose] for gid in sorted(common)}
+    """All grasps feasible at EVERY pose in ``obj_pose_list`` (the eager form of
+    :func:`iter_common_gids`). Returns ``{gid: [qs_at_pose0, ...]}`` -- for each
+    common grasp, its config at each pose. Use this when you need the WHOLE
+    common set (shared-grasp / regrasp analysis); use ``iter_common_gids`` when
+    you can stop at the first that works."""
+    return dict(iter_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs))
 
 
 class GraspReasoner:

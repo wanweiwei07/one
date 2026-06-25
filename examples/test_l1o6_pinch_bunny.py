@@ -12,7 +12,7 @@ parallel gripper uses. No hand-rolled IK / motion: that lives in the library.
 
 Run:        py -3.12 examples/test_l1o6_pinch_bunny.py
 Headless:   ONE_HEADLESS=1 py -3.12 examples/test_l1o6_pinch_bunny.py
-Keys:       F = step one frame   G = play/pause   R = reset
+Keys:       N = next grasp   F = step one frame   G = play/pause   R = reset
 """
 import os
 
@@ -79,19 +79,37 @@ def main():
     # both poses, and returns a MotionData carrying the hand's tcp + closure qpos.
     # ``robot.left_arm`` IS the left arm/manipulator; its end_effector is the
     # left hand (== ``hand``), so the grasps match (gen_pick_place guards it). It
-    # plans only its own chain ('left_arm_waist').
-    motion = robot.left_arm.pick_place(bunny, grasps, pick_pose, place_pose,
-                                       statics=[table, ground], lift_height=LIFT)
-    if motion is None:
+    # plans only its own chain ('left_arm_waist'). Build its collision world once
+    # (robot + hands + table + ground; NOT the bunny -- it is grasped).
+    collider = robot.left_arm.build_collider(fixtures=[table, ground])
+    # LAZY pick-place: ONE plan per common grasp, planned only when reached.
+    # ``computed`` caches (gid, MotionData); ``ensure(idx)`` plans up to ``idx``
+    # on demand. The viewer's N key just advances the index.
+    plans = robot.left_arm.iter_pick_place(bunny, grasps, pick_pose, place_pose,
+                                           collider=collider, lift_height=LIFT)
+    computed = []
+
+    def ensure(idx):
+        """Plan grasps until ``computed[idx]`` exists; False if none left."""
+        while len(computed) <= idx:
+            nxt = next(plans, None)
+            if nxt is None:
+                return False
+            computed.append(nxt)
+        return True
+
+    if not ensure(0):
         raise RuntimeError('no feasible pinch pick-and-place for the left arm')
-    print(f'{len(grasps)} pinch grasps -> {len(motion)} waypoints')
+    gid0, motion0 = computed[0]
+    print(f'{len(grasps)} pinch grasps -> first feasible grasp {gid0}, '
+          f'{len(motion0)} waypoints')
 
     if headless:
-        pp = np.array(motion.robot_qpos_list)
+        pp = np.array(motion0.robot_qpos_list)
         moved = set(np.where(np.abs(pp.max(0) - pp.min(0)) > 1e-6)[0].tolist())
         chain = set(robot.chain(CHAIN).active_jnt_ids.tolist())
         assert moved <= chain, f'non-chain joints moved: {sorted(moved - chain)}'
-        assert all(e is not None for e in motion.ee_qpos_list), 'ee_qpos gap'
+        assert all(e is not None for e in motion0.ee_qpos_list), 'ee_qpos gap'
         print(f'headless OK: only chain {CHAIN} moves ({sorted(moved)}); '
               f'dexterous-hand pick-place via gen_pick_place')
         return
@@ -104,37 +122,53 @@ def main():
         e.attach_to(base.scene)
     ossop.frame(pos=pick_pose[:3, 3], rotmat=pick_pose[:3, :3]).attach_to(base.scene)
     ossop.frame(pos=place_pose[:3, 3], rotmat=place_pose[:3, :3]).attach_to(base.scene)
-    print('F = step one frame   G = play/pause   R = reset')
+    print('N = next grasp   F = step one frame   G = play/pause   R = reset')
 
     hand = robot.left_hand
-    state = {'i': 0, 'playing': False}
+    state = {'cur': 0, 'i': 0, 'playing': False}   # cur = grasp index in computed
+
+    def motion():
+        return computed[state['cur']][1]           # the current grasp's MotionData
 
     def show(i):
-        robot.fk(qs=motion.robot_qpos_list[i])
-        ee_qpos = motion.ee_qpos_list[i]
+        m = motion()
+        robot.fk(qs=m.robot_qpos_list[i])
+        ee_qpos = m.ee_qpos_list[i]
         if ee_qpos is not None:
             hand.fk(qs=ee_qpos)               # replay the hand closure (uniform)
-        op = motion.obj_pose_list[i]
+        op = m.obj_pose_list[i]
         if op is not None:
             bunny.pos, bunny.rotmat = op[:3, 3], op[:3, :3]
         base.scene.dirty = True
 
     def step_one():
-        if state['i'] >= len(motion):
+        if state['i'] >= len(motion()):
             state['playing'] = False
             return
         show(state['i'])
         state['i'] += 1
 
-    def reset_play():
-        state['i'], state['playing'] = 0, False
+    def load(cur):
+        """Switch to grasp index ``cur``, paused at frame 0 (waiting for F/G)."""
+        state['cur'], state['i'], state['playing'] = cur, 0, False
         show(0)
 
-    reset_play()
+    def next_grasp():
+        nxt = state['cur'] + 1
+        if not ensure(nxt):                   # plans it on demand (brief pause)
+            print('no more feasible grasps')
+            return
+        load(nxt)
+        print(f"grasp {computed[nxt][0]} ({len(computed)} planned)")
+
+    load(0)
 
     def tick(dt):
         if base.input_manager.is_key_pressed_edge(key.R):
-            reset_play()
+            load(state['cur'])                # reset the current grasp to frame 0
+            return
+        if base.input_manager.is_key_pressed_edge(key.N):
+            next_grasp()                      # switch to next grasp, paused for F/G
             return
         if base.input_manager.is_key_pressed_edge(key.G):
             state['playing'] = not state['playing']

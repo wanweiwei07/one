@@ -37,7 +37,8 @@ np.random.seed(7)               # antipodal samples randomly; seed for repeatabi
 robot = khi_rs007l.RS007L()
 gripper = or_2fg7.OR2FG7()
 robot.mount(gripper, robot.runtime_lnks[-1], update=True)
-robot.end_effector = gripper     # the arm's mounted EE (swappable)
+# the arm's end_effector is DERIVED from this mount (the mech at its flange) --
+# no separate assignment; swapping the gripper (re-mount) just follows.
 bunny = osso.SceneObject.from_file(BUNNY_STL,
                                    collision_type=ouc.CollisionType.MESH,
                                    is_floating=True)   # manipulated object
@@ -62,10 +63,11 @@ tf_place = oum.tf_from_pos_rotmat(pos0 + np.array([0.3, 0.3, 0.0], np.float32),
                                   rot_place)
 
 # ----------------------------------------------------------------------------
-# Plan: bind the cell once (robot, gripper, the static ground+wall), then sample
-# grasps and let the planner reason + compose the motion. The bunny is the
-# manipulated object (free during reach, collision-checked while carried); the
-# wall is a static obstacle the carried bunny must route around.
+# Build the collision world ONCE and hold it: robot (+ its mounted gripper) +
+# the static ground + wall. The bunny is the manipulated object -- NOT a fixture
+# (it is grasped, not an obstacle). It is an explicit value passed to pick_place.
+collider = robot.build_collider(fixtures=[ground, wall])
+
 motion = None
 for attempt in range(10):
     grasps = antipodal(gripper=gripper, target_sobj=bunny, density=0.006,
@@ -73,9 +75,9 @@ for attempt in range(10):
     if not grasps:
         continue
     # the arm IS the manipulator; the gripper is its end_effector. tcp derived
-    # per grasp; obstacles passed per task.
+    # per grasp; the wall is routed around with the bunny carried.
     motion = robot.pick_place(bunny, grasps, tf_pick, tf_place,
-                              statics=[ground, wall], lift_height=LIFT)
+                              collider=collider, lift_height=LIFT)
     if motion is not None:
         print(f"attempt {attempt}: {len(grasps)} grasps -> "
               f"{len(motion)} waypoints")

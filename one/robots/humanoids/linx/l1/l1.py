@@ -79,9 +79,10 @@ class L1O6(L1):
         self.mount(self.left_hand, self.lnk('left_arm_link_6'), mount_tf, update=True)
         self.mount(self.right_hand, self.lnk('right_arm_link_6'), mount_tf, update=True)
         # per-arm manipulators OWNED by this dual-arm body: each is the arm
-        # (chain) + its end_effector. ``robot.left_arm.pick_place(...)``.
-        self.left_arm = Arm(self, 'left_arm_waist', self.left_hand)
-        self.right_arm = Arm(self, 'right_arm_waist', self.right_hand)
+        # (chain); its end_effector is DERIVED from the hand mounted at the chain
+        # tip (named once, above). ``robot.left_arm.pick_place(...)``.
+        self.left_arm = Arm(self, 'left_arm_waist')
+        self.right_arm = Arm(self, 'right_arm_waist')
 
     def clone(self):
         new = super().clone()
@@ -92,8 +93,8 @@ class L1O6(L1):
                 new.left_hand = child
             elif isinstance(child, oello6.O6Right):
                 new.right_hand = child
-        new.left_arm = Arm(new, 'left_arm_waist', new.left_hand)
-        new.right_arm = Arm(new, 'right_arm_waist', new.right_hand)
+        new.left_arm = Arm(new, 'left_arm_waist')
+        new.right_arm = Arm(new, 'right_arm_waist')
         return new
 
 

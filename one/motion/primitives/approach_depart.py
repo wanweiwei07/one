@@ -24,7 +24,58 @@ import numpy as np
 
 import one.motion.interpolation.cartesian as omic
 import one.motion.interpolation.joint as omij
+import one.motion.probabilistic.rrt as ompr
 from one.motion.core.motion_data import MotionData
+
+
+def _as_goal_conf(robot, ctx, goal, *, tcp, chain, ref_qs, ik_max_solutions=8):
+    """Resolve ``goal`` to a full joint config: a config array is returned as-is;
+    a pose (``(pos, rotmat)`` or a 4x4 tf) is IK'd via ``tcp`` to the collision-
+    free solution nearest ``ref_qs`` (None if unreachable / all colliding)."""
+    g = goal
+    if isinstance(g, np.ndarray) and g.ndim == 1 and g.shape[0] == len(robot.qs):
+        return np.asarray(g, dtype=np.float32)
+    if isinstance(g, (tuple, list)) and len(g) == 2:
+        pos, rotmat = g
+    else:
+        g = np.asarray(g, dtype=np.float32)
+        if g.shape == (4, 4):
+            pos, rotmat = g[:3, 3], g[:3, :3]
+        else:
+            raise ValueError("moveto goal must be a full config, a (pos, rotmat) "
+                             "pair, or a 4x4 tf")
+    if tcp is None:
+        raise ValueError("moveto to a pose needs a tcp")
+    return nearest_valid_ik(robot, ctx, pos, rotmat, chain=chain, tcp=tcp,
+                            ref_qs=ref_qs, max_solutions=ik_max_solutions)
+
+
+def gen_moveto(robot, ctx, planner, goal, *, tcp=None, start_qs, chain='main',
+               ee_qpos=None, max_iters=4000, shortcut=True):
+    """Free RRT move from ``start_qs`` to ``goal`` (a config, or a pose IK'd via
+    ``tcp``) under ``ctx`` (collision + constraints). With ``shortcut`` the RRT
+    path is shortcut + re-densified (kept ``ctx``-valid). Returns a MotionData
+    (held at ``ee_qpos``) or None if unreachable / no path. The free-space
+    primitive every transfer / transit leg is built from."""
+    start_qs = np.asarray(start_qs, dtype=np.float32)
+    goal_qs = _as_goal_conf(robot, ctx, goal, tcp=tcp, chain=chain,
+                            ref_qs=start_qs)
+    if goal_qs is None:
+        return None
+    if (not ctx.is_state_valid(np.asarray(start_qs, dtype=np.float64))
+            or not ctx.is_state_valid(np.asarray(goal_qs, dtype=np.float64))):
+        return None
+    path = planner.solve(start_qs, goal_qs, max_iters=max_iters)
+    if not path:
+        return None
+    path = list(path)
+    if shortcut:
+        path = ompr.shortcut_path(path, ctx)
+        path = ompr.densify_path(path, ctx)
+        path[0] = start_qs
+        path[-1] = np.asarray(goal_qs, dtype=np.float32)
+    return MotionData.from_jpath(
+        [np.asarray(q, dtype=np.float32) for q in path], ee_qpos)
 
 
 def _unit(v):

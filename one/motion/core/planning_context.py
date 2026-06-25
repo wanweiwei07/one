@@ -15,12 +15,17 @@ class PlanningContext:
     def __init__(self,
                  collider,                  # mj_collider; collider.actors = planned mechanisms
                  joint_limits=None,         # (low, high); autoinfer from actors if None
+                 constraints=(),            # extra state-validity predicates (Constraint)
                  cd_step_size=np.pi / 180,  # edge collision-check step size
                  cache_size=10000):         # collision cache capacity
         if not collider.actors:
             raise ValueError("collider has no actors; set collider.actors first")
         self.collider = collider
         self.cd_step_size = cd_step_size
+        # extra predicates beyond collision (cable/tether length, keep-upright,
+        # keep-out zones, ...). A config is valid iff in-bounds AND every
+        # constraint passes AND collision-free. See one.motion.core.constraint.
+        self.constraints = tuple(constraints)
         if joint_limits is None:
             joint_limits = self._infer_joint_limits()
         self.state_space = ssp.RealVectorStateSpace(*joint_limits)
@@ -38,6 +43,11 @@ class PlanningContext:
     def is_state_valid(self, state):
         if not self.state_space.satisfies_bounds(state):
             return False
+        # extra predicates before collision: a cheap constraint (e.g. a length
+        # limit) can reject without paying for the collision query.
+        for c in self.constraints:
+            if not c.is_valid(state):
+                return False
         return not self._is_collided(state)
 
     def is_motion_valid(self, state1, state2):

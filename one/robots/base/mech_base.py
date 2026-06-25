@@ -48,6 +48,10 @@ class MechBase:
             (self._compiled.n_lnks, 1, 1))
         # mountings
         self._mountings = {}
+        # the render scene this mech is attached to (one at a time; None when
+        # detached). Mounted children inherit it -> scene membership follows the
+        # mount tree (see attach_to / mount).
+        self._scene = None
         # named chains (which joints move) + tcps (what point to position)
         self._chains = {}
         self._tcps = {}
@@ -61,14 +65,23 @@ class MechBase:
         self.fk()
 
     def attach_to(self, scene):
+        """Attach to ``scene`` (and recurse into mounted children, so the whole
+        assembly renders). One scene at a time: re-attaching to the same scene is
+        a no-op; attaching to a different one MOVES this mech (leaves the old)."""
+        if self._scene is scene:
+            return
+        if self._scene is not None:
+            self.detach_from(self._scene)
         scene.add(self)
+        self._scene = scene
         for m in self._mountings.values():
             m.child.attach_to(scene)
 
     def detach_from(self, scene):
         for m in self._mountings.values():
-            scene.remove(m.child)
+            m.child.detach_from(scene)
         scene.remove(self)
+        self._scene = None
 
     def set_pos_rotmat(self, pos=None, rotmat=None):
         self._pos[:] = oum.ensure_pos(pos)
@@ -107,10 +120,10 @@ class MechBase:
         return self.gl_lnk_tfarr
 
     def mount(self, child, plnk, loc_tf=None, update=False):
-        """
-            Note: child is not attached to the scene when this is called
-            Caller is responsible for attaching the child to a scene
-        """
+        """Weld free ``child`` to link ``plnk`` of this mech. Scene membership
+        follows the mount automatically: the child inherits this mech's render
+        scene (mount before OR after attaching -- either order works), so callers
+        never separately attach a mounted child. ``unmount`` removes it again."""
         if child is self:
             raise ValueError("Self-mounting not allowed")
         if child in self._mountings:
@@ -123,6 +136,10 @@ class MechBase:
             loc_tf = np.asarray(loc_tf, dtype=np.float32)
         self._mountings[child] = Mounting(child, plnk, loc_tf)
         child.is_floating = False   # weld to the parent; collision role is unchanged
+        if self._scene is not None:
+            # a welded child lives in exactly the parent's scene; attach_to is
+            # idempotent if it is already there, and moves it if it was elsewhere.
+            child.attach_to(self._scene)
         if update:
             self._update_mounting(self._mountings[child])
 
@@ -132,6 +149,8 @@ class MechBase:
         except KeyError:
             raise ValueError("Child not mounted")
         child.is_floating = True
+        if self._scene is not None:
+            child.detach_from(self._scene)   # leaves with the parent's scene
         return m
 
     def get_solver(self, chain):
@@ -388,6 +407,7 @@ class MechBase:
         new.runtime_lidx_map = {
             lnk: i for i, lnk in enumerate(new.runtime_lnks)}
         new.gl_lnk_tfarr = self.gl_lnk_tfarr.copy()
+        new._scene = None           # a fresh clone is not attached to any scene
         new._mountings = {}
         new._solvers = self._solvers  # solvers can be shared
         for k, m in self._mountings.items():
