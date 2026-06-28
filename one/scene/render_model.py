@@ -35,6 +35,7 @@ class RenderModel:
         # cached
         self._tf = oum.tf_from_pos_rotmat(self._pos, self._rotmat)
         self._dirty = True
+        self._pcd_buffer = None  # lazily built, cached point-cloud GPU buffer
 
     def clone(self):
         new = self.__class__(geom=self.geom,
@@ -47,12 +48,19 @@ class RenderModel:
 
     def get_device_buffer(self):
         if self.geom.fs is None:
-            # do not cache point cloud buffers
+            # Point cloud: cache the buffer on the model. get_device_buffer()
+            # is called every frame (render._draw_pcd) and on every scene
+            # rebuild; building a fresh PointCloudBuffer each time allocates a
+            # new GPU VAO/VBO that is never freed -> VRAM leak that crashes the
+            # process after a while of live re-posing. Geometry is immutable
+            # here, so one buffer per model is enough.
             if self._vrgbs is None:
                 raise ValueError(
                     "PointCloudBuffer requires per-vertex rgb colors")
-            return ovdb.PointCloudBuffer(
-                self.geom.vs, self._vrgbs)
+            if self._pcd_buffer is None:
+                self._pcd_buffer = ovdb.PointCloudBuffer(
+                    self.geom.vs, self._vrgbs)
+            return self._pcd_buffer
         gid = id(self.geom)
         if gid in _device_buffer_cache:
             return _device_buffer_cache[gid]
