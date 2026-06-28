@@ -1,0 +1,4902 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A self-contained robotics library -- kinematics, scene, mesh geometry, collision, grasp planning, motion, viewer.">
+      
+      
+      
+        <link rel="canonical" href="https://wanweiwei07.github.io/one/zh/API_INDEX/">
+      
+      
+        <link rel="prev" href="../api/devices/">
+      
+      
+      
+        
+          <link rel="alternate" href="../../API_INDEX/" hreflang="en">
+        
+          <link rel="alternate" href="../../ja/API_INDEX/" hreflang="ja">
+        
+          <link rel="alternate" href="./" hreflang="zh">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Full Index - one</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#one-api-index" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../" title="one" class="md-header__button md-logo" aria-label="one" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            one
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Full Index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="选择当前语言">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../API_INDEX/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="../../ja/API_INDEX/" hreflang="ja" class="md-select__link">
+              日本語
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="zh" class="md-select__link">
+              中文
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/wanweiwei07/one" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanweiwei07/one
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../" title="one" class="md-nav__button md-logo" aria-label="one" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    one
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/wanweiwei07/one" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    wanweiwei07/one
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../COMMENT_STYLE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comment Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/kinematics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kinematics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/scene_geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene & Geometry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/collision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/grasp_planning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grasp Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/motion_planning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Motion Planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/end_effectors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-Effectors & Tool Change
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/humanoid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Humanoid (L1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/mujoco/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MuJoCo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/geom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.geom
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/collider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.collider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/grasp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.grasp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/manipulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.manipulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/motion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.motion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/physics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.physics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/robots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.robots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/viewer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.viewer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stream/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.stream
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/devices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    one.devices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Full Index
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Full Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#onecollideraabb_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.aabb_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidercollider_base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.collider_base
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidercollision_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.collision_batch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidercpu_simd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.cpu_simd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_aabb_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_aabb_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_collision_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_collision_batch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_simd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_simd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_simd_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_simd_batch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidermj_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.mj_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecolliderraycast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.raycast
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_merged_geom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_merged_geom
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_simd_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_simd_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_simd_collider_x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_simd_collider_x
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onedevicescubemars" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.devices.cubemars
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomfitting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.fitting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomgeometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.geometry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.loader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomops2d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.ops2d
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomops3d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.ops3d
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomscaler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.scaler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomsurface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegrasp_common" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp._common
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspantipodal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.antipodal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspgrasp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.grasp
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspmonocontact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.monocontact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspplacement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.placement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegrasppolypodal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.polypodal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspreasoner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.reasoner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspserialize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.serialize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationarm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.arm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationpick_place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.pick_place
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationsession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationworkcell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.workcell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncoreconstraint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.constraint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncoremotion_data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.motion_data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncoreplanning_context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.planning_context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncorestate_space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.state_space
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioninterpolationcartesian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.interpolation.cartesian
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioninterpolationjoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.interpolation.joint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprimitivesapproach_depart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.primitives.approach_depart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprobabilisticpost_processor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.probabilistic.post_processor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprobabilisticprm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.probabilistic.prm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprobabilisticrrt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.probabilistic.rrt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotiontrajectorytime_param" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.trajectory.time_param
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsinertial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.inertial
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_compiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_contact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_contact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_env
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_naming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_one_cvter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_one_cvter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_one_sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_one_sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekine_visualizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine_visualizer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasemech_base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.mech_base
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasemech_structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.mech_structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasetcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.tcp
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbaseurdf_loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.urdf_loader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineanaik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.anaik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinegeoik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.geoik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinekinematic_chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.kinematic_chain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinenumik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.numik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinenumik_sel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.numik_sel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinepoe_ana_solver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.poe_ana_solver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinerandom_ik_test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.random_ik_test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeorand_py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.rand_py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp1_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp1_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp2e_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp2E_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp2_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp2_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp3_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp3_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp4_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp4_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp5_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp5_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp6_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp6_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsee_mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.ee_mixins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsdensocvr038_grippercvr038_gripper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.denso.cvr038_gripper.cvr038_gripper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsfr3_gripperfr3_gripper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.fr3_gripper.fr3_gripper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorslinkerboto6o6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.linkerbot.o6.o6
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsonrobotor_2fg7or_2fg7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.onrobot.or_2fg7.or_2fg7
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsonrobotor_sdor_sd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.onrobot.or_sd.or_sd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsopenarm_gripperoa_gripper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.openarm_gripper.oa_gripper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsrobotiqrtq2f85rtq2f85" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.robotiq.rtq2f85.rtq2f85
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsxhandxhand_right" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.xhand.xhand_right
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotshumanoidslinxl1l1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.humanoids.linx.l1.l1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038cvr038" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.cvr038
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikcvr038_pencil_ik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.cvr038_pencil_ik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikgen_q4_pencil_coeffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.gen_q4_pencil_coeffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikq4_pencil_coeffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.q4_pencil_coeffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikq4_pencil_solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.q4_pencil_solve
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsfanuccrx5iacrx5ia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.fanuc.crx5ia.crx5ia
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsfanuccrx5iaikcrx5ia_analytic_ik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.fanuc.crx5ia.ik.crx5ia_analytic_ik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsfrankafr3fr3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.franka.fr3.fr3
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorskawasakirs007lrs007l" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.kawasaki.rs007l.rs007l
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsopenarmopenarm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.openarm.openarm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsuniversal_robotsur3ur3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.universal_robots.ur3.ur3
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsxarmlite6lite6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.xarm.lite6.lite6
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsvehiclexytheta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.vehicle.xytheta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenecollision_shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.collision_shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenegeometry_ops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.geometry_ops
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenerender_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.render_model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenerender_model_primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.render_model_primitive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene_node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene_object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene_object
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene_object_primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene_object_primitive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onestreamwebsocket_server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.stream.websocket_server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilsconstant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.constant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilsdecorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.decorator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilshelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.helper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilsmath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.math
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewercamera" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.camera
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerdevice_buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.device_buffer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerinput_manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.input_manager
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerrender" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.render
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerrender_target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.render_target
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerscreen_quad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.screen_quad
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewershader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.shader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerworld" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.world
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#onecollideraabb_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.aabb_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidercollider_base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.collider_base
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidercollision_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.collision_batch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidercpu_simd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.cpu_simd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_aabb_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_aabb_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_collision_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_collision_batch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_simd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_simd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidergpu_simd_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.gpu_simd_batch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidermj_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.mj_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecolliderraycast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.raycast
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_merged_geom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_merged_geom
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_simd_collider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_simd_collider
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onecollidertbd_simd_collider_x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.collider.tbd_simd_collider_x
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onedevicescubemars" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.devices.cubemars
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomfitting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.fitting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomgeometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.geometry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomloader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.loader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomops2d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.ops2d
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomops3d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.ops3d
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomscaler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.scaler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegeomsurface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.geom.surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegrasp_common" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp._common
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspantipodal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.antipodal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspgrasp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.grasp
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspmonocontact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.monocontact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspplacement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.placement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegrasppolypodal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.polypodal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspreasoner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.reasoner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onegraspserialize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.grasp.serialize
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationarm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.arm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationpick_place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.pick_place
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationsession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemanipulationworkcell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.manipulation.workcell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncoreconstraint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.constraint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncoremotion_data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.motion_data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncoreplanning_context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.planning_context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioncorestate_space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.core.state_space
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioninterpolationcartesian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.interpolation.cartesian
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotioninterpolationjoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.interpolation.joint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprimitivesapproach_depart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.primitives.approach_depart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprobabilisticpost_processor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.probabilistic.post_processor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprobabilisticprm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.probabilistic.prm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotionprobabilisticrrt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.probabilistic.rrt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onemotiontrajectorytime_param" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.motion.trajectory.time_param
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsinertial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.inertial
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_compiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_compiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_contact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_contact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_env
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_naming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_one_cvter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_one_cvter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_one_sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_one_sync
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onephysicsmj_runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.physics.mj_runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekine_visualizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine_visualizer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasemech_base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.mech_base
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasemech_structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.mech_structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasetcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.tcp
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbaseurdf_loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.urdf_loader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineanaik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.anaik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinegeoik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.geoik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinekinematic_chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.kinematic_chain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinenumik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.numik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinenumik_sel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.numik_sel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinepoe_ana_solver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.poe_ana_solver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekinerandom_ik_test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.random_ik_test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeorand_py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.rand_py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp1_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp1_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp2e_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp2E_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp2_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp2_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp3_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp3_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp4_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp4_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp5_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp5_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsbasekineikgeosp6_lib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.base.kine.ikgeo.sp6_lib
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsee_mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.ee_mixins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsdensocvr038_grippercvr038_gripper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.denso.cvr038_gripper.cvr038_gripper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsfr3_gripperfr3_gripper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.fr3_gripper.fr3_gripper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorslinkerboto6o6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.linkerbot.o6.o6
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsonrobotor_2fg7or_2fg7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.onrobot.or_2fg7.or_2fg7
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsonrobotor_sdor_sd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.onrobot.or_sd.or_sd
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsopenarm_gripperoa_gripper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.openarm_gripper.oa_gripper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsrobotiqrtq2f85rtq2f85" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.robotiq.rtq2f85.rtq2f85
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsend_effectorsxhandxhand_right" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.end_effectors.xhand.xhand_right
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotshumanoidslinxl1l1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.humanoids.linx.l1.l1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038cvr038" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.cvr038
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikcvr038_pencil_ik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.cvr038_pencil_ik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikgen_q4_pencil_coeffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.gen_q4_pencil_coeffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikq4_pencil_coeffs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.q4_pencil_coeffs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsdensocvr038ikq4_pencil_solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.denso.cvr038.ik.q4_pencil_solve
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsfanuccrx5iacrx5ia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.fanuc.crx5ia.crx5ia
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsfanuccrx5iaikcrx5ia_analytic_ik" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.fanuc.crx5ia.ik.crx5ia_analytic_ik
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsfrankafr3fr3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.franka.fr3.fr3
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorskawasakirs007lrs007l" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.kawasaki.rs007l.rs007l
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsopenarmopenarm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.openarm.openarm
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsuniversal_robotsur3ur3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.universal_robots.ur3.ur3
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsmanipulatorsxarmlite6lite6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.manipulators.xarm.lite6.lite6
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onerobotsvehiclexytheta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.robots.vehicle.xytheta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenecollision_shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.collision_shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenegeometry_ops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.geometry_ops
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenerender_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.render_model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenerender_model_primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.render_model_primitive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene_node
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene_object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene_object
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onescenescene_object_primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.scene.scene_object_primitive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#onestreamwebsocket_server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.stream.websocket_server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilsconstant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.constant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilsdecorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.decorator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilshelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.helper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneutilsmath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.utils.math
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewercamera" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.camera
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerdevice_buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.device_buffer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerinput_manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.input_manager
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerrender" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.render
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerrender_target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.render_target
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerscreen_quad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.screen_quad
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewershader" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.shader
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oneviewerworld" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        one.viewer.world
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="one-api-index"><code>one</code> API index<a class="headerlink" href="#one-api-index" title="Permanent link">&para;</a></h1>
+<p>Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-generated by <code>tools/gen_api_index.py</code> (static ast scan); re-run after adding functions.</p>
+<h2 id="onecollideraabb_collider"><code>one.collider.aabb_collider</code><a class="headerlink" href="#onecollideraabb_collider" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>AABBCollider</code></strong> — OBB/SAT batch collider based on ColliderBase pair compilation.</li>
+<li>methods: <code>is_collided</code></li>
+</ul>
+<h2 id="onecollidercollider_base"><code>one.collider.collider_base</code><a class="headerlink" href="#onecollidercollider_base" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>ColliderBase</code></strong></li>
+<li>methods: <code>append</code>, <code>compile</code>, <code>actors</code>, <code>is_collided</code></li>
+</ul>
+<h2 id="onecollidercollision_batch"><code>one.collider.collision_batch</code><a class="headerlink" href="#onecollidercollision_batch" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>compute_wd_obb_batch(local_mins, local_maxs, tfs)</code> — local_min/local_max: (n,3)</li>
+<li><code>compute_wd_aabb_batch(local_mins, local_maxs, tfs)</code></li>
+<li><strong>class <code>CollisionBatch</code></strong></li>
+<li>methods: <code>update_transforms</code></li>
+</ul>
+<h2 id="onecollidercpu_simd"><code>one.collider.cpu_simd</code><a class="headerlink" href="#onecollidercpu_simd" title="Permanent link">&para;</a></h2>
+<p><em>CPU triangle-mesh collision detection (numpy/SIMD). create_detector +</em></p>
+<ul>
+<li><code>create_detector(eps=1e-09, max_points=200)</code></li>
+<li><code>build_batch(items, pairs)</code></li>
+<li><code>cols_to_vfs(cols)</code></li>
+<li><code>cols_to_vffns(cols)</code></li>
+<li><code>cols_to_tris(cols)</code></li>
+<li><code>compute_aabb(tris)</code></li>
+<li><code>aabb_intersect(min_a, max_a, min_b, max_b)</code></li>
+<li><code>compute_triangle_planes(tris)</code> — plane through origin: n dot x = 0</li>
+<li><code>point_in_tri_batch(pts, tris, eps=1e-09)</code></li>
+<li><strong>class <code>CPUDetector</code></strong></li>
+<li>methods: <code>detect_collision</code>, <code>detect_collision_batch</code></li>
+</ul>
+<h2 id="onecollidergpu_aabb_collider"><code>one.collider.gpu_aabb_collider</code><a class="headerlink" href="#onecollidergpu_aabb_collider" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>GPUAABBCollider</code></strong> — GPU OBB/SAT collider with full async pipeline optimization.</li>
+<li>methods: <code>is_collided</code>, <code>get_profile_summary</code></li>
+</ul>
+<h2 id="onecollidergpu_collision_batch"><code>one.collider.gpu_collision_batch</code><a class="headerlink" href="#onecollidergpu_collision_batch" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>GPUCollisionBatch</code></strong></li>
+<li>methods: <code>update_transforms_ssbo</code>, <code>sync_transforms</code>, <code>clear_counter</code>, <code>read_counter</code>, <code>read_points</code>, <code>release</code></li>
+</ul>
+<h2 id="onecollidergpu_simd"><code>one.collider.gpu_simd</code><a class="headerlink" href="#onecollidergpu_simd" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>detect_collision(col_a, tf_a, col_b, tf_b, eps=1e-09, max_points=1000)</code> — detect collision between two collision shapes using GPU</li>
+<li><strong>class <code>GPUCollider</code></strong> — GPU-accelerated triangle-triangle collision detection.</li>
+<li>methods: <code>detect_collision_single</code></li>
+</ul>
+<h2 id="onecollidergpu_simd_batch"><code>one.collider.gpu_simd_batch</code><a class="headerlink" href="#onecollidergpu_simd_batch" title="Permanent link">&para;</a></h2>
+<p><em>GPU batch triangle-mesh collision detection (pyglet/OpenGL compute).</em></p>
+<ul>
+<li><code>create_detector()</code></li>
+<li><code>build_batch(items, pairs)</code></li>
+<li><strong>class <code>GPUBatchDetector</code></strong></li>
+<li>methods: <code>detect_collision_batch</code></li>
+</ul>
+<h2 id="onecollidermj_collider"><code>one.collider.mj_collider</code><a class="headerlink" href="#onecollidermj_collider" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MJCollider</code></strong> — The robot's collision world: the planned mechanism(s) (<code>actors</code>), the</li>
+<li>methods: <code>append</code>, <code>compile</code>, <code>refresh</code>, <code>exclude</code>, <code>include</code>, <code>is_collided</code>, <code>get_slice</code>, <code>set_mecba_qpos</code>, <code>save</code>, <code>actors</code></li>
+</ul>
+<h2 id="onecolliderraycast"><code>one.collider.raycast</code><a class="headerlink" href="#onecolliderraycast" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>ray_shoot_scene_object(scene_obj, orig, direction)</code> — Ray cast against all collision shapes of a SceneObject.</li>
+</ul>
+<h2 id="onecollidertbd_collider"><code>one.collider.tbd_collider</code><a class="headerlink" href="#onecollidertbd_collider" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>is_collided(sobj_a, sobj_b, eps=1e-09, max_points=1000)</code> — detect collision between two scene objects</li>
+</ul>
+<h2 id="onecollidertbd_merged_geom"><code>one.collider.tbd_merged_geom</code><a class="headerlink" href="#onecollidertbd_merged_geom" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MergedGeom</code></strong> — Merged collision geom built from multiple collision shapes.</li>
+<li>methods: <code>from_collisions</code>, <code>vertices</code>, <code>faces</code>, <code>aabb</code>, <code>get_vertex_buffer</code>, <code>get_face_buffer</code></li>
+<li><strong>class <code>MergedGeomBatch</code></strong> — Batch data for GPU collision queries.</li>
+<li>methods: <code>merged_geoms</code>, <code>pair_indices</code>, <code>num_geoms</code>, <code>num_pairs</code>, <code>get_vertices</code>, <code>get_faces</code>, <code>get_geom_desc</code>, <code>get_pairs</code></li>
+</ul>
+<h2 id="onecollidertbd_simd_collider"><code>one.collider.tbd_simd_collider</code><a class="headerlink" href="#onecollidertbd_simd_collider" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>SIMDCollider</code></strong> — SIMD-based collision detector using FK + runtime_lnks</li>
+<li>methods: <code>append</code>, <code>compile</code>, <code>is_collided</code>, <code>get_slice</code>, <code>actors</code>, <code>get_stats</code>, <code>reset_stats</code>, <code>print_stats</code></li>
+</ul>
+<h2 id="onecollidertbd_simd_collider_x"><code>one.collider.tbd_simd_collider_x</code><a class="headerlink" href="#onecollidertbd_simd_collider_x" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>SIMDCollider</code></strong></li>
+<li>methods: <code>is_collided</code></li>
+</ul>
+<h2 id="onedevicescubemars"><code>one.devices.cubemars</code><a class="headerlink" href="#onedevicescubemars" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>CubeMarsNativeCAN</code></strong> — CubeMars servo CAN packet builder (extended CAN frame).</li>
+<li>methods: <code>set_duty</code>, <code>set_current</code>, <code>set_cb</code>, <code>set_rpm</code>, <code>set_pos</code>, <code>set_origin</code>, <code>set_pos_spd</code>, <code>parse_feedback_8b</code></li>
+<li><strong>class <code>CubeMarsRLinkSerial</code></strong> — R-Link serial protocol helper with optional serial session support.</li>
+<li>methods: <code>crc16</code>, <code>build_packet</code>, <code>comm_get_values</code>, <code>comm_get_values_setup_all</code>, <code>comm_get_rotor_position_stream</code>, <code>comm_set_pos</code>, <code>comm_set_pos_spd</code>, <code>comm_set_pos_origin</code>, <code>comm_power_on_raw</code>, <code>parse_packet</code>, <code>open</code>, <code>close</code>, <code>is_open</code>, <code>send</code>, <code>read_available</code>, <code>transact</code>, <code>startup</code>, <code>set_pos</code>, <code>set_pos_spd</code></li>
+</ul>
+<h2 id="onegeomfitting"><code>one.geom.fitting</code><a class="headerlink" href="#onegeomfitting" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>convex_hull(geom)</code></li>
+<li><code>fit_plane_from_pts(pts)</code></li>
+</ul>
+<h2 id="onegeomgeometry"><code>one.geom.geometry</code><a class="headerlink" href="#onegeomgeometry" title="Permanent link">&para;</a></h2>
+<p><em>Geometry container (vertices/faces/normals) and mesh-level helpers used</em></p>
+<ul>
+<li><code>gen_geom_from_raw(vs, fs=None)</code></li>
+<li><code>gen_cylinder_geom(length, radius=0.05, n_segs=8)</code> — Cylinder of total height <code>length</code> CENTERED on the origin along +Z</li>
+<li><code>gen_cone_geom(length, radius=0.05, n_segs=8)</code></li>
+<li><code>gen_sphere_geom(radius=0.05, n_segs=8)</code></li>
+<li><code>gen_icosphere_geom(radius=0.05, n_subs=2)</code></li>
+<li><code>gen_arrow_geom(length, shaft_radius=ouc.ArrowSize.SHAFT_RADIUS, head_length=ouc.ArrowSize.HEAD_LENGTH, head_radius=ouc.ArrowSize.HEAD_RADIUS, n_segs=8)</code></li>
+<li><code>gen_box_geom(xyz_lengths=(0.1, 0.1, 0.1))</code></li>
+<li><code>gen_frustrum_geom(height=0.05, bottom_length=0.05, top_length=0.03)</code></li>
+<li><code>gen_capsule_geom(radius=0.05, half_length=0.1, n_segs=32)</code></li>
+</ul>
+<h2 id="onegeomloader"><code>one.geom.loader</code><a class="headerlink" href="#onegeomloader" title="Permanent link">&para;</a></h2>
+<p><em>Mesh file loading: <code>load_geometry(path)</code> reads STL (ascii/binary) and</em></p>
+<ul>
+<li><code>load_geometry(path)</code></li>
+</ul>
+<h2 id="onegeomops2d"><code>one.geom.ops2d</code><a class="headerlink" href="#onegeomops2d" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>pts_in_polygon2d(pts, poly_pts)</code></li>
+<li><code>mindist_to_linesegs2d(pt, line_segs)</code> — pt: (2,), line_segs: array-like (M,2,2)</li>
+<li><code>extract_boundary(fs_sub)</code></li>
+</ul>
+<h2 id="onegeomops3d"><code>one.geom.ops3d</code><a class="headerlink" href="#onegeomops3d" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>revolve(profile, n_segs=36)</code> — Revolve a 2D profile (r,z) around Z-axis to produce a mesh</li>
+<li><code>subdivide_once(verts, faces)</code></li>
+<li><code>icosahedron()</code> — Generate vertices and faces of a unit icosahedron.</li>
+<li><code>ray_shoot_flat(orig, dir, verts, faces, face_normals, eps=oum.eps)</code></li>
+<li><code>ray_shoot(orig, dir, geometry)</code></li>
+</ul>
+<h2 id="onegeomscaler"><code>one.geom.scaler</code><a class="headerlink" href="#onegeomscaler" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>scale_stl_files(scale=(1, 1, 1))</code></li>
+</ul>
+<h2 id="onegeomsurface"><code>one.geom.surface</code><a class="headerlink" href="#onegeomsurface" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sample_surface(vs, fs, n_samples)</code></li>
+<li><code>segment_surface(geometry, normal_tol_deg=5.0)</code></li>
+</ul>
+<h2 id="onegrasp_common"><code>one.grasp._common</code><a class="headerlink" href="#onegrasp_common" title="Permanent link">&para;</a></h2>
+<p><em>Shared grasp-domain helpers (depend on end-effector runtime links and</em></p>
+<ul>
+<li><code>build_ee_target_detector(ee, target_sobj)</code> — Collision detector + batch checking every link of an end effector</li>
+</ul>
+<h2 id="onegraspantipodal"><code>one.grasp.antipodal</code><a class="headerlink" href="#onegraspantipodal" title="Permanent link">&para;</a></h2>
+<p><em>Antipodal grasp planning: 2-point opposing pinch (force-closure) grasps</em></p>
+<ul>
+<li><code>build_grasp_rotmat_batch(ray_dirs, open_dir)</code> — ray_dirs: (N,3) unit vectors</li>
+<li><code>antipodal_iter(gripper, target_sobj, density=0.02, normal_tol_deg=20, roll_step_deg=30, clearance=0.002, score_weights=(0.7, 0.3), exclude_regions=None, pre_open=0.5)</code> — Generator: yields (grasp, collided) -- a Grasp and its collision flag.</li>
+<li><code>antipodal(gripper, target_sobj, density=0.02, normal_tol_deg=20, roll_step_deg=30, clearance=0.002, max_grasps=50, score_weights=(0.7, 0.3), exclude_regions=None, pre_open=0.5)</code> — Collects non-colliding grasps only.</li>
+</ul>
+<h2 id="onegraspgrasp"><code>one.grasp.grasp</code><a class="headerlink" href="#onegraspgrasp" title="Permanent link">&para;</a></h2>
+<p><em>The <code>Grasp</code> record -- a self-contained, gripper-agnostic grasp.</em></p>
+<ul>
+<li><strong>class <code>Grasp</code></strong> — A frozen, gripper-agnostic grasp record (see module docstring).</li>
+<li>methods: <code>make_tcp</code>, <code>base_pose</code>, <code>transformed</code>, <code>to_dict</code>, <code>from_dict</code>, <code>from_jaw</code>, <code>from_tool</code></li>
+</ul>
+<h2 id="onegraspmonocontact"><code>one.grasp.monocontact</code><a class="headerlink" href="#onegraspmonocontact" title="Permanent link">&para;</a></h2>
+<p><em>Monocontact: single-contact ("one contact pad") surface-approach</em></p>
+<ul>
+<li><code>monocontact_iter(tool, target_sobj, tcp='tip', density=0.02, roll_step_deg=90, retreat=None, approach_bias=(0.0, 0.0, 1.0), exclude_regions=None)</code> — Generator: yields (grasp, collided) -- a Grasp and its collision flag.</li>
+<li><code>monocontact(tool, target_sobj, tcp='tip', density=0.02, roll_step_deg=90, retreat=None, max_grasps=50, approach_bias=(0.0, 0.0, 1.0), exclude_regions=None)</code> — Collects non-colliding single-contact grasps only.</li>
+</ul>
+<h2 id="onegraspplacement"><code>one.grasp.placement</code><a class="headerlink" href="#onegraspplacement" title="Permanent link">&para;</a></h2>
+<p><em>Stable placement poses: <code>compute_stable_poses</code> finds the resting</em></p>
+<ul>
+<li><code>compute_stable_poses(vs, fs, facets, com=None, stable_thresh=7.0)</code> — segs = list of list of face ids</li>
+</ul>
+<h2 id="onegrasppolypodal"><code>one.grasp.polypodal</code><a class="headerlink" href="#onegrasppolypodal" title="Permanent link">&para;</a></h2>
+<p><em>Polypodal: rigid N-point contact pattern matching against a mesh</em></p>
+<ul>
+<li><code>sample_pattern(pattern, tgt_vs, tgt_fs, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None)</code> — Sample N-point pattern placements on the target mesh surface.</li>
+<li><code>pair_pattern(samples, tgt_vs, tgt_fs, normal_tol_deg=0, distance_tol=0.001, min_thickness=0.0, max_thickness=None)</code> — For every front-side (points, normals) sample in <code>samples</code>, ray-cast</li>
+<li><code>polypodal(gripper, target_sobj, n_samples, normal_tol_deg=0, distance_tol=0.001, surface_density_factor=1, exclude_regions=None, clearance=0.0003, min_thickness=0.0, max_thickness=None, pre_open=0.5, verbose=True, return_pairs=False)</code> — End-to-end polypodal grasp computation.</li>
+</ul>
+<h2 id="onegraspreasoner"><code>one.grasp.reasoner</code><a class="headerlink" href="#onegraspreasoner" title="Permanent link">&para;</a></h2>
+<p><em>Grasp feasibility reasoning -- the "common grasp" kernel.</em></p>
+<ul>
+<li><code>iter_common_gids(robot, ctx, grasps, obj_pose_list, *, tcp=None, gripper=None, chain='main', which='pre', max_solutions=1, ik_accept=None)</code> — Lazily yield grasps feasible at EVERY pose in <code>obj_pose_list</code>.</li>
+<li><code>find_feasible_gids(robot, ctx, grasps, obj_pose, **kwargs)</code> — Feasible grasps at a SINGLE object pose -- the one-pose special case of</li>
+<li><code>reason_common_gids(robot, ctx, grasps, obj_pose_list, **kwargs)</code> — All grasps feasible at EVERY pose in <code>obj_pose_list</code> (the eager form of</li>
+<li><strong>class <code>GraspReasoner</code></strong> — Thin stateful facade over :func:<code>find_feasible_gids</code> /</li>
+<li>methods: <code>find_feasible_gids</code>, <code>reason_common_gids</code></li>
+</ul>
+<h2 id="onegraspserialize"><code>one.grasp.serialize</code><a class="headerlink" href="#onegraspserialize" title="Permanent link">&para;</a></h2>
+<p><em>Save / load / world-transform a list of :class:<code>~one.grasp.grasp.Grasp</code>.</em></p>
+<ul>
+<li><code>save_grasps(grasps, path, gripper_name=None, object_name=None)</code> — Save planned grasps to a JSON file.</li>
+<li><code>load_grasps(path)</code> — Load grasps previously saved by :func:<code>save_grasps</code>.</li>
+<li><code>transform_grasps(grasps, tf)</code> — Map object-LOCAL grasps into the world by an object world transform.</li>
+</ul>
+<h2 id="onemanipulationarm"><code>one.manipulation.arm</code><a class="headerlink" href="#onemanipulationarm" title="Permanent link">&para;</a></h2>
+<p><em>The manipulation verbs of a single arm -- as a mixin, not a wrapper.</em></p>
+<ul>
+<li><strong>class <code>SingleArmManipulation</code></strong> — Manipulation verbs for one arm, delegating to the free-function cores.</li>
+<li>methods: <code>body</code>, <code>end_effector</code>, <code>build_collider</code>, <code>plan</code>, <code>reason_grasps</code>, <code>moveto</code>, <code>approach</code>, <code>depart</code>, <code>insert</code>, <code>grasp</code>, <code>release</code>, <code>pick_place</code>, <code>iter_pick_place</code>, <code>regrasp</code></li>
+<li><strong>class <code>Arm</code></strong> — A per-arm manipulator OWNED by a multi-arm robot: binds the parent</li>
+<li>methods: <code>body</code></li>
+</ul>
+<h2 id="onemanipulationpick_place"><code>one.manipulation.pick_place</code><a class="headerlink" href="#onemanipulationpick_place" title="Permanent link">&para;</a></h2>
+<p><em>Pick-and-place motion planning -- move an object from a pick pose to a place</em></p>
+<ul>
+<li><code>gen_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, collider, tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, approach_iters=4000, transfer_iters=8000, goal_bias=0.3, constraints=())</code> — The FIRST feasible pick-and-place plan, or None -- the common case.</li>
+<li><code>iter_pick_place(robot, gripper, obj, grasps, pick_pose, place_pose, *, collider, tcp=None, chain='main', start_qs=None, lift_height=0.12, granularity=0.01, approach_iters=4000, transfer_iters=8000, goal_bias=0.3, constraints=())</code> — Lazily plan home -&gt; pick -&gt; lift -&gt; transfer -&gt; place -&gt; retreat moving</li>
+</ul>
+<h2 id="onemanipulationsession"><code>one.manipulation.session</code><a class="headerlink" href="#onemanipulationsession" title="Permanent link">&para;</a></h2>
+<p><em>A manipulation Session: compose primitive verbs into a recipe.</em></p>
+<ul>
+<li><strong>class <code>Session</code></strong></li>
+<li>methods: <code>moveto</code>, <code>linear</code>, <code>grasp</code>, <code>release</code>, <code>result</code>, <code>last_qs</code></li>
+</ul>
+<h2 id="onemanipulationworkcell"><code>one.manipulation.workcell</code><a class="headerlink" href="#onemanipulationworkcell" title="Permanent link">&para;</a></h2>
+<p><em>A multi-arm cell: several arms sharing ONE collision world.</em></p>
+<ul>
+<li><strong>class <code>Workcell</code></strong> — Several arms (each a <code>SingleArmManipulation</code>) sharing one collider.</li>
+<li>methods: <code>build_collider</code>, <code>activate</code>, <code>plan</code></li>
+</ul>
+<h2 id="onemotioncoreconstraint"><code>one.motion.core.constraint</code><a class="headerlink" href="#onemotioncoreconstraint" title="Permanent link">&para;</a></h2>
+<p><em>Planning constraints: state-validity predicates layered on top of collision.</em></p>
+<ul>
+<li><strong>class <code>Constraint</code></strong> — A state-validity predicate beyond collision.</li>
+<li>methods: <code>is_valid</code></li>
+</ul>
+<h2 id="onemotioncoremotion_data"><code>one.motion.core.motion_data</code><a class="headerlink" href="#onemotioncoremotion_data" title="Permanent link">&para;</a></h2>
+<p><em>A plain, composable motion container.</em></p>
+<ul>
+<li><strong>class <code>MotionData</code></strong></li>
+<li>methods: <code>from_jpath</code>, <code>is_empty</code>, <code>copy</code></li>
+</ul>
+<h2 id="onemotioncoreplanning_context"><code>one.motion.core.planning_context</code><a class="headerlink" href="#onemotioncoreplanning_context" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>PlanningContext</code></strong> — Collision + bounds oracle for sampling-based planners.</li>
+<li>methods: <code>is_state_valid</code>, <code>is_motion_valid</code>, <code>states_equal</code>, <code>enforce_bounds</code>, <code>clear_cache</code>, <code>sample_uniform</code>, <code>interpolate</code>, <code>distance</code></li>
+</ul>
+<h2 id="onemotioncorestate_space"><code>one.motion.core.state_space</code><a class="headerlink" href="#onemotioncorestate_space" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>RealVectorStateSpace</code></strong> — Simple R^n box-bounded state space, OMPL-style.</li>
+<li>methods: <code>sample_uniform</code>, <code>distance</code>, <code>vectorized_distance</code>, <code>interpolate</code>, <code>enforce_bounds</code>, <code>satisfies_bounds</code></li>
+</ul>
+<h2 id="onemotioninterpolationcartesian"><code>one.motion.interpolation.cartesian</code><a class="headerlink" href="#onemotioninterpolationcartesian" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>linear_to_jpath(robot, start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0), ref_qs=None, chain='main', tcp='flange', ctx=None)</code> — Convert Cartesian straight-line trajectory to joint trajectory using IK.</li>
+<li><code>interp_by_step(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, pos_step=0.01, rot_step=np.deg2rad(2.0))</code> — Cartesian straight-line interpolation with automatic sample count.</li>
+<li><code>interp_by_n(start_rotmat, start_pos, goal_rotmat=None, goal_pos=None, n_steps=2)</code> — Cartesian straight-line interpolation with fixed number of samples.</li>
+</ul>
+<h2 id="onemotioninterpolationjoint"><code>one.motion.interpolation.joint</code><a class="headerlink" href="#onemotioninterpolationjoint" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>interp_by_step(start_qs, goal_qs, step=np.deg2rad(3.0))</code> — Joint-space straight-line interpolation with automatic sample count.</li>
+<li><code>interp_by_n(start_qs, goal_qs, n_steps=2)</code> — Joint-space straight-line interpolation with fixed number of samples.</li>
+<li><code>linear_path(start_qs, goal_qs, step=np.deg2rad(3.0), ctx=None)</code> — Joint-space straight-line path between two configs, optionally collision-gated.</li>
+</ul>
+<h2 id="onemotionprimitivesapproach_depart"><code>one.motion.primitives.approach_depart</code><a class="headerlink" href="#onemotionprimitivesapproach_depart" title="Permanent link">&para;</a></h2>
+<p><em>Approach / depart motion primitives.</em></p>
+<ul>
+<li><code>gen_moveto(robot, ctx, planner, goal, *, tcp=None, start_qs, chain='main', ee_qpos=None, max_iters=4000, shortcut=True)</code> — Free RRT move from <code>start_qs</code> to <code>goal</code> (a config, or a pose IK'd via</li>
+<li><code>nearest_valid_ik(robot, ctx, pos, rotmat, *, chain='main', tcp='flange', ref_qs, max_solutions=8, accept=None)</code> — IK at <code>(pos, rotmat)</code> returning the solution nearest <code>ref_qs</code> (in the</li>
+<li><code>gen_approach(robot, ctx, planner, goal_pos, goal_rotmat, *, tcp, start_qs, chain='main', pre_pos=None, pre_rotmat=None, approach_direction=None, approach_distance=0.05, granularity=0.01, ee_qpos=None, use_rrt=True, check_descent=True, max_iters=2000, ik_max_solutions=8, ik_accept=None)</code> — <code>start_qs</code> -&gt; pre-grasp (probabilistic) -&gt; grasp (cartesian line).</li>
+<li><code>gen_depart(robot, ctx, planner, start_pos, start_rotmat, *, tcp, start_qs, chain='main', depart_direction=None, depart_distance=0.05, granularity=0.01, ee_qpos=None, end_qs=None, use_rrt=False, check_retreat=True, max_iters=2000)</code> — <code>start_qs</code> (at the grasp) -&gt; retreat (cartesian line) -&gt; optional park.</li>
+</ul>
+<h2 id="onemotionprobabilisticpost_processor"><code>one.motion.probabilistic.post_processor</code><a class="headerlink" href="#onemotionprobabilisticpost_processor" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>PathPostProcessor</code></strong></li>
+<li>methods: <code>shortcut</code>, <code>densify</code></li>
+</ul>
+<h2 id="onemotionprobabilisticprm"><code>one.motion.probabilistic.prm</code><a class="headerlink" href="#onemotionprobabilisticprm" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>PRMRoadmap</code></strong></li>
+<li>methods: <code>add_state</code>, <code>add_edge_undirected</code>, <code>remove_edge_undirected</code>, <code>dijkstra</code></li>
+<li><strong>class <code>PRMPlanner</code></strong></li>
+<li>methods: <code>solve</code></li>
+<li><strong>class <code>LazyPRMPlanner</code></strong></li>
+<li>methods: <code>solve</code></li>
+</ul>
+<h2 id="onemotionprobabilisticrrt"><code>one.motion.probabilistic.rrt</code><a class="headerlink" href="#onemotionprobabilisticrrt" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>shortcut_path(path, pln_ctx, n_iter=200)</code></li>
+<li><code>densify_path(path, pln_ctx, max_step=np.pi / 12)</code></li>
+<li><strong>class <code>RRTTree</code></strong></li>
+<li>methods: <code>add_node</code>, <code>nearest</code>, <code>nearest_state</code>, <code>path_from_root</code></li>
+<li><strong>class <code>RRTConnectPlanner</code></strong></li>
+<li>methods: <code>solve</code>, <code>solve_iter</code></li>
+</ul>
+<h2 id="onemotiontrajectorytime_param"><code>one.motion.trajectory.time_param</code><a class="headerlink" href="#onemotiontrajectorytime_param" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>retime_trapezoidal(q_seq, v_max, a_max, dt=0.01)</code> — Time-parameterize a joint waypoint path using per-segment trapezoidal scaling.</li>
+</ul>
+<h2 id="onephysicsinertial"><code>one.physics.inertial</code><a class="headerlink" href="#onephysicsinertial" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>inertia_box(m, hx, hy, hz)</code></li>
+<li><code>inertia_sphere(m, r)</code></li>
+<li><code>inertia_capsule(m, r, h)</code></li>
+<li><code>inertia_from_collisions(collisions, total_mass=10.0)</code></li>
+</ul>
+<h2 id="onephysicsmj_compiler"><code>one.physics.mj_compiler</code><a class="headerlink" href="#onephysicsmj_compiler" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MJCFCompiler</code></strong></li>
+<li>methods: <code>set_vec3</code>, <code>set_quat</code>, <code>compile_mjcf</code>, <code>compile_default</code>, <code>compile_mesh_asset</code>, <code>compile_body</code>, <code>compile_joint</code>, <code>compile_geom</code>, <code>compile_actuator</code></li>
+</ul>
+<h2 id="onephysicsmj_contact"><code>one.physics.mj_contact</code><a class="headerlink" href="#onephysicsmj_contact" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>debug_contacts(mjenv)</code></li>
+<li><strong>class <code>MJContactViz</code></strong></li>
+<li>methods: <code>clear</code>, <code>update_from_data</code></li>
+<li><strong>class <code>MjContactForceViz</code></strong></li>
+<li>methods: <code>clear</code>, <code>update_from_data</code></li>
+</ul>
+<h2 id="onephysicsmj_env"><code>one.physics.mj_env</code><a class="headerlink" href="#onephysicsmj_env" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MJEnv</code></strong></li>
+<li>methods: <code>step</code>, <code>is_collided</code>, <code>reset</code>, <code>get_timestep</code>, <code>save</code>, <code>data</code>, <code>model</code>, <code>ctrl</code></li>
+</ul>
+<h2 id="onephysicsmj_naming"><code>one.physics.mj_naming</code><a class="headerlink" href="#onephysicsmj_naming" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>alloc_name(prefix: str)</code></li>
+<li><code>reset_names()</code></li>
+</ul>
+<h2 id="onephysicsmj_nodes"><code>one.physics.mj_nodes</code><a class="headerlink" href="#onephysicsmj_nodes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>WorldNode</code></strong></li>
+<li>methods: <code>compile_mjcf</code></li>
+<li><strong>class <code>DefaultNode</code></strong></li>
+<li><strong>class <code>OptionNode</code></strong></li>
+<li><strong>class <code>AssetNode</code></strong></li>
+<li><strong>class <code>MeshAsset</code></strong></li>
+<li><strong>class <code>BodyNode</code></strong></li>
+<li><strong>class <code>JointNode</code></strong></li>
+<li><strong>class <code>InertialNode</code></strong></li>
+<li><strong>class <code>GeomNode</code></strong></li>
+<li><strong>class <code>ActuatorNode</code></strong></li>
+</ul>
+<h2 id="onephysicsmj_one_cvter"><code>one.physics.mj_one_cvter</code><a class="headerlink" href="#onephysicsmj_one_cvter" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MJOneConverter</code></strong></li>
+<li>methods: <code>convert</code>, <code>gravity</code>, <code>timestep</code></li>
+</ul>
+<h2 id="onephysicsmj_one_sync"><code>one.physics.mj_one_sync</code><a class="headerlink" href="#onephysicsmj_one_sync" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MJSynchronizer</code></strong></li>
+<li>methods: <code>pull_all_mecba_qpos</code>, <code>pull_all_mecba_freebase_pose</code>, <code>pull_all_sobj_pose</code>, <code>push_all_sobj_qpos</code>, <code>push_one_sobj_qpos</code>, <code>push_all_mecba_qpos</code>, <code>push_one_mecba_qpos</code>, <code>push_one_mecba_freebase_pose</code></li>
+</ul>
+<h2 id="onephysicsmj_runtime"><code>one.physics.mj_runtime</code><a class="headerlink" href="#onephysicsmj_runtime" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>MJRuntime</code></strong></li>
+<li>methods: <code>step</code>, <code>forward</code>, <code>enter_cd</code>, <code>exit_cd</code>, <code>is_collided</code></li>
+</ul>
+<h2 id="onerobotsbasekine_visualizer"><code>one.robots.base.kine_visualizer</code><a class="headerlink" href="#onerobotsbasekine_visualizer" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>KineVisualizer</code></strong></li>
+<li>methods: <code>attach_to</code>, <code>detach_from</code>, <code>refresh</code></li>
+</ul>
+<h2 id="onerobotsbasemech_base"><code>one.robots.base.mech_base</code><a class="headerlink" href="#onerobotsbasemech_base" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Mounting</code></strong></li>
+<li><strong>class <code>MechBase</code></strong></li>
+<li>methods: <code>structure</code>, <code>attach_to</code>, <code>detach_from</code>, <code>set_pos_rotmat</code>, <code>fk</code>, <code>mount</code>, <code>unmount</code>, <code>get_solver</code>, <code>add_chain</code>, <code>chain</code>, <code>chains</code>, <code>chain_joint_limits</code>, <code>add_tcp</code>, <code>tcp</code>, <code>tcps</code>, <code>toggle_tcp</code>, <code>ik</code>, <code>ik_partial</code>, <code>clone</code>, <code>ndof</code>, <code>runtime_root_lnk</code>, <code>is_floating</code>, <code>home_qs</code>, <code>tf</code>, <code>rotmat</code>, <code>quat</code>, <code>pos</code>, <code>toggle_render_collision</code>, <code>rgba</code>, <code>rgb</code>, <code>alpha</code></li>
+</ul>
+<h2 id="onerobotsbasemech_structure"><code>one.robots.base.mech_structure</code><a class="headerlink" href="#onerobotsbasemech_structure" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Link</code></strong></li>
+<li><strong>class <code>Joint</code></strong></li>
+<li>methods: <code>zero_tf</code>, <code>motion_tf</code></li>
+<li><strong>class <code>MechStruct</code></strong></li>
+<li>methods: <code>get_chain</code>, <code>add_lnk</code>, <code>add_jnt</code>, <code>ignore_collision</code>, <code>compile</code>, <code>collision_ignores_objs</code>, <code>n_jnts</code>, <code>n_lnks</code>, <code>compiled</code></li>
+<li><strong>class <code>FlatMechStructure</code></strong> — flat representation of RobotStructure for efficient computation</li>
+<li>methods: <code>resolve_all_qs</code>, <code>is_active_jnt</code></li>
+</ul>
+<h2 id="onerobotsbasetcp"><code>one.robots.base.tcp</code><a class="headerlink" href="#onerobotsbasetcp" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>TCP</code></strong> — A local frame (link + offset) used as an IK target point.</li>
+<li>methods: <code>tf</code>, <code>pos</code>, <code>rotmat</code>, <code>set_loc_tf</code>, <code>set_loc_rotmat_pos</code>, <code>copy</code></li>
+</ul>
+<h2 id="onerobotsbaseurdf_loader"><code>one.robots.base.urdf_loader</code><a class="headerlink" href="#onerobotsbaseurdf_loader" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>auto_scan_packages(main_file, search_root)</code> — Scan main_file and auto-detect "$(find pkg)" patterns,</li>
+<li><code>load_robot_from_xacro(main_file, base_dir=None, mappings=None)</code> — Load a robot URDF from a xacro or urdf file.</li>
+<li><code>urdf_to_mechstruct(urdf, urdf_dir, collision_type=None, res_dir=None, mesh_resolver=None)</code> — Convert a urdf_parser_py URDF (Robot) object into a one MechStruct.</li>
+</ul>
+<h2 id="onerobotsbasekineanaik"><code>one.robots.base.kine.anaik</code><a class="headerlink" href="#onerobotsbasekineanaik" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>AnaIKBase</code></strong> — Analytic IK base class (returns all solutions).</li>
+<li>methods: <code>ik</code>, <code>ik_all</code>, <code>get_rotmat_from_fk</code></li>
+<li><strong>class <code>S456X12</code></strong></li>
+<li>methods: <code>ik_all</code></li>
+<li><strong>class <code>P234X56</code></strong></li>
+<li>methods: <code>ik_all</code></li>
+</ul>
+<h2 id="onerobotsbasekinegeoik"><code>one.robots.base.kine.geoik</code><a class="headerlink" href="#onerobotsbasekinegeoik" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>is_parallel(h1, h2, eps=1e-06)</code></li>
+<li><code>line_line_distance(p1, d1, p2, d2)</code> — distance between two 3D lines:</li>
+<li><code>line_point_distance(p, l0, d)</code></li>
+<li><code>line_line_midpoint(p1, d1, p2, d2, eps=1e-09)</code></li>
+<li><code>estimate_wrist_center(o1, h1, o2, h2, o3, h3, eps_intersect=1e-05)</code></li>
+<li><code>is_intersecting(p1, d1, p2, d2, eps=1e-05)</code></li>
+<li><code>analyze_decomposition(chain, eps_parallel=1e-06, eps_intersect=1e-05)</code></li>
+<li><strong>class <code>KineInfo</code></strong></li>
+</ul>
+<h2 id="onerobotsbasekinekinematic_chain"><code>one.robots.base.kine.kinematic_chain</code><a class="headerlink" href="#onerobotsbasekinekinematic_chain" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>KinematicChain</code></strong> — get a base_link to tip_link chain</li>
+<li>methods: <code>embed_active_qs</code>, <code>extract_active_qs</code>, <code>n_active_jnts</code>, <code>n_jnts</code></li>
+</ul>
+<h2 id="onerobotsbasekinenumik"><code>one.robots.base.kine.numik</code><a class="headerlink" href="#onerobotsbasekinenumik" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>NumIKSolver</code></strong> — Solver for one chain</li>
+<li>methods: <code>fk</code>, <code>ik</code>, <code>ik_partial</code></li>
+</ul>
+<h2 id="onerobotsbasekinenumik_sel"><code>one.robots.base.kine.numik_sel</code><a class="headerlink" href="#onerobotsbasekinenumik_sel" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>SELIKSolver</code></strong></li>
+<li>methods: <code>build_and_save_cvt_database</code>, <code>query_seeds</code>, <code>ik</code>, <code>ik_partial</code></li>
+</ul>
+<h2 id="onerobotsbasekinepoe_ana_solver"><code>one.robots.base.kine.poe_ana_solver</code><a class="headerlink" href="#onerobotsbasekinepoe_ana_solver" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Ana6RSWSolver</code></strong></li>
+<li>methods: <code>ik</code></li>
+</ul>
+<h2 id="onerobotsbasekinerandom_ik_test"><code>one.robots.base.kine.random_ik_test</code><a class="headerlink" href="#onerobotsbasekinerandom_ik_test" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>make_robot(name)</code></li>
+<li><code>make_solver(name, robot, default_solver)</code></li>
+<li><code>rand_active_qs(chain)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeorand_py"><code>one.robots.base.kine.ikgeo.rand_py</code><a class="headerlink" href="#onerobotsbasekineikgeorand_py" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>hat(k)</code></li>
+<li><code>rand_angle()</code></li>
+<li><code>rand_mat(size=1)</code></li>
+<li><code>rand_vec(size=3)</code></li>
+<li><code>rand_normal_vec(size=3)</code></li>
+<li><code>rand_normal_mat(size=1)</code></li>
+<li><code>rand_perp_normal_vec(inp)</code></li>
+<li><code>rot(k, theta)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp1_lib"><code>one.robots.base.kine.ikgeo.sp1_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp1_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp1_setup(p1, p2, k, theta)</code></li>
+<li><code>sp1_run(p1, p2, k, tol=1e-05)</code></li>
+<li><code>sp1_setup_LS(p1, p2, k)</code></li>
+<li><code>sp1_error(p1, p2, k, theta)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp2e_lib"><code>one.robots.base.kine.ikgeo.sp2E_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp2e_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp2E_setup(p0, p1, p2, k1, k2)</code></li>
+<li><code>sp2E_run(p0, p1, p2, k1, k2)</code></li>
+<li><code>sp2E_error(p0, p1, p2, k1, k2, theta1, theta2)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp2_lib"><code>one.robots.base.kine.ikgeo.sp2_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp2_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp2_setup(p1, p2, k1, k2)</code></li>
+<li><code>sp2_setup_LS(p1, p2, k1, k2)</code></li>
+<li><code>sp2_run(p1, p2, k1, k2)</code></li>
+<li><code>sp2_error(p1, p2, k1, k2, theta1, theta2)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp3_lib"><code>one.robots.base.kine.ikgeo.sp3_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp3_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp3_setup(p1, p2, k)</code></li>
+<li><code>sp3_setup_LS(p1, p2, k)</code></li>
+<li><code>sp3_run(p1, p2, k, d)</code></li>
+<li><code>sp3_error(p1, p2, k, d, theta)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp4_lib"><code>one.robots.base.kine.ikgeo.sp4_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp4_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp4_setup(p, k, h)</code></li>
+<li><code>sp4_setup_LS(p, k, h)</code></li>
+<li><code>sp4_run(p, k, h, d)</code></li>
+<li><code>sp4_error(p, k, h, d, theta)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp5_lib"><code>one.robots.base.kine.ikgeo.sp5_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp5_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp5_setup(p0, p1, p2, p3, k1, k2, k3)</code></li>
+<li><code>cone_polynomials(p0_i, k_i, p_i, p_i_s, k2)</code></li>
+<li><code>sp5_run(p0, p1, p2, p3, k1, k2, k3)</code></li>
+<li><code>sp5_error(p0, p1, p2, p3, k1, k2, k3, theta1, theta2, theta3)</code></li>
+</ul>
+<h2 id="onerobotsbasekineikgeosp6_lib"><code>one.robots.base.kine.ikgeo.sp6_lib</code><a class="headerlink" href="#onerobotsbasekineikgeosp6_lib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>sp6_setup(H, K, P)</code></li>
+<li><code>solve_2_ellipse_numeric(xm1, xn1, xm2, xn2)</code></li>
+<li><code>sp6_run(H, K, P, d1, d2)</code></li>
+<li><code>sp6_error(H, K, P, theta1, theta2, d1, d2)</code></li>
+</ul>
+<h2 id="onerobotsend_effectorsee_mixins"><code>one.robots.end_effectors.ee_mixins</code><a class="headerlink" href="#onerobotsend_effectorsee_mixins" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>EndEffectorMixin</code></strong> — Uniform object-holding for any actuated end effector (gripper, hand).</li>
+<li>methods: <code>attach</code>, <code>detach</code></li>
+<li><strong>class <code>GripperMixin</code></strong> — A parallel-jaw gripper: closes via a single scalar <code>set_opening</code>, and</li>
+<li>methods: <code>open</code>, <code>close</code>, <code>set_opening</code>, <code>grip_at</code>, <code>grasp_center_tcp</code>, <code>qpos</code>, <code>mode</code></li>
+<li><strong>class <code>PointMixin</code></strong></li>
+<li>methods: <code>activate</code>, <code>deactivate</code>, <code>touch_at</code>, <code>attach</code>, <code>detach</code>, <code>is_activated</code></li>
+<li><strong>class <code>DexHandMixin</code></strong> — Behavior for a multi-finger dexterous hand (a MechBase EE).</li>
+<li>methods: <code>grasp_spec</code>, <code>open_hand</code>, <code>open</code>, <code>grip</code>, <code>pinch</code>, <code>tripod</code>, <code>power</code>, <code>grasp_at</code>, <code>pinch_at</code>, <code>power_at</code>, <code>as_jaw</code></li>
+<li><strong>class <code>JawView</code></strong> — A parallel-jaw view of a dexterous hand, bound to one opposition</li>
+<li>methods: <code>runtime_lnks</code>, <code>qpos</code>, <code>attach_to</code>, <code>rgb</code>, <code>alpha</code>, <code>clone</code>, <code>set_opening</code>, <code>open_dir_at</code>, <code>grasp_center_at</code>, <code>grasp_center_tcp</code>, <code>grip_at</code></li>
+</ul>
+<h2 id="onerobotsend_effectorsdensocvr038_grippercvr038_gripper"><code>one.robots.end_effectors.denso.cvr038_gripper.cvr038_gripper</code><a class="headerlink" href="#onerobotsend_effectorsdensocvr038_grippercvr038_gripper" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_ms()</code></li>
+<li><strong>class <code>CVR038Gripper</code></strong> — Parallel-jaw gripper: a MechBase + GripperMixin. No chain / ik (motion is</li>
+<li>methods: <code>set_opening</code>, <code>clone</code></li>
+</ul>
+<h2 id="onerobotsend_effectorsfr3_gripperfr3_gripper"><code>one.robots.end_effectors.fr3_gripper.fr3_gripper</code><a class="headerlink" href="#onerobotsend_effectorsfr3_gripperfr3_gripper" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_ms()</code></li>
+<li><strong>class <code>FR3Gripper</code></strong></li>
+<li>methods: <code>set_opening</code>, <code>clone</code></li>
+</ul>
+<h2 id="onerobotsend_effectorslinkerboto6o6"><code>one.robots.end_effectors.linkerbot.o6.o6</code><a class="headerlink" href="#onerobotsend_effectorslinkerboto6o6" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct(side, collision_type=ouc.CollisionType.MESH)</code> — Load one side of the Linkerbot O6 dexterous hand from its standalone</li>
+<li><strong>class <code>O6Left</code></strong></li>
+<li><strong>class <code>O6Right</code></strong></li>
+</ul>
+<h2 id="onerobotsend_effectorsonrobotor_2fg7or_2fg7"><code>one.robots.end_effectors.onrobot.or_2fg7.or_2fg7</code><a class="headerlink" href="#onerobotsend_effectorsonrobotor_2fg7or_2fg7" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_ms()</code></li>
+<li><strong>class <code>OR2FG7</code></strong></li>
+<li>methods: <code>set_opening</code>, <code>clone</code></li>
+</ul>
+<h2 id="onerobotsend_effectorsonrobotor_sdor_sd"><code>one.robots.end_effectors.onrobot.or_sd.or_sd</code><a class="headerlink" href="#onerobotsend_effectorsonrobotor_sdor_sd" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>ORSD</code></strong> — Minimal OnRobot ScrewDriver implementation.</li>
+</ul>
+<h2 id="onerobotsend_effectorsopenarm_gripperoa_gripper"><code>one.robots.end_effectors.openarm_gripper.oa_gripper</code><a class="headerlink" href="#onerobotsend_effectorsopenarm_gripperoa_gripper" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_ms()</code></li>
+<li><strong>class <code>OAGripper</code></strong></li>
+<li>methods: <code>set_opening</code>, <code>clone</code></li>
+</ul>
+<h2 id="onerobotsend_effectorsrobotiqrtq2f85rtq2f85"><code>one.robots.end_effectors.robotiq.rtq2f85.rtq2f85</code><a class="headerlink" href="#onerobotsend_effectorsrobotiqrtq2f85rtq2f85" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_ms()</code></li>
+<li><strong>class <code>Rtq2F85</code></strong></li>
+<li>methods: <code>set_opening</code>, <code>clone</code></li>
+</ul>
+<h2 id="onerobotsend_effectorsxhandxhand_right"><code>one.robots.end_effectors.xhand.xhand_right</code><a class="headerlink" href="#onerobotsend_effectorsxhandxhand_right" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct(collision_type=ouc.CollisionType.MESH)</code> — Load the XHand right (12-dof dexterous hand) from its URDF into a</li>
+<li><strong>class <code>XHandRight</code></strong> — XHand right: a 12-dof dexterous hand as a mountable MechBase EE with the</li>
+<li>methods: <code>grasp_spec</code>, <code>goto_given_conf</code>, <code>rand_conf</code></li>
+</ul>
+<h2 id="onerobotshumanoidslinxl1l1"><code>one.robots.humanoids.linx.l1.l1</code><a class="headerlink" href="#onerobotshumanoidslinxl1l1" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct(collision_type=ouc.CollisionType.MESH)</code> — Load the Linx L1/H0602 upper-body URDF into a MechStruct, via the shared</li>
+<li><strong>class <code>L1</code></strong> — Linx L1 upper-body humanoid, bare (no end-effectors). Arms tip at the</li>
+<li>methods: <code>lnk</code>, <code>jnt</code></li>
+<li><strong>class <code>L1O6</code></strong> — Linx L1 with two dexterous Linkerbot O6 hands mounted on the arm</li>
+<li>methods: <code>clone</code></li>
+</ul>
+<h2 id="onerobotsmanipulatorsdensocvr038cvr038"><code>one.robots.manipulators.denso.cvr038.cvr038</code><a class="headerlink" href="#onerobotsmanipulatorsdensocvr038cvr038" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><code>cvr038_with_gripper(rotmat=None, pos=None, jaw_width=0.03)</code> — Convenience factory: CVR038 arm with the stock COBOTTA gripper attached.</li>
+<li><strong>class <code>CVR038</code></strong> — 6-DOF single-arm: a MechBase configured with one root-&gt;tip chain and a</li>
+</ul>
+<h2 id="onerobotsmanipulatorsdensocvr038ikcvr038_pencil_ik"><code>one.robots.manipulators.denso.cvr038.ik.cvr038_pencil_ik</code><a class="headerlink" href="#onerobotsmanipulatorsdensocvr038ikcvr038_pencil_ik" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>CVR038PencilIK</code></strong> — CVR038-specific semi-analytic IK.</li>
+<li>methods: <code>ik_all</code></li>
+</ul>
+<h2 id="onerobotsmanipulatorsdensocvr038ikgen_q4_pencil_coeffs"><code>one.robots.manipulators.denso.cvr038.ik.gen_q4_pencil_coeffs</code><a class="headerlink" href="#onerobotsmanipulatorsdensocvr038ikgen_q4_pencil_coeffs" title="Permanent link">&para;</a></h2>
+<p><em>Offline generator for q4_pencil_coeffs.py (NOT used at runtime).</em></p>
+<ul>
+<li><code>main()</code></li>
+</ul>
+<h2 id="onerobotsmanipulatorsdensocvr038ikq4_pencil_coeffs"><code>one.robots.manipulators.denso.cvr038.ik.q4_pencil_coeffs</code><a class="headerlink" href="#onerobotsmanipulatorsdensocvr038ikq4_pencil_coeffs" title="Permanent link">&para;</a></h2>
+<p><em>GENERATED by gen_q4_pencil_coeffs.py - do not edit by hand.</em></p>
+<ul>
+<li><code>eval_coeffs(px, pz, vx, vy, vz)</code> — Return (c3_vals, lu_vals) aligned with C3_KEYS / LU_KEYS.</li>
+</ul>
+<h2 id="onerobotsmanipulatorsdensocvr038ikq4_pencil_solve"><code>one.robots.manipulators.denso.cvr038.ik.q4_pencil_solve</code><a class="headerlink" href="#onerobotsmanipulatorsdensocvr038ikq4_pencil_solve" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>q4_roots_pencil_fast(px, py, pz, vx, vy, vz, tol=1e-08)</code> — Closed-form-coefficient pencil for the fixed CVR038 geometry.</li>
+</ul>
+<h2 id="onerobotsmanipulatorsfanuccrx5iacrx5ia"><code>one.robots.manipulators.fanuc.crx5ia.crx5ia</code><a class="headerlink" href="#onerobotsmanipulatorsfanuccrx5iacrx5ia" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><strong>class <code>CRX5ia</code></strong></li>
+</ul>
+<h2 id="onerobotsmanipulatorsfanuccrx5iaikcrx5ia_analytic_ik"><code>one.robots.manipulators.fanuc.crx5ia.ik.crx5ia_analytic_ik</code><a class="headerlink" href="#onerobotsmanipulatorsfanuccrx5iaikcrx5ia_analytic_ik" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>CRX5iaAnalyticIK</code></strong> — CRX-5iA analytic IK (returns all solutions).</li>
+<li>methods: <code>ik_all</code></li>
+</ul>
+<h2 id="onerobotsmanipulatorsfrankafr3fr3"><code>one.robots.manipulators.franka.fr3.fr3</code><a class="headerlink" href="#onerobotsmanipulatorsfrankafr3fr3" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><code>fr3_with_hand(rotmat=None, pos=None, jaw_width=0.08)</code> — Convenience factory: FR3 arm with the stock Franka Hand attached.</li>
+<li><strong>class <code>FR3</code></strong></li>
+</ul>
+<h2 id="onerobotsmanipulatorskawasakirs007lrs007l"><code>one.robots.manipulators.kawasaki.rs007l.rs007l</code><a class="headerlink" href="#onerobotsmanipulatorskawasakirs007lrs007l" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><strong>class <code>RS007L</code></strong></li>
+</ul>
+<h2 id="onerobotsmanipulatorsopenarmopenarm"><code>one.robots.manipulators.openarm.openarm</code><a class="headerlink" href="#onerobotsmanipulatorsopenarmopenarm" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>link(prefix, name, idx, mesh_dir, rgb=ouc.ExtendedColor.DEEP_GRAY)</code></li>
+<li><code>joint(prefix, name, parent_lnk, child_lnk)</code></li>
+<li><code>prepare_arm_ms(prefix='lft')</code></li>
+<li><code>prepare_bdy_ms()</code></li>
+<li><strong>class <code>OALft</code></strong></li>
+<li><strong>class <code>OARgt</code></strong></li>
+<li><strong>class <code>OABody</code></strong> — Single body link (openarm_body_link0).</li>
+<li><strong>class <code>OpenArm</code></strong></li>
+<li>methods: <code>attach_to</code>, <code>detach_from</code>, <code>rotmat</code>, <code>pos</code>, <code>set_pos_rotmat</code></li>
+</ul>
+<h2 id="onerobotsmanipulatorsuniversal_robotsur3ur3"><code>one.robots.manipulators.universal_robots.ur3.ur3</code><a class="headerlink" href="#onerobotsmanipulatorsuniversal_robotsur3ur3" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><strong>class <code>UR3</code></strong></li>
+</ul>
+<h2 id="onerobotsmanipulatorsxarmlite6lite6"><code>one.robots.manipulators.xarm.lite6.lite6</code><a class="headerlink" href="#onerobotsmanipulatorsxarmlite6lite6" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><strong>class <code>Lite6</code></strong></li>
+</ul>
+<h2 id="onerobotsvehiclexytheta"><code>one.robots.vehicle.xytheta</code><a class="headerlink" href="#onerobotsvehiclexytheta" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>prepare_mechstruct()</code></li>
+<li><strong>class <code>XYThetaRobot</code></strong></li>
+</ul>
+<h2 id="onescenecollision_shape"><code>one.scene.collision_shape</code><a class="headerlink" href="#onescenecollision_shape" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>CollisionShape</code></strong></li>
+<li>methods: <code>to_render_model</code>, <code>clone</code>, <code>geom</code>, <code>tf</code>, <code>quat</code>, <code>rotmat</code>, <code>pos</code>, <code>aabb</code></li>
+<li><strong>class <code>SphereCollisionShape</code></strong></li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code>, <code>to_render_model</code>, <code>radius</code>, <code>aabb</code></li>
+<li><strong>class <code>CapsuleCollisionShape</code></strong></li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code>, <code>to_render_model</code>, <code>radius</code>, <code>half_length</code>, <code>aabb</code></li>
+<li><strong>class <code>CylinderCollisionShape</code></strong> — A flat-ended cylinder (MuJoCo native <code>cylinder</code> geom). Same fit as the</li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code>, <code>to_render_model</code>, <code>radius</code>, <code>half_length</code>, <code>aabb</code></li>
+<li><strong>class <code>AABBCollisionShape</code></strong></li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code>, <code>to_render_model</code>, <code>half_extents</code>, <code>aabb</code></li>
+<li><strong>class <code>OBBCollisionShape</code></strong></li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code>, <code>to_render_model</code>, <code>half_extents</code>, <code>aabb</code></li>
+<li><strong>class <code>PlaneCollisionShape</code></strong></li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code>, <code>to_render_model</code>, <code>normal</code>, <code>aabb</code></li>
+<li><strong>class <code>MeshCollisionShape</code></strong></li>
+<li>methods: <code>clone</code>, <code>to_render_model</code>, <code>file_path</code>, <code>geom</code>, <code>aabb</code></li>
+<li><strong>class <code>CvxHullCollisionShape</code></strong></li>
+<li>methods: <code>fit_from_geom</code>, <code>clone</code></li>
+</ul>
+<h2 id="onescenegeometry_ops"><code>one.scene.geometry_ops</code><a class="headerlink" href="#onescenegeometry_ops" title="Permanent link">&para;</a></h2>
+<p><em>Mesh geometry operations on raw (vertices, faces) arrays: surface</em></p>
+<ul>
+<li><code>revolve(profile, n_segs=36)</code> — Revolve a 2D profile (r,z) around Z-axis to produce a mesh</li>
+<li><code>subdivide_once(verts, faces)</code></li>
+<li><code>icosahedron()</code> — Generate vertices and faces of a unit icosahedron.</li>
+<li><code>triangle_areas(vs, fs)</code> — Per-face triangle areas of a mesh. vs (V,3), fs (F,3) -&gt; (F,).</li>
+<li><code>sample_count_from_area(vs, fs, density)</code> — Number of surface samples for a target spacing <code>density</code> (one</li>
+<li><code>ray_triangles_batch_far(origins, directions, v0, v1, v2, eps=1e-06)</code> — Moller-Trumbore ray-triangle intersection (batch version).</li>
+<li><code>sample_surface(vs, fs, n_samples)</code></li>
+<li><code>segment_surface(geometry, normal_tol_deg=15.0)</code></li>
+<li><code>convex_hull(geom)</code></li>
+<li><code>ray_shoot_flat(orig, dir, verts, faces, face_normals, eps=oum.eps)</code></li>
+<li><code>ray_shoot(orig, dir, geometry)</code></li>
+<li><code>clip_mesh(tgt_vs, tgt_fs, exclude_regions)</code> — Cut convex <code>exclude_regions</code> out of the mesh.</li>
+</ul>
+<h2 id="onescenerender_model"><code>one.scene.render_model</code><a class="headerlink" href="#onescenerender_model" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>RenderModel</code></strong> — rotmat and pos of model is for transforming local geometries</li>
+<li>methods: <code>clone</code>, <code>get_device_buffer</code>, <code>rgb</code>, <code>alpha</code>, <code>quat</code>, <code>pos</code>, <code>rotmat</code>, <code>tf</code>, <code>set_pos_rotmat</code></li>
+</ul>
+<h2 id="onescenerender_model_primitive"><code>one.scene.render_model_primitive</code><a class="headerlink" href="#onescenerender_model_primitive" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>gen_mesh_rmodel(vs, fs, rgb, alpha=1.0)</code></li>
+<li><code>gen_pcd_rmodel(vs, vrgbs, alpha=1.0)</code></li>
+<li><code>gen_cylinder_rmodel(length=0.1, radius=0.05, n_segs=8, rotmat=None, pos=None, rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code> — Gen cylinder render model from (0,0,0) to (0,0,length).</li>
+<li><code>gen_cone_rmodel(length=0.1, radius=0.05, n_segs=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code> — Gen cone render model from (0,0,0) to (0,0,length).</li>
+<li><code>gen_sphere_rmodel(radius=0.05, n_segs=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code> — Gen sphere render model at (0,0,0).</li>
+<li><code>gen_icosphere_rmodel(radius=0.05, n_subs=2, rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code> — Gen icosphere render model at (0,0,0).</li>
+<li><code>gen_box_rmodel(xyz_lengths=(0.1, 0.1, 0.1), rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code> — Gen box render model centered at (0,0,0).</li>
+<li><code>gen_frustrum_rmodel(height=0.05, bottom_length=0.05, top_length=0.03, rotmat=None, pos=None, rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code></li>
+<li><code>gen_arrow_rmodel(length, shaft_radius, head_length, head_radius, n_segs, rotmat=None, pos=None, rgb=ouc.BasicColor.DEFAULT, alpha=1.0)</code> — Gen arrow render model from (0,0,0) to (0,0,length).</li>
+</ul>
+<h2 id="onescenescene"><code>one.scene.scene</code><a class="headerlink" href="#onescenescene" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Scene</code></strong></li>
+<li>methods: <code>add</code>, <code>remove</code>, <code>sobjs</code>, <code>lnks</code>, <code>mecbas</code>, <code>visual_sobjs</code></li>
+</ul>
+<h2 id="onescenescene_node"><code>one.scene.scene_node</code><a class="headerlink" href="#onescenescene_node" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>SceneNode</code></strong></li>
+<li>methods: <code>set_parent</code>, <code>set_pos_rotmat</code>, <code>quat</code>, <code>pos</code>, <code>rotmat</code>, <code>tf</code>, <code>wd_tf</code></li>
+</ul>
+<h2 id="onescenescene_object"><code>one.scene.scene_object</code><a class="headerlink" href="#onescenescene_object" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>SceneObject</code></strong></li>
+<li>methods: <code>from_file</code>, <code>attach_to</code>, <code>detach_from</code>, <code>add_visual</code>, <code>add_collision</code>, <code>clone</code>, <code>set_inertia</code>, <code>collision_group</code>, <code>collision_affinity</code>, <code>is_floating</code>, <code>rgb</code>, <code>alpha</code>, <code>rgba</code>, <code>inrtmat</code>, <code>com</code>, <code>mass</code></li>
+</ul>
+<h2 id="onescenescene_object_primitive"><code>one.scene.scene_object_primitive</code><a class="headerlink" href="#onescenescene_object_primitive" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>cylinder(spos=(0, 0, 0), epos=(0.01, 0.01, 0.01), radius=0.05, segments=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>dashed_cylinder(spos=(0, 0, 0), epos=(0.01, 0.01, 0.01), radius=0.05, len_solid=None, len_interval=None, segments=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>cone(spos=(0, 0, 0), epos=(0.01, 0.01, 0.01), radius=0.05, segments=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>sphere(pos=(0, 0, 0), radius=0.05, segments=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>icosphere(pos=(0, 0, 0), radius=0.05, subdivisions=2, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>box(pos=(0, 0, 0), xyz_lengths=(0.1, 0.1, 0.1), rotmat=None, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>linsegs(segs, radius=0.001, srgbs=None, alpha=1.0)</code> — segs: (N,2,3), srgb: None | scalar | (3,) | (N,3)</li>
+<li><code>arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01, shaft_radius=ouc.ArrowSize.SHAFT_RADIUS, head_radius=ouc.ArrowSize.HEAD_RADIUS, head_length=ouc.ArrowSize.HEAD_LENGTH, n_segs=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>dashed_arrow(spos=np.zeros(3), epos=np.ones(3) * 0.01, shaft_radius=ouc.ArrowSize.SHAFT_RADIUS, head_radius=ouc.ArrowSize.HEAD_RADIUS, head_length=ouc.ArrowSize.HEAD_LENGTH, len_solid=None, len_interval=None, n_segs=8, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>frame_from_tf(tf, length_scale=1.0, radius_scale=1.0, n_segs=8, color_mat=ouc.CoordColor.RGB, alpha=1.0, **kwargs)</code> — Draw a coordinate frame at the pose given by a 4x4 transform.</li>
+<li><code>frame(pos=np.zeros(3), rotmat=np.eye(3), length_scale=1.0, radius_scale=1.0, n_segs=8, color_mat=ouc.CoordColor.RGB, alpha=1.0, **kwargs)</code></li>
+<li><code>dashed_frame(pos=np.zeros(3), rotmat=np.eye(3), length_scale=1.0, radius_scale=1.0, len_solid=None, len_interval=None, n_segs=8, color_mat=ouc.CoordColor.RGB, alpha=1.0, **kwargs)</code></li>
+<li><code>plane(pos=(0, 0, 0), normal=ouc.StandardAxis.Z, size=(100.0, 100.0), thickness=0.001, rgb=ouc.BasicColor.GRAY, alpha=1.0)</code></li>
+<li><code>point_cloud(vs, vrgbs, alpha=1.0)</code> — Build a point-cloud SceneObject from per-vertex positions and colors.</li>
+<li><code>frustrum(base_center=(0, 0, 0), top_center=(0, 0, 0.05), bottom_length=0.05, top_length=0.03, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code></li>
+<li><code>mesh(vs, fs, collision_type=None, is_floating=False, rgb=ouc.BasicColor.DEFAULT, alpha=1.0, **kwargs)</code> — Build a SceneObject from user-specified vertices/faces.</li>
+</ul>
+<h2 id="onestreamwebsocket_server"><code>one.stream.websocket_server</code><a class="headerlink" href="#onestreamwebsocket_server" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>collect_scene_meshes(scene)</code></li>
+<li><code>collect_scene_transforms(scene)</code></li>
+<li><code>handler(websocket, scene, hz=30)</code></li>
+<li><code>start_stream(scene, host='127.0.0.1', port=8000, hz=30)</code></li>
+<li><code>run_stream(scene, host='127.0.0.1', port=8000, hz=30)</code></li>
+<li><code>get_scene_from_builtins()</code></li>
+<li><code>main()</code></li>
+</ul>
+<h2 id="oneutilsconstant"><code>one.utils.constant</code><a class="headerlink" href="#oneutilsconstant" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>BasicColor</code></strong></li>
+<li><strong>class <code>ExtendedColor</code></strong></li>
+<li><strong>class <code>Tab20</code></strong></li>
+<li><strong>class <code>ALPHA</code></strong></li>
+<li><strong>class <code>AxisColor</code></strong></li>
+<li><strong>class <code>CoordColor</code></strong></li>
+<li><strong>class <code>StandardAxis</code></strong></li>
+<li><strong>class <code>StandardCoord</code></strong></li>
+<li><strong>class <code>ArrowSize</code></strong></li>
+<li><strong>class <code>ForceArrowSize</code></strong></li>
+<li><strong>class <code>JntType</code></strong></li>
+<li><strong>class <code>CollisionType</code></strong></li>
+<li><strong>class <code>CollisionGroup</code></strong></li>
+<li><strong>class <code>CollisionMatrix</code></strong> — Default collision permission table: which groups each group collides with.</li>
+<li><strong>class <code>DefaultPhy</code></strong></li>
+</ul>
+<h2 id="oneutilsdecorator"><code>one.utils.decorator</code><a class="headerlink" href="#oneutilsdecorator" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>mark_dirty(dirty_method_name)</code></li>
+<li><code>lazy_update(dirty_flag_name, update_method_name)</code></li>
+<li><code>check_positive(func)</code></li>
+<li><code>readonly_view(func)</code></li>
+</ul>
+<h2 id="oneutilshelper"><code>one.utils.helper</code><a class="headerlink" href="#oneutilshelper" title="Permanent link">&para;</a></h2>
+<p><em>Misc utility helpers: array pretty-printing, random color generation.</em></p>
+<ul>
+<li><code>print_arr(name, arr, precision=8)</code></li>
+<li><code>rand_rgb()</code></li>
+</ul>
+<h2 id="oneutilsmath"><code>one.utils.math</code><a class="headerlink" href="#oneutilsmath" title="Permanent link">&para;</a></h2>
+<p><em>Transform &amp; rotation math: rotmat_from</em>* (axangle, quat, euler, rotvec,_</p>
+<ul>
+<li><code>vec(*args)</code></li>
+<li><code>axis_from_name(name)</code></li>
+<li><code>parse_axis_constraints(axis_constraints)</code> — Parse local-to-target axis constraints into unit vector pairs.</li>
+<li><code>axis_angle_error(src_axis, tgt_axis)</code> — Smallest angle between two axes in radians.</li>
+<li><code>rotmat_from_axis_constraints(axis_constraints, ref_rotmat=None, n_iter=4)</code> — Build a rotmat that satisfies axis constraints as closely as possible.</li>
+<li><code>rotmat_from_axangle(ax, angle)</code></li>
+<li><code>rotmat_from_quat(quat)</code></li>
+<li><code>rotmat_from_normal(normal, up=(0, 0, 1))</code> — rotation matrix from normal vector,  normal is the z axis</li>
+<li><code>rotmat_from_normalandpoints(facet_normal, facet_first_pnt, facet_second_pnt)</code> — TODO: deprecate this function</li>
+<li><code>rotmat_from_euler(ai, aj, ak, order='sxyz')</code> — :param ai: radian</li>
+<li><code>rotmat_from_rotvec(v)</code></li>
+<li><code>rotmat_between_vecs(v1, v2)</code> — Rotation mapping v1 onto v2. Scalar (3,) inputs return a (3, 3) matrix;</li>
+<li><code>rotmat_average(rot_mats)</code></li>
+<li><code>rotmat_slerp(rotmat0, rotmat1, n)</code></li>
+<li><code>tf_from_axangle(ax, angle)</code> — homogeneous matrix from the given axis and angle</li>
+<li><code>tf_from_pos_rotmat(pos=None, rotmat=None)</code></li>
+<li><code>tf_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3))</code> — build a (4,4) transformation matrix from position and rotation vector</li>
+<li><code>tf_from_quat(quat)</code> — convert a quaterion to (4,4) homogeneous transformation matrix</li>
+<li><code>tf_from_quat_pos(quat, pos)</code></li>
+<li><code>tf_inverse(tf)</code> — compute the inverse of a homogeneous transformation matrix</li>
+<li><code>tf_average(tf_list, bandwidth=10)</code> — TODO: tf list or (n,4,4) array</li>
+<li><code>transform_points_by_tf(tf, pnts)</code> — do homotransform on a point or an array of points using pos</li>
+<li><code>interplate_pos_rotmat(start_pos, start_rotmat, goal_pos, goal_rotmat, granularity=0.01)</code> — :param start_info: [pos, rotmat]</li>
+<li><code>interplate_pos_rotmat_around_circle(circle_center_pos, circle_normal_ax, radius, start_rotmat, end_rotmat, granularity=0.01)</code> — :param circle_center_pos:</li>
+<li><code>interpolate_vectors(start_vector, end_vector, granularity)</code> — :param start_vector:</li>
+<li><code>quat_from_rotmat(rotmat)</code></li>
+<li><code>quat_from_axangle(ax, angle)</code></li>
+<li><code>average_quaternions(quats)</code></li>
+<li><code>quat_from_euler(ai, aj, ak, order='sxyz')</code> — Return quaternion from Euler angles and axis sequence.</li>
+<li><code>rotvec_from_rotmat(rotmat)</code></li>
+<li><code>euler_from_quat(quat, order='sxyz')</code></li>
+<li><code>euler_from_rotmat(rotmat, order='sxyz')</code></li>
+<li><code>quaternion_multiply(quaternion1, quaternion0)</code> — Return multiplication of two quaternions.</li>
+<li><code>quaternion_conjugate(quaternion)</code> — Return conjugate of quaternion.</li>
+<li><code>quaternion_inverse(quaternion)</code> — Return inverse of quaternion.</li>
+<li><code>quaternion_real(quaternion)</code> — Return real part of quaternion.</li>
+<li><code>quaternion_imag(quaternion)</code> — Return imaginary part of quaternion.</li>
+<li><code>slerp_quat(quat0, quat1, fraction, spin=0, shortestpath=True)</code> — Return spherical linear interpolation between two quaternions.</li>
+<li><code>rand_quaternion()</code> — Return uniform random unit quaternion.</li>
+<li><code>rand_rotmat()</code> — Return uniform random rotation matrix.</li>
+<li><code>skew(vec)</code></li>
+<li><code>orth_vec(vec, toggle_unit=True)</code> — compute a vector orthogonal to the given 3D vector</li>
+<li><code>frame_from_normal(n)</code> — compute a coordinate frame whose 3rd column is the (unit) vector n</li>
+<li><code>closest_point_between_lines(p1, d1, p2, d2)</code> — line1=p1 + t<em>d1, line2=p2 + s</em>d2</li>
+<li><code>intersect_lines(lines, cond_thresh=1000000000000.0)</code> — least-squares intersection point of multiple 3D lines</li>
+<li><code>rel_pose(pos0, rotmat0, pos1, rotmat1)</code> — relpos of rot1, pos1 with respect to rot0 pos0</li>
+<li><code>regulate_angle(lowerbound, upperbound, jntangles)</code> — change the range of armjnts to [lowerbound, upperbound]</li>
+<li><code>unit_vec(vec, axis=-1, return_length=True)</code> — :param vec: (1,n)</li>
+<li><code>angle_between_vecs(vec1, vec2)</code> — :param vec1: (1,3)</li>
+<li><code>angle_between_2d_vecs(vec1, vec2)</code> — return the angle from ved1 to vec2, with signs</li>
+<li><code>delta_rotvec_between_rotmats(src_rotmat, tgt_rotmat)</code> — compute the rotvec from src_rotmat to tgt_rotmat</li>
+<li><code>diff_between_poses(src_pos, src_rotmat, tgt_pos, tgt_rotmat)</code> — compute the error between the given tcp and tgt_tcp</li>
+<li><code>cosine_between_vecs(v1, v2)</code></li>
+<li><code>axangle_between_rotmat(rotmati, rotmatj)</code></li>
+<li><code>quaternion_to_axangle(quaternion)</code> — :param quaternion:</li>
+<li><code>pos_average(pos_list, bandwidth=10)</code> — average a list of pos_vec (1x3)</li>
+<li><code>pos_quat_from_tf(tf, quat_order='xyzw')</code></li>
+<li><code>intersect_planes(p1, n1, p2, n2, tol=1e-06)</code></li>
+<li><code>gen_2d_spiral_points(max_radius: float=0.002, radial_granularity: float=0.0001, tangential_granularity: float=0.0003, toggle_origin: bool=False)</code> — gen spiral curve</li>
+<li><code>gen_3d_spiral_points(pos: npt.NDArray=np.zeros(3), rotmat: npt.NDArray=np.eye(3), max_radius: float=0.002, radial_granularity: float=0.0001, tangential_granularity: float=0.0003, toggle_origin: bool=False)</code> — gen spiral curve</li>
+<li><code>gen_regpoly(radius, nedges=12)</code></li>
+<li><code>gen_2d_isosceles_verts(nlevel, edge_length, nedges=12)</code></li>
+<li><code>gen_2d_equilateral_verts(nlevel, edge_length)</code></li>
+<li><code>gen_3d_isosceles_verts(pos, rotmat, nlevel=5, edge_length=0.001, nedges=12)</code></li>
+<li><code>gen_3d_equilateral_verts(pos, rotmat, nlevel=5, edge_length=0.001)</code></li>
+<li><code>get_aabb(pointsarray)</code> — get the axis aligned bounding box of nx3 array</li>
+<li><code>compute_pca(nparray)</code> — :param nparray: nxd array, d is the dimension</li>
+<li><code>transform_data_pcv(data, random_rot=True)</code> — :param data:</li>
+<li><code>fit_plane(points)</code> — :param points: nx3 nparray</li>
+<li><code>project_point_to_plane(point, plane_center, plane_normal)</code></li>
+<li><code>project_vector_to_vector(vector1, vector2)</code></li>
+<li><code>distance_point_to_edge(point, edge_start, edge_end)</code> — compute the minimum distance from a point to a line segment.</li>
+<li><code>min_distance_point_edge_list(contact_point, edge_list)</code> — compute the minimum distance between a point and a list of nested edge lists.</li>
+<li><code>points_obb(pointsarray, toggledebug=False)</code> — applicable to both 2d and 3d pointsarray</li>
+<li><code>gaussian_ellipsoid(pointsarray)</code> — compute a 95% percent ellipsoid axes_mat for the given points array</li>
+<li><code>random_rgba(toggle_alpha_random=False)</code> — randomize a 1x4 list in range 0-1</li>
+<li><code>consecutive(nparray1d, stepsize=1)</code> — find consecutive sequences from an array</li>
+<li><code>null_space(npmat)</code></li>
+<li><code>to_homogeneous(pos)</code> — append 1 to pos</li>
+<li><code>reflection_homomat(point, normal)</code> — Return matrix to mirror at plane defined by point and normal vector.</li>
+<li><code>reflection_from_homomat(homomat)</code> — Return mirror plane point and normal vector from reflection homomat</li>
+<li><code>projection_homomat(point, normal, perspective=None, pseudo=False)</code> — Return matrix to project onto plane defined by point and normal.</li>
+<li><code>affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True)</code> — Return affine transform matrix to register two point sets.</li>
+<li><code>rotmat_from_look_at(pos, look_at, up)</code> — Constructs a camera rotation matrix from pos to look_at</li>
+<li><code>area_weighted_pca(verts, faces, eps=eps)</code> — area weighted pca for a mesh defined by verts and faces</li>
+<li><code>wrap_to_pi(angle)</code> — wrap angle to [-pi, pi]</li>
+<li><code>clamp(x, lo, hi)</code> — clamp x to [lo, hi]</li>
+<li><code>ensure_right_handed(rotmat)</code> — ensure the given rotmat is right-handed</li>
+<li><code>ensure_rotmat(rotmat=None)</code></li>
+<li><code>ensure_pos(pos=None)</code></li>
+<li><code>ensure_tf(tf=None)</code></li>
+<li><code>ensure_rgb(rgb=None)</code></li>
+</ul>
+<h2 id="oneviewercamera"><code>one.viewer.camera</code><a class="headerlink" href="#oneviewercamera" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Camera</code></strong></li>
+<li>methods: <code>set_to</code>, <code>orbit</code>, <code>mouse_orbit</code>, <code>mouse_pan</code>, <code>mouse_zoom</code>, <code>rotmat</code>, <code>look_at</code>, <code>up</code>, <code>fov</code>, <code>near</code>, <code>far</code>, <code>view_mat</code>, <code>proj_mat</code></li>
+</ul>
+<h2 id="oneviewerdevice_buffer"><code>one.viewer.device_buffer</code><a class="headerlink" href="#oneviewerdevice_buffer" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>DeviceBufferBase</code></strong></li>
+<li><strong>class <code>MeshBuffer</code></strong></li>
+<li>methods: <code>update_instances</code>, <code>draw_instanced</code></li>
+<li><strong>class <code>PointCloudBuffer</code></strong></li>
+<li>methods: <code>draw</code></li>
+</ul>
+<h2 id="oneviewerinput_manager"><code>one.viewer.input_manager</code><a class="headerlink" href="#oneviewerinput_manager" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>InputManager</code></strong></li>
+<li>methods: <code>on_key_press</code>, <code>on_key_release</code>, <code>on_mouse_press</code>, <code>on_mouse_release</code>, <code>is_key_pressed</code>, <code>is_key_pressed_edge</code>, <code>is_button_pressed</code>, <code>on_mouse_drag</code>, <code>on_mouse_scroll</code></li>
+</ul>
+<h2 id="oneviewerrender"><code>one.viewer.render</code><a class="headerlink" href="#oneviewerrender" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Render</code></strong></li>
+<li>methods: <code>draw</code>, <code>draw_screen_quad</code></li>
+</ul>
+<h2 id="oneviewerrender_target"><code>one.viewer.render_target</code><a class="headerlink" href="#oneviewerrender_target" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>RenderTarget</code></strong></li>
+<li>methods: <code>bind</code>, <code>unbind</code></li>
+</ul>
+<h2 id="oneviewerscreen_quad"><code>one.viewer.screen_quad</code><a class="headerlink" href="#oneviewerscreen_quad" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>ScreenQuad</code></strong></li>
+<li>methods: <code>draw</code></li>
+</ul>
+<h2 id="oneviewershader"><code>one.viewer.shader</code><a class="headerlink" href="#oneviewershader" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>Shader</code></strong></li>
+<li>methods: <code>use</code></li>
+</ul>
+<h2 id="oneviewerworld"><code>one.viewer.world</code><a class="headerlink" href="#oneviewerworld" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>class <code>World</code></strong></li>
+<li>methods: <code>on_resize</code>, <code>on_draw</code>, <code>set_scene</code>, <code>auto_cam_orbit</code>, <code>schedule_interval</code>, <code>schedule_once</code>, <code>schedule_interval_after</code>, <code>stop</code>, <code>stop_after</code>, <code>run</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

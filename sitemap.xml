@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://wanweiwei07.github.io/one/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/API_INDEX/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/API_INDEX/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/API_INDEX/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/API_INDEX/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/COMMENT_STYLE/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/COMMENT_STYLE/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/COMMENT_STYLE/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/COMMENT_STYLE/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/installation/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/installation/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/installation/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/installation/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/quickstart/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/collider/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/collider/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/collider/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/collider/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/devices/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/devices/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/devices/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/devices/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/geom/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/geom/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/geom/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/geom/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/grasp/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/grasp/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/grasp/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/grasp/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/manipulation/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/manipulation/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/manipulation/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/manipulation/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/motion/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/motion/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/motion/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/motion/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/physics/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/physics/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/physics/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/physics/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/robots/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/robots/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/robots/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/robots/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/scene/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/scene/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/scene/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/scene/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/stream/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/stream/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/stream/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/stream/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/utils/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/utils/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/api/viewer/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/viewer/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/viewer/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/viewer/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/collision/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/collision/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/collision/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/collision/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/end_effectors/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/end_effectors/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/end_effectors/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/end_effectors/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/grasp_planning/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/grasp_planning/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/grasp_planning/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/grasp_planning/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/humanoid/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/humanoid/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/humanoid/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/humanoid/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/kinematics/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/kinematics/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/kinematics/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/kinematics/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/motion_planning/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/motion_planning/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/motion_planning/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/motion_planning/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/mujoco/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/mujoco/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/mujoco/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/mujoco/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/tutorials/scene_geometry/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/scene_geometry/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/scene_geometry/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/scene_geometry/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/API_INDEX/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/API_INDEX/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/API_INDEX/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/API_INDEX/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/COMMENT_STYLE/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/COMMENT_STYLE/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/COMMENT_STYLE/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/COMMENT_STYLE/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/installation/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/installation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/installation/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/installation/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/quickstart/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/collider/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/collider/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/collider/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/collider/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/devices/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/devices/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/devices/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/devices/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/geom/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/geom/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/geom/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/geom/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/grasp/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/grasp/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/grasp/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/grasp/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/manipulation/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/manipulation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/manipulation/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/manipulation/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/motion/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/motion/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/motion/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/motion/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/physics/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/physics/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/physics/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/physics/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/robots/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/robots/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/robots/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/robots/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/scene/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/scene/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/scene/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/scene/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/stream/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/stream/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/stream/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/stream/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/utils/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/utils/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/api/viewer/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/viewer/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/viewer/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/viewer/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/collision/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/collision/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/collision/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/collision/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/end_effectors/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/end_effectors/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/end_effectors/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/end_effectors/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/grasp_planning/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/grasp_planning/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/grasp_planning/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/grasp_planning/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/humanoid/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/humanoid/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/humanoid/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/humanoid/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/kinematics/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/kinematics/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/kinematics/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/kinematics/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/motion_planning/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/motion_planning/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/motion_planning/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/motion_planning/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/mujoco/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/mujoco/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/mujoco/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/mujoco/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/ja/tutorials/scene_geometry/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/scene_geometry/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/scene_geometry/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/scene_geometry/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/API_INDEX/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/API_INDEX/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/API_INDEX/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/API_INDEX/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/COMMENT_STYLE/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/COMMENT_STYLE/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/COMMENT_STYLE/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/COMMENT_STYLE/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/installation/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/installation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/installation/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/installation/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/quickstart/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/collider/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/collider/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/collider/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/collider/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/devices/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/devices/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/devices/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/devices/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/geom/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/geom/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/geom/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/geom/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/grasp/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/grasp/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/grasp/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/grasp/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/manipulation/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/manipulation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/manipulation/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/manipulation/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/motion/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/motion/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/motion/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/motion/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/physics/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/physics/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/physics/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/physics/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/robots/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/robots/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/robots/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/robots/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/scene/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/scene/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/scene/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/scene/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/stream/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/stream/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/stream/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/stream/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/utils/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/utils/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/utils/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/api/viewer/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/api/viewer/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/api/viewer/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/api/viewer/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/collision/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/collision/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/collision/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/collision/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/end_effectors/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/end_effectors/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/end_effectors/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/end_effectors/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/grasp_planning/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/grasp_planning/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/grasp_planning/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/grasp_planning/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/humanoid/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/humanoid/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/humanoid/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/humanoid/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/kinematics/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/kinematics/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/kinematics/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/kinematics/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/motion_planning/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/motion_planning/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/motion_planning/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/motion_planning/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/mujoco/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/mujoco/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/mujoco/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/mujoco/"/>
+    </url>
+    <url>
+        <loc>https://wanweiwei07.github.io/one/zh/tutorials/scene_geometry/</loc>
+        <lastmod>2026-06-28</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://wanweiwei07.github.io/one/zh/tutorials/scene_geometry/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://wanweiwei07.github.io/one/tutorials/scene_geometry/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="https://wanweiwei07.github.io/one/ja/tutorials/scene_geometry/"/>
+    </url>
+</urlset>
