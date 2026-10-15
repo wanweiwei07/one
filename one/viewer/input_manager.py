@@ -39,9 +39,9 @@ class InputManager:
         return button in self.pressed_buttons
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        # Right-drag orbits the camera, middle-drag pans. Left-drag is
-        # reserved for selection (no camera motion).
-        if mouse.RIGHT in self.pressed_buttons:
+        # Left- or right-drag orbits the camera, middle-drag pans.
+        if (mouse.LEFT in self.pressed_buttons or
+                mouse.RIGHT in self.pressed_buttons):
             self._window.camera.mouse_orbit(dx, dy)
         elif mouse.MIDDLE in self.pressed_buttons:
             self._window.camera.mouse_pan(dx, dy)
@@ -49,7 +49,7 @@ class InputManager:
         self.last_mouse_y = y
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        # Scroll forward (positive scroll_y) = zoom IN, backward = OUT.
-        # Camera.mouse_zoom moves pos along (pos - look_at), so positive
-        # delta moves the camera AWAY (zoom out); negate to flip.
-        self._window.camera.mouse_zoom(-scroll_y)
+        # Camera.mouse_zoom moves pos along (pos - look_at), so a positive
+        # delta pulls the camera AWAY. Pass scroll_y straight through: scroll
+        # forward (positive scroll_y) = zoom OUT, backward = IN.
+        self._window.camera.mouse_zoom(scroll_y)

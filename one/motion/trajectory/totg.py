@@ -8,9 +8,9 @@ as allowed) and backward (stay slow enough to still stop) -- give the fastest
 feasible ``sdot`` at every waypoint; the pointwise minimum of the two is the
 time-optimal profile.
 
-This is what ``time_param.retime_trapezoidal`` cannot do: it solves each
-segment as an independent rest-to-rest move, so a waypoint-dense path pays a
-full stop at every point. Here a waypoint only costs speed when the direction
+This is what a per-segment trapezoidal retimer cannot do: solving each segment
+as an independent rest-to-rest move makes a waypoint-dense path pay a full stop
+at every point. Here a waypoint only costs speed when the direction
 actually turns -- collinear waypoints are passed through untouched, and the
 result depends on the path's GEOMETRY, not on how finely it was sampled.
 

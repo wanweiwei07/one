@@ -176,11 +176,17 @@ class SingleArmManipulation:
             tcp = self.body.tcp(tcp)
         if ref_qs is None:
             ref_qs = np.asarray(self.body.qs, dtype=np.float32)
-        g = np.asarray(goal, dtype=np.float32)
-        if g.shape == (4, 4):
-            pos, rotmat = g[:3, 3], g[:3, :3]
-        else:
+        # the pair is unpacked BEFORE any asarray: a (pos, rotmat) tuple is
+        # ragged ((3,) and (3,3)), so converting it first raises instead of
+        # reaching the branch that handles it. Same order as _as_goal_conf.
+        if isinstance(goal, (tuple, list)) and len(goal) == 2:
             pos, rotmat = goal
+        else:
+            g = np.asarray(goal, dtype=np.float32)
+            if g.shape != (4, 4):
+                raise ValueError("reachable goal must be a (pos, rotmat) pair "
+                                 "or a 4x4 tf")
+            pos, rotmat = g[:3, 3], g[:3, :3]
         return nearest_valid_ik(self.body, ctx, pos, rotmat, chain=self.arm_chain,
                                 tcp=tcp, ref_qs=ref_qs)
 
@@ -277,7 +283,7 @@ class SingleArmManipulation:
         grasps clearance-by-constraint parts (cables, tethered connectors) from
         paying a recompile per grasp."""
         ee = self.end_effector
-        ee.attach(obj, qpos)
+        ee.hold(obj, qpos)
         if _changes_collision(obj):
             if exclude:
                 collider.exclude(obj)
@@ -290,7 +296,7 @@ class SingleArmManipulation:
         object that carries no collision geometry (it never entered the model)."""
         ee = self.end_effector
         changed = _changes_collision(obj)
-        ee.detach(obj)
+        ee.release(obj)
         if changed:
             collider.include(obj)
             collider.refresh()

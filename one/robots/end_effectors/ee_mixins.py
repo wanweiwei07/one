@@ -29,10 +29,10 @@ DexGraspSpec = namedtuple(
 #
 # Two orthogonal concerns are kept SEPARATE on purpose (their coupling is what
 # leaked a re-derived jaw_width back into replay before):
-#   * holding   -- attach(child[, qpos]) / detach(child): rigidly mount/unmount
+#   * holding   -- hold(child[, qpos]) / release(child): rigidly mount/unmount
 #                  an object. Uniform across grippers and hands (EndEffectorMixin).
 #   * closure   -- set_opening(w) (gripper) / pinch|tripod|power(amount) (hand):
-#                  type-specific. Compose them: set the closure, then attach.
+#                  type-specific. Compose them: set the closure, then hold.
 # The parallel-jaw abstraction the grasp planners consume is a third concern: a
 # real gripper IS a jaw; a dexterous hand PRODUCES one via ``as_jaw`` (-> JawView)
 # rather than carrying jaw methods on the hand class.
@@ -41,14 +41,14 @@ DexGraspSpec = namedtuple(
 class EndEffectorMixin:
     """Uniform object-holding for any actuated end effector (gripper, hand).
 
-    ``attach`` / ``detach`` rigidly mount / unmount a child object on the EE
+    ``hold`` / ``release`` rigidly mount / unmount a child object on the EE
     root link. Closure is a SEPARATE concern (``set_opening`` on a gripper,
-    ``pinch`` etc. on a hand) -- compose them: set the closure, then attach.
-    ``attach(child, qpos=...)`` is the canonical replay of a saved grasp: it
+    ``pinch`` etc. on a hand) -- compose them: set the closure, then hold.
+    ``hold(child, qpos=...)`` is the canonical replay of a saved grasp: it
     poses the EE to the grasp's frozen ``qpos`` first, so no scalar jaw_width /
     primitive / amount is re-derived."""
 
-    def attach(self, child, qpos=None):
+    def hold(self, child, qpos=None):
         """Rigidly mount ``child`` on the EE at its current pose. If ``qpos`` is
         given, pose the EE to it first (e.g. a Grasp's frozen closure)."""
         if qpos is not None:
@@ -57,7 +57,7 @@ class EndEffectorMixin:
         loc_tf = np.linalg.inv(parent.tf) @ child.tf
         self.mount(child, parent, loc_tf)
 
-    def detach(self, child):
+    def release(self, child):
         """Unmount ``child`` from the EE. Reopening (if wanted) is a separate,
         explicit closure call (``open`` / ``open_hand``)."""
         self.unmount(child)
@@ -103,7 +103,7 @@ class GripperMixin(EndEffectorMixin):
     @property
     def qpos(self):
         """The gripper's full joint config -- snapshotted into a Grasp's
-        ``qpos`` at plan time, replayed via ``attach(child, qpos)``."""
+        ``qpos`` at plan time, replayed via ``hold(child, qpos)``."""
         return self.qs
 
     @property
@@ -141,12 +141,12 @@ class PointMixin:
             self.activate()
         return base_tf
 
-    def attach(self, child, offset_tf=None):
-        """Attach object to the tool tip (requires activation first). A point
+    def hold(self, child, offset_tf=None):
+        """Hold ``child`` at the tool tip (requires activation first). A point
         tool holds at the TIP frame with an activation gate, so it keeps its own
-        attach/detach rather than the root-relative EndEffectorMixin pair."""
+        hold/release rather than the root-relative EndEffectorMixin pair."""
         if not self.is_activated:
-            raise RuntimeError("Cannot attach: end effector not activated")
+            raise RuntimeError("Cannot hold: end effector not activated")
         parent_tf = self.runtime_root_lnk.tf @ self._tip_loc_tf()
         if offset_tf is None:
             loc_tf = np.linalg.inv(parent_tf) @ child.tf
@@ -154,8 +154,8 @@ class PointMixin:
             loc_tf = np.linalg.inv(parent_tf @ offset_tf) @ child.tf
         self.mount(child, self.runtime_root_lnk, loc_tf)
 
-    def detach(self, child):
-        """Detach object from tool."""
+    def release(self, child):
+        """Release ``child`` from the tool."""
         self.unmount(child)
         self.deactivate()
 
@@ -174,7 +174,7 @@ class DexHandMixin(EndEffectorMixin):
     A hand closes via *named grasp primitives* (pinch / tripod / power): each
     maps one scalar ``amount`` in [0, 1] (open -> closed) onto a coordinated
     finger pose. The concrete hand supplies the data; this mixin supplies the
-    verbs. Holding (``attach`` / ``detach``) is inherited and uniform with the
+    verbs. Holding (``hold`` / ``release``) is inherited and uniform with the
     parallel gripper; closure (``pinch`` etc.) is hand-specific -- compose them.
 
     The concrete hand must define:
@@ -242,7 +242,7 @@ class DexHandMixin(EndEffectorMixin):
     def grip(self, primitive, amount=1.0):
         """Close a named grasp ``primitive`` to ``amount`` in [0, 1] -- the
         generic form behind ``pinch`` / ``tripod`` / ``power``. Holding is
-        separate: compose with ``attach(child)`` to pick an object up."""
+        separate: compose with ``hold(child)`` to pick an object up."""
         self._pose_grasp(self.grasp_spec(primitive), amount)
 
     def pinch(self, amount=1.0):

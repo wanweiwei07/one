@@ -67,10 +67,6 @@ _Approach / depart motion primitives._
 - **class `RRTConnectPlanner`**
   - methods: `solve`, `solve_iter`
 
-## `one.motion.trajectory.time_param`
-
-- `retime_trapezoidal(q_seq, v_max, a_max, dt=0.01)` — Time-parameterize a joint waypoint path using per-segment trapezoidal scaling.
-
 ## `one.motion.trajectory.totg`
 _Time-optimal retiming of a joint waypoint path (Kunz-Stilman style)._
 

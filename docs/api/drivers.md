@@ -19,3 +19,17 @@ _b-CAP (ORiN2) client for DENSO controllers + a COBOTTA joint-state reader._
   - methods: `set_duty`, `set_current`, `set_cb`, `set_rpm`, `set_pos`, `set_origin`, `set_pos_spd`, `parse_feedback_8b`
 - **class `CubeMarsRLinkSerial`** — R-Link serial protocol helper with optional serial session support.
   - methods: `crc16`, `build_packet`, `comm_get_values`, `comm_get_values_setup_all`, `comm_get_rotor_position_stream`, `comm_set_pos`, `comm_set_pos_spd`, `comm_set_pos_origin`, `comm_power_on_raw`, `parse_packet`, `open`, `close`, `is_open`, `send`, `read_available`, `transact`, `startup`, `set_pos`, `set_pos_spd`
+
+## `one.drivers.dynamixel`
+_Dynamixel Protocol 2.0 over a serial (RS485/TTL) port -- no vendor SDK._
+
+- `crc16(data)` — CRC-16/IBM (poly 0x8005, init 0) over ``data`` -- the Protocol 2.0 CRC.
+- `stuff(payload)` — Insert the extra ``FD`` after every ``FF FF FD`` in ``payload``.
+- `unstuff(payload)` — Drop the stuffing bytes ``stuff`` inserted.
+- `build_packet(dxl_id, instruction, params=b'')` — Return the complete instruction packet for one servo.
+- `describe_hardware_error(bits)` — Human-readable list of the hardware error bits set in ``bits``.
+- `serial_ports()` — Every serial port as ``(device, usb_serial, description)``.
+- `find_port(usb_serial)` — The port the USB adapter with serial number ``usb_serial`` is on.
+- **class `DynamixelError`** — A bad packet, a timeout, or an error flag reported by the servo.
+- **class `Dynamixel`** — One servo on one serial port.
+  - methods: `connect`, `close`, `is_open`, `ping`, `model_name`, `reboot`, `read`, `write`, `torque`, `set_operating_mode`, `hardware_error`, `clear_hardware_error`, `ticks_to_deg`, `deg_to_ticks`, `present_current_ma`, `wait_until_stopped`

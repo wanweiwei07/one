@@ -94,7 +94,7 @@ class Recipe:
         self._held = obj
 
     def release(self, obj):
-        """Drop ``obj`` (open + detach); subsequent legs are empty-handed. A no-op
+        """Drop ``obj`` (open + release); subsequent legs are empty-handed. A no-op
         if a prior step failed."""
         if self._failed:
             return

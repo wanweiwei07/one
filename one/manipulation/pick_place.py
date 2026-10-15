@@ -21,11 +21,11 @@ grasp / release):
     ``auto_acm`` detects the arm's structural self-collisions once and caches them.
 
   CARRY phase (lift / transfer / place): the object is mounted on the gripper
-    (``ee.attach``) and the collider is ``refresh``ed -- it rides the gripper link
+    (``ee.hold``) and the collider is ``refresh``ed -- it rides the gripper link
     and IS collision-checked, so the transfer routes the HELD object (not just the
     gripper) around obstacles. ``refresh`` reuses the cached ACM (no re-detection)
     and AUTO-exempts the held object from the gripper links (the intended grasp
-    contact). At release the object is ``detach``ed and the collider ``refresh``ed
+    contact). At release the object is ``release``d and the collider ``refresh``ed
     back to the free state.
 
 The cartesian descent into the grasp and the cartesian lift/place legs are
@@ -169,7 +169,7 @@ def iter_pick_and_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
         # (object now collision-checked vs obstacles, auto-exempt vs the gripper).
         obj.pos, obj.rotmat = pick_pose[:3, 3], pick_pose[:3, :3]
         robot.fk(qs=q_grasp)
-        gripper.attach(obj, grasp.qpos)          # frozen closure, no jaw_width
+        gripper.hold(obj, grasp.qpos)            # frozen closure, no jaw_width
         collider.refresh()
         collider.set_mecba_qpos(gripper, grasp.qpos)
         ctx.clear_cache()
@@ -195,7 +195,7 @@ def iter_pick_and_place(robot, gripper, obj, grasps, pick_pose, place_pose, *,
                 tcp=g_tcp, start_qs=place.robot_qpos_list[-1], chain=chain,
                 depart_direction=(0, 0, 1), depart_distance=lift_height,
                 granularity=granularity, ee_qpos=open_qpos, check_retreat=False)
-        gripper.detach(obj)                     # drop the planning mount
+        gripper.release(obj)                    # drop the planning mount
         collider.refresh()                      # back to the free state for next gid
         if retreat is None:
             continue

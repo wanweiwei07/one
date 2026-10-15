@@ -33,8 +33,8 @@ box = ossop.cylinder(
     radius=.03, is_floating=True)
 box.attach_to(base.scene)
 gripper.close()
-gripper.attach(box)
-# gripper.detach(box)
+gripper.hold(box)
+# gripper.release(box)
 # base.run()
 
 robot2_ik = robot2.clone()

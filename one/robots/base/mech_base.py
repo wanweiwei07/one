@@ -159,8 +159,11 @@ class MechBase:
         chain via ``add_chain(..., solver=...)`` is already in ``_solvers`` and
         returned directly."""
         if chain not in self._solvers:
+            # bare data/ only for the unique root->tip chain; multi-tip bodies
+            # (e.g. base->left/right hand) would otherwise share one database
+            tip_ids = self.structure.compiled.tip_lnk_ids
             if (chain.base_lidx == self.structure.compiled.root_lnk_idx and
-                    chain.tip_lidx in self.structure.compiled.tip_lnk_ids):
+                    len(tip_ids) == 1 and chain.tip_lidx in tip_ids):
                 _data_dir = os.path.join(self.structure.res_dir, "data")
             else:
                 # use the registered chain name as a readable hint, falling

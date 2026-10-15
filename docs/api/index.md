@@ -5,14 +5,15 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 Browse by subpackage (or see the single-page [API Index](../API_INDEX.md)):
 
 - [`one.collider`](collider.md) — 14 modules, 16 functions, 13 classes
-- [`one.drivers`](drivers.md) — 2 modules, 0 functions, 6 classes
+- [`one.drivers`](drivers.md) — 3 modules, 7 functions, 8 classes
 - [`one.geom`](geom.md) — 7 modules, 23 functions, 0 classes
 - [`one.grasp`](grasp.md) — 8 modules, 16 functions, 2 classes
 - [`one.manipulation`](manipulation.md) — 4 modules, 2 functions, 4 classes
-- [`one.motion`](motion.md) — 12 modules, 14 functions, 10 classes
+- [`one.motion`](motion.md) — 11 modules, 13 functions, 10 classes
 - [`one.physics`](physics.md) — 9 modules, 7 functions, 17 classes
-- [`one.robots`](robots.md) — 43 modules, 72 functions, 45 classes
+- [`one.robots`](robots.md) — 44 modules, 73 functions, 46 classes
 - [`one.scene`](scene.md) — 8 modules, 37 functions, 13 classes
 - [`one.stream`](stream.md) — 1 modules, 7 functions, 0 classes
 - [`one.utils`](utils.md) — 4 modules, 99 functions, 15 classes
 - [`one.viewer`](viewer.md) — 8 modules, 0 functions, 10 classes
+- [`one.vision`](vision.md) — 7 modules, 22 functions, 3 classes

@@ -1,3 +1,3 @@
 import one.motion.trajectory.totg as totg
 
-__all__ = ['time_param']
+__all__ = ['totg']

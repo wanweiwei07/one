@@ -6,7 +6,7 @@ import one.utils.constant as ouc
 import one.viewer.world as ovw
 import one.scene.scene_object_primitive as ossop
 import one.motion.interpolation.cartesian as omic
-import one.motion.trajectory.time_param as omttp
+import one.motion.trajectory.totg as omttg
 import one.robots.manipulators.kawasaki.rs007l.rs007l as ormkr7
 import one.robots.end_effectors.onrobot.or_sd.or_sd as oreorsd
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         n_jnts = q_seq.shape[1]
         v_max = np.full(n_jnts, 1.2, dtype=np.float32)
         a_max = np.full(n_jnts, 2.5, dtype=np.float32)
-        t_seq, q_tp, qd_tp, qdd_tp = omttp.retime_trapezoidal(
+        t_seq, q_tp, qd_tp, qdd_tp = omttg.retime(
             q_seq=q_seq,
             v_max=v_max,
             a_max=a_max,

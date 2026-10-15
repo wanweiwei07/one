@@ -62,7 +62,7 @@ def linear_path(start_qs, goal_qs, step=np.deg2rad(3.0), ctx=None):
     ``ctx.is_motion_valid``; if it is blocked, returns None instead of an unsafe
     path. ``ctx=None`` degrades to the raw interpolation. Returning a path here
     (not a timed trajectory) matches the probabilistic planners' vocabulary;
-    timing is a separate ``trajectory.time_param`` step.
+    timing is a separate ``trajectory.totg`` step.
 
     Parameters
     ----------

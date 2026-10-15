@@ -11,7 +11,7 @@ bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH)
 bunny.alpha = 0.3
 bunny.attach_to(base.scene)
-oframe = ossop.frame(length=0.05)
+oframe = ossop.frame(length_scale=.5)
 oframe.attach_to(base.scene)
 
 plane_ground = ossop.plane()

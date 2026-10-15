@@ -25,8 +25,8 @@
 
 当你需要 tcp 沿直线笛卡尔路径运动时（例如工具在工件上
 扫掠），`one.motion.interpolation.cartesian.linear_to_jpath` 沿该直线
-逐步求解 IK，而 `time_param.retime_trapezoidal` 则添加速度/
-加速度曲线。本示例安装一把螺丝刀，并驱动其尖端沿
+逐步求解 IK，而 `totg.retime` 则添加速度/加速度曲线。
+本示例安装一把螺丝刀，并驱动其尖端沿
 笛卡尔线段运动：
 
 ```python
@@ -38,7 +38,10 @@
 - `linear_to_jpath(robot, start_pos, start_rotmat, goal_pos, goal_rotmat,
   tcp=...)` 返回关节路径以及采样得到的位姿；传入一个有偏置的
   `ref_qs`，使逐步 IK 保持在平滑的分支上。
-- `retime_trapezoidal(q_seq, v_max, a_max, dt)` 对路点进行时间参数化。
+- `retime(q_seq, v_max, a_max, dt)` 对路点进行时间参数化。它把整条路径
+  当作一条曲线，在其上做前向/后向扫描，因此时序取决于路径的*几何*，
+  而不是采样的疏密：共线路点会被全速穿过，只有真正的转向才会减速。
+  当采样比机器人实际驱动周期更细时，请传入 `corner_dt`。
 
 ## 另请参阅
 

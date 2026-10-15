@@ -310,9 +310,16 @@ def main():
     st = {"gi": gi, "motion": motion, "i": 0, "held": False,
           "playing": False, "dropping": False, "drop_steps": 0}
 
+    def let_go(c):
+        # unmount() DETACHES the child from the render scene (scene membership
+        # follows the mount), so a plain release makes the part vanish instead
+        # of falling -- re-attach it so mujoco's drop stays visible.
+        robot.left_hand.release(c)
+        c.attach_to(base.scene)
+
     def reset_play():
         if st["held"]:
-            robot.left_hand.detach(cyls[st["gi"]])   # open_hand below reopens
+            let_go(cyls[st["gi"]])                    # open_hand below reopens
             st["held"] = False
         robot.left_hand.open_hand()
         robot.fk(qs=st["motion"][0][0])
@@ -327,7 +334,7 @@ def main():
         if i >= len(traj):                       # trajectory done -> release+drop
             if st["held"]:
                 robot.left_hand.open_hand()          # reopen, then drop
-                robot.left_hand.detach(cyls[st["gi"]])
+                let_go(cyls[st["gi"]])
                 st["held"] = False
                 mjenv.sync.push_all_sobj_qpos()  # sync carried pose into mujoco
                 st["dropping"] = True
@@ -335,7 +342,7 @@ def main():
         robot.fk(qs=traj[i])
         if i == grasp_idx and not st["held"]:
             robot.left_hand.grip('pinch', amount)
-            robot.left_hand.attach(cyls[st["gi"]])
+            robot.left_hand.hold(cyls[st["gi"]])
             st["held"] = True
         st["i"] += 1
         base.scene.dirty = True

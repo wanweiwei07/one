@@ -25,9 +25,9 @@ Things to notice:
 
 When you need the tcp to follow a straight Cartesian path (e.g. a tool sweeping
 over a workpiece), `one.motion.interpolation.cartesian.linear_to_jpath` solves
-per-step IK along the line, and `time_param.retime_trapezoidal` adds a velocity/
-acceleration profile. This example mounts a screwdriver and drives its tip along
-a Cartesian segment:
+per-step IK along the line, and `totg.retime` adds a velocity/acceleration
+profile. This example mounts a screwdriver and drives its tip along a Cartesian
+segment:
 
 ```python
 --8<-- "examples/test_rs007l_mount_orsd_jtraj.py"
@@ -38,7 +38,12 @@ Things to notice:
 - `linear_to_jpath(robot, start_pos, start_rotmat, goal_pos, goal_rotmat,
   tcp=...)` returns the joint path plus the sampled poses; pass a biased
   `ref_qs` so the per-step IK stays on a smooth branch.
-- `retime_trapezoidal(q_seq, v_max, a_max, dt)` time-parameterizes the waypoints.
+- `retime(q_seq, v_max, a_max, dt)` time-parameterizes the waypoints. It treats
+  the whole path as one curve and runs a forward/backward sweep over it, so the
+  timing follows the path's *geometry* rather than how finely it was sampled:
+  collinear waypoints are passed through at speed and only a real change of
+  direction slows the arm. Pass `corner_dt` when you sample finer than the robot
+  is actually driven.
 
 ## See also
 

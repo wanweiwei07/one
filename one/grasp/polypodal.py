@@ -457,7 +457,7 @@ if __name__ == "__main__":
             back_spheres[k].pos = back_pts[k]
         ghost.grip_at(
             tgt_pos=pose[:3, 3], tgt_rotmat=pose[:3, :3],
-            tgt_jaw_width=float(np.clip(jaw, jaw_lo, jaw_hi)))
+            width=float(np.clip(jaw, jaw_lo, jaw_hi)))
         msg = f"pair {i + 1} / {n_tup}  jaw={jaw * 1000:.1f}mm"
         base.set_caption(msg)
         print(msg)

@@ -142,11 +142,11 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 ## `one.robots.end_effectors.ee_mixins`
 
 - **class `EndEffectorMixin`** — Uniform object-holding for any actuated end effector (gripper, hand).
-  - methods: `attach`, `detach`
+  - methods: `hold`, `release`
 - **class `GripperMixin`** — A parallel-jaw gripper: closes via a single scalar ``set_opening``, and
   - methods: `open`, `close`, `set_opening`, `grip_at`, `grasp_center_tcp`, `qpos`, `mode`
 - **class `PointMixin`**
-  - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
+  - methods: `activate`, `deactivate`, `touch_at`, `hold`, `release`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).
   - methods: `grasp_spec`, `open_hand`, `open`, `grip`, `pinch`, `tripod`, `power`, `grasp_at`, `pinch_at`, `power_at`, `as_jaw`
 - **class `JawView`** — A parallel-jaw view of a dexterous hand, bound to one opposition
@@ -197,6 +197,12 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 - `prepare_mechstruct(collision_type=ouc.CollisionType.MESH)` — Load the XHand right (12-dof dexterous hand) from its URDF into a
 - **class `XHandRight`** — XHand right: a 12-dof dexterous hand as a mountable MechBase EE with the
   - methods: `grasp_spec`, `goto_given_conf`, `rand_conf`
+
+## `one.robots.humanoids.gento.luna.luna`
+
+- `prepare_mechstruct(collision_type=ouc.CollisionType.MESH)` — Load the Gento Luna URDF into a MechStruct, via the shared urdf_loader.
+- **class `Luna`** — Gento Luna wheeled humanoid, bare (no end-effectors): a mobile underpan,
+  - methods: `lnk`, `jnt`
 
 ## `one.robots.humanoids.linx.l1.l1`
 

@@ -17,7 +17,7 @@ box.attach_to(base.scene)
 # box.toggle_render_collision = True
 
 gripper.close()
-gripper.attach(box)
+gripper.hold(box)
 
 # robot_list = [robot]
 #

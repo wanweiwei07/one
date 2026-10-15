@@ -1,10 +1,10 @@
-"""Checks for one.motion.trajectory.totg -- the four properties that separate
-it from time_param.retime_trapezoidal, plus the degenerate paths."""
+"""Checks for one.motion.trajectory.totg -- the properties that make the timing
+depend on the path's geometry rather than on its sampling, plus the degenerate
+paths."""
 
 import numpy as np
 
 import one.motion.trajectory.totg as omttg
-import one.motion.trajectory.time_param as omttp
 
 DT = 0.008
 V = np.full(6, np.pi / 2)
@@ -115,16 +115,6 @@ dup = np.stack([np.zeros(6), np.zeros(6), np.ones(6), np.ones(6)])
 check('with vs without duplicates',
       abs(omttg.retime(plain, V, A, dt=DT)[0][-1]
           - omttg.retime(dup, V, A, dt=DT)[0][-1]) < 1e-9)
-
-print('8. never slower than the rest-to-rest baseline')
-for tag, path in (('corners', corners), ('dense', densify(corners, 12)),
-                  ('line', line)):
-    t_new = omttg.retime(path, V, A, dt=DT)[0][-1]
-    t_old = float(omttp.retime_trapezoidal(path.astype(np.float32),
-                                           V.astype(np.float32),
-                                           A.astype(np.float32), dt=DT)[0][-1])
-    check(f'{tag}: totg <= retime_trapezoidal', t_new <= t_old + DT,
-          f'{t_new:.4f}s vs {t_old:.4f}s  ({t_old / t_new:.2f}x)')
 
 print()
 if _failures:

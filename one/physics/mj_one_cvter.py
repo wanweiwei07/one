@@ -63,8 +63,12 @@ class MJOneConverter:
         world.assets = list(self._mesh_assets.values())
         world.actuators = self._actuators
         self._finalize_alias_maps()
-        # process collision ignores
-        for mecba in scene.mecbas:
+        # process collision ignores -- of the scene's mechs AND the mechs
+        # mounted on them (a gripper / cutter declares its own ignores too)
+        mounted_mecbas = [c for c in self._mounted_children
+                          if isinstance(c, orbmb.MechBase)
+                          and c not in scene.mecbas]
+        for mecba in list(scene.mecbas) + mounted_mecbas:
             struct = mecba.structure
             for alidx, blidx in struct.compiled.collision_ignores_idx:
                 rta = mecba.runtime_lnks[alidx]

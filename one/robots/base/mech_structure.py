@@ -177,6 +177,7 @@ class FlatMechStructure:
         self.mmc_src_by_idx = np.full(self.n_jnts, -1, dtype=np.int32)
         self.mmc_mult_by_idx = np.ones(self.n_jnts, dtype=np.float32)
         self.mmc_offset_by_idx = np.zeros(self.n_jnts, dtype=np.float32)
+        self.mmc_fn_by_idx = {}  # {jidx: fn(q_src) -> q}, nonlinear mimics
         # limits # TODO only active non-mimic joints?
         self.jlmt_low_by_idx = np.zeros(self.n_jnts, dtype=np.float32)
         self.jlmt_high_by_idx = np.zeros(self.n_jnts, dtype=np.float32)
@@ -206,6 +207,8 @@ class FlatMechStructure:
             self.mmc_mult_by_idx[mask] * q_resolved[src] +
             self.mmc_offset_by_idx[mask]
         )
+        for jidx, fn in self.mmc_fn_by_idx.items():
+            q_resolved[jidx] = fn(q_resolved[self.mmc_src_by_idx[jidx]])
         return q_resolved
 
     def is_active_jnt(self, jnt_idx):
@@ -228,11 +231,15 @@ class FlatMechStructure:
             self.jax_by_idx[jidx] = jnt.ax
             self.jtf0_by_idx[jidx] = jnt.zero_tf
             # mimic
+            # (src, mult, offset) is linear; (src, fn) takes fn(q_src) -> q
             if jnt.mmc is not None:
-                src, mult, offset = jnt.mmc
-                self.mmc_src_by_idx[jidx] = self.jidx_map[src]
-                self.mmc_mult_by_idx[jidx] = float(mult)
-                self.mmc_offset_by_idx[jidx] = float(offset)
+                self.mmc_src_by_idx[jidx] = self.jidx_map[jnt.mmc[0]]
+                if len(jnt.mmc) == 2:
+                    self.mmc_fn_by_idx[jidx] = jnt.mmc[1]
+                else:
+                    _, mult, offset = jnt.mmc
+                    self.mmc_mult_by_idx[jidx] = float(mult)
+                    self.mmc_offset_by_idx[jidx] = float(offset)
             # limits
             self.jlmt_low_by_idx[jidx] = float(jnt.lmt_lo)
             self.jlmt_high_by_idx[jidx] = float(jnt.lmt_up)

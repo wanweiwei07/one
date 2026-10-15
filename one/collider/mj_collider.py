@@ -17,9 +17,9 @@ class MJCollider:
         is exempted from that end effector's links -- the intended grasp contact;
       * an ``exclude``d object (e.g. the grasp target during its own approach) is
         exempted from all actor links.
-    Grasping itself stays on the end effector (``ee.attach`` / ``ee.detach``);
+    Grasping itself stays on the end effector (``ee.hold`` / ``ee.release``);
     this class only reflects it -- there is no grasp/hold verb here. Call
-    ``refresh`` after an ``attach`` / ``detach`` / ``exclude`` / ``include`` to
+    ``refresh`` after a ``hold`` / ``release`` / ``exclude`` / ``include`` to
     apply the change.
     """
 

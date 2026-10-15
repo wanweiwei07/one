@@ -1,0 +1,1323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="Gento Luna_URDF">
+  <link
+    name="Underpan_Base_link">
+    <inertial>
+      <origin
+        xyz="-0.09256522 -0.0000363 0.06223249"
+        rpy="0 0 0" />
+      <mass
+        value="90.8" />
+      <inertia
+        ixx="3.83874927"
+        ixy="0.15871441"
+        ixz="0.05742001"
+        iyy="5.14227220"
+        iyz="-0.00084760"
+        izz="7.99256123" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Underpan_Base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Underpan_Base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="Gento Luna_Leg_J1_Link">
+    <inertial>
+      <origin
+        xyz="-0.00305605 0.11879615 0.00090574"
+        rpy="0 0 0" />
+      <mass
+        value="6.04185968" />
+      <inertia
+        ixx="0.05014865"
+        ixy="-0.00085033"
+        ixz="0.00003711"
+        iyy="0.01918359"
+        iyz="-0.00035279"
+        izz="0.04606091" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J1_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J1_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Gento Luna_Leg_J1_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0.1"
+      rpy="1.5708 0 1.5708" />
+    <parent
+      link="Underpan_Base_link" />
+    <child
+      link="Gento Luna_Leg_J1_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.191986218"
+      upper="0.191986218"
+      effort="217"
+      velocity="3.560471674" />
+  </joint>
+  <link
+    name="Gento Luna_Leg_J2_Link">
+    <inertial>
+      <origin
+        xyz="0.00164163 0.20480598 0.00707016"
+        rpy="0 0 0" />
+      <mass
+        value="7.22131191" />
+      <inertia
+        ixx="0.13625794"
+        ixy="0.00021980"
+        ixz="-0.00005379"
+        iyy="0.02626537"
+        iyz="0.00455997"
+        izz="0.13418940" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J2_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J2_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Gento Luna_Leg_J2_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0.165 0"
+      rpy="0 -1.5708 0" />
+    <parent
+      link="Gento Luna_Leg_J1_Link" />
+    <child
+      link="Gento Luna_Leg_J2_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.570796327"
+      upper="1.570796327"
+      effort="217"
+      velocity="3.560471674" />
+  </joint>
+  <link
+    name="Gento Luna_Leg_J3_Link">
+    <inertial>
+      <origin
+        xyz="-0.00357006 0.14573557 -0.00024996"
+        rpy="0 0 0" />
+      <mass
+        value="4.67121672" />
+      <inertia
+        ixx="0.09821390"
+        ixy="0.00087722"
+        ixz="-0.00000461"
+        iyy="0.03054277"
+        iyz="0.00002818"
+        izz="0.08828479" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J3_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J3_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Gento Luna_Leg_J3_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0.3 0"
+      rpy="0 0 0" />
+    <parent
+      link="Gento Luna_Leg_J2_Link" />
+    <child
+      link="Gento Luna_Leg_J3_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.443460953"
+      upper="1.047197551"
+      effort="217"
+      velocity="3.560471674" />
+  </joint>
+  <link
+    name="Gento Luna_Leg_J4_Link">
+    <inertial>
+      <origin
+        xyz="-0.03690660 -0.00007427 0.01019860"
+        rpy="0 0 0" />
+      <mass
+        value="5.90046349" />
+      <inertia
+        ixx="0.01031884"
+        ixy="0.00001703"
+        ixz="0.00214964"
+        iyy="0.02997544"
+        iyz="-0.00000169"
+        izz="0.02890014" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J4_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J4_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Gento Luna_Leg_J4_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0.3 0"
+      rpy="0 0 0" />
+    <parent
+      link="Gento Luna_Leg_J3_Link" />
+    <child
+      link="Gento Luna_Leg_J4_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.959931089"
+      upper="1.919862177"
+      effort="108"
+      velocity="3.560471674" />
+  </joint>
+  <link
+    name="Gento Luna_Leg_J5_Link">
+    <inertial>
+      <origin
+        xyz="-0.00154757 0.12766899 -0.01565105"
+        rpy="0 0 0" />
+      <mass
+        value="3.76177572" />
+      <inertia
+        ixx="0.03428558"
+        ixy="-0.00014969"
+        ixz="-0.00014018"
+        iyy="0.02062551"
+        iyz="0.00372161"
+        izz="0.02033725" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J5_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J5_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Gento Luna_Leg_J5_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 1.5708 0" />
+    <parent
+      link="Gento Luna_Leg_J4_Link" />
+    <child
+      link="Gento Luna_Leg_J5_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.523598776"
+      upper="0.523598776"
+      effort="108"
+      velocity="5.235987756" />
+  </joint>
+  <link
+    name="Gento Luna_Leg_J6_Link">
+    <inertial>
+      <origin
+        xyz="-0.00252318 0.00023889 0.35352016"
+        rpy="0 0 0" />
+      <mass
+        value="7.69392497" />
+      <inertia
+        ixx="0.09791321"
+        ixy="0.00040226"
+        ixz="0.00387194"
+        iyy="0.08468144"
+        iyz="-0.00008696"
+        izz="0.06678130" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J6_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Gento Luna_Leg_J6_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Gento Luna_Leg_J6_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="-1.5708 -1.5708 0" />
+    <parent
+      link="Gento Luna_Leg_J5_Link" />
+    <child
+      link="Gento Luna_Leg_J6_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.967059728"
+      upper="2.967059728"
+      effort="108"
+      velocity="5.235987756" />
+  </joint>
+  <link
+    name="Arm_R1_Link">
+    <inertial>
+      <origin
+         xyz="-3.3175e-04 -4.26687e-03 -3.522466e-02"
+        rpy="0 0 0" />
+      <mass
+        value="1.537551" />
+      <inertia
+        ixx="3.66914e-03"
+        ixy="1.77e-06"
+        ixz="1.342e-05"
+        iyy="3.94529e-03"
+        iyz="-2.3437e-04"
+        izz="1.31774e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R1_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R1_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R1_Joint"
+    type="revolute">
+    <origin
+      xyz="0 -0.2146 0.3915"
+      rpy="1.5708 0 0" />
+    <parent
+      link="Gento Luna_Leg_J6_Link" />
+    <child
+      link="Arm_R1_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.0194"
+      upper="3.0194"
+      effort="35"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_R2_Link">
+    <inertial>
+      <origin
+         xyz="-1.6285e-04 4.983697e-02 -8.33367e-03"
+        rpy="0 0 0" />
+      <mass
+        value="1.540624" />
+      <inertia
+        ixx="5.98937e-03"
+        ixy="1.663e-05"
+        ixz="8.58e-06"
+        iyy="1.83242e-03"
+        iyz="6.4328e-04"
+        izz="5.64358e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R2_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R2_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R2_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 0 0" />
+    <parent
+      link="Arm_R1_Link" />
+    <child
+      link="Arm_R2_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.0595"
+      upper="2.0595"
+      effort="35"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_R3_Link">
+    <inertial>
+      <origin
+        xyz="8.2949e-03 -4.11162e-03 -4.916618e-02"
+        rpy="0 0 0" />
+      <mass
+        value="1.361743" />
+      <inertia
+        ixx="4.67364e-03"
+        ixy="-5.704e-05"
+        ixz="5.8882e-04"
+        iyy="4.98053e-03"
+        iyz="-2.7207e-04"
+        izz="1.19672e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R3_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R3_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R3_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0.264 0"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="Arm_R2_Link" />
+    <child
+      link="Arm_R3_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+       lower="-3.0194"
+      upper="3.0194"
+      effort="18"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_R4_Link">
+    <inertial>
+      <origin
+       xyz="8.52387e-03 -3.857074e-02 -8.01541e-03"
+        rpy="0 0 0" />
+      <mass
+        value="1.034295" />
+      <inertia
+        ixx="3.03957e-03"
+        ixy="-3.7917e-04"
+        ixz="6.787e-05"
+        iyy="1.18553e-03"
+        iyz="-3.1048e-04"
+        izz="2.88173e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R4_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R4_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R4_Joint"
+    type="revolute">
+    <origin
+      xyz="0.018 0 0"
+      rpy="-1.5708 0 -3.1416" />
+    <parent
+      link="Arm_R3_Link" />
+    <child
+      link="Arm_R4_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.5307"
+      upper="0.7854"
+      effort="18"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_R5_Link">
+    <inertial>
+      <origin
+         xyz="5.008e-04 -2.23923e-03 -9.253416e-02"
+        rpy="0 0 0" />
+      <mass
+        value="1.000479" />
+      <inertia
+        ixx="2.17057e-03"
+        ixy="-1.142e-05"
+        ixz="6.68e-06"
+        iyy="1.95131e-03"
+        iyz="-3.059e-05"
+        izz="8.4222e-04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R5_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R5_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R5_Joint"
+    type="revolute">
+    <origin
+      xyz="0.018 -0.264 0"
+      rpy="-1.5708 0 3.1416" />
+    <parent
+      link="Arm_R4_Link" />
+    <child
+      link="Arm_R5_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.0194"
+      upper="3.0194"
+      effort="5.5"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_R6_Link">
+    <inertial>
+      <origin
+        xyz="-1.8634e-04 2.3824e-04 5.829e-04"
+        rpy="0 0 0" />
+      <mass
+        value="0.3906229" />
+      <inertia
+        ixx="1.9943e-04"
+        ixy="-1.1800e-06"
+        ixz="-3.0000e-07"
+        iyy="1.7163e-04"
+        iyz="3.5300e-06"
+        izz="1.8567e-04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R6_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R6_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R6_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 -1.5708 0" />
+    <parent
+      link="Arm_R5_Link" />
+    <child
+      link="Arm_R6_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.0472"
+      upper="1.0472"
+      effort="5.5"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_R7_Link">
+    <inertial>
+      <origin
+        xyz="-5.2431e-04 -3.976234e-02 7.27342e-03"
+        rpy="0 0 0" />
+      <mass
+        value="0.37939" />
+      <inertia
+        ixx="7.0308e-04"
+        ixy="5.97e-06"
+        ixz="7.30e-07"
+        iyy="3.0365e-04"
+        iyz="1.2769e-04"
+        izz="5.8833e-04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R7_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_R7_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_R7_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 -1.5708 0" />
+    <parent
+      link="Arm_R6_Link" />
+    <child
+      link="Arm_R7_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="5.5"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L1_Link">
+    <inertial>
+      <origin
+        xyz="-3.3175e-04 -4.26687e-03 -3.522466e-02"
+        rpy="0 0 0" />
+      <mass
+        value="1.537551" />
+      <inertia
+        ixx="3.66914e-03"
+        ixy="1.77e-06"
+        ixz="1.342e-05"
+        iyy="3.94529e-03"
+        iyz="-2.3437e-04"
+        izz="1.31774e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L1_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L1_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L1_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0.2146 0.3915"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="Gento Luna_Leg_J6_Link" />
+    <child
+      link="Arm_L1_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.0194"
+      upper="3.0194"
+      effort="35"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L2_Link">
+    <inertial>
+      <origin
+        xyz="-1.6285e-04 4.983697e-02 -8.33367e-03"
+        rpy="0 0 0" />
+      <mass
+        value="1.540624" />
+      <inertia
+        ixx="5.98937e-03"
+        ixy="1.663e-05"
+        ixz="8.58e-06"
+        iyy="1.83242e-03"
+        iyz="6.4328e-04"
+        izz="5.64358e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L2_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L2_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L2_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="-1.5708 0 3.1416" />
+    <parent
+      link="Arm_L1_Link" />
+    <child
+      link="Arm_L2_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.0595"
+      upper="2.0595"
+      effort="35"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L3_Link">
+    <inertial>
+      <origin
+        xyz="8.2949e-03 -4.11162e-03 -4.916618e-02"
+        rpy="0 0 0" />
+      <mass
+        value="1.361743" />
+      <inertia
+        ixx="4.67364e-03"
+        ixy="-5.704e-05"
+        ixz="5.8882e-04"
+        iyy="4.98053e-03"
+        iyz="-2.7207e-04"
+        izz="1.19672e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L3_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L3_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L3_Joint"
+    type="revolute">
+    <origin
+      xyz="0 -0.264 0"
+      rpy="-1.5708 0 -3.1416" />
+    <parent
+      link="Arm_L2_Link" />
+    <child
+      link="Arm_L3_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.0194"
+      upper="3.0194"
+      effort="18"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L4_Link">
+    <inertial>
+      <origin
+        xyz="8.52387e-03 -3.857074e-02 -8.01541e-03"
+        rpy="0 0 0" />
+      <mass
+        value="1.034295" />
+      <inertia
+        ixx="3.03957e-03"
+        ixy="-3.7917e-04"
+        ixz="6.787e-05"
+        iyy="1.18553e-03"
+        iyz="-3.1048e-04"
+        izz="2.88173e-03" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L4_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L4_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L4_Joint"
+    type="revolute">
+    <origin
+      xyz="0.018 0 0"
+      rpy="-1.5708 0 3.1416" />
+    <parent
+      link="Arm_L3_Link" />
+    <child
+      link="Arm_L4_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.5307"
+      upper="0.7854"
+      effort="18"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L5_Link">
+    <inertial>
+      <origin
+        xyz="-5.008e-04 2.23923e-03 -9.253416e-02"
+        rpy="0 0 0" />
+      <mass
+        value="1.000479" />
+      <inertia
+        ixx="2.17057e-03"
+        ixy="-1.142e-05"
+        ixz="-6.68e-06"
+        iyy="1.95131e-03"
+        iyz="3.059e-05"
+        izz="8.4222e-04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L5_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L5_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L5_Joint"
+    type="revolute">
+    <origin
+      xyz="0.018 -0.264 0"
+      rpy="-1.5708 0 -3.1416" />
+    <parent
+      link="Arm_L4_Link" />
+    <child
+      link="Arm_L5_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-3.0194"
+      upper="3.0194"
+      effort="5.5"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L6_Link">
+    <inertial>
+      <origin
+        xyz="1.8634e-04 2.3824e-04 -5.829e-04"
+        rpy="0 0 0" />
+      <mass
+        value="0.3906229" />
+      <inertia
+        ixx="1.9943e-04"
+        ixy="1.1800e-06"
+        ixz="-3.0000e-07"
+        iyy="1.7163e-04"
+        iyz="-3.5300e-06"
+        izz="1.8567e-04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L6_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 0 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L6_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L6_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 -1.5708 0" />
+    <parent
+      link="Arm_L5_Link" />
+    <child
+      link="Arm_L6_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.0472"
+      upper="1.0472"
+      effort="5.5"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Arm_L7_Link">
+    <inertial>
+      <origin
+        xyz="-5.2431e-04 -3.976234e-02 7.27342e-03"
+        rpy="0 0 0" />
+      <mass
+        value="0.37939" />
+      <inertia
+        ixx="7.0308e-04"
+        ixy="5.97e-06"
+        ixz="7.30e-07"
+        iyy="3.0365e-04"
+        iyz="1.2769e-04"
+        izz="5.8833e-04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L7_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Arm_L7_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Arm_L7_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 -1.5708 0" />
+    <parent
+      link="Arm_L6_Link" />
+    <child
+      link="Arm_L7_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="5.5"
+      velocity="3.1416" />
+  </joint>
+  <link
+    name="Head_J1_Link">
+    <inertial>
+      <origin
+        xyz="0 0.01744095 -0.00430266"
+        rpy="0 0 0" />
+      <mass
+        value="1.1" />
+      <inertia
+        ixx="0.00175163"	
+        ixy="0.00000004"
+        ixz="0.00000000"
+        iyy="0.00117904"
+        iyz="0.00008664"
+        izz="0.00169733" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Head_J1_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Head_J1_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Head_J1_joint"
+    type="revolute">
+    <origin
+      xyz="-0.013496 0 0.49898"
+      rpy="1.5708 0 0" />
+    <parent
+      link="Gento Luna_Leg_J6_Link" />
+    <child
+      link="Head_J1_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.523595776"
+      upper="0.523595776"
+      effort="18"
+      velocity="3.665191429" />
+  </joint>
+  <link
+    name="Head_J2_Link">
+    <inertial>
+      <origin
+        xyz="0.05233126 0.00010773 0.15732740"
+        rpy="0 0 0" />
+      <mass
+        value="2.2" />
+      <inertia
+        ixx="0.00768053"
+        ixy="0.00000838"
+        ixz="0.00110945"
+        iyy="0.00961263"
+        iyz="0.00000298"
+        izz="0.00660884" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Head_J2_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 0 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Gento Luna_URDF/meshes/Head_J2_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Head_J2_Joint"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="Head_J1_Link" />
+    <child
+      link="Head_J2_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.570796327"
+      upper="1.570796327"
+      effort="18"
+      velocity="3.665191429" />
+  </joint>
+</robot>

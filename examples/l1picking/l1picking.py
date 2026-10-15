@@ -253,7 +253,7 @@ def main():
     def reset_play():
         if state["held"]:
             robot.left_hand.open_hand()
-            robot.left_hand.detach(cyl)
+            robot.left_hand.release(cyl)
             state["held"] = False
         robot.left_hand.open_hand()
         cyl.pos, cyl.rotmat = cyl_home[0].copy(), cyl_home[1].copy()
@@ -282,7 +282,7 @@ def main():
         robot.fk(qs=traj_i[i])
         if i == grasp_idx_i and not state["held"]:
             robot.left_hand.grip(PRIMITIVE, amount)
-            robot.left_hand.attach(cyl)
+            robot.left_hand.hold(cyl)
             state["held"] = True
         state["i"] += 1
         base.scene.dirty = True

@@ -7,7 +7,7 @@ base = ovw.World(cam_pos=(.3, .3, .3), toggle_auto_cam_orbit=True)
 oframe = ossop.frame()
 bunny = osso.SceneObject.from_file(
     "bunny.stl", collision_type=ouc.CollisionType.MESH)
-oframe.attach_to(base.scene)
+# oframe.attach_to(base.scene)
 bunny.attach_to(base.scene)
 bunny.alpha=.3
 

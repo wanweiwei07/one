@@ -6,7 +6,7 @@ compose with ``+`` so a pick = approach + grasp + depart is just three segments
 added together. It is deliberately *pure data* -- three parallel lists, no robot
 reference, no mesh generation, no backup/restore state dance. Rendering meshes
 is the viewer's job (draw each config on demand); timing is a separate
-``trajectory.time_param`` step.
+``trajectory.totg`` step.
 
 Three parallel per-waypoint lists (all length ``len(self)``):
     robot_qpos_list -- robot / arm joint configs (full qs, the planners'

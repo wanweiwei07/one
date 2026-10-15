@@ -4,9 +4,9 @@ End-effectors are `MechBase` mechanisms too. They mix in behavior and register a
 working tcp:
 
 - **Grippers** (`GripperMixin`) register a `'grasp_center'` tcp and expose
-  `open()` / `close()` / `set_jaw_width()` and `grasp(child)` / `release(child)`.
+  `open()` / `close()` / `set_opening()` and `hold(child)` / `release(child)`.
 - **Point tools** (`PointMixin`, e.g. a screwdriver) register a `'tip'` tcp and
-  expose `touch_at(...)` / `attach(...)`.
+  expose `touch_at(...)` / `hold(...)`.
 
 ## Mounting
 
@@ -25,7 +25,7 @@ qs = arm.ik(pos, rotmat, tcp=gripper.tcp('grasp_center'))
 
 This example starts with a bare RS007L, mounts a 2FG7 gripper to pick and place a
 bunny, returns it to its stand and unmounts it, then mounts a screwdriver to work
-above the bunny — exercising mount / grasp / release / unmount end to end:
+above the bunny — exercising mount / hold / release / unmount end to end:
 
 ```python
 --8<-- "examples/test_rs007l_toolchange.py"
@@ -39,7 +39,7 @@ Things to notice:
   gripper is on, `screwdriver.tcp('tip')` while the screwdriver is on, and the
   default `'flange'` while the arm is bare.
 - `SceneObject` defaults to `is_free = False`; set `bunny.is_free = True` before
-  `grasp` so it can be mounted onto the gripper.
+  `hold` so it can be mounted onto the gripper.
 
 ## See also
 

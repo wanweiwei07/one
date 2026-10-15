@@ -28,7 +28,7 @@ class _O6Hand(oremx.DexHandMixin, orbmb.MechBase):
     """Linkerbot O6 dexterous hand (one side): a mountable MechBase EE with the
     DexHandMixin grasp behaviors. Closure is the ``pinch`` / ``tripod`` /
     ``power`` (alias ``grip``) primitives and ``open_hand``; holding a child is
-    the uniform ``attach`` / ``detach``; ``as_jaw`` returns a parallel-jaw
+    the uniform ``hold`` / ``release``; ``as_jaw`` returns a parallel-jaw
     ``JawView`` for antipodal planning.
 
     DexHandMixin is listed FIRST so its ``clone`` (which carries the jaw

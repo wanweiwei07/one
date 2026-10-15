@@ -73,6 +73,7 @@ class OAGripper(orbmb.MechBase, oreb.GripperMixin):
         self.contact_pattern = np.zeros((1, 3), dtype=np.float32)
         self.jaw_range = np.array(
             [0.0, 0.088], dtype=np.float32)
+        self.open_dir = ouc.StandardAxis.Y
         self.set_opening(0.0)
 
     def set_opening(self, jaw_width):
@@ -84,6 +85,7 @@ class OAGripper(orbmb.MechBase, oreb.GripperMixin):
         new = super().clone()
         new.contact_pattern = self.contact_pattern.copy()
         new.jaw_range = self.jaw_range.copy()
+        new.open_dir = self.open_dir
         new.set_opening(self.qs[0] * 2.0)
         return new
 

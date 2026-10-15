@@ -106,6 +106,20 @@ _b-CAP (ORiN2) client for DENSO controllers + a COBOTTA joint-state reader._
 - **class `CubeMarsRLinkSerial`** — R-Link serial protocol helper with optional serial session support.
   - methods: `crc16`, `build_packet`, `comm_get_values`, `comm_get_values_setup_all`, `comm_get_rotor_position_stream`, `comm_set_pos`, `comm_set_pos_spd`, `comm_set_pos_origin`, `comm_power_on_raw`, `parse_packet`, `open`, `close`, `is_open`, `send`, `read_available`, `transact`, `startup`, `set_pos`, `set_pos_spd`
 
+## `one.drivers.dynamixel`
+_Dynamixel Protocol 2.0 over a serial (RS485/TTL) port -- no vendor SDK._
+
+- `crc16(data)` — CRC-16/IBM (poly 0x8005, init 0) over ``data`` -- the Protocol 2.0 CRC.
+- `stuff(payload)` — Insert the extra ``FD`` after every ``FF FF FD`` in ``payload``.
+- `unstuff(payload)` — Drop the stuffing bytes ``stuff`` inserted.
+- `build_packet(dxl_id, instruction, params=b'')` — Return the complete instruction packet for one servo.
+- `describe_hardware_error(bits)` — Human-readable list of the hardware error bits set in ``bits``.
+- `serial_ports()` — Every serial port as ``(device, usb_serial, description)``.
+- `find_port(usb_serial)` — The port the USB adapter with serial number ``usb_serial`` is on.
+- **class `DynamixelError`** — A bad packet, a timeout, or an error flag reported by the servo.
+- **class `Dynamixel`** — One servo on one serial port.
+  - methods: `connect`, `close`, `is_open`, `ping`, `model_name`, `reboot`, `read`, `write`, `torque`, `set_operating_mode`, `hardware_error`, `clear_hardware_error`, `ticks_to_deg`, `deg_to_ticks`, `present_current_ma`, `wait_until_stopped`
+
 ## `one.geom.fitting`
 
 - `convex_hull(geom)`
@@ -294,10 +308,6 @@ _Approach / depart motion primitives._
   - methods: `add_node`, `nearest`, `nearest_state`, `path_from_root`
 - **class `RRTConnectPlanner`**
   - methods: `solve`, `solve_iter`
-
-## `one.motion.trajectory.time_param`
-
-- `retime_trapezoidal(q_seq, v_max, a_max, dt=0.01)` — Time-parameterize a joint waypoint path using per-segment trapezoidal scaling.
 
 ## `one.motion.trajectory.totg`
 _Time-optimal retiming of a joint waypoint path (Kunz-Stilman style)._
@@ -503,11 +513,11 @@ _Time-optimal retiming of a joint waypoint path (Kunz-Stilman style)._
 ## `one.robots.end_effectors.ee_mixins`
 
 - **class `EndEffectorMixin`** — Uniform object-holding for any actuated end effector (gripper, hand).
-  - methods: `attach`, `detach`
+  - methods: `hold`, `release`
 - **class `GripperMixin`** — A parallel-jaw gripper: closes via a single scalar ``set_opening``, and
   - methods: `open`, `close`, `set_opening`, `grip_at`, `grasp_center_tcp`, `qpos`, `mode`
 - **class `PointMixin`**
-  - methods: `activate`, `deactivate`, `touch_at`, `attach`, `detach`, `is_activated`
+  - methods: `activate`, `deactivate`, `touch_at`, `hold`, `release`, `is_activated`
 - **class `DexHandMixin`** — Behavior for a multi-finger dexterous hand (a MechBase EE).
   - methods: `grasp_spec`, `open_hand`, `open`, `grip`, `pinch`, `tripod`, `power`, `grasp_at`, `pinch_at`, `power_at`, `as_jaw`
 - **class `JawView`** — A parallel-jaw view of a dexterous hand, bound to one opposition
@@ -558,6 +568,12 @@ _Time-optimal retiming of a joint waypoint path (Kunz-Stilman style)._
 - `prepare_mechstruct(collision_type=ouc.CollisionType.MESH)` — Load the XHand right (12-dof dexterous hand) from its URDF into a
 - **class `XHandRight`** — XHand right: a 12-dof dexterous hand as a mountable MechBase EE with the
   - methods: `grasp_spec`, `goto_given_conf`, `rand_conf`
+
+## `one.robots.humanoids.gento.luna.luna`
+
+- `prepare_mechstruct(collision_type=ouc.CollisionType.MESH)` — Load the Gento Luna URDF into a MechStruct, via the shared urdf_loader.
+- **class `Luna`** — Gento Luna wheeled humanoid, bare (no end-effectors): a mobile underpan,
+  - methods: `lnk`, `jnt`
 
 ## `one.robots.humanoids.linx.l1.l1`
 
@@ -908,3 +924,59 @@ _Transform & rotation math: rotmat_from_* (axangle, quat, euler, rotvec,_
 
 - **class `World`**
   - methods: `on_resize`, `on_draw`, `set_scene`, `auto_cam_orbit`, `schedule_interval`, `schedule_once`, `schedule_interval_after`, `stop`, `stop_after`, `run`
+
+## `one.vision.ar_marker.make_pdfboard`
+_Printable PDF boards: ArUco markers, ChArUco, chessboard._
+
+- `make_aruco_board(nrow, ncolumn, marker_dict=aruco.DICT_6X6_250, start_id=0, marker_size=25, save_path='./', name='test', frame_size=None, paper_width=210, paper_height=297, dpi=600)` — A grid of ``nrow`` x ``ncolumn`` ArUco markers, ids from ``start_id``
+- `make_charuco_board(nrow, ncolumn, marker_dict=aruco.DICT_4X4_250, square_size=25, marker_ratio=0.57, save_path='./', name='test', frame_size=None, paper_width=210, paper_height=297, dpi=600)` — A ChArUco board of ``nrow`` x ``ncolumn`` squares; each marker is
+- `make_dual_marker(marker_dict=aruco.DICT_4X4_250, left_id=0, right_id=1, marker_size=45, save_path='./', name='test', frame_size=(150, 60), paper_width=210, paper_height=297, dpi=600)` — Two markers side by side, spaced so that the margin to ``frame_size``
+- `make_multi_marker(marker_dict=aruco.DICT_4X4_250, id_list=(0, 1, 2, 3, 4, 5), marker_pos_list=((-80, 30), (-80, 0), (-80, -30), (80, 30), (80, 0), (80, -30)), marker_size=25, save_path='./', name='test', frame_size=(190, 130), paper_width=210, paper_height=297, dpi=600)` — Markers ``id_list`` centred at ``marker_pos_list`` (mm from the page
+- `make_chess_board(nrow, ncolumn, square_size=25, save_path='./', name='test', frame_size=None, paper_width=210, paper_height=297, dpi=600)` — A chessboard of ``nrow`` x ``ncolumn`` squares. Returns the
+- `make_chess_and_charuco_board(nrow_charuco=3, ncolumn_charuco=5, square_size_charuco=25, nrow_chess=3, ncolumn_chess=5, square_size_chess=25, marker_dict=aruco.DICT_6X6_250, marker_ratio=0.57, save_path='./', name='test', frame_size=None, paper_width=210, paper_height=297, dpi=600)` — A ChArUco board in the upper half of the page, a chessboard in the
+
+## `one.vision.calibrate.cameras`
+_Find USB webcams of one model by the hub port they are plugged into._
+
+- `find_by_port(vid=CAM_VID, pid=CAM_PID, backend=cv2.CAP_DSHOW)` — ``{hub port: OpenCV index}`` for every ``vid:pid`` camera present.
+
+## `one.vision.calibrate.charuco`
+_The ChArUco board for calibrating the cameras, and taking lens_
+
+- `charuco_board()` — The board as OpenCV detects it (sizes in m).
+- `make_pdf()` — Write the printable board next to this file; its path.
+- `capture(port, out_dir, label='camera')` — Live view of the webcam on hub ``port`` with the board's corners
+
+## `one.vision.calibrate.handeye`
+_Hand-eye calibration of a camera on a robot's flange: where the camera_
+
+- `load_handeye(path)` — The 4x4 flange -> camera tf saved at ``path``.
+- `flange_tfs(robot, qs_list)` — ``robot``'s flange tf in the world for each joint vector.
+- `solve(detector, tfs_w_flange, observations)` — ``(X flange -> camera, W board in world, per-image RMS px)`` fitted
+- `report(tf_flange_cam, tf_w_board, per_image, names=None)` — Print the result and the board check.
+- `calibrate(robot, detector, data_dir, out_path)` — Solve from the images and ``poses.json`` in ``data_dir`` (taken by
+- **class `BoardDetector`** — The board's corners and pose in a camera from one image. ``fisheye``:
+  - methods: `normalize`, `corners`, `pose`, `project`
+
+## `one.vision.calibrate.handeye_capture`
+_Move a robot through ~20 poses that look at the ChArUco board on the_
+
+- `run(make_session, data_dir, calibrate)` — Clear ``data_dir``, record with ``make_session()`` (a :class:`Session`
+- **class `WebCam`** — The webcam on hub ``port``, kept open for the whole run.
+  - methods: `frame`, `close`
+- **class `Session`** — The arm, the camera and the board detector of a hand-eye run.
+  - methods: `close`, `qs_now`, `path_to`, `go`, `record`, `save`, `bootstrap_goals`, `plan_views`, `poses_seen`, `visit`, `run`
+
+## `one.vision.calibrate.lens`
+_Lens calibration of a webcam from the ChArUco images saved by_
+
+- `load_intrinsics(path)` — ``(K, D)`` of the fisheye model saved at ``path``.
+- `detect_all(image_dir)` — ``(names, object points, image points, image size)`` for every image
+- `calibrate(obj_pts, img_pts, size)` — ``(rms, K, D, rvecs, tvecs)`` of the fisheye model.
+- `per_image_rms(obj_pts, img_pts, K, D, rvecs, tvecs)` — RMS reprojection error (px) of each image.
+- `fit(image_dir, out_path)` — Calibrate from the images in ``image_dir``, write ``out_path``.
+
+## `one.vision.calibrate.menu`
+_The step menu a camera's ``calib.py`` shows when it is run: numbered_
+
+- `run(title, steps)` — ``steps``: ``[(label, fn), ...]``, ``fn() -> bool``. Lists them, runs

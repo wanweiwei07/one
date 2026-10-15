@@ -4,10 +4,10 @@
 登録します:
 
 - **グリッパ**（`GripperMixin`）は `'grasp_center'` tcp を登録し、
-  `open()` / `close()` / `set_jaw_width()` および `grasp(child)` / `release(child)`
+  `open()` / `close()` / `set_opening()` および `hold(child)` / `release(child)`
   を公開します。
 - **ポイントツール**（`PointMixin`、例: ドライバ）は `'tip'` tcp を登録し、
-  `touch_at(...)` / `attach(...)` を公開します。
+  `touch_at(...)` / `hold(...)` を公開します。
 
 ## 取り付け
 
@@ -26,7 +26,7 @@ qs = arm.ik(pos, rotmat, tcp=gripper.tcp('grasp_center'))
 
 この例では素の RS007L から始め、2FG7 グリッパを取り付けてバニーをピックアンド
 プレースし、スタンドに戻して取り外し、それからドライバを取り付けてバニーの上で
-作業します。mount / grasp / release / unmount を端から端まで実行します:
+作業します。mount / hold / release / unmount を端から端まで実行します:
 
 ```python
 --8<-- "examples/test_rs007l_toolchange.py"
@@ -40,7 +40,7 @@ qs = arm.ik(pos, rotmat, tcp=gripper.tcp('grasp_center'))
   `gripper.tcp('grasp_center')`、ドライバが付いている間は
   `screwdriver.tcp('tip')`、アームが素の間はデフォルトの `'flange'` です。
 - `SceneObject` はデフォルトで `is_free = False` です。グリッパに取り付けられる
-  よう、`grasp` の前に `bunny.is_free = True` を設定してください。
+  よう、`hold` の前に `bunny.is_free = True` を設定してください。
 
 ## 関連項目
 
