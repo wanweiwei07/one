@@ -96,3 +96,15 @@ site/
 
 # Claude Code local config
 .claude/
+
+# Model weights (downloaded at runtime, not source)
+mobileclip*.ts
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.tflite
+
+# Local tool output
+*.prof
+imgui.ini
