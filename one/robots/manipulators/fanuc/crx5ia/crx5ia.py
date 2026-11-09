@@ -241,6 +241,13 @@ class CRX5ia(orbmb.MechBase, SingleArmManipulation):
                        solver=ormfci.CRX5iaAnalyticIK)
         self.add_tcp('flange', self.runtime_lnks[-1])
 
+    def ik(self, tgt_pos, tgt_rotmat, chain='main', tcp='flange',
+           max_solutions=16, ref_qs=None, **kwargs):
+        """``MechBase.ik``, keeping all solutions by default: the offset wrist
+        gives up to 16, where a spherical wrist gives at most 8."""
+        return super().ik(tgt_pos, tgt_rotmat, chain=chain, tcp=tcp,
+                          max_solutions=max_solutions, ref_qs=ref_qs, **kwargs)
+
 
 if __name__ == "__main__":
     import one.viewer.world as ovw

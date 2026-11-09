@@ -138,7 +138,7 @@ class CVR038(orbmb.MechBase, SingleArmManipulation):
         c = self.structure.compiled
         # chain + its analytic solver, declared together
         self.add_chain('main', c.root_lnk, c.tip_lnks[0],
-                       solver=ormdci.CVR038PencilIK)
+                       solver=ormdci.CVR038AnalyticIK)
         self.add_tcp('flange', self.runtime_lnks[-1])
 
 

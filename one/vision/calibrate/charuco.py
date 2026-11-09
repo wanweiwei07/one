@@ -13,13 +13,14 @@ tilts and distances. 20-30 images.
 """
 
 import os
+import time
 
 import cv2
 from cv2 import aruco
 
 from one.vision.ar_marker.make_pdfboard import make_charuco_board
 
-from one.vision.calibrate.cameras import find_by_port
+from one.vision.calibrate.cameras import index_of
 
 
 NROW = 10                       # squares down the (portrait A4) page
@@ -49,18 +50,48 @@ def make_pdf():
                               name=NAME)
 
 
+def _delete_old(out_dir):
+    """Images already in ``out_dir`` would be fitted together with the new
+    ones -- wrong once the lens (focus, zoom) was touched. Ask whether to
+    delete them."""
+    old = sorted(f for f in os.listdir(out_dir) if f.endswith('.png'))
+    if not old:
+        return
+    newest = max(os.path.getmtime(os.path.join(out_dir, f)) for f in old)
+    print(f'{len(old)} images already in {out_dir} (newest '
+          f'{time.strftime("%Y-%m-%d %H:%M", time.localtime(newest))}). '
+          'The lens fit uses all of them: keep them only if the lens was not '
+          'touched since.')
+    if input('delete them? y / Enter keeps: ').strip().lower() == 'y':
+        for f in old:
+            os.remove(os.path.join(out_dir, f))
+        print(f'deleted {len(old)} images')
+
+
+def _next_number(out_dir):
+    """One past the highest ``NNN.png`` in ``out_dir`` (never overwrites,
+    also when some were taken out)."""
+    nums = [int(f[:-4]) for f in os.listdir(out_dir)
+            if f.endswith('.png') and f[:-4].isdigit()]
+    return max(nums) + 1 if nums else 0
+
+
 def capture(port, out_dir, label='camera'):
     """Live view of the webcam on hub ``port`` with the board's corners
     drawn; space saves the frame into ``out_dir`` (only with MIN_CORNERS),
-    q or Esc quits. True unless the camera failed."""
-    by_port = find_by_port()
-    if port not in by_port:
-        print(f'no camera on hub port {port} (found: {by_port})')
+    q or Esc quits. Images already there are kept or deleted first
+    (asked). True unless the camera failed."""
+    try:
+        index = index_of(port)
+    except LookupError as exc:
+        print(exc)
         return False
     os.makedirs(out_dir, exist_ok=True)
+    _delete_old(out_dir)
     n_saved = len([f for f in os.listdir(out_dir) if f.endswith('.png')])
+    number = _next_number(out_dir)
     detector = cv2.aruco.CharucoDetector(charuco_board())
-    cap = cv2.VideoCapture(by_port[port], cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
     if not cap.isOpened():
         print(f'{label}: cannot open')
         return False
@@ -91,8 +122,9 @@ def capture(port, out_dir, label='camera'):
                 if n < MIN_CORNERS:
                     print(f'only {n} corners, not saved')
                     continue
-                path = os.path.join(out_dir, f'{n_saved:03d}.png')
+                path = os.path.join(out_dir, f'{number:03d}.png')
                 cv2.imwrite(path, frame)     # the raw frame, no drawing
+                number += 1
                 n_saved += 1
                 print(f'{path} ({n} corners)')
     finally:

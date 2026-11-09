@@ -9,9 +9,9 @@ _b-CAP (ORiN2) client for DENSO controllers + a COBOTTA joint-state reader._
 - **class `BCapClient`** — Minimal synchronous b-CAP client over TCP.
   - methods: `close`, `service_start`, `service_stop`, `controller_connect`, `controller_disconnect`, `controller_getrobot`, `controller_getvariable`, `controller_execute`, `robot_getvariable`, `robot_execute`, `robot_move`, `robot_release`, `variable_getvalue`, `variable_release`
 - **class `Cobotta`** — Read-only b-CAP session with one COBOTTA controller.
-  - methods: `is_connected`, `connect`, `joint_angles`, `close`
+  - methods: `is_connected`, `connect`, `joint_angles`, `disconnect`
 - **class `CobottaMotion`** — A COBOTTA session that can also MOVE the arm.
-  - methods: `is_armed`, `enable`, `disable`, `set_speed`, `move_qs`, `move_path`, `close`
+  - methods: `is_armed`, `enable`, `disable`, `set_speed`, `move_qs`, `move_path`, `disconnect`
 
 ## `one.drivers.cubemars`
 
@@ -32,4 +32,4 @@ _Dynamixel Protocol 2.0 over a serial (RS485/TTL) port -- no vendor SDK._
 - `find_port(usb_serial)` — The port the USB adapter with serial number ``usb_serial`` is on.
 - **class `DynamixelError`** — A bad packet, a timeout, or an error flag reported by the servo.
 - **class `Dynamixel`** — One servo on one serial port.
-  - methods: `connect`, `close`, `is_open`, `ping`, `model_name`, `reboot`, `read`, `write`, `torque`, `set_operating_mode`, `hardware_error`, `clear_hardware_error`, `ticks_to_deg`, `deg_to_ticks`, `present_current_ma`, `wait_until_stopped`
+  - methods: `connect`, `disconnect`, `is_connected`, `ping`, `model_name`, `reboot`, `read`, `write`, `torque`, `set_operating_mode`, `hardware_error`, `clear_hardware_error`, `ticks_to_deg`, `deg_to_ticks`, `present_current_ma`, `wait_until_stopped`

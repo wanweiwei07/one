@@ -24,16 +24,19 @@ class CRX5iaAnalyticIK(orbka.AnaIKBase):
     on a circle parameterised by one angle phi:
         h5(phi) = cos(phi) e1 + sin(phi) e2,   e1, e2 _|_ h6
         p_j5    = p_j6 - L5 * h5(phi)
-    Given p_j5 the arm (h1, h2//h3) is closed form (q1 = atan2, 2-link elbow),
-    which yields R03 and h4 = R03 @ (-X).  Because h5 _|_ h4 always holds, phi is
-    pinned by the single scalar equation
-        g(phi) = h5(phi) . h4(phi) = 0
-    i.e. geometrically "wrist-offset segment _|_ forearm".  g has only ~2 roots
-    per arm branch (cf. the degree-16 q4 polynomial of CVR038), so a robust 1-D
-    bracket/bisection over phi finds them all.  q4 then comes from h5, and
-    (q5, q6) from an X-Y-X Euler split of R36 = R03^T R06.  All candidates are
-    FK-residual filtered, so any numerically marginal phi root is rejected.
+    Given p_j5 the arm (h1, h2//h3) is closed form, and h5 _|_ h4 must hold, i.e.
+    "wrist-offset segment _|_ forearm".  Eliminating the elbow's square root
+    turns that into a trigonometric polynomial in phi (see _phi_roots), solved
+    directly.  Each root gives q1, q2, q3, and h5 gives q4, then (q5, q6) follow
+    from the remaining Y-X rotation.  This has no gimbal case: q4 is never split
+    from q6 through the wrist rotation, so q5 = 0 needs no special handling.
+    All candidates are FK-residual filtered.
     """
+    ROOT_TOL = 1e-3     # |abs(z) - 1| for a polynomial root to count as real
+    REACH_TOL = 1e-7    # slack on the elbow cosine, for a root at full stretch
+    G_TOL = 1e-3        # |h5 . h4| selects the arm branches of a root
+    POLISH_ITERS = 3    # Newton steps on each polynomial root
+    POLISH_MAX_STEP = 1e-3  # rad, a larger step is off its root (near-double)
 
     def __init__(self, chain, joint_limits=None):
         super().__init__(chain, joint_limits=joint_limits)
@@ -85,7 +88,7 @@ class CRX5iaAnalyticIK(orbka.AnaIKBase):
         return np.array([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]])
 
     # ---- public entry ---------------------------------------------------
-    def ik_all(self, tgt_tf_in_root, residual_tol=1e-4, n_phi=720, **kwargs):
+    def ik_all(self, tgt_tf_in_root, residual_tol=1e-4, **kwargs):
         tgt_tf = np.asarray(tgt_tf_in_root, dtype=np.float64)
         t06 = tgt_tf @ np.linalg.inv(self.t_6tcp)
         r06 = t06[:3, :3]
@@ -98,108 +101,64 @@ class CRX5iaAnalyticIK(orbka.AnaIKBase):
         e2 = np.cross(h6, e1)
 
         all_qs = []
-        for label, phi in self._phi_roots(p_j6, e1, e2, n_phi):
-            cand = self._complete(label, phi, p_j6, e1, e2, r06)
-            all_qs.extend(cand)
+        for phi in self._phi_roots(p_j6, e1, e2):
+            h5 = math.cos(phi) * e1 + math.sin(phi) * e2
+            p_j5 = p_j6 - self.l5 * h5
+            for label in ((0, 1), (0, -1), (1, 1), (1, -1)):
+                q123 = self._arm_branch(p_j5, label)
+                if q123 is None:
+                    continue
+                q1, q2, q3 = q123
+                # h4 = Rz(q1) Ry(q2 - q3) (-X), closed form
+                cpsi, spsi = math.cos(q2 - q3), math.sin(q2 - q3)
+                h4 = np.array([-cpsi * math.cos(q1), -cpsi * math.sin(q1), spsi])
+                if abs(h5 @ h4) <= self.G_TOL:
+                    all_qs.append(self._complete(q123, h5, r06))
 
         all_qs = self._wrap_to_limits(all_qs)
         all_qs = self._filter_fk_residual(all_qs, tgt_tf, residual_tol)
         return self._unique(all_qs)
 
-    # ---- driving equation g(phi) = h5 . h4 ------------------------------
-    def _g(self, label, phi, p_j6, e1, e2):
-        cphi, sphi = math.cos(phi), math.sin(phi)
-        h5x = cphi * e1[0] + sphi * e2[0]
-        h5y = cphi * e1[1] + sphi * e2[1]
-        h5z = cphi * e1[2] + sphi * e2[2]
-        p5 = (p_j6[0] - self.l5 * h5x,
-              p_j6[1] - self.l5 * h5y,
-              p_j6[2] - self.l5 * h5z)
-        q123 = self._arm_branch(p5, label)
-        if q123 is None:
-            return None, None
-        q1, q2, q3 = q123
-        psi = q2 - q3                       # h4 = Rz(q1) Ry(psi) (-X), closed form
-        cpsi, spsi = math.cos(psi), math.sin(psi)
-        # g = h5 . h4,  h4 = [-cpsi cos q1, -cpsi sin q1, spsi]
-        g = -cpsi * math.cos(q1) * h5x - cpsi * math.sin(q1) * h5y + spsi * h5z
-        return g, q123
+    # ---- driving equation h5 . h4 = 0, as a polynomial in phi ------------
+    def _phi_roots(self, p_j6, e1, e2):
+        """Every real phi with h5 . h4 = 0.
 
-    def _g_all_labels(self, phis, p_j6, e1, e2):
-        """Vectorised g(phi) for all 4 arm branches at once.
-
-        The wrist point, elbow magnitude and arccos are shared across branches;
-        only q1 (+pi for the back branch) and the elbow sign differ.  Returns a
-        dict {label: g_array} with NaN where the arm cannot reach.
+        With v = p_j5 - p_j2, d2 = v . v, the forearm is f = a v + b w, where
+        w is the unit vector _|_ v in the arm's vertical plane.  The triangle
+        (l2, l4, |v|) gives
+            a d2 = K / 2,   b^2 = l4^2 - K^2 / (4 d2),   K = d2 + l4^2 - l2^2
+        and h5 . w = (B d2 - A vz) / (rho |v|), with A = h5 . v, B = h5 . Z,
+        rho^2 = d2 - vz^2.  Squaring h5 . f = 0 away from the sign of b (the
+        elbow) and clearing denominators:
+            F = K^2 A^2 (d2 - vz^2) - (4 d2 l4^2 - K^2) (B d2 - A vz)^2 = 0
+        d2, K, A, vz, B are all degree 1 in (cos phi, sin phi), so F is a
+        trigonometric polynomial of degree 6.  13 samples determine it exactly,
+        and with z = exp(i phi) its roots are polynomial roots of degree 12.
         """
+        phis = 2.0 * np.pi * np.arange(13) / 13
         h5 = np.outer(np.cos(phis), e1) + np.outer(np.sin(phis), e2)
-        p5 = p_j6[None, :] - self.l5 * h5
-        px, py, pz = p5[:, 0], p5[:, 1], p5[:, 2]
-        h = pz - self.z0
-        a = np.arctan2(py, px)
-        rho = np.hypot(px, py)
-        reach_far = (self.l2 + self.l4) ** 2
-        reach_near = (self.l2 - self.l4) ** 2
-
-        out = {}
-        for q1_branch in (0, 1):
-            q1 = a + (np.pi if q1_branch else 0.0)
-            r = rho if q1_branch == 0 else -rho     # px cos q1 + py sin q1
-            d2 = r * r + h * h
-            reach = (d2 <= reach_far) & (d2 >= reach_near)
-            d2c = np.clip(d2, reach_near, reach_far)
-            ac = np.arccos(np.clip((d2c - self.l2 ** 2 - self.l4 ** 2)
-                                   / (2.0 * self.l2 * self.l4), -1.0, 1.0))
-            atan_rh = np.arctan2(r, h)
-            cq1, sq1 = np.cos(q1), np.sin(q1)
-            for elbow in (+1, -1):
-                el = elbow * ac
-                beta = np.arctan2(self.l4 * np.sin(el),
-                                  self.l2 + self.l4 * np.cos(el))
-                q2 = atan_rh - beta
-                ux, uz = self.l2 * np.sin(q2), self.l2 * np.cos(q2)
-                fx, fz = r - ux, h - uz
-                psi = q2 - (q2 - np.arctan2(-fz, fx))   # = atan2(-fz, fx)
-                cpsi, spsi = np.cos(psi), np.sin(psi)
-                # g = h5 . h4,  h4 = [-cpsi cq1, -cpsi sq1, spsi]
-                g = (h5[:, 0] * (-cpsi * cq1) + h5[:, 1] * (-cpsi * sq1)
-                     + h5[:, 2] * spsi)
-                g = np.where(reach, g, np.nan)
-                out[(q1_branch, elbow)] = g
-        return out
-
-    def _phi_roots(self, p_j6, e1, e2, n_phi):
-        """Bracket (vectorised scan) + bisect every g(phi)=0 per arm branch."""
-        phis = np.linspace(0.0, 2.0 * np.pi, n_phi, endpoint=False)
-        step = 2.0 * np.pi / n_phi
-        g_by_label = self._g_all_labels(phis, p_j6, e1, e2)
-        roots = []
-        for label, g in g_by_label.items():
-            sign = g < 0.0
-            cross = np.where((~np.isnan(g)) & (~np.isnan(np.roll(g, -1)))
-                             & (sign != np.roll(sign, -1)))[0]
-            for k in cross:
-                phi = self._bisect(label, phis[k], phis[k] + step,
-                                   p_j6, e1, e2)
-                if phi is not None:
-                    roots.append((label, phi))
+        v = p_j6 - np.array([0.0, 0.0, self.z0]) - self.l5 * h5
+        d2 = np.sum(v * v, axis=1)
+        k = d2 + self.l4 ** 2 - self.l2 ** 2
+        a = np.sum(h5 * v, axis=1)
+        vz = v[:, 2]
+        b = h5[:, 2]
+        f = (k * k * a * a * (d2 - vz * vz)
+             - (4.0 * d2 * self.l4 ** 2 - k * k) * (b * d2 - a * vz) ** 2)
+        c = np.fft.fft(f) / 13
+        coeffs = c[np.arange(6, -7, -1)]    # z^12 ... z^0, negative k wraps
+        if np.abs(coeffs).max() < 1e-14:    # F = 0 for all phi: a self-motion
+            return []
+        z = np.roots(coeffs)
+        roots = np.angle(z[np.abs(np.abs(z) - 1.0) < self.ROOT_TOL])
+        # eigenvalues are only good to ~1e-6 here, and near full stretch q moves
+        # as sqrt(phi - limit): polish on F itself
+        orders = np.arange(6, -7, -1)
+        for _ in range(self.POLISH_ITERS):
+            terms = coeffs * np.exp(1j * np.outer(roots, orders))
+            step = np.sum(terms, axis=1).real / np.sum(1j * orders * terms, axis=1).real
+            roots = roots - np.where(np.abs(step) < self.POLISH_MAX_STEP, step, 0.0)
         return roots
-
-    def _bisect(self, label, lo, hi, p_j6, e1, e2, n_iter=14):
-        glo = self._g(label, lo, p_j6, e1, e2)[0]
-        if glo is None:
-            return None
-        for _ in range(n_iter):
-            mid = 0.5 * (lo + hi)
-            gm = self._g(label, mid, p_j6, e1, e2)[0]
-            if gm is None:
-                return None
-            if (glo < 0.0) != (gm < 0.0):
-                hi = mid
-            else:
-                lo = mid
-                glo = gm
-        return 0.5 * (lo + hi)
 
     # ---- closed-form arm: p_j5 -> (q1, q2, q3) for one branch label -----
     def _arm_branch(self, p_j5, label):
@@ -208,11 +167,10 @@ class CRX5iaAnalyticIK(orbka.AnaIKBase):
         q1 = math.atan2(py, px) + (math.pi if q1_branch else 0.0)
         r = px * math.cos(q1) + py * math.sin(q1)
         h = pz - self.z0
-        d2 = r * r + h * h
         l2, l4 = self.l2, self.l4
-        if d2 > (l2 + l4) ** 2 or d2 < (l2 - l4) ** 2:
+        cos_el = (r * r + h * h - l2 * l2 - l4 * l4) / (2.0 * l2 * l4)
+        if abs(cos_el) > 1.0 + self.REACH_TOL:
             return None
-        cos_el = (d2 - l2 * l2 - l4 * l4) / (2.0 * l2 * l4)
         cos_el = -1.0 if cos_el < -1.0 else (1.0 if cos_el > 1.0 else cos_el)
         el = elbow * math.acos(cos_el)
         beta = math.atan2(l4 * math.sin(el), l2 + l4 * math.cos(el))
@@ -222,33 +180,18 @@ class CRX5iaAnalyticIK(orbka.AnaIKBase):
         q3 = q2 - math.atan2(-fz, fx)
         return q1, q2, q3
 
-    # ---- wrist: R36 = Rx(-q4) Ry(-q5) Rx(-q6) (X-Y-X Euler) -------------
-    def _wrist_xyx(self, r36):
-        out = []
-        cb = float(np.clip(r36[0, 0], -1.0, 1.0))
-        for beta in (np.arccos(cb), -np.arccos(cb)):
-            sb = np.sin(beta)
-            if abs(sb) < 1e-9:
-                # gimbal: fold q4+q6, pick q4 such that q6 = 0
-                a_plus_c = np.arctan2(r36[2, 1], r36[1, 1])
-                out.append((-a_plus_c, -beta, 0.0))
-                continue
-            a = np.arctan2(r36[1, 0] / sb, -r36[2, 0] / sb)
-            c = np.arctan2(r36[0, 1] / sb, r36[0, 2] / sb)
-            out.append((-a, -beta, -c))
-        return out
-
-    def _complete(self, label, phi, p_j6, e1, e2, r06):
-        _, q123 = self._g(label, phi, p_j6, e1, e2)
-        if q123 is None:
-            return []
+    # ---- wrist: R36 = Rx(-q4) Ry(-q5) Rx(-q6) ---------------------------
+    def _complete(self, q123, h5, r06):
         q1, q2, q3 = q123
         r03 = self._rotz(q1) @ self._roty(q2) @ self._roty(-q3)
-        r36 = r03.T @ r06
-        out = []
-        for q4, q5, q6 in self._wrist_xyx(r36):
-            out.append(np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32))
-        return out
+        # h5 in frame 3 is Rx(-q4) (-Y) = (0, -cos q4, sin q4)
+        h5_3 = r03.T @ h5
+        q4 = math.atan2(h5_3[2], -h5_3[1])
+        # what is left is Ry(-q5) Rx(-q6)
+        r = self._rotx(q4) @ r03.T @ r06
+        q5 = -math.atan2(-r[2, 0], r[0, 0])
+        q6 = -math.atan2(-r[1, 2], r[1, 1])
+        return np.array([q1, q2, q3, q4, q5, q6], dtype=np.float32)
 
     # ---- FK residual + housekeeping ------------------------------------
     def _fk_tf(self, qs):

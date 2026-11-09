@@ -41,6 +41,9 @@ class World(pyglet.window.Window):
             self.schedule_interval(self.auto_cam_orbit, interval=1 / 30.0)
         self.input_manager = ovim.InputManager(self)
         self.fps_display = pyglet.window.FPSDisplay(self)
+        # callables drawn over the scene each frame, after it (2D panels:
+        # one.viewer.imgui_overlay)
+        self.overlays = []
 
     def on_resize(self, width, height):
         gl.glViewport(0, 0, *self.get_framebuffer_size())
@@ -57,6 +60,8 @@ class World(pyglet.window.Window):
             #                              width=self.width,
             #                              height=self.height)
         # self.fps_display.draw()
+        for overlay in self.overlays:
+            overlay()
 
     def set_scene(self, scene):
         self.scene = scene

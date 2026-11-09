@@ -246,7 +246,7 @@ class Dynamixel:
         self._ser.reset_input_buffer()
         return self
 
-    def close(self):
+    def disconnect(self):
         if self._ser is not None:
             self._ser.close()
             self._ser = None
@@ -255,10 +255,10 @@ class Dynamixel:
         return self.connect()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.disconnect()
 
     @property
-    def is_open(self):
+    def is_connected(self):
         return self._ser is not None and self._ser.is_open
 
     # ---- transactions -----------------------------------------------------
@@ -298,7 +298,7 @@ class Dynamixel:
         return body[2:]
 
     def _transact(self, instruction, params=b'', expect_status=True):
-        if not self.is_open:
+        if not self.is_connected:
             raise DynamixelError(f'adapter {self.usb_serial} is not open')
         packet = build_packet(self.dxl_id, instruction, params)
         last = None

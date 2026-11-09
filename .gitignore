@@ -89,6 +89,8 @@ scene_free.xml
 *.hdf5
 kurabo/
 coripps/
+khi/
+khi_v2/
 # mkdocs build output
 site/
 

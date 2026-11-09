@@ -43,7 +43,7 @@ class AnaIKBase:
         root_tf = oum.tf_from_pos_rotmat(root_pos, root_rotmat)
         tgt_tf = oum.tf_from_pos_rotmat(tgt_pos, tgt_rotmat)
         tgt_tf_in_root = np.linalg.inv(root_tf) @ tgt_tf
-        sols = self.ik_all(tgt_tf_in_root, **kwargs)
+        sols = self._fit_limits(self.ik_all(tgt_tf_in_root, **kwargs))
         if not sols:
             return []
         if ref_qs is not None:
@@ -85,6 +85,23 @@ class AnaIKBase:
         for i in range(k):
             tf = tf @ self.chain.jnts[i].zero_tf @ self.chain.jnts[i].motion_tf(qs[i])
         return tf[:3, :3]
+
+    def _fit_limits(self, qs_list, tol=1e-6):
+        """Keep only solutions inside the joint limits. A joint outside its
+        range first tries its 2*pi equivalent, since ik_all gives angles near
+        [-pi, pi] and a valid range may lie elsewhere (e.g. [0, 2*pi])."""
+        if self.joint_limits is None:
+            return qs_list
+        lo = np.asarray(self.joint_limits[0], dtype=np.float64)
+        hi = np.asarray(self.joint_limits[1], dtype=np.float64)
+        out = []
+        for q in qs_list:
+            q = np.asarray(q, dtype=np.float64)
+            outside = (q < lo - tol) | (q > hi + tol)
+            fitted = np.where(outside, lo + np.mod(q - lo, 2.0 * np.pi), q)
+            if np.all(fitted <= hi + tol) and np.all(fitted >= lo - tol):
+                out.append(np.clip(fitted, lo, hi).astype(np.float32))
+        return out
 
     def _filter_limits(self, qs_list):
         if self.joint_limits is None:

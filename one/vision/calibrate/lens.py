@@ -3,9 +3,11 @@
 
 Fisheye model (OpenCV ``cv2.fisheye``: K + 4 distortion coefficients) -- on
 this wide-angle lens it fits as well as the 8-coefficient rational pinhole
-model and much better than the 5-coefficient one. :func:`fit` prints the
-RMS reprojection error and the worst images and writes the result to a
-json.
+model and much better than the 5-coefficient one. :func:`fit` drops the
+images that fit much worse than the rest (blur, a bent board, a corner
+found wrong) and fits again, prints the RMS reprojection error and the
+worst images kept and writes the result -- with the dropped images'
+names -- to a json.
 """
 
 import os
@@ -19,6 +21,18 @@ from one.vision.calibrate.charuco import MIN_CORNERS, charuco_board
 
 
 N_WORST = 5                     # how many of the worst images to list
+# an image is dropped when its RMS is above median + OUTLIER_MADS robust
+# std of all images', and above OUTLIER_MIN_PX
+OUTLIER_MADS = 4
+OUTLIER_MIN_PX = 0.5
+
+
+def outliers(errors):
+    """Mask of the ``errors`` far above the rest (see OUTLIER_MADS)."""
+    errors = np.asarray(errors)
+    med = np.median(errors)
+    std = 1.4826 * np.median(np.abs(errors - med))
+    return errors > max(med + OUTLIER_MADS * std, OUTLIER_MIN_PX)
 
 
 def load_intrinsics(path):
@@ -73,8 +87,19 @@ def fit(image_dir, out_path):
     if len(names) < 10:
         print(f'only {len(names)} usable images in {image_dir}; take more')
         return False
-    rms, K, D, rvecs, tvecs = calibrate(obj_pts, img_pts, size)
-    errors = per_image_rms(obj_pts, img_pts, K, D, rvecs, tvecs)
+    dropped = []
+    while True:
+        rms, K, D, rvecs, tvecs = calibrate(obj_pts, img_pts, size)
+        errors = per_image_rms(obj_pts, img_pts, K, D, rvecs, tvecs)
+        bad = outliers(errors)
+        if not bad.any():
+            break
+        dropped += [(names[i], errors[i]) for i in np.flatnonzero(bad)]
+        names, obj_pts, img_pts = ([x[i] for i in np.flatnonzero(~bad)]
+                                   for x in (names, obj_pts, img_pts))
+    if dropped:
+        print(f'dropped {len(dropped)} images fitting much worse: '
+              + ', '.join(f'{n} {e:.2f}px' for n, e in dropped))
     print(f'{len(names)} images, {sum(len(p) for p in img_pts)} corners, '
           f'{size[0]}x{size[1]}')
     print(f'RMS reprojection error {rms:.3f} px')
@@ -91,6 +116,7 @@ def fit(image_dir, out_path):
                    'K': K.tolist(),
                    'D': D.ravel().tolist(),
                    'rms_px': float(rms),
-                   'n_images': len(names)}, f, indent=2)
+                   'n_images': len(names),
+                   'dropped': [n for n, _ in dropped]}, f, indent=2)
     print(out_path)
     return True

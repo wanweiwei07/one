@@ -197,9 +197,10 @@ def report(tf_flange_cam, tf_w_board, per_image, names=None):
           'tilt should be ~0)')
 
 
-def calibrate(robot, detector, data_dir, out_path):
-    """Solve from the images and ``poses.json`` in ``data_dir`` (taken by
-    ``robot``, seen by ``detector``'s camera) and write ``out_path``."""
+def load_run(robot, detector, data_dir):
+    """``(names, flange tfs, observations)`` of the usable images of one
+    recorded run (images + ``poses.json`` in ``data_dir``, taken by
+    ``robot``, seen by ``detector``'s camera)."""
     with open(os.path.join(data_dir, RECORD_NAME), encoding='utf-8') as f:
         records = json.load(f)
     names, qs_list, observations = [], [], []
@@ -212,18 +213,25 @@ def calibrate(robot, detector, data_dir, out_path):
         names.append(rec['image'])
         qs_list.append(rec['qs'])
         observations.append(found)
-    if len(qs_list) < 5:
-        print(f'only {len(qs_list)} usable poses; need more')
+    return names, flange_tfs(robot, qs_list), observations
+
+
+def calibrate(robot, detector, data_dir, out_path):
+    """Solve from the images and ``poses.json`` in ``data_dir`` (taken by
+    ``robot``, seen by ``detector``'s camera) and write ``out_path``."""
+    names, flanges, observations = load_run(robot, detector, data_dir)
+    if len(names) < 5:
+        print(f'only {len(names)} usable poses; need more')
         return False
-    print(f'{len(qs_list)} poses, '
+    print(f'{len(names)} poses, '
           f'{sum(len(img) for _, img in observations)} corners')
     tf_flange_cam, tf_w_board, per_image = solve(
-        detector, flange_tfs(robot, qs_list), observations)
+        detector, flanges, observations)
     report(tf_flange_cam, tf_w_board, per_image, names)
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump({'tf_flange_cam': tf_flange_cam.tolist(),
                    'tf_w_board': tf_w_board.tolist(),
                    'rms_px': float(np.sqrt(np.mean(np.square(per_image)))),
-                   'n_poses': len(qs_list)}, f, indent=2)
+                   'n_poses': len(names)}, f, indent=2)
     print(out_path)
     return True

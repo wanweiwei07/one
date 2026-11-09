@@ -15,6 +15,12 @@ Prefer these in-house utilities over trimesh / scipy / open3d / fcl. Auto-genera
 - **class `PointCloudBuffer`**
   - methods: `draw`
 
+## `one.viewer.imgui_overlay`
+_Dear ImGui panels drawn over a :class:`one.viewer.world.World`._
+
+- **class `ImGuiOverlay`** — ImGui over ``world``: ``draw()`` each frame issues the panels.
+  - methods: `frame`
+
 ## `one.viewer.input_manager`
 
 - **class `InputManager`**

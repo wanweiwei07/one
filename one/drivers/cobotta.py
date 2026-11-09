@@ -334,7 +334,7 @@ class Cobotta:
             self._hangle = self._client.robot_getvariable(
                 self._hrobot, '@CURRENT_ANGLE', '')
         except Exception:
-            self.close()
+            self.disconnect()
             raise
         return self
 
@@ -351,7 +351,7 @@ class Cobotta:
         return np.deg2rad(
             np.asarray(values[:ndof], dtype=np.float32)).astype(np.float32)
 
-    def close(self):
+    def disconnect(self):
         for release, handle in ((BCapClient.variable_release, self._hangle),
                                 (BCapClient.robot_release, self._hrobot),
                                 (BCapClient.controller_disconnect, self._hctrl)):
@@ -378,7 +378,7 @@ class Cobotta:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        self.disconnect()
         return False
 
 
@@ -487,10 +487,10 @@ class CobottaMotion(Cobotta):
             self.move_qs(qs, pass_motion=(i < last), option=option)
         return len(path)
 
-    def close(self):
+    def disconnect(self):
         if self._is_armed:
             self.disable()
-        super().close()
+        super().disconnect()
 
 
 if __name__ == '__main__':

@@ -11,9 +11,9 @@ Browse by subpackage (or see the single-page [API Index](../API_INDEX.md)):
 - [`one.manipulation`](manipulation.md) — 4 modules, 2 functions, 4 classes
 - [`one.motion`](motion.md) — 11 modules, 13 functions, 10 classes
 - [`one.physics`](physics.md) — 9 modules, 7 functions, 17 classes
-- [`one.robots`](robots.md) — 44 modules, 73 functions, 46 classes
+- [`one.robots`](robots.md) — 41 modules, 70 functions, 46 classes
 - [`one.scene`](scene.md) — 8 modules, 37 functions, 13 classes
 - [`one.stream`](stream.md) — 1 modules, 7 functions, 0 classes
 - [`one.utils`](utils.md) — 4 modules, 99 functions, 15 classes
-- [`one.viewer`](viewer.md) — 8 modules, 0 functions, 10 classes
-- [`one.vision`](vision.md) — 7 modules, 22 functions, 3 classes
+- [`one.viewer`](viewer.md) — 9 modules, 0 functions, 11 classes
+- [`one.vision`](vision.md) — 11 modules, 33 functions, 7 classes

@@ -1,3 +1,3 @@
-from .cvr038_pencil_ik import CVR038GeoIK, CVR038PencilIK
+from .cvr038_analytic_ik import CVR038AnalyticIK
 
-__all__ = ['CVR038PencilIK', 'CVR038GeoIK']
+__all__ = ['CVR038AnalyticIK']

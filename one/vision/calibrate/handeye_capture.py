@@ -32,7 +32,7 @@ import one.motion.probabilistic.rrt as ompr
 from one.drivers.cobotta import BCapError, CobottaMotion
 
 from one.utils.keys import _quit_pressed, _wait_for_g
-from one.vision.calibrate.cameras import find_by_port
+from one.vision.calibrate.cameras import index_of
 from one.vision.calibrate.charuco import NROW, NCOLUMN, SQUARE_SIZE
 from one.vision.calibrate import handeye as che
 
@@ -44,10 +44,12 @@ FLUSH_FRAMES = 10               # stale frames the camera has buffered
 BOOTSTRAP = ((3, 10), (3, -10), (4, 10), (4, -10), (5, 15), (5, -15))
 TILTS_DEG = (20, 35, 0)         # camera axis from vertical
 AZIMUTHS_DEG = (0, 60, 120, 180, 240, 300)
-DISTANCES = (0.20, 0.25)        # m, camera to board centre
+DISTANCES = (0.20, 0.25)        # m, camera to board centre (default; a
+                                # camera focused nearer passes its own)
 ROLLS_DEG = (0, 20, -20)
 N_VIEWS = 14
 IMAGE_MARGIN = 15               # px, board corners kept this far inside
+IN_VIEW = 1.0                   # share of the corners that must be in it
 _EXTEND_STEP_SIZE = np.pi / 36
 _MAX_ITERS = 3000
 _SHORTCUT_ITERS = 200
@@ -59,15 +61,16 @@ def _rot(axis, deg):
 
 
 class WebCam:
-    """The webcam on hub ``port``, kept open for the whole run."""
+    """The webcam on hub ``port`` (or port path, ``cameras.index_of``),
+    kept open for the whole run."""
 
     def __init__(self, port, label='camera'):
         self.label = label
-        by_port = find_by_port()
-        if port not in by_port:
-            raise RuntimeError(f'no camera on hub port {port} '
-                               f'(found: {by_port})')
-        self.cap = cv2.VideoCapture(by_port[port], cv2.CAP_DSHOW)
+        try:
+            index = index_of(port)
+        except LookupError as exc:
+            raise RuntimeError(f'{label}: {exc}')
+        self.cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
         if not self.cap.isOpened():
             raise RuntimeError(f'{label}: cannot open')
 
@@ -90,9 +93,13 @@ class Session:
     camera is on (e.g. ``coripps.tool.home_sampler._build``), ``host`` its controller.
     ``camera``: open, with ``frame()`` (BGR, taken now) and ``close()``;
     closed by :meth:`close`, also when connecting the arm fails.
+    ``distances`` (m, camera to board centre) of the views; ``in_view``: the
+    share of the board's corners a view must have in the picture (below 1
+    when the board is too big for the picture at those distances).
     """
 
-    def __init__(self, build, host, camera, detector, data_dir):
+    def __init__(self, build, host, camera, detector, data_dir,
+                 distances=DISTANCES, in_view=IN_VIEW):
         self.camera = camera
         try:
             _, _, self.robot, self.pln_ctx = build()
@@ -102,12 +109,14 @@ class Session:
             raise
         self.detector = detector
         self.data_dir = data_dir
+        self.distances = tuple(distances)
+        self.in_view = in_view
         self.records = []
         self.img_size = None
 
     def close(self):
         self.camera.close()
-        self.cobotta.close()            # powers off, gives the arm back
+        self.cobotta.disconnect()       # powers off, gives the arm back
 
     # -- moving -----------------------------------------------------------
     def qs_now(self):
@@ -192,10 +201,10 @@ class Session:
                 z = -up
                 x = x_ref - (x_ref @ z) * z
                 x /= np.linalg.norm(x)
-                k_d = len(views) % len(DISTANCES)
+                k_d = len(views) % len(self.distances)
                 k_r = len(views) % len(ROLLS_DEG)
                 view = None
-                for dist in DISTANCES[k_d:] + DISTANCES[:k_d]:
+                for dist in self.distances[k_d:] + self.distances[:k_d]:
                     for roll in ROLLS_DEG[k_r:] + ROLLS_DEG[:k_r]:
                         rx = _rot(z, roll) @ x
                         tf_w_cam = che._tf(center + dist * up, np.column_stack(
@@ -242,8 +251,9 @@ class Session:
         px = self.detector.project(tf_cam_board)
         w, h = self.img_size
         m = IMAGE_MARGIN
-        return bool(np.all((px[:, 0] > m) & (px[:, 0] < w - m)
-                           & (px[:, 1] > m) & (px[:, 1] < h - m)))
+        inside = ((px[:, 0] > m) & (px[:, 0] < w - m)
+                  & (px[:, 1] > m) & (px[:, 1] < h - m))
+        return bool(inside.mean() >= self.in_view)
 
     # -- the run ----------------------------------------------------------
     def poses_seen(self):
