@@ -1,0 +1,6 @@
+# Documentation build dependencies (mkdocs site).
+#   pip install -r docs/requirements.txt
+#   mkdocs serve   # or: mkdocs build
+mkdocs-material
+mkdocs-static-i18n
+pymdown-extensions
