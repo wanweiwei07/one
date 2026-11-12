@@ -94,7 +94,7 @@ class Camera(ossn.SceneNode):
         return self._fov
 
     @fov.setter
-    @oud.mark_dirty('_proj_dirty')
+    @oud.mark_dirty('_mark_proj_dirty')
     def fov(self, fov):
         self._fov = fov
 
@@ -103,7 +103,7 @@ class Camera(ossn.SceneNode):
         return self._near
 
     @near.setter
-    @oud.mark_dirty('_proj_dirty')
+    @oud.mark_dirty('_mark_proj_dirty')
     def near(self, near):
         self._near = near
 
@@ -112,7 +112,7 @@ class Camera(ossn.SceneNode):
         return self._far
 
     @far.setter
-    @oud.mark_dirty('_proj_dirty')
+    @oud.mark_dirty('_mark_proj_dirty')
     def far(self, far):
         self._far = far
 

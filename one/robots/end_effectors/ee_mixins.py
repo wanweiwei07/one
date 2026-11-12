@@ -122,9 +122,10 @@ class GripperMixin(EndEffectorMixin):
 class PointMixin:
 
     def _tip_loc_tf(self):
-        """Tool-point offset relative to the root link (the tcp named 'tip'
-        that every point tool registers)."""
-        return self.tcp('tip').loc_tf
+        """Tool-point pose relative to the root link (the tcp named 'tip' that
+        every point tool registers). Taken from the world poses, so it stays
+        right when 'tip' sits on a moving link (e.g. a sliding shank)."""
+        return np.linalg.inv(self.runtime_root_lnk.tf) @ self.tcp('tip').tf
 
     def activate(self):
         self._set_activation_state(True)
@@ -142,17 +143,18 @@ class PointMixin:
         return base_tf
 
     def hold(self, child, offset_tf=None):
-        """Hold ``child`` at the tool tip (requires activation first). A point
-        tool holds at the TIP frame with an activation gate, so it keeps its own
-        hold/release rather than the root-relative EndEffectorMixin pair."""
+        """Hold ``child`` on the link carrying the 'tip' tcp (requires
+        activation first), so it follows that link (e.g. a sliding shank).
+        Without ``offset_tf`` the child keeps its current pose; with it, the
+        child is snapped to ``tip @ offset_tf`` (for special cases)."""
         if not self.is_activated:
             raise RuntimeError("Cannot hold: end effector not activated")
-        parent_tf = self.runtime_root_lnk.tf @ self._tip_loc_tf()
+        tip = self.tcp('tip')
         if offset_tf is None:
-            loc_tf = np.linalg.inv(parent_tf) @ child.tf
+            loc_tf = np.linalg.inv(tip.parent_lnk.tf) @ child.tf
         else:
-            loc_tf = np.linalg.inv(parent_tf @ offset_tf) @ child.tf
-        self.mount(child, self.runtime_root_lnk, loc_tf)
+            loc_tf = tip.loc_tf @ offset_tf
+        self.mount(child, tip.parent_lnk, loc_tf, update=True)
 
     def release(self, child):
         """Release ``child`` from the tool."""

@@ -292,13 +292,13 @@ _Approach / depart motion primitives._
   - methods: `shortcut`, `densify`
 
 ## `one.motion.probabilistic.prm`
+_Probabilistic roadmaps._
 
 - **class `PRMRoadmap`**
-  - methods: `add_state`, `add_edge_undirected`, `remove_edge_undirected`, `dijkstra`
-- **class `PRMPlanner`**
-  - methods: `solve`
-- **class `LazyPRMPlanner`**
-  - methods: `solve`
+  - methods: `add_state`, `add_edge_undirected`, `remove_edge_undirected`, `knn`, `query_graph`, `dijkstra`, `save`, `load`
+- **class `PRMPlanner`** — Roadmap planner. Without a roadmap (``roadmap=`` here or ``rm=`` in
+  - methods: `build_roadmap`, `solve`
+- **class `LazyPRMPlanner`** — A PRM that checks nothing but the states while building, and a path's
 
 ## `one.motion.probabilistic.rrt`
 
@@ -792,7 +792,7 @@ _Transform & rotation math: rotmat_from_* (axangle, quat, euler, rotvec,_
 - `tf_from_axangle(ax, angle)` — homogeneous matrix from the given axis and angle
 - `tf_from_pos_rotmat(pos=None, rotmat=None)`
 - `tf_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3))` — build a (4,4) transformation matrix from position and rotation vector
-- `tf_from_quat(quat)` — convert a quaterion to (4,4) homogeneous transformation matrix
+- `tf_from_quat(quat)` — (4,4) homogeneous transform of quaternion [x, y, z, w] (need not be unit).
 - `tf_from_quat_pos(quat, pos)`
 - `tf_inverse(tf)` — compute the inverse of a homogeneous transformation matrix
 - `tf_average(tf_list, bandwidth=10)` — TODO: tf list or (n,4,4) array
@@ -803,17 +803,17 @@ _Transform & rotation math: rotmat_from_* (axangle, quat, euler, rotvec,_
 - `quat_from_rotmat(rotmat)`
 - `quat_from_axangle(ax, angle)`
 - `average_quaternions(quats)`
-- `quat_from_euler(ai, aj, ak, order='sxyz')` — Return quaternion from Euler angles and axis sequence.
+- `quat_from_euler(ai, aj, ak, order='sxyz')` — Return quaternion [x, y, z, w] from Euler angles and axis sequence.
 - `rotvec_from_rotmat(rotmat)`
 - `euler_from_quat(quat, order='sxyz')`
 - `euler_from_rotmat(rotmat, order='sxyz')`
-- `quaternion_multiply(quaternion1, quaternion0)` — Return multiplication of two quaternions.
-- `quaternion_conjugate(quaternion)` — Return conjugate of quaternion.
-- `quaternion_inverse(quaternion)` — Return inverse of quaternion.
-- `quaternion_real(quaternion)` — Return real part of quaternion.
-- `quaternion_imag(quaternion)` — Return imaginary part of quaternion.
+- `quaternion_multiply(quaternion1, quaternion0)` — Return quaternion1 * quaternion0, all [x, y, z, w] (the rotation of q0, then q1).
+- `quaternion_conjugate(quaternion)` — Return conjugate of quaternion [x, y, z, w].
+- `quaternion_inverse(quaternion)` — Return inverse of quaternion [x, y, z, w].
+- `quaternion_real(quaternion)` — Return real part (w) of quaternion [x, y, z, w].
+- `quaternion_imag(quaternion)` — Return imaginary part (x, y, z) of quaternion [x, y, z, w].
 - `slerp_quat(quat0, quat1, fraction, spin=0, shortestpath=True)` — Return spherical linear interpolation between two quaternions.
-- `rand_quaternion()` — Return uniform random unit quaternion.
+- `rand_quaternion()` — Return uniform random unit quaternion [x, y, z, w].
 - `rand_rotmat()` — Return uniform random rotation matrix.
 - `skew(vec)`
 - `orth_vec(vec, toggle_unit=True)` — compute a vector orthogonal to the given 3D vector
@@ -829,7 +829,7 @@ _Transform & rotation math: rotmat_from_* (axangle, quat, euler, rotvec,_
 - `diff_between_poses(src_pos, src_rotmat, tgt_pos, tgt_rotmat)` — compute the error between the given tcp and tgt_tcp
 - `cosine_between_vecs(v1, v2)`
 - `axangle_between_rotmat(rotmati, rotmatj)`
-- `quaternion_to_axangle(quaternion)` — :param quaternion:
+- `quaternion_to_axangle(quaternion)` — :param quaternion: [x, y, z, w]
 - `pos_average(pos_list, bandwidth=10)` — average a list of pos_vec (1x3)
 - `pos_quat_from_tf(tf, quat_order='xyzw')`
 - `intersect_planes(p1, n1, p2, n2, tol=1e-06)`

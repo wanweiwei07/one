@@ -3,7 +3,11 @@ normal, two-vecs, look_at), tf_from_pos_rotmat, quat/euler/rotvec
 conversions, slerp, interpolation, relative poses. Many rotmat_from_* and
 frame_from_normal accept batched (..., 3) inputs.
 
-Prefer these over scipy.spatial.transform / transforms3d for in-house work."""
+Prefer these over scipy.spatial.transform / transforms3d for in-house work.
+
+Quaternions are [x, y, z, w] throughout (scipy's order), as are SceneNode.quat
+and MechBase.quat. Convert only at an outside interface that wants [w, x, y, z]
+(e.g. ``pos_quat_from_tf(tf, quat_order='wxyz')`` for MuJoCo)."""
 import warnings
 import numpy as np
 import numpy.typing as npt
@@ -345,18 +349,13 @@ def tf_from_rotvec(pos=np.zeros(3), rotvec=np.ones(3)):
 
 
 def tf_from_quat(quat):
-    """convert a quaterion to (4,4) homogeneous transformation matrix"""
-    q = np.array(quat, dtype=np.float32, copy=True)
-    n = np.dot(q, q)
-    if n < eps:
-        return np.identity(4)
-    q *= np.sqrt(2.0 / n)
-    q = np.outer(q, q)
-    return np.array([
-        [1.0 - q[2, 2] - q[3, 3], q[1, 2] - q[3, 0], q[1, 3] + q[2, 0], 0.0],
-        [q[1, 2] + q[3, 0], 1.0 - q[1, 1] - q[3, 3], q[2, 3] - q[1, 0], 0.0],
-        [q[1, 3] - q[2, 0], q[2, 3] + q[1, 0], 1.0 - q[1, 1] - q[2, 2], 0.0],
-        [0.0, 0.0, 0.0, 1.0]])
+    """(4,4) homogeneous transform of quaternion [x, y, z, w] (need not be unit)."""
+    q = np.asarray(quat, dtype=np.float64)
+    tf = np.identity(4)
+    if np.dot(q, q) < eps:
+        return tf
+    tf[:3, :3] = Rotation.from_quat(q).as_matrix()
+    return tf
 
 
 def tf_from_quat_pos(quat, pos):
@@ -506,7 +505,7 @@ def average_quaternions(quats):
 
 def quat_from_euler(ai, aj, ak, order='sxyz'):
     """
-    Return quaternion from Euler angles and axis sequence.
+    Return quaternion [x, y, z, w] from Euler angles and axis sequence.
     """
     try:
         firstaxis, parity, repetition, frame = _AXES2TUPLE[order.lower()]
@@ -546,7 +545,7 @@ def quat_from_euler(ai, aj, ak, order='sxyz'):
         q[k] = cj * cs - sj * sc
     if parity:
         q[j] *= -1.0
-    return q
+    return np.roll(q, -1)  # built as [w, x, y, z]
 
 
 def rotvec_from_rotmat(rotmat):
@@ -595,46 +594,45 @@ def euler_from_rotmat(rotmat, order='sxyz'):
 
 def quaternion_multiply(quaternion1, quaternion0):
     """
-    Return multiplication of two quaternions.
+    Return quaternion1 * quaternion0, all [x, y, z, w] (the rotation of q0, then q1).
     """
-    w0, x0, y0, z0 = quaternion0
-    w1, x1, y1, z1 = quaternion1
-    return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
-                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+    x0, y0, z0, w0 = quaternion0
+    x1, y1, z1, w1 = quaternion1
+    return np.array([x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
                      -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
-                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0,
+                     -x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0], dtype=np.float64)
 
 
 def quaternion_conjugate(quaternion):
     """
-    Return conjugate of quaternion.
+    Return conjugate of quaternion [x, y, z, w].
     """
     q = np.array(quaternion, dtype=np.float64, copy=True)
-    np.negative(q[1:], q[1:])
+    np.negative(q[:3], q[:3])
     return q
 
 
 def quaternion_inverse(quaternion):
     """
-    Return inverse of quaternion.
+    Return inverse of quaternion [x, y, z, w].
     """
-    q = np.array(quaternion, dtype=np.float64, copy=True)
-    np.negative(q[1:], q[1:])
+    q = quaternion_conjugate(quaternion)
     return q / np.dot(q, q)
 
 
 def quaternion_real(quaternion):
     """
-    Return real part of quaternion.
+    Return real part (w) of quaternion [x, y, z, w].
     """
-    return float(quaternion[0])
+    return float(quaternion[3])
 
 
 def quaternion_imag(quaternion):
     """
-    Return imaginary part of quaternion.
+    Return imaginary part (x, y, z) of quaternion [x, y, z, w].
     """
-    return np.array(quaternion[1:4], dtype=np.float64, copy=True)
+    return np.array(quaternion[:3], dtype=np.float64, copy=True)
 
 
 def slerp_quat(quat0, quat1, fraction, spin=0, shortestpath=True):
@@ -666,7 +664,7 @@ def slerp_quat(quat0, quat1, fraction, spin=0, shortestpath=True):
 
 def rand_quaternion():
     """
-    Return uniform random unit quaternion.
+    Return uniform random unit quaternion [x, y, z, w].
     :return:
     """
     rand = np.random.rand(3)
@@ -675,7 +673,7 @@ def rand_quaternion():
     pi2 = np.pi * 2.0
     t1 = pi2 * rand[1]
     t2 = pi2 * rand[2]
-    return np.array([np.cos(t2) * r2, np.sin(t1) * r1, np.cos(t1) * r1, np.sin(t2) * r2])
+    return np.array([np.sin(t1) * r1, np.cos(t1) * r1, np.sin(t2) * r2, np.cos(t2) * r2])
 
 
 def rand_rotmat():
@@ -935,7 +933,7 @@ def axangle_between_rotmat(rotmati, rotmatj):
 
 def quaternion_to_axangle(quaternion):
     """
-    :param quaternion:
+    :param quaternion: [x, y, z, w]
     :return: angle (radian), axis
     author: weiwei
     date: 20190421
@@ -945,8 +943,8 @@ def quaternion_to_axangle(quaternion):
     angle = 0
     axis = [0, 0, 0]
     if norm > lim:
-        w = quaternion[0]
-        vec = quaternion[1:]
+        w = quaternion[3]
+        vec = quaternion[:3]
         normvec = np.linalg.norm(vec)
         angle = 2 * np.acos(w)
         axis = vec / normvec
@@ -1426,9 +1424,9 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, use_svd=True):
         # quaternion: eigenvector corresponding to most positive eigenvalue
         w, V = np.linalg.eigh(N)
         q = V[:, np.argmax(w)]
-        q /= np.linalg.norm(q)  # unit quaternion
+        q /= np.linalg.norm(q)  # unit quaternion, [w, x, y, z] in Horn's N
         # homogeneous transformation matrix
-        M = tf_from_quat(q)
+        M = tf_from_quat(np.roll(q, -1))
 
     if scale and not shear:
         # Affine transformation; scale is ratio of RMS deviations from centroid

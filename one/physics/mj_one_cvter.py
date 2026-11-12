@@ -8,6 +8,34 @@ import one.physics.mj_nodes as opmno
 import one.physics.mj_naming as opmna
 
 
+def _node_tf(pos, quat):
+    """(4,4) of a node's pos and [x, y, z, w] quat."""
+    tf = oum.tf_from_quat(quat)
+    tf[:3, 3] = pos
+    return tf
+
+
+def _moved_inertial(inertial, tf):
+    """``inertial`` re-expressed in the frame ``tf`` maps it from."""
+    rot = tf[:3, :3]
+    inertia = np.zeros((3, 3)) if inertial.inertia is None else np.asarray(inertial.inertia, float)
+    return opmno.InertialNode(mass=inertial.mass,
+                              com=rot @ np.asarray(inertial.com, float) + tf[:3, 3],
+                              inertia=rot @ inertia @ rot.T)
+
+
+def _summed_inertial(a, b):
+    """Two inertials in the same frame as one: mass, com, inertia about the com."""
+    m = a.mass + b.mass
+    com = (a.mass * np.asarray(a.com, float) + b.mass * np.asarray(b.com, float)) / m
+    inertia = np.zeros((3, 3))
+    for n in (a, b):
+        d = np.asarray(n.com, float) - com
+        own = np.zeros((3, 3)) if n.inertia is None else np.asarray(n.inertia, float)
+        inertia += own + n.mass * (d @ d * np.eye(3) - np.outer(d, d))
+    return opmno.InertialNode(mass=m, com=com, inertia=inertia)
+
+
 class MJOneConverter:
 
     def __init__(self, margin=0.0):
@@ -261,29 +289,32 @@ class MJOneConverter:
         geom.conaffinity = int(sobj.collision_affinity)
 
     def _merge_empty_geoms(self, body, is_root=False):
+        """Fold ``body`` into a geom-less parent, so a moving body is not left
+        without mass. The parent keeps its frame (its joints, its other children
+        and the pose pushed to it stay valid); the body's geoms, inertial and
+        children move over, re-expressed in the parent's frame. A body with
+        joints folds in only when it sits at the parent's origin, since a joint
+        lives at its body's origin; otherwise it stays a body of its own."""
         for child in list(body.children):
             self._merge_empty_geoms(child, is_root=False)
         if is_root:
             return
         parent = body.parent
-        if parent is None:
+        if parent is None or parent.geoms:
             return
-        merge = 0
-        if len(parent.geoms) == 0 and len(body.geoms) > 0:
-            merge = 1
-        if len(parent.geoms) == 0 and len(body.geoms) == 0:
-            merge = 2
-        if merge == 0:
+        ctf = _node_tf(body.pos, body.quat)
+        if body.hosting_jnts and not np.allclose(ctf, np.eye(4), atol=1e-7):
             return
-        ptfmat = oum.tf_from_quat_pos(parent.quat, parent.pos)
-        ctfmat = oum.tf_from_quat_pos(body.quat, body.pos)
-        newtfmat = ptfmat @ ctfmat
-        parent.pos, parent.quat = oum.pos_quat_from_tf(newtfmat)
-        if merge == 1:
-            parent.geoms.extend(body.geoms)
-            parent.inertial = body.inertial
+        for g in body.geoms:
+            g.pos, g.quat = oum.pos_quat_from_tf(ctf @ _node_tf(g.pos, g.quat))
+        parent.geoms.extend(body.geoms)
+        if body.inertial is not None:
+            moved = _moved_inertial(body.inertial, ctf)
+            parent.inertial = moved if parent.inertial is None else \
+                _summed_inertial(parent.inertial, moved)
         parent.hosting_jnts.extend(body.hosting_jnts)
         for gc in body.children:
+            gc.pos, gc.quat = oum.pos_quat_from_tf(ctf @ _node_tf(gc.pos, gc.quat))
             gc.parent = parent
             parent.children.append(gc)
         parent.children.remove(body)

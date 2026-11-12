@@ -23,13 +23,16 @@ class World(pyglet.window.Window):
                  cam_pos=(.1, .1, .1),
                  cam_lookat_pos=(0, 0, 0),
                  win_size=None,
-                 toggle_auto_cam_orbit=False):
+                 toggle_auto_cam_orbit=False,
+                 visible=True):
+        """``visible=False``: a hidden window, e.g. to render off screen into a
+        ``RenderTarget``."""
         display = pyglet.display.get_display()
         screen = display.get_default_screen()
         screen_w, screen_h = screen.width, screen.height
         win_w, win_h = (screen_w * 8 // 10, screen_h * 8 //
                         10) if win_size is None else win_size
-        super().__init__(win_w, win_h, config=config, resizable=True)
+        super().__init__(win_w, win_h, config=config, resizable=True, visible=visible)
         self.set_location((screen_w - win_w) // 2, (screen_h - win_h) // 2)
         self.set_caption("WRS World")
         self.camera = ovc.Camera(

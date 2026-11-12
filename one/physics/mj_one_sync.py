@@ -54,8 +54,12 @@ class MJSynchronizer:
             mecba.set_pos_rotmat(pos, rotmat)
 
     def pull_all_sobj_pose(self):
+        """Pull back the free (floating) objects, the only ones MuJoCo moves --
+        the mirror of ``push_all_sobj_qpos``. Static and mounted objects are
+        posed by one, so their one-side pose is left as is."""
         data = self.mj_runtime.data
-        for sobj, bid in self._body_map.items():
+        for sobj in self._sobj_qpos_adr:
+            bid = self._body_map[sobj]
             pos = data.xpos[bid]
             rot = data.xmat[bid].reshape(3, 3)
             sobj.set_pos_rotmat(pos, rot)

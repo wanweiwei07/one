@@ -50,13 +50,13 @@ _Approach / depart motion primitives._
   - methods: `shortcut`, `densify`
 
 ## `one.motion.probabilistic.prm`
+_Probabilistic roadmaps._
 
 - **class `PRMRoadmap`**
-  - methods: `add_state`, `add_edge_undirected`, `remove_edge_undirected`, `dijkstra`
-- **class `PRMPlanner`**
-  - methods: `solve`
-- **class `LazyPRMPlanner`**
-  - methods: `solve`
+  - methods: `add_state`, `add_edge_undirected`, `remove_edge_undirected`, `knn`, `query_graph`, `dijkstra`, `save`, `load`
+- **class `PRMPlanner`** — Roadmap planner. Without a roadmap (``roadmap=`` here or ``rm=`` in
+  - methods: `build_roadmap`, `solve`
+- **class `LazyPRMPlanner`** — A PRM that checks nothing but the states while building, and a path's
 
 ## `one.motion.probabilistic.rrt`
 
